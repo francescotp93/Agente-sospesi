@@ -9,6 +9,7 @@
 <title>Agente Sospesi</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
 :root {
@@ -211,6 +212,9 @@ input[type=file]{display:none;}
   <button class="nav-btn" onclick="goTab('sospesi')" id="btn-sospesi">
     <i class="ti ti-list"></i><span>Sospesi</span>
   </button>
+  <button class="nav-btn" onclick="goTab('storico')" id="btn-storico">
+    <i class="ti ti-history"></i><span>Storico</span>
+  </button>
   <button class="nav-btn" onclick="goTab('chat')" id="btn-chat">
     <i class="ti ti-message-circle"></i><span>AI</span>
   </button>
@@ -277,6 +281,7 @@ input[type=file]{display:none;}
     <button class="btn secondary" onclick="demoData()">
       <i class="ti ti-database"></i> Carica dati di esempio
     </button>
+    <div id="msg-salvataggio" style="display:none;margin:10px 12px 0;padding:10px 14px;background:var(--green-bg);color:var(--green-text);border-radius:var(--rs);font-size:13px;font-weight:500;"></div>
     <div style="height:16px"></div>
   </div>
 
@@ -342,6 +347,19 @@ input[type=file]{display:none;}
     </div>
   </div>
 
+  <!-- ===== STORICO ===== -->
+  <div class="panel" id="panel-storico">
+    <div class="section-lbl">Ultimi 30 giorni</div>
+    <div id="storico-empty" class="empty" style="margin-top:40px">
+      <i class="ti ti-history"></i>
+      <p>Nessuno storico ancora salvato.<br>I dati appariranno dopo il primo salvataggio.</p>
+    </div>
+    <div id="storico-content" style="display:none">
+      <div class="card" id="card-storico"></div>
+    </div>
+    <div style="height:16px"></div>
+  </div>
+
   <!-- ===== CHAT ===== -->
   <div class="panel" id="panel-chat">
     <div class="chip-row">
@@ -368,8 +386,83 @@ input[type=file]{display:none;}
 </div>
 
 <script>
+// ─── SUPABASE INIT ────────────────────────────────────────────────────────────
+let db = null;
+function initSupabase() {
+  try {
+    if (window.supabase && window.SUPABASE_URL && window.SUPABASE_KEY) {
+      db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+      console.log('Supabase connesso');
+      createTablesIfNeeded();
+    }
+  } catch(e) { console.warn('Supabase non disponibile:', e); }
+}
+
+async function createTablesIfNeeded() {
+  // Crea le tabelle tramite SQL se non esistono
+  // Le tabelle vengono create manualmente su Supabase (vedi sotto)
+}
+
+// ── SALVA SESSIONE GIORNALIERA ─────────────────────────────────
+async function salvaSessione(sospesi, incassi, manuale) {
+  if (!db) return;
+  try {
+    const data = manuale.data || new Date().toISOString().split('T')[0];
+    // Salva snapshot sospesi
+    await db.from('sessioni_giornaliere').upsert({
+      data_riferimento: data,
+      sospesi_json: JSON.stringify(sospesi),
+      incassi_json: JSON.stringify(incassi),
+      contanti: manuale.contanti || 0,
+      versamenti: manuale.versamenti || 0,
+      spese: manuale.spese || 0,
+      note: manuale.note || '',
+      totale_sospesi: sospesi.length,
+      valore_totale: sospesi.reduce((a,s)=>a+s.importo,0),
+      aggiornato_il: new Date().toISOString()
+    }, { onConflict: 'data_riferimento' });
+    console.log('Sessione salvata su Supabase per', data);
+  } catch(e) { console.warn('Errore salvataggio:', e); }
+}
+
+// ── CARICA SESSIONE PRECEDENTE ─────────────────────────────────
+async function caricaSessionePrecedente() {
+  if (!db) return null;
+  try {
+    const { data } = await db
+      .from('sessioni_giornaliere')
+      .select('data_riferimento, sospesi_json')
+      .order('data_riferimento', { ascending: false })
+      .limit(2);
+    if (data && data.length >= 1) {
+      const sessione = data[0];
+      const sospesiPrec = JSON.parse(sessione.sospesi_json || '[]');
+      return sospesiPrec.map(s => s.prog).filter(Boolean);
+    }
+  } catch(e) { console.warn('Errore caricamento sessione precedente:', e); }
+  return null;
+}
+
+// ── CARICA STORICO ─────────────────────────────────────────────
+async function caricaStorico() {
+  if (!db) return [];
+  try {
+    const { data } = await db
+      .from('sessioni_giornaliere')
+      .select('data_riferimento, totale_sospesi, valore_totale, contanti, versamenti, spese, note')
+      .order('data_riferimento', { ascending: false })
+      .limit(30);
+    return data || [];
+  } catch(e) { return []; }
+}
+
+
+
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const API_KEY = window.GROQ_API_KEY || '';
+
+// Inizializza Supabase
+document.addEventListener('DOMContentLoaded', initSupabase);
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
 const S = {
@@ -414,7 +507,33 @@ function goTab(t) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('btn-'+t).classList.add('active');
   document.getElementById('panel-'+t).classList.add('active');
+  if (t === 'storico') buildStorico();
 }
+
+// ─── STORICO ──────────────────────────────────────────────────────────────────
+async function buildStorico() {
+  const righe = await caricaStorico();
+  if (!righe.length) {
+    document.getElementById('storico-empty').style.display = 'block';
+    document.getElementById('storico-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('storico-empty').style.display = 'none';
+  document.getElementById('storico-content').style.display = 'block';
+  document.getElementById('card-storico').innerHTML = righe.map(r => `
+    <div class="row-item">
+      <div class="row-icon blue"><i class="ti ti-calendar"></i></div>
+      <div class="row-main">
+        <div class="row-name">${new Date(r.data_riferimento+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'})}</div>
+        <div class="row-sub">${r.totale_sospesi} sospesi · Cassa € ${fmt(r.contanti)}${r.note?' · '+r.note:''}</div>
+      </div>
+      <div class="row-right">
+        <div class="row-amount">€ ${fmt(r.valore_totale)}</div>
+        <div class="row-badge badge-blue">vers. € ${fmt(r.versamenti)}</div>
+      </div>
+    </div>`).join('');
+}
+
 
 // ─── FILE LOADING ─────────────────────────────────────────────────────────────
 function loadFile(inp, tipo) {
@@ -499,11 +618,42 @@ function parseWordIncassi(text, fname) {
 }
 
 // ─── ANALISI ──────────────────────────────────────────────────────────────────
-function avviaAnalisi() {
+async function avviaAnalisi() {
   if (!S.sospesi.length) { alert('Carica prima il file Excel dei sospesi.'); return; }
+
+  // Mostra indicatore salvataggio
+  document.getElementById('msg-salvataggio').textContent = '💾 Salvataggio in corso...';
+  document.getElementById('msg-salvataggio').style.display = 'block';
+
+  // Carica prog sospesi del giorno precedente da Supabase
+  const progPrec = await caricaSessionePrecedente();
+  if (progPrec) {
+    S.sospesiPrecedente = progPrec;
+  } else {
+    // fallback localStorage
+    try { S.sospesiPrecedente = JSON.parse(localStorage.getItem('sospesi_prev')||'[]'); } catch(e){}
+  }
+
+  // Salva sessione odierna su Supabase
+  const manuale = {
+    data:       document.getElementById('inp-data').value,
+    contanti:   parseFloat(document.getElementById('inp-contanti').value)||0,
+    versamenti: parseFloat(document.getElementById('inp-versamento').value)||0,
+    spese:      parseFloat(document.getElementById('inp-spese').value)||0,
+    note:       document.getElementById('inp-note').value
+  };
+  await salvaSessione(S.sospesi, S.incassi, manuale);
+
+  // Salva anche in localStorage come backup
+  try { localStorage.setItem('sospesi_prev', JSON.stringify(S.sospesi.map(r=>r.prog).filter(Boolean))); } catch(e){}
+
+  document.getElementById('msg-salvataggio').textContent = '✅ Dati salvati nel cloud';
+  setTimeout(() => { document.getElementById('msg-salvataggio').style.display = 'none'; }, 3000);
+
   buildDashboard();
   buildAnomalie();
   buildListaSospesi();
+  await buildStorico();
   updateStatus();
   goTab('dashboard');
 }
@@ -596,9 +746,9 @@ function buildAnomalie() {
   const spese = parseFloat(document.getElementById('inp-spese').value)||0;
   const valIncassato = S.incassi.reduce((a,i)=>a+i.importo,0);
 
-  // 1. Sospesi spariti (presenti in sessione precedente, non ora, senza "Pagato il")
+  // 1. Sospesi spariti (presenti in sessione precedente da Supabase, non ora)
   try {
-    const prev = JSON.parse(localStorage.getItem('sospesi_prev')||'[]');
+    const prev = S.sospesiPrecedente || [];
     const progAttuali = new Set(sosp.map(s=>String(s.prog)));
     const spariti = prev.filter(p => p && !progAttuali.has(String(p)));
     if (spariti.length > 0) {

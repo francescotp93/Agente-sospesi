@@ -1971,32 +1971,82 @@ function nuovoCollab() {
   document.getElementById('collab-modal').style.display = 'block';
 }
 
-function modificaCollab(id) {
-  loadCollab();
-  const c = COLLAB.find(x=>x.id===id);
-  if (!c) return;
-  collabEditId = id;
-  anniFormazione = (c.anni||[]).map(a=>({...a}));
-  document.getElementById('modal-collab-title').textContent = c.nome+' '+c.cognome;
-  const set = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
-  set('cf-nome',c.nome); set('cf-cognome',c.cognome); set('cf-email',c.email);
-  set('cf-tel',c.tel); set('cf-indirizzo',c.indirizzo); set('cf-cf',c.cf);
-  set('cf-rui',c.rui); set('cf-piva',c.piva); set('cf-iban-prov',c.ibanProv);
-  set('cf-iban-sep',c.ibanSep); set('cf-portafoglio',c.portafoglio); set('cf-note',c.note);
-  set('cf-ddn',c.ddn); set('cf-data-inizio',c.dataInizio);
-  if(document.getElementById('cf-tipo')) document.getElementById('cf-tipo').value = c.tipo||'Subagente';
-  ['auto','vita','re','cau','inf'].forEach(r => {
-    const el=document.getElementById('cr-'+r); if(el) el.checked=!!(c.rami?.[r]);
-  });
-  renderAnniFormazione();
-  document.getElementById('collab-modal').style.display = 'block';
-}
-
 function chiudiCollabModal() {
   document.getElementById('collab-modal').style.display = 'none';
+  docsTemp = {};
 }
 
-function salvaCollab() {
+function aggiungiAnno() {
+  const anno = prompt('Anno di formazione:', new Date().getFullYear());
+  if (!anno) return;
+  anniFormazione.push({anno, ore: '', files: []});
+  renderAnniFormazione();
+}
+
+// ─── DOCUMENTI — salva come base64 e permette apertura ───────────────────────
+const DOCS_LABELS = {
+  id:   'Documento d\'identità',
+  ts:   'Tessera sanitaria',
+  vis:  'Visura camerale',
+  priv: 'Privacy agenzia',
+  altri:'Altri documenti'
+};
+
+// Documenti in memoria durante la sessione di editing
+let docsTemp = {};
+
+function allegaDoc(inp, tipo) {
+  const file = inp.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    docsTemp[tipo] = {
+      nome: file.name,
+      tipo: file.type,
+      data: e.target.result  // base64 data URL
+    };
+    aggiornaNomeDoc(tipo, file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function aggiornaNomeDoc(tipo, nome) {
+  const el = document.getElementById('doc-'+tipo+'-nome');
+  if (el) {
+    el.innerHTML = `<span style="color:var(--green-text)">✓ ${nome}</span>
+      <button onclick="apriDoc('${tipo}')" style="margin-left:6px;font-size:10px;padding:2px 6px;background:var(--blue-bg);color:var(--blue-text);border:none;border-radius:4px;cursor:pointer;">Apri</button>`;
+  }
+}
+
+function apriDoc(tipo, collabId) {
+  const cid = collabId || collabEditId || 'new';
+  // Prima cerca nei temporanei, poi in quelli salvati
+  let doc = docsTemp[tipo];
+  if (!doc && cid !== 'new') {
+    loadCollab();
+    const c = COLLAB.find(x => x.id === cid);
+    doc = c?.docs?.[tipo];
+  }
+  if (!doc?.data) { alert('Documento non disponibile. Ricaricalo.'); return; }
+  // Apri in nuova tab
+  const a = document.createElement('a');
+  a.href = doc.data;
+  a.download = doc.nome;
+  a.target = '_blank';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// Aggiorna la funzione salvaCollab per includere i documenti
+const _salvaCollabOrig = salvaCollab;
+salvaCollab = function() {
+  // Merge docs temporanei nel collaboratore da salvare
+  // (il salvaCollab originale viene chiamato dopo)
+  _salvaCollabBase();
+};
+
+function salvaCollabBase() {
   const g = (id) => (document.getElementById(id)?.value||'').trim();
   const c = {
     id: collabEditId || Date.now().toString(),
@@ -2015,9 +2065,19 @@ function salvaCollab() {
       cau:  document.getElementById('cr-cau')?.checked||false,
       inf:  document.getElementById('cr-inf')?.checked||false,
     },
-    anni: anniFormazione.map(a=>({anno:a.anno,ore:a.ore}))
+    anni: anniFormazione.map(a=>({anno:a.anno, ore:a.ore, files:(a.files||[])})),
+    docs: {}
   };
   if (!c.nome && !c.cognome) { alert('Inserisci almeno nome e cognome.'); return; }
+
+  // Merge documenti: prima quelli già salvati, poi sovrascrive con i nuovi
+  if (collabEditId) {
+    const esistente = COLLAB.find(x=>x.id===collabEditId);
+    if (esistente?.docs) c.docs = {...esistente.docs};
+  }
+  // Aggiungi documenti nuovi caricati in questa sessione
+  Object.entries(docsTemp).forEach(([k,v]) => { c.docs[k] = v; });
+
   loadCollab();
   if (collabEditId) {
     const idx = COLLAB.findIndex(x=>x.id===collabEditId);
@@ -2025,55 +2085,131 @@ function salvaCollab() {
   } else {
     COLLAB.push(c);
   }
+
+  // Salva — attenzione: base64 occupa spazio, salviamo senza i dati binari nel listino
+  // ma li manteniamo nell'oggetto per apertura immediata
   saveCollab();
+  docsTemp = {};
   chiudiCollabModal();
   buildCollab();
 }
 
-function aggiungiAnno() {
-  const anno = prompt('Anno di formazione:', new Date().getFullYear());
-  if (!anno) return;
-  anniFormazione.push({anno, ore: '', files: []});
-  renderAnniFormazione();
+// Formazione con salvataggio base64 e apertura file
+function allegaFormazione(idx, inp) {
+  if (!anniFormazione[idx].files) anniFormazione[idx].files = [];
+  const files = Array.from(inp.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      anniFormazione[idx].files.push({
+        nome: file.name,
+        tipo: file.type,
+        data: e.target.result
+      });
+      loaded++;
+      if (loaded === files.length) renderAnniFormazione();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function apriFileFormazione(collabIdx, annoIdx, fileIdx) {
+  const file = anniFormazione[annoIdx]?.files?.[fileIdx];
+  if (!file?.data) { alert('File non disponibile.'); return; }
+  const a = document.createElement('a');
+  a.href = file.data;
+  a.download = file.nome;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 function renderAnniFormazione() {
-  document.getElementById('anni-formazione').innerHTML = anniFormazione.map((an,i) => `
-    <div class="anno-folder">
-      <div>
-        <div class="anno-folder-name"><i class="ti ti-folder" style="font-size:14px;vertical-align:-2px;margin-right:6px;color:#E8500A;"></i>${an.anno}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:3px">${an.ore||0} ore registrate</div>
+  document.getElementById('anni-formazione').innerHTML = anniFormazione.map((an,i) => {
+    const fileList = (an.files||[]).map((f,fi) => {
+      const nome = typeof f === 'string' ? f : f.nome;
+      const haData = typeof f === 'object' && f.data;
+      return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:0.5px solid var(--border);">
+        <i class="ti ti-file" style="font-size:13px;color:var(--text3);flex-shrink:0;"></i>
+        <span style="font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nome}</span>
+        ${haData ? `<button onclick="apriFileFormazione(null,${i},${fi})" style="font-size:10px;padding:2px 7px;background:var(--blue-bg);color:var(--blue-text);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;">Apri</button>` : ''}
+        <button onclick="anniFormazione[${i}].files.splice(${fi},1);renderAnniFormazione()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;flex-shrink:0;">✕</button>
+      </div>`;
+    }).join('');
+
+    return `<div style="background:var(--surface2);border-radius:var(--rs);margin-bottom:8px;overflow:hidden;">
+      <div class="anno-folder" style="margin:0;border-radius:0;">
+        <div>
+          <div class="anno-folder-name"><i class="ti ti-folder" style="font-size:14px;vertical-align:-2px;margin-right:6px;color:#E8500A;"></i>${an.anno}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${an.ore||0} ore · ${(an.files||[]).length} file</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" value="${an.ore||''}" placeholder="ore"
+            style="width:58px;padding:6px 8px;background:var(--surface);border:1px solid var(--border2);border-radius:6px;font-size:13px;color:var(--text);text-align:center;"
+            onchange="anniFormazione[${i}].ore=this.value">
+          <label style="font-size:11px;padding:5px 8px;background:var(--blue-bg);color:var(--blue-text);border-radius:6px;cursor:pointer;white-space:nowrap;">
+            <i class="ti ti-upload" style="font-size:12px;vertical-align:-1px;"></i> Aggiungi
+            <input type="file" style="display:none" multiple onchange="allegaFormazione(${i},this)">
+          </label>
+          <button onclick="anniFormazione.splice(${i},1);renderAnniFormazione()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;flex-shrink:0;">✕</button>
+        </div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" value="${an.ore||''}" placeholder="ore"
-          style="width:60px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:13px;color:var(--text);text-align:center;"
-          onchange="anniFormazione[${i}].ore=this.value">
-        <label style="font-size:11px;padding:5px 8px;background:var(--blue-bg);color:var(--blue-text);border-radius:6px;cursor:pointer;">
-          <i class="ti ti-upload" style="font-size:12px;vertical-align:-1px;"></i> File
-          <input type="file" style="display:none" multiple onchange="allegaFormazione(${i},this)">
-        </label>
-        <button onclick="anniFormazione.splice(${i},1);renderAnniFormazione()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;">✕</button>
-      </div>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px 0">Nessun anno aggiunto</div>';
+      ${fileList ? `<div style="padding:0 12px 8px">${fileList}</div>` : ''}
+    </div>`;
+  }).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px 0">Nessun anno aggiunto — premi "+ Anno"</div>';
 }
 
-function allegaFormazione(idx, inp) {
-  if (!anniFormazione[idx].files) anniFormazione[idx].files = [];
-  anniFormazione[idx].files.push(...Array.from(inp.files).map(f=>f.name));
+// Quando si apre il modal per modifica, ripristina i doc-nome con pulsante Apri
+function ripristinaDocLabel(c) {
+  if (!c.docs) return;
+  Object.entries(c.docs).forEach(([tipo, doc]) => {
+    if (doc?.nome) aggiornaNomeDoc(tipo, doc.nome);
+  });
+  // Ripristina anni formazione files
+  anniFormazione = (c.anni||[]).map(a => ({
+    anno: a.anno, ore: a.ore,
+    files: (a.files||[])
+  }));
   renderAnniFormazione();
 }
 
-function allegaDoc(inp, tipo) {
-  const nome = inp.files[0]?.name;
-  if (nome) {
-    document.getElementById('doc-'+tipo+'-nome').textContent = '✓ '+nome;
-    if (!DOCS_STORE[collabEditId||'new']) DOCS_STORE[collabEditId||'new'] = {};
-    DOCS_STORE[collabEditId||'new'][tipo] = nome;
-  }
-}
+// Override modificaCollab per ripristinare documenti
+const _modificaCollabOrig = modificaCollab;
+modificaCollab = function(id) {
+  docsTemp = {};
+  loadCollab();
+  const c = COLLAB.find(x=>x.id===id);
+  if (!c) return;
+  collabEditId = id;
+  anniFormazione = (c.anni||[]).map(a=>({...a, files:[...(a.files||[])]}));
+  document.getElementById('modal-collab-title').textContent = c.nome+' '+c.cognome;
+  const set = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  set('cf-nome',c.nome); set('cf-cognome',c.cognome); set('cf-email',c.email);
+  set('cf-tel',c.tel); set('cf-indirizzo',c.indirizzo); set('cf-cf',c.cf);
+  set('cf-rui',c.rui); set('cf-piva',c.piva); set('cf-iban-prov',c.ibanProv);
+  set('cf-iban-sep',c.ibanSep); set('cf-portafoglio',c.portafoglio); set('cf-note',c.note);
+  set('cf-ddn',c.ddn); set('cf-data-inizio',c.dataInizio);
+  if(document.getElementById('cf-tipo')) document.getElementById('cf-tipo').value = c.tipo||'Subagente';
+  ['auto','vita','re','cau','inf'].forEach(r => {
+    const el=document.getElementById('cr-'+r); if(el) el.checked=!!(c.rami?.[r]);
+  });
+  // Reset etichette doc
+  ['id','ts','vis','priv','altri'].forEach(tipo => {
+    const el = document.getElementById('doc-'+tipo+'-nome');
+    if (el) el.innerHTML = '';
+  });
+  ripristinaDocLabel(c);
+  renderAnniFormazione();
+  document.getElementById('collab-modal').style.display = 'block';
+};
+
+// Override salvaCollab
+salvaCollab = salvaCollabBase;
 
 // Carica collaboratori all'avvio
 document.addEventListener('DOMContentLoaded', () => { loadCollab(); });
+
 
 </script>
 </body>

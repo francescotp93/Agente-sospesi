@@ -1198,30 +1198,29 @@ function loadFile(inp, tipo) {
 // ─── PARSE NUMERO SICURO ─────────────────────────────────────────────────────
 function parseNum(val) {
   if (val === null || val === undefined || val === '') return 0;
-  if (typeof val === 'number') {
-    // Controlla se è un numero Excel anomalo (es. 339000 invece di 339)
-    // I valori Excel a volte hanno moltiplicatori x1000 per via del formato celle
-    return val;
-  }
+  // Numero già in formato JavaScript — restituisci direttamente
+  if (typeof val === 'number') return val;
   const s = String(val).trim();
-  // Gestisce formati italiani: 1.234,56 → 1234.56
-  const cleaned = s.replace(/\./g,'').replace(',','.');
-  const n = parseFloat(cleaned);
-  return isNaN(n) ? 0 : n;
+  if (!s || s === '-') return 0;
+  // Formato italiano con punto migliaia e virgola decimale: "1.234,56"
+  if (s.includes(',') && s.includes('.')) {
+    return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  }
+  // Formato italiano solo virgola decimale: "17,22"
+  if (s.includes(',') && !s.includes('.')) {
+    return parseFloat(s.replace(',','.')) || 0;
+  }
+  // Formato standard con punto decimale: "17.22"
+  return parseFloat(s) || 0;
 }
 
 // ─── PARSE SOSPESI (colonne reali dal tuo file) ───────────────────────────────
 function parseSospesi(data) {
   return data.map(r => {
-    // Gestisce importo: se Excel lo salva come numero puro, lo legge direttamente
-    // Se è stringa con virgola (formato italiano), la converte
     let importoRaw = r['Importo Sospeso'] ?? r['importo'] ?? 0;
+    // La libreria XLSX legge i numeri Excel come JavaScript number — usiamo direttamente
+    // Solo se è stringa la convertiamo
     let importo = parseNum(importoRaw);
-
-    // Sanity check: se l'importo sembra moltiplicato per 1000 (es. 339000 invece di 339)
-    // questo può succedere quando Excel ha celle formattate come "migliaia"
-    // Non possiamo correggerlo automaticamente senza sapere il formato originale
-    // ma lo segnaliamo nei dati
 
     return {
       nominativo: r['Nominativo'] || r['nominativo'] || '',

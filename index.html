@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#1a3a5c">
-<title>Agente Sospesi</title>
+<meta name="theme-color" content="#E8500A">
+<meta name="application-name" content="IAM">
+<meta name="apple-mobile-web-app-title" content="IAM">
+<meta name="description" content="IAM · Insurance Agency Management">
+<title>IAM · Insurance Agency Management</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 2 L62 14 L62 38 Q62 56 32 64 Q2 56 2 38 L2 14 Z' fill='%23E8500A'/%3E%3Cpath d='M32 8 L56 18 L56 38 Q56 52 32 59 Q8 52 8 38 L8 18 Z' fill='none' stroke='rgba(255,255,255,0.2)' stroke-width='1.5'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='24' font-weight='700' fill='white' text-anchor='middle'%3Ei%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23E8500A'/%3E%3Cpath d='M32 6 L58 16 L58 36 Q58 52 32 60 Q6 52 6 36 L6 16 Z' fill='none' stroke='rgba(255,255,255,0.25)' stroke-width='1.5'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='26' font-weight='700' fill='white' text-anchor='middle'%3Ei%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -39,21 +44,21 @@ html,body{height:100%;overflow:hidden;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
 
 /* HEADER */
-.hdr{background:var(--accent);color:#fff;padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.hdr{background:#1E1E1C;color:#fff;padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25);}
 .hdr-inner{padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.hdr-title{font-size:16px;font-weight:700;letter-spacing:-.3px;}
-.hdr-sub{font-size:11px;opacity:.65;margin-top:1px;}
-.status-pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.18);white-space:nowrap;flex-shrink:0;}
-.status-pill.warn{background:#e87020;}
-.status-pill.ok{background:#1a8a5a;}
+.hdr-title{font-family:Georgia,serif;font-size:18px;font-weight:700;letter-spacing:-0.5px;color:#fff;}
+.hdr-sub{font-size:10px;opacity:.45;margin-top:1px;letter-spacing:.5px;}
+.status-pill{font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,.1);white-space:nowrap;flex-shrink:0;}
+.status-pill.warn{background:#E8500A;}
+.status-pill.ok{background:#2a7a4a;}
 .status-pill.err{background:#c0392b;}
 
 /* NAV TABS */
 .nav{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 .nav-btn{flex:1;padding:10px 4px 8px;font-size:10px;font-weight:500;border:none;background:none;color:var(--text3);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;position:relative;transition:color .15s;}
 .nav-btn i{font-size:20px;}
-.nav-btn.active{color:var(--accent2);}
-.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--accent2);border-radius:2px;}
+.nav-btn.active{color:#E8500A;}
+.nav-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:#E8500A;border-radius:2px;}
 .nav-badge{position:absolute;top:6px;right:calc(50% - 14px);background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;}
 
 /* PANELS */
@@ -133,7 +138,7 @@ input[type=file]{display:none;}
 .field input:focus,.field select:focus{outline:2px solid var(--accent2);outline-offset:-1px;}
 
 /* BUTTON */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 24px);margin:0 12px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 24px);margin:0 12px;padding:14px;background:#E8500A;color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;font-family:inherit;}
 .btn:active{opacity:.85;}
 .btn.secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border2);margin-top:10px;}
 .btn i{font-size:18px;}
@@ -183,23 +188,23 @@ input[type=file]{display:none;}
 .chat-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 
 /* LOGIN */
-.login-screen{position:fixed;inset:0;background:var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
+.login-screen{position:fixed;inset:0;background:#1E1E1C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
 .login-logo{font-size:56px;margin-bottom:14px;}
 .login-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:8px;text-align:center;}
-.login-sub{font-size:14px;color:rgba(255,255,255,.65);margin-bottom:32px;text-align:center;line-height:1.6;}
-.login-card{background:rgba(255,255,255,.1);border-radius:18px;padding:24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;backdrop-filter:blur(10px);}
+.login-sub{font-size:14px;color:rgba(255,255,255,.45);margin-bottom:24px;text-align:center;line-height:1.6;}
+.login-card{background:rgba(255,255,255,.06);border-radius:18px;padding:24px;width:100%;max-width:340px;display:flex;flex-direction:column;gap:14px;border:0.5px solid rgba(255,255,255,.1);}
 .login-field{display:flex;flex-direction:column;gap:6px;}
-.login-field label{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;}
-.login-field input{padding:12px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.15);color:#fff;font-size:15px;font-family:inherit;outline:none;}
-.login-field input::placeholder{color:rgba(255,255,255,.4);}
-.login-field input:focus{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.2);}
-.login-btn{padding:14px;background:#fff;color:var(--accent);border:none;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;transition:transform .15s,opacity .15s;}
+.login-field label{font-size:11px;font-weight:600;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.8px;}
+.login-field input{padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff;font-size:15px;font-family:inherit;outline:none;}
+.login-field input::placeholder{color:rgba(255,255,255,.2);}
+.login-field input:focus{border-color:#E8500A;background:rgba(232,80,10,.08);}
+.login-btn{padding:14px;background:#E8500A;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,opacity .15s;font-family:inherit;}
 .login-btn:active{transform:scale(.97);opacity:.9;}
-.login-btn:disabled{opacity:.6;cursor:not-allowed;}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;}
 .login-err{font-size:12px;color:#ffaaaa;text-align:center;min-height:16px;}
-.login-switch{font-size:12px;color:rgba(255,255,255,.5);text-align:center;cursor:pointer;}
-.login-switch span{color:rgba(255,255,255,.9);font-weight:600;text-decoration:underline;}
-.login-footer{font-size:11px;color:rgba(255,255,255,.35);margin-top:20px;text-align:center;line-height:1.7;}
+.login-switch{font-size:12px;color:rgba(255,255,255,.35);text-align:center;cursor:pointer;}
+.login-switch span{color:rgba(255,255,255,.75);font-weight:600;text-decoration:underline;}
+.login-footer{font-size:11px;color:rgba(255,255,255,.2);margin-top:20px;text-align:center;line-height:1.7;}
 .user-avatar{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.5);cursor:pointer;object-fit:cover;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;}
 .user-menu{position:absolute;top:64px;right:12px;background:var(--surface);border-radius:var(--r);box-shadow:0 8px 32px rgba(0,0,0,.18);padding:8px;min-width:210px;z-index:500;border:1px solid var(--border);}
 .user-menu-name{padding:8px 12px 2px;font-size:13px;font-weight:600;}
@@ -213,8 +218,18 @@ input[type=file]{display:none;}
 
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="login-screen">
-  <div class="login-logo">🛡</div>
-  <div class="login-title">Agente Sospesi</div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px;">
+    <svg width="52" height="58" viewBox="0 0 52 58" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 0 L52 10 L52 34 Q52 50 26 58 Q0 50 0 34 L0 10 Z" fill="#E8500A"/>
+      <path d="M26 6 L46 14 L46 34 Q46 47 26 53 Q6 47 6 34 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+      <text x="26" y="38" font-family="Georgia,serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">i</text>
+    </svg>
+    <div>
+      <div style="font-family:Georgia,serif;font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;">IAM</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:2.5px;margin-top:2px;">INSURANCE AGENCY MANAGEMENT</div>
+    </div>
+  </div>
+  <div style="width:48px;height:2px;background:#E8500A;border-radius:1px;margin-bottom:28px;"></div>
   <div class="login-sub">Accesso riservato alla tua agenzia</div>
   <div class="login-card">
     <div class="login-field">
@@ -264,8 +279,8 @@ input[type=file]{display:none;}
 <div class="hdr">
   <div class="hdr-inner">
     <div>
-      <div class="hdr-title">🛡 Agente Sospesi</div>
-      <div class="hdr-sub" id="hdr-date">Carica i file per iniziare</div>
+      <div class="hdr-title">IAM</div>
+      <div class="hdr-sub" id="hdr-date">Insurance Agency Management</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="status-pill" id="status-pill">In attesa</div>

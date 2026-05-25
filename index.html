@@ -530,20 +530,33 @@ input[type=file]{display:none;}
   <div id="pp-tratt">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
       <input type="search" id="tr-search" placeholder="Cerca cliente, prodotto..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTratt()">
-      <select id="tr-filt" onchange="renderTratt()" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:12px;color:var(--txt);font-family:inherit;">
-        <option value="">Tutti</option>
+      <button onclick="openTrattModal(null)" style="width:36px;height:36px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+    </div>
+    <div style="display:flex;gap:8px;padding:0 12px 4px;overflow-x:auto;scrollbar-width:none;">
+      <select id="tr-filt" onchange="renderTratt()" style="flex:1;min-width:100px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti gli status</option>
         <option value="prospect">Prospect</option>
         <option value="preventivo">Preventivo</option>
         <option value="trattativa">In trattativa</option>
-        <option value="chiusa">Chiusa</option>
-        <option value="persa">Persa</option>
+        <option value="chiusa">Chiuse ✓</option>
+        <option value="persa">Perse ✗</option>
       </select>
-      <button onclick="openTrattModal(null)" style="width:36px;height:36px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+      <select id="tr-collab" onchange="renderTratt()" style="flex:1;min-width:100px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti i collab.</option>
+      </select>
+      <select id="tr-periodo" onchange="renderTratt()" style="flex:1;min-width:90px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti i periodi</option>
+        <option value="7">Ultimi 7gg</option>
+        <option value="30">Ultimi 30gg</option>
+        <option value="90">Ultimi 90gg</option>
+        <option value="365">Quest'anno</option>
+      </select>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:4px 12px 8px;">
-      <div style="background:var(--surf2);border-radius:var(--rs);padding:10px;text-align:center;"><div style="font-size:18px;font-weight:700;" id="ktr-tot">0</div><div style="font-size:10px;color:var(--txt3);">Totale</div></div>
-      <div style="background:var(--surf2);border-radius:var(--rs);padding:10px;text-align:center;"><div style="font-size:16px;font-weight:700;color:#E8500A;" id="ktr-val">€0</div><div style="font-size:10px;color:var(--txt3);">Pipeline</div></div>
-      <div style="background:var(--surf2);border-radius:var(--rs);padding:10px;text-align:center;"><div style="font-size:18px;font-weight:700;color:var(--grn);" id="ktr-ch">0</div><div style="font-size:10px;color:var(--txt3);">Chiuse</div></div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 12px 8px;">
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;" id="ktr-tot">0</div><div style="font-size:9px;color:var(--txt3);">Totale</div></div>
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#E8500A;" id="ktr-val">€0</div><div style="font-size:9px;color:var(--txt3);">Pipeline</div></div>
+      <div style="background:var(--grn-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--grn);" id="ktr-ch">0</div><div style="font-size:9px;color:var(--grn-txt);">Chiuse</div></div>
+      <div style="background:var(--red-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--red);" id="ktr-ps">0</div><div style="font-size:9px;color:var(--red-txt);">Perse</div></div>
     </div>
     <div class="card"><div id="tr-list"></div></div>
     <div style="height:16px;"></div>
@@ -1241,28 +1254,62 @@ function buildAnomalie() {
   document.getElementById('a-empty').style.display = APP.anomalie.length ? 'none' : 'block';
   document.getElementById('a-content').style.display = APP.anomalie.length ? 'block' : 'none';
 
-  document.getElementById('a-alerts').innerHTML = APP.anomalie.map(a=>`
-    <div class="alert ${a.tipo==='crit'?'crit':a.tipo==='warn'?'warn':a.tipo==='ok'?'ok':'info'}">
+  document.getElementById('a-alerts').innerHTML = APP.anomalie.map((a,i)=>`
+    <div class="alert ${a.tipo==='crit'?'crit':a.tipo==='warn'?'warn':a.tipo==='ok'?'ok':'info'}"
+      style="cursor:${a.sospesi?.length?'pointer':'default'};"
+      onclick="${a.sospesi?.length?`scrollToAnomSosp(${i})`:''}">
       <i class="ti ${a.icon}"></i>
-      <div><div class="at">${a.titolo}</div><div class="ad">${a.desc}</div></div>
+      <div style="flex:1;">
+        <div class="at">${a.titolo}</div>
+        <div class="ad">${a.desc}</div>
+        ${a.sospesi?.length?`<div style="font-size:11px;margin-top:4px;opacity:.7;">👆 Tocca per vedere i dettagli</div>`:''}
+      </div>
+      ${a.sospesi?.length?`<i class="ti ti-chevron-down" style="font-size:16px;opacity:.5;flex-shrink:0;margin-top:2px;"></i>`:''}
     </div>`).join('');
 
   const anomSosp = APP.anomalie.flatMap(a=>(a.sospesi||[]).map(s=>({...s,ta:a.tipo})));
   document.getElementById('a-list').innerHTML = anomSosp.length
-    ? anomSosp.map(s=>rowSosp(s,s.ta==='crit'?'red':s.ta==='warn'?'amb':'blu')).join('')
+    ? anomSosp.map((s,i)=>`<div id="anom-row-${i}">${rowSosp(s,s.ta==='crit'?'red':s.ta==='warn'?'amb':'blu')}</div>`).join('')
     : '<div class="empty" style="padding:20px;"><p>Nessun dettaglio</p></div>';
+}
+
+function scrollToAnomSosp(alertIdx) {
+  // Conta quante righe ci sono prima di questo alert
+  let offset = 0;
+  for (let i = 0; i < alertIdx; i++) {
+    offset += (APP.anomalie[i].sospesi||[]).length;
+  }
+  const el = document.getElementById('anom-row-'+offset);
+  if (el) {
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    el.style.transition = 'background .3s';
+    el.style.background = 'rgba(232,80,10,.15)';
+    setTimeout(() => { el.style.background = ''; }, 1500);
+  }
 }
 
 // ─── SOSPESI ──────────────────────────────────────────────────────────────────
 let filtComp = '';
+function getProdNome(codice) {
+  // Cerca nel team se c'è un collaboratore che corrisponde al codice produttore
+  const match = TEAM.find(c => {
+    const nome = (c.nome+' '+c.cogn).toLowerCase();
+    const cod  = (codice||'').toLowerCase();
+    return nome === cod || c.rui?.toLowerCase() === cod;
+  });
+  return match ? match.nome+' '+match.cogn : (codice||'—');
+}
+
 function buildSospesi() {
   const sosp = APP.sospesi.filter(s=>s.importo>=0);
   if (!sosp.length) return;
-  // Popola select produttori
+  loadTeam();
+  // Popola select produttori con nome leggibile
   const prods = [...new Set(sosp.map(s=>s.produttore).filter(Boolean))].sort();
   const sel = document.getElementById('s-collab');
   const cur = sel.value;
-  sel.innerHTML = '<option value="">Tutti i produttori</option>' + prods.map(p=>`<option value="${p}" ${cur===p?'selected':''}>${p}</option>`).join('');
+  sel.innerHTML = '<option value="">Tutti i produttori</option>' +
+    prods.map(p=>`<option value="${p}" ${cur===p?'selected':''}>${getProdNome(p)}</option>`).join('');
   // Chips compagnie
   const comps = [...new Set(sosp.map(s=>s.compagnia))].sort();
   document.getElementById('s-chips').innerHTML =
@@ -1314,12 +1361,13 @@ function renderSospesi() {
 function rowSosp(s, c) {
   const ico = {red:'ti-alert-circle',amb:'ti-clock-exclamation',blu:'ti-file-text',grn:'ti-circle-check'};
   const bc  = {red:'bred',amb:'bamb',blu:'bblu',grn:'bgrn'};
+  const prodNome = getProdNome(s.produttore);
   return `<div class="row">
     <div class="rico ${c}"><i class="ti ${ico[c]||'ti-file'}"></i></div>
     <div class="rmain">
       <div class="rname">${s.nominativo||s.polizza||'—'}</div>
       <div class="rsub">${s.compagnia||'—'} · ${s.polizza||'—'}${s.targa?' · '+s.targa:''}</div>
-      ${s.produttore?`<div class="rsub">${s.produttore}</div>`:''}
+      ${prodNome&&prodNome!=='—'?`<div class="rsub" style="color:var(--txt2);">👤 ${prodNome}</div>`:''}
       ${s.nota?`<div class="rsub" style="color:var(--red)">${s.nota}</div>`:''}
     </div>
     <div class="rright">
@@ -1587,9 +1635,47 @@ function loadDoc(inp, tipo) {
   r.readAsDataURL(file);
 }
 
-function setDocLabel(tipo, nome) {
+function setDocLabel(tipo, nome, hasData) {
   const el = document.getElementById('docn-'+tipo);
-  if (el) el.innerHTML = `<span style="color:var(--grn);">✓ ${nome}</span>`;
+  if (!el) return;
+  el.innerHTML = `<span style="color:var(--grn);font-size:11px;">✓ ${nome}</span>
+    <button onclick="prevDoc('${tipo}')" style="margin-left:4px;font-size:10px;padding:2px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">👁 Vedi</button>
+    <button onclick="delDoc('${tipo}')" style="margin-left:2px;font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">🗑</button>`;
+}
+
+function prevDoc(tipo) {
+  // Cerca prima nei temporanei, poi nel collaboratore salvato
+  let doc = TEAM_DOCS[tipo];
+  if (!doc && TEAM_ID) {
+    loadTeam();
+    const c = TEAM.find(x=>x.id===TEAM_ID);
+    doc = c?.docs?.[tipo];
+  }
+  if (!doc?.data) { alert('Documento non disponibile. Ricaricalo.'); return; }
+  if (doc.tipo?.startsWith('image/')) {
+    const w = window.open('','_blank','width=700,height=800');
+    w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${doc.data}" style="max-width:100%;max-height:100vh;object-fit:contain;"></body>`);
+  } else {
+    // PDF o altro — scarica/apri
+    const a = document.createElement('a');
+    a.href = doc.data; a.download = doc.nome; a.target = '_blank';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+function delDoc(tipo) {
+  const nomi = {id:"documento d'identità",ts:'tessera sanitaria',vis:'visura camerale',priv:'privacy agenzia',altri:'altri documenti'};
+  if (!confirm(`Eliminare ${nomi[tipo]||tipo}? L'operazione non è reversibile.`)) return;
+  delete TEAM_DOCS[tipo];
+  if (TEAM_ID) {
+    loadTeam();
+    const c = TEAM.find(x=>x.id===TEAM_ID);
+    if (c?.docs) { delete c.docs[tipo]; saveTeam(); }
+  }
+  const el = document.getElementById('docn-'+tipo);
+  if (el) el.innerHTML = '';
+  const inp = document.getElementById('doc-'+tipo);
+  if (inp) inp.value = '';
 }
 
 function renderCollabDocs() {
@@ -1630,15 +1716,29 @@ function selPTab(t) {
 }
 
 function renderTratt() {
-  loadPipe();
-  const q  = (document.getElementById('tr-search')?.value||'').toLowerCase();
-  const ft = document.getElementById('tr-filt')?.value||'';
-  let lista = PIPE.filter(t=>!ft||t.status===ft);
+  loadPipe(); loadTeam();
+  const selC = document.getElementById('tr-collab');
+  if (selC) {
+    const curC = selC.value;
+    selC.innerHTML = '<option value="">Tutti i collab.</option>'+TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+    if (curC) selC.value = curC;
+  }
+  const q       = (document.getElementById('tr-search')?.value||'').toLowerCase();
+  const ft      = document.getElementById('tr-filt')?.value||'';
+  const fc      = document.getElementById('tr-collab')?.value||'';
+  const periodo = parseInt(document.getElementById('tr-periodo')?.value||'0');
+  let lista = PIPE.filter(t=>!ft||t.status===ft).filter(t=>!fc||t.collab===fc);
   if (q) lista = lista.filter(t=>(t.cliente+t.prodotto).toLowerCase().includes(q));
+  if (periodo) {
+    const limite = new Date(); limite.setDate(limite.getDate()-periodo);
+    const limStr = limite.toISOString().split('T')[0];
+    lista = lista.filter(t=>!t.data_ins||t.data_ins>=limStr);
+  }
   lista.sort((a,b)=>({urgente:0,alta:1,normale:2}[a.prior]||2)-({urgente:0,alta:1,normale:2}[b.prior]||2));
   document.getElementById('ktr-tot').textContent = PIPE.length;
   document.getElementById('ktr-val').textContent = '€'+fmt(PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0));
   document.getElementById('ktr-ch').textContent  = PIPE.filter(t=>t.status==='chiusa').length;
+  const kps = document.getElementById('ktr-ps'); if(kps) kps.textContent = PIPE.filter(t=>t.status==='persa').length;
   const oggi = new Date().toISOString().split('T')[0];
   document.getElementById('tr-list').innerHTML = lista.length ? lista.map(t=>{
     const sc = SC[t.status]||SC.prospect;
@@ -1651,8 +1751,10 @@ function renderTratt() {
             <span class="tstatus" style="background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
             ${t.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':t.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
           </div>
-          <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · '+t.collab:''}</div>
-          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'📅'} Recalling: ${t.recall}</div>`:''}
+          <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · 👤 '+t.collab:''}</div>
+          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'📅'} Recalling: ${t.recall}
+            <button onclick="openGCal('Recalling: ${encodeForAttr(t.cliente)} - ${encodeForAttr(t.prodotto)}','${t.recall}')" style="margin-left:5px;font-size:10px;padding:1px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅 Cal.</button>
+          </div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-size:14px;font-weight:700;color:#E8500A;">€${fmt(parseNum(t.importo)||0)}</div>
@@ -1664,7 +1766,19 @@ function renderTratt() {
         </div>
       </div>
     </div>`;
-  }).join('') : '<div class="empty" style="padding:24px;"><i class="ti ti-timeline" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessuna trattativa. Premi + per aggiungerne una.</p></div>';
+  }).join('') : '<div class="empty" style="padding:24px;"><i class="ti ti-timeline" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessuna trattativa.</p></div>';
+}
+
+function encodeForAttr(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+// Apre Google Calendar o link universale senza scaricare file
+function openGCal(titolo, data, ora, note) {
+  const ora_ = ora || '09:00';
+  const dt = data.replace(/-/g,'')+'T'+(ora_.replace(':',''))+'00';
+  const dtE= data.replace(/-/g,'')+'T'+(String(parseInt(ora_.split(':')[0])+1).padStart(2,'0')+ora_.split(':')[1])+'00';
+  // Google Calendar link (funziona su tutti i dispositivi)
+  const gcUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${dt}/${dtE}&details=${encodeURIComponent(note||'')}`;
+  window.open(gcUrl, '_blank');
 }
 
 function openTrattModal(id) {
@@ -1702,10 +1816,10 @@ function delTratt(id) {
 
 function exportRecalling() {
   const data = document.getElementById('mt-recall')?.value;
-  const cli  = document.getElementById('mt-cliente')?.value;
-  const prod = document.getElementById('mt-prodotto')?.value;
+  const cli  = document.getElementById('mt-cliente')?.value||'';
+  const prod = document.getElementById('mt-prodotto')?.value||'';
   if (!data) { alert('Imposta prima la data del recalling.'); return; }
-  exportICS(`Recalling: ${cli} — ${prod}`, data, '09:00', `Trattativa: ${prod}`);
+  openGCal(`Recalling: ${cli} — ${prod}`, data, '09:00', `Trattativa: ${prod}`);
 }
 
 // ─── AGENDA ───────────────────────────────────────────────────────────────────
@@ -1719,7 +1833,7 @@ function renderAgenda() {
       <div class="rico ${a.data===oggi?'red':'blu'}"><i class="ti ti-calendar-event"></i></div>
       <div class="rmain"><div class="rname">${a.titolo}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${a.note}</div>`:''}</div>
       <div class="rright" style="display:flex;flex-direction:column;gap:4px;">
-        <button onclick="exportICS('${a.titolo.replace(/'/g,'').replace(/"/g,'')}','${a.data}','${a.ora||'09:00'}','${(a.note||'').replace(/'/g,'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅</button>
+        <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅 Cal.</button>
         <button onclick="delAgenda('${a.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('') : '';
@@ -1739,7 +1853,7 @@ function saveAgenda() {
   const a = { id:Date.now().toString(), titolo:g('ag-titolo'), data:g('ag-data'), ora:g('ag-ora'), note:g('ag-note') };
   if (!a.titolo||!a.data) { alert('Inserisci titolo e data.'); return; }
   loadPipe(); AGENDA.push(a); saveAg(); closeModal('modal-agenda'); renderAgenda();
-  if (confirm('Aggiungere al calendario del dispositivo?')) exportICS(a.titolo,a.data,a.ora,a.note);
+  if (confirm('Aggiungere al calendario Google?')) openGCal(a.titolo, a.data, a.ora, a.note);
 }
 
 function delAgenda(id) {

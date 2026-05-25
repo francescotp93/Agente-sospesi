@@ -284,6 +284,9 @@ input[type=file]{display:none;}
     </div>
     <div style="display:flex;align-items:center;gap:10px;">
       <div class="status-pill" id="status-pill">In attesa</div>
+      <button onclick="apriImpostazioni()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;padding:4px;display:flex;align-items:center;" aria-label="Impostazioni">
+        <i class="ti ti-settings" style="font-size:20px;"></i>
+      </button>
       <div class="user-avatar" id="user-avatar" onclick="toggleUserMenu()">?</div>
     </div>
   </div>
@@ -296,6 +299,18 @@ input[type=file]{display:none;}
   <button class="user-menu-btn" onclick="logout()">
     <i class="ti ti-logout"></i> Esci dall'account
   </button>
+</div>
+
+<!-- SETTINGS PANEL -->
+<div id="settings-panel" style="display:none;position:fixed;inset:0;z-index:300;align-items:flex-end;">
+  <div onclick="chiudiImpostazioni()" style="position:absolute;inset:0;background:rgba(0,0,0,.5);"></div>
+  <div style="position:relative;background:var(--surface);border-radius:var(--r) var(--r) 0 0;width:100%;max-height:80vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,16px);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:0.5px solid var(--border);">
+      <div style="font-size:15px;font-weight:700;">⚙️ Impostazioni Dashboard</div>
+      <button onclick="chiudiImpostazioni()" style="background:none;border:none;cursor:pointer;color:var(--text2);font-size:20px;">✕</button>
+    </div>
+    <div id="settings-content"></div>
+  </div>
 </div>
 
 <!-- NAV -->
@@ -315,6 +330,9 @@ input[type=file]{display:none;}
   </button>
   <button class="nav-btn" onclick="goTab('storico')" id="btn-storico">
     <i class="ti ti-history"></i><span>Storico</span>
+  </button>
+  <button class="nav-btn" onclick="goTab('conto')" id="btn-conto">
+    <i class="ti ti-building-bank"></i><span>Conto</span>
   </button>
   <button class="nav-btn" onclick="goTab('chat')" id="btn-chat">
     <i class="ti ti-message-circle"></i><span>AI</span>
@@ -461,6 +479,52 @@ input[type=file]{display:none;}
     <div style="height:16px"></div>
   </div>
 
+  <!-- ===== CONTO CORRENTE ===== -->
+  <div class="panel" id="panel-conto">
+    <div class="section-lbl">Quadratura conto corrente</div>
+    <div class="upload-area" style="margin:12px">
+      <button class="upload-btn" onclick="document.getElementById('f-conto').click()">
+        <i class="ti ti-file-spreadsheet" style="font-size:22px;color:#E8500A;flex-shrink:0;"></i>
+        <div>
+          <div class="upload-btn-lbl">Estratto conto (Excel)</div>
+          <div class="upload-btn-sub">Colonne: Data, Descrizione, Dare, Avere, Saldo</div>
+          <div class="upload-btn-ok" id="ok-conto" style="display:none"></div>
+        </div>
+      </button>
+      <input type="file" id="f-conto" accept=".xlsx,.xls,.csv" onchange="loadFileConto(this)">
+    </div>
+
+    <div id="conto-empty" class="empty" style="margin-top:20px">
+      <i class="ti ti-building-bank"></i>
+      <p>Carica l'estratto conto<br>per iniziare la quadratura</p>
+    </div>
+
+    <div id="conto-content" style="display:none">
+      <div class="metrics" id="conto-metrics" style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+
+      <div style="padding:10px 12px 4px;display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="search" id="search-conto" placeholder="Cerca movimento..." 
+          style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:22px;font-size:13px;color:var(--text);font-family:inherit;"
+          oninput="cercaConto()">
+        <select id="filtro-conto" onchange="filtraConto()"
+          style="padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:22px;font-size:13px;color:var(--text);font-family:inherit;">
+          <option value="tutti">Tutti</option>
+          <option value="da_abbinare">Da abbinare</option>
+          <option value="abbinati">Abbinati ✓</option>
+        </select>
+      </div>
+
+      <div class="card" style="margin:8px 12px 0;">
+        <div style="padding:10px 14px;font-size:11px;color:var(--text2);border-bottom:0.5px solid var(--border);">
+          <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-1px;margin-right:4px;"></i>
+          Spunta i movimenti abbinati a polizze o incassi registrati
+        </div>
+        <div id="lista-conto"></div>
+      </div>
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
   <!-- ===== CHAT ===== -->
   <div class="panel" id="panel-chat">
     <div class="chip-row">
@@ -573,7 +637,6 @@ function onLogin(user) {
   currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-container').style.display = 'flex';
-  // Aggiorna avatar
   const nome = user.user_metadata?.full_name || user.email || '?';
   const iniziale = nome.charAt(0).toUpperCase();
   const avatar = document.getElementById('user-avatar');
@@ -584,8 +647,11 @@ function onLogin(user) {
   }
   document.getElementById('menu-name').textContent = user.user_metadata?.full_name || user.email;
   document.getElementById('menu-email').textContent = user.email;
-  // Carica automaticamente l'ultima sessione salvata
+  // Ripristina abbinamenti conto
+  try { CC.abbinamenti = JSON.parse(localStorage.getItem('iam_abbinamenti')||'{}'); } catch(e){}
+  // Carica ultima sessione e va in dashboard
   caricaUltimaSessione();
+  goTab('dashboard');
 }
 
 async function caricaUltimaSessione() {
@@ -847,9 +913,12 @@ function fmt(n) {
 function goTab(t) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('btn-'+t).classList.add('active');
-  document.getElementById('panel-'+t).classList.add('active');
+  const btn = document.getElementById('btn-'+t);
+  const panel = document.getElementById('panel-'+t);
+  if (btn) btn.classList.add('active');
+  if (panel) panel.classList.add('active');
   if (t === 'storico') buildStorico();
+  if (t === 'conto' && CC.movimenti.length) buildConto();
 }
 
 // ─── STORICO ──────────────────────────────────────────────────────────────────
@@ -915,26 +984,53 @@ function loadFile(inp, tipo) {
   }
 }
 
+// ─── PARSE NUMERO SICURO ─────────────────────────────────────────────────────
+function parseNum(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') {
+    // Controlla se è un numero Excel anomalo (es. 339000 invece di 339)
+    // I valori Excel a volte hanno moltiplicatori x1000 per via del formato celle
+    return val;
+  }
+  const s = String(val).trim();
+  // Gestisce formati italiani: 1.234,56 → 1234.56
+  const cleaned = s.replace(/\./g,'').replace(',','.');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
 // ─── PARSE SOSPESI (colonne reali dal tuo file) ───────────────────────────────
 function parseSospesi(data) {
-  return data.map(r => ({
-    nominativo: r['Nominativo'] || r['nominativo'] || '',
-    polizza:    r['Polizza']    || r['polizza']    || '',
-    targa:      r['Targa']      || r['targa']      || '',
-    importo:    parseFloat(r['Importo Sospeso'] || r['importo'] || 0),
-    data:       r['Data']       || r['data']       || '',
-    scadenza:   r['Scadenza']   || r['scadenza']   || '',
-    compagnia:  r['Compagnia']  || r['compagnia']  || '',
-    codComp:    r['cod.Compagnia'] || '',
-    produttore: r['Autore Pagamento'] || r['Produttore Sospeso'] || '',
-    modPag:     r['Mod.Pagamento']  || r['Mod.Pagamento Compagnia'] || '',
-    pagato:     (r['pagato'] || r['Pagato'] || 'No').toString().toLowerCase() === 'si',
-    pagatoIl:   r['Pagato il'] || '',
-    tipoSospeso:r['Tipo Sospeso'] || '',
-    descrizione:r['Descrizione'] || '',
-    prog:       r['Prog_movimento'] || r['prog'] || '',
-    ggApertura: daysSince(r['Data'] || r['data']),
-  }));
+  return data.map(r => {
+    // Gestisce importo: se Excel lo salva come numero puro, lo legge direttamente
+    // Se è stringa con virgola (formato italiano), la converte
+    let importoRaw = r['Importo Sospeso'] ?? r['importo'] ?? 0;
+    let importo = parseNum(importoRaw);
+
+    // Sanity check: se l'importo sembra moltiplicato per 1000 (es. 339000 invece di 339)
+    // questo può succedere quando Excel ha celle formattate come "migliaia"
+    // Non possiamo correggerlo automaticamente senza sapere il formato originale
+    // ma lo segnaliamo nei dati
+
+    return {
+      nominativo: r['Nominativo'] || r['nominativo'] || '',
+      polizza:    r['Polizza']    || r['polizza']    || '',
+      targa:      r['Targa']      || r['targa']      || '',
+      importo,
+      data:       r['Data']       || r['data']       || '',
+      scadenza:   r['Scadenza']   || r['scadenza']   || '',
+      compagnia:  r['Compagnia']  || r['compagnia']  || '',
+      codComp:    r['cod.Compagnia'] || '',
+      produttore: r['Autore Pagamento'] || r['Produttore Sospeso'] || '',
+      modPag:     r['Mod.Pagamento']  || r['Mod.Pagamento Compagnia'] || '',
+      pagato:     (r['pagato'] || r['Pagato'] || 'No').toString().toLowerCase() === 'si',
+      pagatoIl:   r['Pagato il'] || '',
+      tipoSospeso:r['Tipo Sospeso'] || '',
+      descrizione:r['Descrizione'] || '',
+      prog:       r['Prog_movimento'] || r['prog'] || '',
+      ggApertura: daysSince(r['Data'] || r['data']),
+    };
+  });
 }
 
 function parseIncassiXls(data) {
@@ -1026,14 +1122,26 @@ function buildDashboard() {
   const contanti = parseFloat(document.getElementById('inp-contanti').value) || 0;
   const vers = parseFloat(document.getElementById('inp-versamento').value) || 0;
   const spese = parseFloat(document.getElementById('inp-spese').value) || 0;
+  const valInc = S.incassi.reduce((a,i) => a + i.importo, 0);
 
-  // metrics
-  document.getElementById('metrics-grid').innerHTML = `
-    <div class="metric"><div class="metric-lbl">Sospesi aperti</div><div class="metric-val">${sosp.length}</div><div class="metric-sub">polizze in attesa</div></div>
-    <div class="metric"><div class="metric-lbl">Valore totale</div><div class="metric-val">€${fmt(valTot)}</div><div class="metric-sub">importo sospeso</div></div>
-    <div class="metric"><div class="metric-lbl">Oltre 60 giorni</div><div class="metric-val" style="color:var(--red)">${scad60}</div><div class="metric-sub">priorità urgente</div></div>
-    <div class="metric"><div class="metric-lbl">Cassa contanti</div><div class="metric-val">€${fmt(contanti)}</div><div class="metric-sub">al ${document.getElementById('inp-data').value||'—'}</div></div>
-  `;
+  // Saldo netto cassa = contanti - versamenti - spese
+  const saldoNetto = contanti - vers - spese;
+  const saldoColor = saldoNetto >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Widget configurazione — legge preferenze salvate
+  const W = getWidgetPrefs();
+
+  let metricsHTML = '';
+  if (W.sospesi_aperti) metricsHTML += `<div class="metric"><div class="metric-lbl">Sospesi aperti</div><div class="metric-val">${sosp.length}</div><div class="metric-sub">polizze in attesa</div></div>`;
+  if (W.valore_sospesi) metricsHTML += `<div class="metric"><div class="metric-lbl">Valore sospesi</div><div class="metric-val">€${fmt(valTot)}</div><div class="metric-sub">importo totale</div></div>`;
+  if (W.oltre_60gg)     metricsHTML += `<div class="metric"><div class="metric-lbl">Oltre 60 giorni</div><div class="metric-val" style="color:var(--red)">${scad60}</div><div class="metric-sub">priorità urgente</div></div>`;
+  if (W.cassa_contanti) metricsHTML += `<div class="metric"><div class="metric-lbl">Contanti cassa</div><div class="metric-val">€${fmt(contanti)}</div><div class="metric-sub">lordo movimenti</div></div>`;
+  if (W.versamenti)     metricsHTML += `<div class="metric"><div class="metric-lbl">Versato compagnie</div><div class="metric-val" style="color:var(--red)">-€${fmt(vers)}</div><div class="metric-sub">uscite giornata</div></div>`;
+  if (W.saldo_netto)    metricsHTML += `<div class="metric"><div class="metric-lbl">Saldo netto cassa</div><div class="metric-val" style="color:${saldoColor}">€${fmt(saldoNetto)}</div><div class="metric-sub">contanti - uscite</div></div>`;
+  if (W.incassato)      metricsHTML += `<div class="metric"><div class="metric-lbl">Incassato oggi</div><div class="metric-val" style="color:var(--green)">€${fmt(valInc)}</div><div class="metric-sub">${S.incassi.length} polizze</div></div>`;
+  if (W.spese)          metricsHTML += `<div class="metric"><div class="metric-lbl">Spese agenzia</div><div class="metric-val" style="color:var(--amber)">€${fmt(spese)}</div><div class="metric-sub">uscite varie</div></div>`;
+
+  document.getElementById('metrics-grid').innerHTML = metricsHTML || '<div class="metric full"><div class="metric-lbl">Nessun widget attivo</div><div class="metric-sub">Usa ⚙️ per configurare</div></div>';
 
   // compagnie
   const comp = {};
@@ -1079,7 +1187,164 @@ function buildDashboard() {
   document.getElementById('dash-content').style.display = 'block';
 }
 
-// ─── ANOMALIE ─────────────────────────────────────────────────────────────────
+// ─── WIDGET PREFERENCES ───────────────────────────────────────────────────────
+const WIDGET_DEFAULT = {
+  sospesi_aperti: true, valore_sospesi: true, oltre_60gg: true,
+  cassa_contanti: true, versamenti: true, saldo_netto: true,
+  incassato: false, spese: false
+};
+const WIDGET_LABELS = {
+  sospesi_aperti: 'Sospesi aperti', valore_sospesi: 'Valore sospesi',
+  oltre_60gg: 'Oltre 60 giorni', cassa_contanti: 'Contanti cassa',
+  versamenti: 'Versato compagnie', saldo_netto: 'Saldo netto cassa',
+  incassato: 'Incassato oggi', spese: 'Spese agenzia'
+};
+
+function getWidgetPrefs() {
+  try { return {...WIDGET_DEFAULT, ...JSON.parse(localStorage.getItem('iam_widgets')||'{}')}; } catch(e) { return {...WIDGET_DEFAULT}; }
+}
+function saveWidgetPrefs(prefs) {
+  localStorage.setItem('iam_widgets', JSON.stringify(prefs));
+}
+
+function apriImpostazioni() {
+  const prefs = getWidgetPrefs();
+  const html = Object.entries(WIDGET_LABELS).map(([k,lbl]) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:0.5px solid var(--border);">
+      <span style="font-size:13px">${lbl}</span>
+      <label style="position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;">
+        <input type="checkbox" id="w_${k}" ${prefs[k]?'checked':''} style="opacity:0;width:0;height:0;" onchange="toggleWidget('${k}',this.checked)">
+        <span id="ws_${k}" style="position:absolute;inset:0;background:${prefs[k]?'#E8500A':'var(--border2)'};border-radius:12px;transition:background .2s;">
+          <span style="position:absolute;left:${prefs[k]?'22':'2'}px;top:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s;display:block;"></span>
+        </span>
+      </label>
+    </div>`).join('');
+
+  document.getElementById('settings-content').innerHTML = `
+    <div style="padding:16px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">Widget Dashboard</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Scegli quali metriche vedere</div>
+      ${html}
+    </div>`;
+  document.getElementById('settings-panel').style.display = 'flex';
+}
+
+function toggleWidget(key, val) {
+  const prefs = getWidgetPrefs();
+  prefs[key] = val;
+  saveWidgetPrefs(prefs);
+  const span = document.getElementById('ws_'+key);
+  if(span){
+    span.style.background = val ? '#E8500A' : 'var(--border2)';
+    span.children[0].style.left = val ? '22px' : '2px';
+  }
+  if (S.loaded) buildDashboard();
+}
+
+function chiudiImpostazioni() {
+  document.getElementById('settings-panel').style.display = 'none';
+}
+
+// ─── CONTO CORRENTE ────────────────────────────────────────────────────────────
+const CC = { movimenti: [], abbinamenti: {} };
+
+function loadFileConto(inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(ws, {defval:''});
+    CC.movimenti = parseMovimentiConto(data);
+    document.getElementById('ok-conto').textContent = '✓ ' + file.name + ' (' + CC.movimenti.length + ' movimenti)';
+    document.getElementById('ok-conto').style.display = 'block';
+    buildConto();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseMovimentiConto(data) {
+  return data.map((r, i) => ({
+    id: i,
+    data:       r['Data'] || r['data'] || r['DATA'] || '',
+    descrizione:r['Descrizione'] || r['DESCRIZIONE'] || r['Causale'] || r['causale'] || '',
+    dare:       parseNum(r['Dare'] || r['dare'] || r['Uscita'] || r['DARE'] || 0),
+    avere:      parseNum(r['Avere'] || r['avere'] || r['Entrata'] || r['AVERE'] || 0),
+    saldo:      parseNum(r['Saldo'] || r['saldo'] || r['SALDO'] || 0),
+    abbinato:   false,
+    nota:       ''
+  }));
+}
+
+function buildConto() {
+  const movimenti = CC.movimenti;
+  if (!movimenti.length) return;
+
+  const totEntrate = movimenti.reduce((a,m) => a + m.avere, 0);
+  const totUscite  = movimenti.reduce((a,m) => a + m.dare, 0);
+  const abbinati   = movimenti.filter(m => CC.abbinamenti[m.id]);
+  const daAbbinare = movimenti.filter(m => !CC.abbinamenti[m.id]);
+
+  document.getElementById('conto-empty').style.display = 'none';
+  document.getElementById('conto-content').style.display = 'block';
+
+  document.getElementById('conto-metrics').innerHTML = `
+    <div class="metric"><div class="metric-lbl">Movimenti totali</div><div class="metric-val">${movimenti.length}</div></div>
+    <div class="metric"><div class="metric-lbl">Entrate</div><div class="metric-val" style="color:var(--green)">€${fmt(totEntrate)}</div></div>
+    <div class="metric"><div class="metric-lbl">Uscite</div><div class="metric-val" style="color:var(--red)">€${fmt(totUscite)}</div></div>
+    <div class="metric"><div class="metric-lbl">Abbinati</div><div class="metric-val" style="color:var(--accent2)">${abbinati.length}/${movimenti.length}</div></div>
+  `;
+
+  const ricerca = (document.getElementById('search-conto')?.value||'').toLowerCase();
+  const filtro  = document.getElementById('filtro-conto')?.value || 'tutti';
+
+  let lista = movimenti;
+  if (filtro === 'abbinati')   lista = movimenti.filter(m => CC.abbinamenti[m.id]);
+  if (filtro === 'da_abbinare') lista = movimenti.filter(m => !CC.abbinamenti[m.id]);
+  if (ricerca) lista = lista.filter(m =>
+    m.descrizione.toLowerCase().includes(ricerca) ||
+    String(m.avere||m.dare).includes(ricerca)
+  );
+
+  document.getElementById('lista-conto').innerHTML = lista.length ? lista.map(m => {
+    const abb = CC.abbinamenti[m.id];
+    return `<div class="row-item" style="${abb?'background:var(--green-bg)':''}">
+      <div style="padding:2px 0">
+        <input type="checkbox" ${abb?'checked':''} 
+          onchange="toggleAbbinamento(${m.id}, this.checked, this)"
+          style="width:18px;height:18px;accent-color:#E8500A;cursor:pointer;flex-shrink:0;">
+      </div>
+      <div class="row-main">
+        <div class="row-name" style="font-size:12px">${m.descrizione||'—'}</div>
+        <div class="row-sub">${m.data}${abb?' · ✓ '+abb:''}</div>
+      </div>
+      <div class="row-right">
+        ${m.avere ? `<div class="row-amount" style="color:var(--green)">+€${fmt(m.avere)}</div>` : ''}
+        ${m.dare  ? `<div class="row-amount" style="color:var(--red)">-€${fmt(m.dare)}</div>`   : ''}
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:20px"><p>Nessun movimento trovato</p></div>';
+
+  // Salva abbinamenti
+  try { localStorage.setItem('iam_abbinamenti', JSON.stringify(CC.abbinamenti)); } catch(e){}
+}
+
+function toggleAbbinamento(id, checked, el) {
+  if (checked) {
+    // Mostra popup per nota abbinamento
+    const nota = prompt('Abbina a (es. polizza, cliente, causale):') || 'Abbinato';
+    CC.abbinamenti[id] = nota;
+  } else {
+    delete CC.abbinamenti[id];
+  }
+  buildConto();
+}
+
+function filtraConto() { buildConto(); }
+function cercaConto()  { buildConto(); }
+
+
 function buildAnomalie() {
   S.anomalie = [];
   const sosp = S.sospesi.filter(s => !s.pagato);

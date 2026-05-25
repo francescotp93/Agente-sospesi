@@ -75,11 +75,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* METRICS */
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;}
-.metric{background:var(--surface2);border-radius:var(--rs);padding:12px 14px;}
+.metric{background:var(--surface2);border-radius:var(--rs);padding:12px 14px;cursor:pointer;transition:transform .18s,box-shadow .18s;animation:metricIn .4s ease both;}
+.metric:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1);}
+.metric:active{transform:scale(.97);}
 .metric-lbl{font-size:11px;color:var(--text2);margin-bottom:5px;}
 .metric-val{font-size:22px;font-weight:700;letter-spacing:-.5px;line-height:1;}
 .metric-sub{font-size:11px;color:var(--text3);margin-top:4px;}
 .metric.full{grid-column:1/-1;}
+.metric:nth-child(1){animation-delay:.05s}
+.metric:nth-child(2){animation-delay:.1s}
+.metric:nth-child(3){animation-delay:.15s}
+.metric:nth-child(4){animation-delay:.2s}
+.metric:nth-child(5){animation-delay:.25s}
+.metric:nth-child(6){animation-delay:.3s}
+@keyframes metricIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
 /* ALERTS */
 .alert{display:flex;gap:10px;padding:12px 14px;border-left:3px solid transparent;}
@@ -186,6 +195,47 @@ input[type=file]{display:none;}
 #panel-chat{display:none;flex-direction:column;}
 #panel-chat.active{display:flex;}
 .chat-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* COLLABORATORI */
+.collab-card{background:var(--surface);border-radius:var(--r);margin:0 12px 10px;overflow:hidden;box-shadow:var(--shadow);transition:transform .15s;}
+.collab-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;}
+.collab-avatar{width:42px;height:42px;border-radius:50%;background:#E8500A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
+.collab-info{flex:1;min-width:0;}
+.collab-nome{font-size:14px;font-weight:600;}
+.collab-rami{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.ramo-chip{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;}
+.ramo-auto{background:var(--blue-bg);color:var(--blue-text);}
+.ramo-vita{background:var(--green-bg);color:var(--green-text);}
+.ramo-re{background:var(--amber-bg);color:var(--amber-text);}
+.ramo-cau{background:var(--red-bg);color:var(--red-text);}
+.collab-perf{font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;}
+.perf-alto{background:var(--green-bg);color:var(--green-text);}
+.perf-medio{background:var(--amber-bg);color:var(--amber-text);}
+.perf-basso{background:var(--red-bg);color:var(--red-text);}
+.collab-body{display:none;border-top:0.5px solid var(--border);padding:0 16px 16px;}
+.collab-body.open{display:block;}
+.form-section{margin-top:14px;}
+.form-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.form-field{display:flex;flex-direction:column;gap:3px;}
+.form-field.full{grid-column:1/-1;}
+.form-field label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;}
+.form-field input,.form-field textarea,.form-field select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rs);padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;width:100%;}
+.form-field textarea{resize:none;min-height:56px;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;}
+.toggle-lbl{font-size:13px;}
+.sw{position:relative;display:inline-block;width:40px;height:22px;cursor:pointer;}
+.sw input{opacity:0;width:0;height:0;}
+.sw-track{position:absolute;inset:0;background:var(--border2);border-radius:11px;transition:background .2s;}
+.sw input:checked + .sw-track{background:#E8500A;}
+.sw-thumb{position:absolute;left:2px;top:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .2s;}
+.sw input:checked ~ .sw-thumb{left:20px;}
+.anno-folder{background:var(--surface2);border-radius:var(--rs);padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.anno-folder-name{font-size:13px;font-weight:600;}
+.perf-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-top:6px;}
+.perf-fill{height:100%;border-radius:3px;background:#E8500A;transition:width .6s;}
+.doc-upload{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border-radius:var(--rs);cursor:pointer;font-size:12px;color:var(--text2);border:1px dashed var(--border2);}
+
 
 /* LOGIN */
 .login-screen{position:fixed;inset:0;background:#1E1E1C;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
@@ -334,6 +384,9 @@ input[type=file]{display:none;}
   <button class="nav-btn" onclick="goTab('conto')" id="btn-conto">
     <i class="ti ti-building-bank"></i><span>Conto</span>
   </button>
+  <button class="nav-btn" onclick="goTab('collaboratori')" id="btn-collaboratori">
+    <i class="ti ti-users"></i><span>Team</span>
+  </button>
   <button class="nav-btn" onclick="goTab('chat')" id="btn-chat">
     <i class="ti ti-message-circle"></i><span>AI</span>
   </button>
@@ -481,17 +534,48 @@ input[type=file]{display:none;}
 
   <!-- ===== CONTO CORRENTE ===== -->
   <div class="panel" id="panel-conto">
-    <div class="section-lbl">Quadratura conto corrente</div>
-    <div class="upload-area" style="margin:12px">
-      <button class="upload-btn" onclick="document.getElementById('f-conto').click()">
-        <i class="ti ti-file-spreadsheet" style="font-size:22px;color:#E8500A;flex-shrink:0;"></i>
-        <div>
-          <div class="upload-btn-lbl">Estratto conto (Excel)</div>
-          <div class="upload-btn-sub">Colonne: Data, Descrizione, Dare, Avere, Saldo</div>
-          <div class="upload-btn-ok" id="ok-conto" style="display:none"></div>
-        </div>
+    <div class="section-lbl">Conti correnti</div>
+
+    <!-- Selector conto -->
+    <div style="display:flex;gap:8px;padding:0 12px 12px;">
+      <button id="btn-conto-hdi" onclick="selConto('hdi')"
+        style="flex:1;padding:10px;border-radius:var(--rs);border:2px solid #E8500A;background:rgba(232,80,10,.08);color:#E8500A;font-size:12px;font-weight:700;cursor:pointer;">
+        Conto HDI
       </button>
-      <input type="file" id="f-conto" accept=".xlsx,.xls,.csv" onchange="loadFileConto(this)">
+      <button id="btn-conto-pluri" onclick="selConto('pluri')"
+        style="flex:1;padding:10px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;">
+        Plurimandato
+      </button>
+    </div>
+
+    <!-- Upload per HDI -->
+    <div id="upload-conto-hdi">
+      <div class="upload-area" style="margin:0 12px 12px;">
+        <button class="upload-btn" onclick="document.getElementById('f-conto-hdi').click()">
+          <i class="ti ti-file-spreadsheet" style="font-size:22px;color:#E8500A;flex-shrink:0;"></i>
+          <div>
+            <div class="upload-btn-lbl">Estratto conto HDI (Excel)</div>
+            <div class="upload-btn-sub">Colonne: Data, Descrizione, Dare, Avere, Saldo</div>
+            <div class="upload-btn-ok" id="ok-conto-hdi" style="display:none"></div>
+          </div>
+        </button>
+        <input type="file" id="f-conto-hdi" accept=".xlsx,.xls,.csv" onchange="loadFileConto(this,'hdi')">
+      </div>
+    </div>
+
+    <!-- Upload per Plurimandato -->
+    <div id="upload-conto-pluri" style="display:none">
+      <div class="upload-area" style="margin:0 12px 12px;">
+        <button class="upload-btn" onclick="document.getElementById('f-conto-pluri').click()">
+          <i class="ti ti-file-spreadsheet" style="font-size:22px;color:#E8500A;flex-shrink:0;"></i>
+          <div>
+            <div class="upload-btn-lbl">Estratto conto Plurimandato (Excel)</div>
+            <div class="upload-btn-sub">Colonne: Data, Descrizione, Dare, Avere, Saldo</div>
+            <div class="upload-btn-ok" id="ok-conto-pluri" style="display:none"></div>
+          </div>
+        </button>
+        <input type="file" id="f-conto-pluri" accept=".xlsx,.xls,.csv" onchange="loadFileConto(this,'pluri')">
+      </div>
     </div>
 
     <div id="conto-empty" class="empty" style="margin-top:20px">
@@ -501,9 +585,8 @@ input[type=file]{display:none;}
 
     <div id="conto-content" style="display:none">
       <div class="metrics" id="conto-metrics" style="padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
-
       <div style="padding:10px 12px 4px;display:flex;gap:8px;flex-wrap:wrap;">
-        <input type="search" id="search-conto" placeholder="Cerca movimento..." 
+        <input type="search" id="search-conto" placeholder="Cerca movimento..."
           style="flex:1;min-width:120px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:22px;font-size:13px;color:var(--text);font-family:inherit;"
           oninput="cercaConto()">
         <select id="filtro-conto" onchange="filtraConto()"
@@ -513,7 +596,6 @@ input[type=file]{display:none;}
           <option value="abbinati">Abbinati ✓</option>
         </select>
       </div>
-
       <div class="card" style="margin:8px 12px 0;">
         <div style="padding:10px 14px;font-size:11px;color:var(--text2);border-bottom:0.5px solid var(--border);">
           <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-1px;margin-right:4px;"></i>
@@ -522,6 +604,135 @@ input[type=file]{display:none;}
         <div id="lista-conto"></div>
       </div>
       <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- ===== COLLABORATORI ===== -->
+  <div class="panel" id="panel-collaboratori">
+    <div style="padding:12px 12px 0;display:flex;gap:8px;align-items:center;">
+      <input type="search" id="search-collab" placeholder="Cerca per nome, cognome o ramo..."
+        style="flex:1;padding:9px 13px;background:var(--surface2);border:1px solid var(--border2);border-radius:22px;font-size:13px;color:var(--text);font-family:inherit;"
+        oninput="cercaCollab()">
+      <button onclick="nuovoCollab()"
+        style="width:38px;height:38px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-plus" style="font-size:18px;"></i>
+      </button>
+    </div>
+    <div class="section-lbl" style="padding-top:12px;">Team · <span id="collab-count">0</span> collaboratori</div>
+    <div id="collab-empty" class="empty">
+      <i class="ti ti-users"></i>
+      <p>Nessun collaboratore ancora.<br>Premi + per aggiungerne uno.</p>
+    </div>
+    <div id="collab-list"></div>
+    <div style="height:80px"></div>
+  </div>
+
+  <!-- MODAL COLLABORATORE -->
+  <div id="collab-modal" style="display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.6);overflow-y:auto;">
+    <div style="background:var(--surface);min-height:100%;padding:0 0 40px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:0.5px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1;">
+        <div style="font-size:15px;font-weight:700;" id="modal-collab-title">Nuovo collaboratore</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="salvaCollab()" style="padding:7px 16px;background:#E8500A;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Salva</button>
+          <button onclick="chiudiCollabModal()" style="padding:7px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:8px;font-size:13px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:0;" id="collab-form">
+
+        <!-- Dati anagrafici -->
+        <div class="form-section">
+          <div class="form-section-title">Dati anagrafici</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Nome</label><input type="text" id="cf-nome" placeholder="Mario"></div>
+            <div class="form-field"><label>Cognome</label><input type="text" id="cf-cognome" placeholder="Rossi"></div>
+            <div class="form-field"><label>Email</label><input type="email" id="cf-email" placeholder="mario@email.com"></div>
+            <div class="form-field"><label>Telefono</label><input type="tel" id="cf-tel" placeholder="+39 xxx xxx xxxx"></div>
+            <div class="form-field full"><label>Indirizzo</label><input type="text" id="cf-indirizzo" placeholder="Via, numero, città, CAP"></div>
+            <div class="form-field"><label>Codice fiscale</label><input type="text" id="cf-cf" placeholder="RSSMRA80A01H501U"></div>
+            <div class="form-field"><label>Data di nascita</label><input type="date" id="cf-ddn"></div>
+          </div>
+        </div>
+
+        <!-- Dati professionali -->
+        <div class="form-section">
+          <div class="form-section-title">Dati professionali</div>
+          <div class="form-grid">
+            <div class="form-field"><label>N. iscrizione RUI</label><input type="text" id="cf-rui" placeholder="A000000000"></div>
+            <div class="form-field"><label>Tipo collaborazione</label>
+              <select id="cf-tipo">
+                <option>Subagente</option><option>Produttore</option><option>Dipendente</option><option>Altro</option>
+              </select>
+            </div>
+            <div class="form-field"><label>Valore portafoglio (€)</label><input type="number" id="cf-portafoglio" placeholder="0.00" step="0.01"></div>
+            <div class="form-field"><label>Data inizio</label><input type="date" id="cf-data-inizio"></div>
+          </div>
+        </div>
+
+        <!-- Fatturazione -->
+        <div class="form-section">
+          <div class="form-section-title">Dati fatturazione</div>
+          <div class="form-grid">
+            <div class="form-field full"><label>Ragione sociale / P.IVA</label><input type="text" id="cf-piva" placeholder="Ragione sociale o P.IVA"></div>
+            <div class="form-field full"><label>IBAN provvigioni</label><input type="text" id="cf-iban-prov" placeholder="IT60 X054 2811 1010 0000 0123 456"></div>
+            <div class="form-field full"><label>IBAN conto separato</label><input type="text" id="cf-iban-sep" placeholder="IT60 X054 2811 1010 0000 0123 456"></div>
+          </div>
+        </div>
+
+        <!-- Rami -->
+        <div class="form-section">
+          <div class="form-section-title">Rami abilitati</div>
+          <div style="background:var(--surface2);border-radius:var(--rs);padding:4px 12px;">
+            <div class="toggle-row">
+              <span class="toggle-lbl">Auto</span>
+              <label class="sw"><input type="checkbox" id="cr-auto"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+            </div>
+            <div class="toggle-row" style="border-top:0.5px solid var(--border);">
+              <span class="toggle-lbl">Vita</span>
+              <label class="sw"><input type="checkbox" id="cr-vita"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+            </div>
+            <div class="toggle-row" style="border-top:0.5px solid var(--border);">
+              <span class="toggle-lbl">Rami elementari</span>
+              <label class="sw"><input type="checkbox" id="cr-re"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+            </div>
+            <div class="toggle-row" style="border-top:0.5px solid var(--border);">
+              <span class="toggle-lbl">Cauzioni</span>
+              <label class="sw"><input type="checkbox" id="cr-cau"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+            </div>
+            <div class="toggle-row" style="border-top:0.5px solid var(--border);">
+              <span class="toggle-lbl">Infortuni</span>
+              <label class="sw"><input type="checkbox" id="cr-inf"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formazione -->
+        <div class="form-section">
+          <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            Ore formazione
+            <button onclick="aggiungiAnno()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;">+ Anno</button>
+          </div>
+          <div id="anni-formazione"></div>
+        </div>
+
+        <!-- Documenti -->
+        <div class="form-section">
+          <div class="form-section-title">Documenti</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label class="doc-upload"><i class="ti ti-id-badge" style="font-size:16px;"></i> Documento d'identità <input type="file" style="display:none" id="doc-id" accept=".pdf,.jpg,.png" onchange="allegaDoc(this,'id')"><span id="doc-id-nome" style="margin-left:auto;font-size:11px;color:var(--green)"></span></label>
+            <label class="doc-upload"><i class="ti ti-heart-plus" style="font-size:16px;"></i> Tessera sanitaria <input type="file" style="display:none" id="doc-ts" accept=".pdf,.jpg,.png" onchange="allegaDoc(this,'ts')"><span id="doc-ts-nome" style="margin-left:auto;font-size:11px;color:var(--green)"></span></label>
+            <label class="doc-upload"><i class="ti ti-building" style="font-size:16px;"></i> Visura camerale <input type="file" style="display:none" id="doc-vis" accept=".pdf" onchange="allegaDoc(this,'vis')"><span id="doc-vis-nome" style="margin-left:auto;font-size:11px;color:var(--green)"></span></label>
+            <label class="doc-upload"><i class="ti ti-file-check" style="font-size:16px;"></i> Privacy agenzia <input type="file" style="display:none" id="doc-priv" accept=".pdf" onchange="allegaDoc(this,'priv')"><span id="doc-priv-nome" style="margin-left:auto;font-size:11px;color:var(--green)"></span></label>
+            <label class="doc-upload"><i class="ti ti-paperclip" style="font-size:16px;"></i> Altri documenti <input type="file" style="display:none" id="doc-altri" accept=".pdf,.jpg,.png" multiple onchange="allegaDoc(this,'altri')"><span id="doc-altri-nome" style="margin-left:auto;font-size:11px;color:var(--green)"></span></label>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div class="form-section">
+          <div class="form-section-title">Note</div>
+          <div class="form-field full"><textarea id="cf-note" rows="3" placeholder="Note libere sul collaboratore..."></textarea></div>
+        </div>
+
+      </div>
     </div>
   </div>
 
@@ -1246,19 +1457,43 @@ function chiudiImpostazioni() {
 }
 
 // ─── CONTO CORRENTE ────────────────────────────────────────────────────────────
-const CC = { movimenti: [], abbinamenti: {} };
+const CC = {
+  contoAttivo: 'hdi',
+  hdi:   { movimenti: [], abbinamenti: {} },
+  pluri: { movimenti: [], abbinamenti: {} }
+};
 
-function loadFileConto(inp) {
+function selConto(tipo) {
+  CC.contoAttivo = tipo;
+  const btnHdi   = document.getElementById('btn-conto-hdi');
+  const btnPluri = document.getElementById('btn-conto-pluri');
+  const upHdi    = document.getElementById('upload-conto-hdi');
+  const upPluri  = document.getElementById('upload-conto-pluri');
+  if (tipo === 'hdi') {
+    btnHdi.style.cssText   = 'flex:1;padding:10px;border-radius:var(--rs);border:2px solid #E8500A;background:rgba(232,80,10,.08);color:#E8500A;font-size:12px;font-weight:700;cursor:pointer;';
+    btnPluri.style.cssText = 'flex:1;padding:10px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;';
+    upHdi.style.display = 'block'; upPluri.style.display = 'none';
+  } else {
+    btnPluri.style.cssText = 'flex:1;padding:10px;border-radius:var(--rs);border:2px solid #E8500A;background:rgba(232,80,10,.08);color:#E8500A;font-size:12px;font-weight:700;cursor:pointer;';
+    btnHdi.style.cssText   = 'flex:1;padding:10px;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;';
+    upPluri.style.display = 'block'; upHdi.style.display = 'none';
+  }
+  buildConto();
+}
+
+
+function loadFileConto(inp, contoTipo) {
   const file = inp.files[0];
   if (!file) return;
+  const tipo = contoTipo || CC.contoAttivo;
   const reader = new FileReader();
   reader.onload = e => {
     const wb = XLSX.read(e.target.result, {type:'array'});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:''});
-    CC.movimenti = parseMovimentiConto(data);
-    document.getElementById('ok-conto').textContent = '✓ ' + file.name + ' (' + CC.movimenti.length + ' movimenti)';
-    document.getElementById('ok-conto').style.display = 'block';
+    CC[tipo].movimenti = parseMovimentiConto(data);
+    const okEl = document.getElementById('ok-conto-'+tipo);
+    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + data.length + ' movimenti)'; okEl.style.display = 'block'; }
     buildConto();
   };
   reader.readAsArrayBuffer(file);
@@ -1278,41 +1513,43 @@ function parseMovimentiConto(data) {
 }
 
 function buildConto() {
-  const movimenti = CC.movimenti;
-  if (!movimenti.length) return;
-
+  const c = CC[CC.contoAttivo];
+  const movimenti = c.movimenti;
+  if (!movimenti.length) {
+    document.getElementById('conto-empty').style.display = 'block';
+    document.getElementById('conto-content').style.display = 'none';
+    return;
+  }
   const totEntrate = movimenti.reduce((a,m) => a + m.avere, 0);
   const totUscite  = movimenti.reduce((a,m) => a + m.dare, 0);
-  const abbinati   = movimenti.filter(m => CC.abbinamenti[m.id]);
-  const daAbbinare = movimenti.filter(m => !CC.abbinamenti[m.id]);
+  const abbinati   = movimenti.filter(m => c.abbinamenti[m.id]);
 
   document.getElementById('conto-empty').style.display = 'none';
   document.getElementById('conto-content').style.display = 'block';
 
   document.getElementById('conto-metrics').innerHTML = `
-    <div class="metric"><div class="metric-lbl">Movimenti totali</div><div class="metric-val">${movimenti.length}</div></div>
+    <div class="metric"><div class="metric-lbl">Movimenti</div><div class="metric-val">${movimenti.length}</div></div>
     <div class="metric"><div class="metric-lbl">Entrate</div><div class="metric-val" style="color:var(--green)">€${fmt(totEntrate)}</div></div>
     <div class="metric"><div class="metric-lbl">Uscite</div><div class="metric-val" style="color:var(--red)">€${fmt(totUscite)}</div></div>
-    <div class="metric"><div class="metric-lbl">Abbinati</div><div class="metric-val" style="color:var(--accent2)">${abbinati.length}/${movimenti.length}</div></div>
+    <div class="metric"><div class="metric-lbl">Abbinati</div><div class="metric-val" style="color:#E8500A">${abbinati.length}/${movimenti.length}</div></div>
   `;
 
   const ricerca = (document.getElementById('search-conto')?.value||'').toLowerCase();
   const filtro  = document.getElementById('filtro-conto')?.value || 'tutti';
-
   let lista = movimenti;
-  if (filtro === 'abbinati')   lista = movimenti.filter(m => CC.abbinamenti[m.id]);
-  if (filtro === 'da_abbinare') lista = movimenti.filter(m => !CC.abbinamenti[m.id]);
+  if (filtro === 'abbinati')    lista = movimenti.filter(m => c.abbinamenti[m.id]);
+  if (filtro === 'da_abbinare') lista = movimenti.filter(m => !c.abbinamenti[m.id]);
   if (ricerca) lista = lista.filter(m =>
     m.descrizione.toLowerCase().includes(ricerca) ||
     String(m.avere||m.dare).includes(ricerca)
   );
 
   document.getElementById('lista-conto').innerHTML = lista.length ? lista.map(m => {
-    const abb = CC.abbinamenti[m.id];
+    const abb = c.abbinamenti[m.id];
     return `<div class="row-item" style="${abb?'background:var(--green-bg)':''}">
       <div style="padding:2px 0">
-        <input type="checkbox" ${abb?'checked':''} 
-          onchange="toggleAbbinamento(${m.id}, this.checked, this)"
+        <input type="checkbox" ${abb?'checked':''}
+          onchange="toggleAbbinamento(${m.id},this.checked)"
           style="width:18px;height:18px;accent-color:#E8500A;cursor:pointer;flex-shrink:0;">
       </div>
       <div class="row-main">
@@ -1326,17 +1563,16 @@ function buildConto() {
     </div>`;
   }).join('') : '<div class="empty" style="padding:20px"><p>Nessun movimento trovato</p></div>';
 
-  // Salva abbinamenti
-  try { localStorage.setItem('iam_abbinamenti', JSON.stringify(CC.abbinamenti)); } catch(e){}
+  try { localStorage.setItem('iam_abb_'+CC.contoAttivo, JSON.stringify(c.abbinamenti)); } catch(e){}
 }
 
-function toggleAbbinamento(id, checked, el) {
+function toggleAbbinamento(id, checked) {
+  const c = CC[CC.contoAttivo];
   if (checked) {
-    // Mostra popup per nota abbinamento
     const nota = prompt('Abbina a (es. polizza, cliente, causale):') || 'Abbinato';
-    CC.abbinamenti[id] = nota;
+    c.abbinamenti[id] = nota;
   } else {
-    delete CC.abbinamenti[id];
+    delete c.abbinamenti[id];
   }
   buildConto();
 }
@@ -1622,6 +1858,224 @@ function addLoader() {
   return id;
 }
 function removeLoader(id) { const e = document.getElementById('ld-'+id); if(e) e.remove(); }
+
+// ─── COLLABORATORI ────────────────────────────────────────────────────────────
+let COLLAB = [];
+let collabEditId = null;
+let anniFormazione = [];
+const DOCS_STORE = {};
+
+function loadCollab() {
+  try { COLLAB = JSON.parse(localStorage.getItem('iam_collab')||'[]'); } catch(e){ COLLAB=[]; }
+}
+function saveCollab() {
+  localStorage.setItem('iam_collab', JSON.stringify(COLLAB));
+}
+
+function calcPerformance(c) {
+  let score = 0;
+  // portafoglio
+  const port = parseFloat(c.portafoglio)||0;
+  if (port > 500000) score += 40;
+  else if (port > 200000) score += 25;
+  else if (port > 50000) score += 10;
+  // rami attivi
+  const rami = [c.rami?.auto,c.rami?.vita,c.rami?.re,c.rami?.cau,c.rami?.inf].filter(Boolean).length;
+  score += rami * 8;
+  // documenti completi
+  const docs = ['id','ts','vis','priv'].filter(k => c.docs?.[k]).length;
+  score += docs * 4;
+  // formazione
+  const totOre = (c.anni||[]).reduce((a,an) => a + (parseInt(an.ore)||0), 0);
+  if (totOre >= 60) score += 20;
+  else if (totOre >= 30) score += 10;
+  else if (totOre > 0) score += 5;
+  return Math.min(100, score);
+}
+
+function perfLabel(score) {
+  if (score >= 70) return {lbl:'Alto', cls:'perf-alto'};
+  if (score >= 40) return {lbl:'Medio', cls:'perf-medio'};
+  return {lbl:'Base', cls:'perf-basso'};
+}
+
+function buildCollab(q) {
+  loadCollab();
+  const search = q !== undefined ? q : (document.getElementById('search-collab')?.value||'').toLowerCase();
+  let lista = COLLAB;
+  if (search) lista = COLLAB.filter(c =>
+    (c.nome+' '+c.cognome).toLowerCase().includes(search) ||
+    Object.entries(c.rami||{}).some(([k,v]) => v && k.toLowerCase().includes(search))
+  );
+  document.getElementById('collab-count').textContent = COLLAB.length;
+  document.getElementById('collab-empty').style.display = lista.length ? 'none' : 'block';
+  document.getElementById('collab-list').innerHTML = lista.map(c => {
+    const score = calcPerformance(c);
+    const perf = perfLabel(score);
+    const rami = [];
+    if (c.rami?.auto) rami.push('<span class="ramo-chip ramo-auto">Auto</span>');
+    if (c.rami?.vita) rami.push('<span class="ramo-chip ramo-vita">Vita</span>');
+    if (c.rami?.re)   rami.push('<span class="ramo-chip ramo-re">Rami El.</span>');
+    if (c.rami?.cau)  rami.push('<span class="ramo-chip ramo-cau">Cauzioni</span>');
+    if (c.rami?.inf)  rami.push('<span class="ramo-chip ramo-re">Infortuni</span>');
+    const iniziali = ((c.nome||'?')[0]+(c.cognome||'?')[0]).toUpperCase();
+    return `<div class="collab-card">
+      <div class="collab-header" onclick="toggleCollabCard('cc-${c.id}')">
+        <div class="collab-avatar">${iniziali}</div>
+        <div class="collab-info">
+          <div class="collab-nome">${c.nome} ${c.cognome}</div>
+          <div class="collab-rami">${rami.join('')}</div>
+          <div class="perf-bar" style="margin-top:6px"><div class="perf-fill" style="width:${score}%"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <span class="collab-perf ${perf.cls}">${perf.lbl} · ${score}%</span>
+          <button onclick="event.stopPropagation();modificaCollab('${c.id}')" style="font-size:11px;padding:3px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;cursor:pointer;color:var(--text2);">Modifica</button>
+        </div>
+      </div>
+      <div class="collab-body" id="cc-${c.id}">
+        <div style="padding:12px 0;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+          ${c.rui?`<div><span style="color:var(--text3)">RUI</span><br><b>${c.rui}</b></div>`:''}
+          ${c.portafoglio?`<div><span style="color:var(--text3)">Portafoglio</span><br><b>€ ${fmt(parseFloat(c.portafoglio))}</b></div>`:''}
+          ${c.email?`<div><span style="color:var(--text3)">Email</span><br><b>${c.email}</b></div>`:''}
+          ${c.tel?`<div><span style="color:var(--text3)">Tel.</span><br><b>${c.tel}</b></div>`:''}
+          ${c.ibanProv?`<div style="grid-column:1/-1"><span style="color:var(--text3)">IBAN Provvigioni</span><br><b style="font-size:11px">${c.ibanProv}</b></div>`:''}
+        </div>
+        ${c.note?`<div style="background:var(--surface2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--text2)">${c.note}</div>`:''}
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          ${(c.anni||[]).map(an=>`<span style="background:var(--blue-bg);color:var(--blue-text);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600">${an.anno} · ${an.ore} ore</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCollabCard(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+
+function cercaCollab() { buildCollab(); }
+
+function nuovoCollab() {
+  collabEditId = null;
+  anniFormazione = [];
+  document.getElementById('modal-collab-title').textContent = 'Nuovo collaboratore';
+  ['nome','cognome','email','tel','indirizzo','cf','rui','piva','iban-prov','iban-sep','portafoglio','note'].forEach(f => {
+    const el = document.getElementById('cf-'+f);
+    if (el) el.value = '';
+  });
+  ['auto','vita','re','cau','inf'].forEach(r => { const el = document.getElementById('cr-'+r); if(el) el.checked=false; });
+  const ddn = document.getElementById('cf-ddn'); if(ddn) ddn.value='';
+  const di  = document.getElementById('cf-data-inizio'); if(di) di.value='';
+  const tipo = document.getElementById('cf-tipo'); if(tipo) tipo.selectedIndex=0;
+  renderAnniFormazione();
+  document.getElementById('collab-modal').style.display = 'block';
+}
+
+function modificaCollab(id) {
+  loadCollab();
+  const c = COLLAB.find(x=>x.id===id);
+  if (!c) return;
+  collabEditId = id;
+  anniFormazione = (c.anni||[]).map(a=>({...a}));
+  document.getElementById('modal-collab-title').textContent = c.nome+' '+c.cognome;
+  const set = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  set('cf-nome',c.nome); set('cf-cognome',c.cognome); set('cf-email',c.email);
+  set('cf-tel',c.tel); set('cf-indirizzo',c.indirizzo); set('cf-cf',c.cf);
+  set('cf-rui',c.rui); set('cf-piva',c.piva); set('cf-iban-prov',c.ibanProv);
+  set('cf-iban-sep',c.ibanSep); set('cf-portafoglio',c.portafoglio); set('cf-note',c.note);
+  set('cf-ddn',c.ddn); set('cf-data-inizio',c.dataInizio);
+  if(document.getElementById('cf-tipo')) document.getElementById('cf-tipo').value = c.tipo||'Subagente';
+  ['auto','vita','re','cau','inf'].forEach(r => {
+    const el=document.getElementById('cr-'+r); if(el) el.checked=!!(c.rami?.[r]);
+  });
+  renderAnniFormazione();
+  document.getElementById('collab-modal').style.display = 'block';
+}
+
+function chiudiCollabModal() {
+  document.getElementById('collab-modal').style.display = 'none';
+}
+
+function salvaCollab() {
+  const g = (id) => (document.getElementById(id)?.value||'').trim();
+  const c = {
+    id: collabEditId || Date.now().toString(),
+    nome: g('cf-nome'), cognome: g('cf-cognome'),
+    email: g('cf-email'), tel: g('cf-tel'),
+    indirizzo: g('cf-indirizzo'), cf: g('cf-cf'),
+    ddn: g('cf-ddn'), dataInizio: g('cf-data-inizio'),
+    rui: g('cf-rui'), tipo: g('cf-tipo') || 'Subagente',
+    piva: g('cf-piva'), ibanProv: g('cf-iban-prov'),
+    ibanSep: g('cf-iban-sep'), portafoglio: g('cf-portafoglio'),
+    note: g('cf-note'),
+    rami: {
+      auto: document.getElementById('cr-auto')?.checked||false,
+      vita: document.getElementById('cr-vita')?.checked||false,
+      re:   document.getElementById('cr-re')?.checked||false,
+      cau:  document.getElementById('cr-cau')?.checked||false,
+      inf:  document.getElementById('cr-inf')?.checked||false,
+    },
+    anni: anniFormazione.map(a=>({anno:a.anno,ore:a.ore}))
+  };
+  if (!c.nome && !c.cognome) { alert('Inserisci almeno nome e cognome.'); return; }
+  loadCollab();
+  if (collabEditId) {
+    const idx = COLLAB.findIndex(x=>x.id===collabEditId);
+    if (idx>=0) COLLAB[idx] = c; else COLLAB.push(c);
+  } else {
+    COLLAB.push(c);
+  }
+  saveCollab();
+  chiudiCollabModal();
+  buildCollab();
+}
+
+function aggiungiAnno() {
+  const anno = prompt('Anno di formazione:', new Date().getFullYear());
+  if (!anno) return;
+  anniFormazione.push({anno, ore: '', files: []});
+  renderAnniFormazione();
+}
+
+function renderAnniFormazione() {
+  document.getElementById('anni-formazione').innerHTML = anniFormazione.map((an,i) => `
+    <div class="anno-folder">
+      <div>
+        <div class="anno-folder-name"><i class="ti ti-folder" style="font-size:14px;vertical-align:-2px;margin-right:6px;color:#E8500A;"></i>${an.anno}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">${an.ore||0} ore registrate</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" value="${an.ore||''}" placeholder="ore"
+          style="width:60px;padding:6px 8px;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;font-size:13px;color:var(--text);text-align:center;"
+          onchange="anniFormazione[${i}].ore=this.value">
+        <label style="font-size:11px;padding:5px 8px;background:var(--blue-bg);color:var(--blue-text);border-radius:6px;cursor:pointer;">
+          <i class="ti ti-upload" style="font-size:12px;vertical-align:-1px;"></i> File
+          <input type="file" style="display:none" multiple onchange="allegaFormazione(${i},this)">
+        </label>
+        <button onclick="anniFormazione.splice(${i},1);renderAnniFormazione()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;">✕</button>
+      </div>
+    </div>`).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px 0">Nessun anno aggiunto</div>';
+}
+
+function allegaFormazione(idx, inp) {
+  if (!anniFormazione[idx].files) anniFormazione[idx].files = [];
+  anniFormazione[idx].files.push(...Array.from(inp.files).map(f=>f.name));
+  renderAnniFormazione();
+}
+
+function allegaDoc(inp, tipo) {
+  const nome = inp.files[0]?.name;
+  if (nome) {
+    document.getElementById('doc-'+tipo+'-nome').textContent = '✓ '+nome;
+    if (!DOCS_STORE[collabEditId||'new']) DOCS_STORE[collabEditId||'new'] = {};
+    DOCS_STORE[collabEditId||'new'][tipo] = nome;
+  }
+}
+
+// Carica collaboratori all'avvio
+document.addEventListener('DOMContentLoaded', () => { loadCollab(); });
+
 </script>
 </body>
 </html>

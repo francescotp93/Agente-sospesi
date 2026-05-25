@@ -1177,11 +1177,15 @@ function loadFile(inp, tipo) {
     reader.readAsArrayBuffer(file);
   } else {
     reader.onload = e => {
-      const wb = XLSX.read(e.target.result, {type:'array'});
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true, raw:false});
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
+      const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:false});
       if (tipo === 'sospesi') {
-        S.sospesi = parseSospesi(data);
+        // Rileggi con raw:true per avere i numeri corretti
+        const wbRaw = XLSX.read(e.target.result, {type:'array', raw:true});
+        const wsRaw = wbRaw.Sheets[wbRaw.SheetNames[0]];
+        const dataRaw = XLSX.utils.sheet_to_json(wsRaw, {defval:'', raw:true});
+        S.sospesi = parseSospesi(dataRaw);
         // salva per confronto futuro
         try { localStorage.setItem('sospesi_prev', JSON.stringify(S.sospesi.map(r=>r.prog))); } catch(e){}
       } else {
@@ -1198,19 +1202,15 @@ function loadFile(inp, tipo) {
 // ─── PARSE NUMERO SICURO ─────────────────────────────────────────────────────
 function parseNum(val) {
   if (val === null || val === undefined || val === '') return 0;
-  // Numero già in formato JavaScript — restituisci direttamente
-  if (typeof val === 'number') return val;
-  const s = String(val).trim();
+  // Con raw:true XLSX restituisce numeri JS puri — usali direttamente
+  if (typeof val === 'number') return isNaN(val) ? 0 : val;
+  const s = String(val).trim().replace(/\s/g,'');
   if (!s || s === '-') return 0;
-  // Formato italiano con punto migliaia e virgola decimale: "1.234,56"
-  if (s.includes(',') && s.includes('.')) {
-    return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
-  }
-  // Formato italiano solo virgola decimale: "17,22"
-  if (s.includes(',') && !s.includes('.')) {
-    return parseFloat(s.replace(',','.')) || 0;
-  }
-  // Formato standard con punto decimale: "17.22"
+  // Formato italiano: "1.234,56"
+  if (/\d\.\d{3},/.test(s)) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
+  // Formato italiano solo virgola: "17,22"
+  if (s.includes(',') && !s.includes('.')) return parseFloat(s.replace(',','.')) || 0;
+  // Standard: "17.22" o "339"
   return parseFloat(s) || 0;
 }
 

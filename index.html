@@ -237,6 +237,26 @@ input[type=file]{display:none;}
   <div class="login-footer">I tuoi dati sono protetti e privati<br>Solo utenti autorizzati</div>
 </div>
 
+<!-- RESET PASSWORD SCREEN -->
+<div class="login-screen" id="reset-screen" style="display:none">
+  <div class="login-logo">🔑</div>
+  <div class="login-title">Nuova Password</div>
+  <div class="login-sub">Scegli una nuova password per il tuo account</div>
+  <div class="login-card">
+    <div class="login-field">
+      <label>Nuova password</label>
+      <input type="password" id="reset-pass1" placeholder="Minimo 6 caratteri" autocomplete="new-password">
+    </div>
+    <div class="login-field">
+      <label>Conferma password</label>
+      <input type="password" id="reset-pass2" placeholder="Ripeti la password" autocomplete="new-password" onkeydown="if(event.key==='Enter')submitReset()">
+    </div>
+    <div class="login-err" id="reset-err"></div>
+    <button class="login-btn" id="reset-btn" onclick="submitReset()">Salva nuova password</button>
+  </div>
+  <div class="login-footer">I tuoi dati sono protetti e privati</div>
+</div>
+
 <!-- APP (nascosta finché non si fa login) -->
 <div id="app-container" style="display:none;flex-direction:column;height:100%;">
 
@@ -462,18 +482,58 @@ function initSupabase() {
       db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
       // Controlla se già loggato
       db.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          onLogin(data.session.user);
-        }
+        if (data.session) onLogin(data.session.user);
       });
       // Ascolta cambi di stato auth
       db.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' && session) onLogin(session.user);
         if (event === 'SIGNED_OUT') onLogout();
+        if (event === 'PASSWORD_RECOVERY') mostraResetPassword();
       });
     }
   } catch(e) { console.warn('Supabase non disponibile:', e); }
 }
+
+function mostraResetPassword() {
+  // Mostra schermata reset password
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'none';
+  document.getElementById('reset-screen').style.display = 'flex';
+}
+
+async function submitReset() {
+  const pass1 = document.getElementById('reset-pass1').value;
+  const pass2 = document.getElementById('reset-pass2').value;
+  const err   = document.getElementById('reset-err');
+  const btn   = document.getElementById('reset-btn');
+
+  if (!pass1 || pass1.length < 6) { err.textContent = 'La password deve avere almeno 6 caratteri.'; return; }
+  if (pass1 !== pass2) { err.textContent = 'Le password non coincidono.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Salvataggio...';
+  err.textContent = '';
+
+  try {
+    const { error } = await db.auth.updateUser({ password: pass1 });
+    if (error) throw error;
+    err.style.color = '#aaffaa';
+    err.textContent = '✓ Password aggiornata! Accesso in corso...';
+    setTimeout(() => {
+      document.getElementById('reset-screen').style.display = 'none';
+      db.auth.getSession().then(({ data }) => {
+        if (data.session) onLogin(data.session.user);
+        else { document.getElementById('login-screen').style.display = 'flex'; }
+      });
+    }, 1500);
+  } catch(e) {
+    err.style.color = '#ffaaaa';
+    err.textContent = e.message || 'Errore durante il reset.';
+    btn.disabled = false;
+    btn.textContent = 'Salva nuova password';
+  }
+}
+
 
 function onLogin(user) {
   currentUser = user;

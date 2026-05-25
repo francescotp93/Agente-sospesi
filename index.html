@@ -221,7 +221,7 @@ input[type=file]{display:none;}
       <label>Email</label>
       <input type="email" id="login-email" placeholder="la-tua@email.com" autocomplete="email">
     </div>
-    <div class="login-field">
+    <div class="login-field" id="pass-field">
       <label>Password</label>
       <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitLogin()">
     </div>
@@ -229,6 +229,9 @@ input[type=file]{display:none;}
     <button class="login-btn" id="login-btn" onclick="submitLogin()">Accedi</button>
     <div class="login-switch" id="login-switch" onclick="toggleRegister()">
       Non hai un account? <span>Registrati</span>
+    </div>
+    <div class="login-switch" id="forgot-link" onclick="toggleForgot()" style="margin-top:-4px">
+      Password dimenticata? <span>Recupera</span>
     </div>
   </div>
   <div class="login-footer">I tuoi dati sono protetti e privati<br>Solo utenti autorizzati</div>
@@ -476,7 +479,7 @@ function onLogin(user) {
   currentUser = user;
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-container').style.display = 'flex';
-  // Aggiorna avatar con iniziale nome
+  // Aggiorna avatar
   const nome = user.user_metadata?.full_name || user.email || '?';
   const iniziale = nome.charAt(0).toUpperCase();
   const avatar = document.getElementById('user-avatar');
@@ -485,9 +488,44 @@ function onLogin(user) {
   } else {
     avatar.textContent = iniziale;
   }
-  document.getElementById('menu-name').textContent = user.user_metadata?.full_name || 'Utente';
+  document.getElementById('menu-name').textContent = user.user_metadata?.full_name || user.email;
   document.getElementById('menu-email').textContent = user.email;
+  // Carica automaticamente l'ultima sessione salvata
+  caricaUltimaSessione();
 }
+
+async function caricaUltimaSessione() {
+  if (!db) return;
+  try {
+    const { data } = await db
+      .from('sessioni_giornaliere')
+      .select('*')
+      .order('data_riferimento', { ascending: false })
+      .limit(1);
+    if (!data || !data.length) return;
+    const s = data[0];
+    S.sospesi  = JSON.parse(s.sospesi_json  || '[]');
+    S.incassi  = JSON.parse(s.incassi_json  || '[]');
+    // Ripristina campi manuali
+    document.getElementById('inp-data').value       = s.data_riferimento || '';
+    document.getElementById('inp-contanti').value   = s.contanti  || 0;
+    document.getElementById('inp-versamento').value = s.versamenti || 0;
+    document.getElementById('inp-spese').value      = s.spese     || 0;
+    document.getElementById('inp-note').value       = s.note      || '';
+    // Mostra indicatore
+    document.getElementById('msg-salvataggio').textContent = `📂 Ultima sessione caricata: ${new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT')}`;
+    document.getElementById('msg-salvataggio').style.display = 'block';
+    setTimeout(() => document.getElementById('msg-salvataggio').style.display = 'none', 4000);
+    // Ricostruisce dashboard e anomalie
+    if (S.sospesi.length) {
+      buildDashboard();
+      buildAnomalie();
+      buildListaSospesi();
+      updateStatus();
+    }
+  } catch(e) { console.warn('Errore caricamento ultima sessione:', e); }
+}
+
 
 function onLogout() {
   currentUser = null;
@@ -501,36 +539,55 @@ async function submitLogin() {
   const pass  = document.getElementById('login-pass').value;
   const err   = document.getElementById('login-err');
   const btn   = document.getElementById('login-btn');
-  const isRegister = btn.dataset.mode === 'register';
+  const mode  = btn.dataset.mode || '';
 
-  if (!email || !pass) { err.textContent = 'Inserisci email e password.'; return; }
+  if (!email) { err.textContent = 'Inserisci la tua email.'; return; }
   if (!db) { err.textContent = 'Connessione al database non disponibile.'; return; }
 
   btn.disabled = true;
-  btn.textContent = isRegister ? 'Registrazione...' : 'Accesso in corso...';
   err.textContent = '';
 
   try {
-    let result;
-    if (isRegister) {
-      result = await db.auth.signUp({ email, password: pass });
-      if (result.error) throw result.error;
+    if (mode === 'forgot') {
+      // RECUPERO PASSWORD
+      btn.textContent = 'Invio in corso...';
+      const { error } = await db.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.href
+      });
+      if (error) throw error;
+      err.style.color = '#aaffaa';
+      err.textContent = '✓ Email inviata! Controlla la tua casella.';
+      btn.disabled = false;
+      btn.textContent = 'Invia email di recupero';
+      return;
+    }
+
+    if (!pass) { err.textContent = 'Inserisci la password.'; btn.disabled = false; return; }
+
+    if (mode === 'register') {
+      btn.textContent = 'Registrazione...';
+      const { error } = await db.auth.signUp({ email, password: pass });
+      if (error) throw error;
       err.style.color = '#aaffaa';
       err.textContent = '✓ Registrazione ok! Controlla la tua email per confermare.';
       btn.disabled = false;
-      btn.textContent = 'Accedi';
+      btn.textContent = 'Registrati';
       return;
-    } else {
-      result = await db.auth.signInWithPassword({ email, password: pass });
-      if (result.error) throw result.error;
     }
+
+    // LOGIN NORMALE
+    btn.textContent = 'Accesso in corso...';
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    if (error) throw error;
+
   } catch(e) {
     err.style.color = '#ffaaaa';
     if (e.message.includes('Invalid login')) err.textContent = 'Email o password errati.';
     else if (e.message.includes('Email not confirmed')) err.textContent = 'Conferma prima la tua email.';
+    else if (e.message.includes('User already registered')) err.textContent = 'Email già registrata. Accedi.';
     else err.textContent = e.message;
     btn.disabled = false;
-    btn.textContent = isRegister ? 'Registrati' : 'Accedi';
+    btn.textContent = mode === 'register' ? 'Registrati' : mode === 'forgot' ? 'Invia email di recupero' : 'Accedi';
   }
 }
 
@@ -549,7 +606,30 @@ function toggleRegister() {
   document.getElementById('login-err').textContent = '';
 }
 
-async function loginGoogle() { /* non usato */ }
+function toggleForgot() {
+  const btn   = document.getElementById('login-btn');
+  const sw    = document.getElementById('login-switch');
+  const forgot = document.getElementById('forgot-link');
+  const passF = document.getElementById('pass-field');
+  const err   = document.getElementById('login-err');
+  err.textContent = '';
+  if (btn.dataset.mode === 'forgot') {
+    // torna al login
+    btn.dataset.mode = '';
+    btn.textContent = 'Accedi';
+    passF.style.display = 'flex';
+    sw.style.display = 'block';
+    forgot.innerHTML = 'Password dimenticata? <span>Recupera</span>';
+  } else {
+    btn.dataset.mode = 'forgot';
+    btn.textContent = 'Invia email di recupero';
+    passF.style.display = 'none';
+    sw.style.display = 'none';
+    forgot.innerHTML = '← <span>Torna al login</span>';
+  }
+}
+
+
 
 async function logout() {
   if (db) await db.auth.signOut();

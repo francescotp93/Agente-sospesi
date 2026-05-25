@@ -4,7 +4,7 @@
 //  Registrati su: https://console.groq.com → API Keys → Create
 // ═══════════════════════════════════════════════════════════════
 
-window.GROQ_API_KEY = 'gsk_INSERISCI-QUI-LA-TUA-CHIAVE-GROQ';
+window.GROQ_API_KEY = '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';
 
 // ── SUPABASE (database cloud per salvare i dati) ──────────────
 window.SUPABASE_URL  = 'https://ekjxrnsfqxnfxzrthdcf.supabase.co';

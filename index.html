@@ -480,11 +480,30 @@ function initSupabase() {
   try {
     if (window.supabase && window.SUPABASE_URL && window.SUPABASE_KEY) {
       db = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
-      // Controlla se già loggato
+
+      // Controlla se c'è un token di recovery nell'URL
+      const hash = window.location.hash;
+      if (hash && hash.includes('type=recovery')) {
+        // Mostra subito la schermata di reset
+        setTimeout(() => mostraResetPassword(), 500);
+        db.auth.onAuthStateChange((event, session) => {
+          if (event === 'PASSWORD_RECOVERY') mostraResetPassword();
+          if (event === 'SIGNED_IN' && session) {
+            // Non fare login automatico se siamo in recovery
+            if (!document.getElementById('reset-screen') ||
+                document.getElementById('reset-screen').style.display === 'none') {
+              onLogin(session.user);
+            }
+          }
+          if (event === 'SIGNED_OUT') onLogout();
+        });
+        return;
+      }
+
+      // Flusso normale
       db.auth.getSession().then(({ data }) => {
         if (data.session) onLogin(data.session.user);
       });
-      // Ascolta cambi di stato auth
       db.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' && session) onLogin(session.user);
         if (event === 'SIGNED_OUT') onLogout();

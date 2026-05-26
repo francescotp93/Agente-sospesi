@@ -368,6 +368,8 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-conto" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Conto</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
+  <button class="nbtn" id="nb-utenti" onclick="goTab('utenti')" style="display:none;"><i class="ti ti-shield-lock"></i><span>Utenti</span></button>
+  <button class="nbtn" id="nb-profilo" onclick="goTab('profilo')"><i class="ti ti-user-circle"></i><span>Profilo</span></button>
   <button class="nbtn" id="nb-ai" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>AI</span></button>
 </div>
 
@@ -576,6 +578,12 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- UTENTI -->
+<div class="panel" id="panel-utenti" style="overflow-y:auto;"></div>
+
+<!-- PROFILO PERSONALE -->
+<div class="panel" id="panel-profilo" style="overflow-y:auto;"></div>
+
 <!-- AI CHAT -->
 <div class="panel" id="panel-ai">
   <div class="chips" style="padding:10px 12px 4px;">
@@ -765,7 +773,16 @@ function onLogin(user) {
   }
   document.getElementById('um-name').textContent  = nm;
   document.getElementById('um-email').textContent = user.email;
-  loadLastSession();
+
+  // Carica profilo e applica permessi
+  caricaProfilo(user.id).then(profilo => {
+    PROFILO = profilo;
+    if (PROFILO) {
+      applicaPermessi(PROFILO.ruolo);
+      mostraBadgeRuolo();
+    }
+    loadLastSession();
+  });
 }
 
 function onLogout() {
@@ -1001,9 +1018,11 @@ function goTab(t) {
   const pp = document.getElementById('panel-'+t);
   if (nb) nb.classList.add('act');
   if (pp) pp.classList.add('act');
-  if (t === 'storico') buildStorico();
-  if (t === 'team') renderTeam();
-  if (t === 'pipeline') { renderTratt(); }
+  if (t === 'storico')  buildStorico();
+  if (t === 'team')     renderTeam();
+  if (t === 'pipeline') { loadTrattDB().then(renderTratt); }
+  if (t === 'utenti')   renderUtenti();
+  if (t === 'profilo')  renderPannelloPersonale();
 }
 
 // ─── WIDGET PREFS ─────────────────────────────────────────────────────────────
@@ -1801,17 +1820,24 @@ function openTrattModal(id) {
 
 function saveTratt() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
-  const t = { id: PIPE_ID||Date.now().toString(), cliente:gv('mt-cliente'), prodotto:gv('mt-prodotto'), importo:gv('mt-importo'), status:gv('mt-status'), recall:gv('mt-recall'), prob:gv('mt-prob'), prior:gv('mt-prior'), collab:gv('mt-collab'), note:gv('mt-note') };
+  const t = { id: PIPE_ID||Date.now().toString(), cliente:gv('mt-cliente'), prodotto:gv('mt-prodotto'), importo:gv('mt-importo'), status:gv('mt-status'), recall:gv('mt-recall')||null, prob:gv('mt-prob'), prior:gv('mt-prior'), collab:gv('mt-collab'), note:gv('mt-note'), data_ins: new Date().toISOString().split('T')[0] };
   if (!t.cliente) { alert('Inserisci il nome del cliente.'); return; }
-  loadPipe();
-  if (PIPE_ID) { const idx=PIPE.findIndex(x=>x.id===PIPE_ID); if(idx>=0) PIPE[idx]=t; else PIPE.push(t); }
-  else PIPE.push(t);
-  savePipe(); closeModal('modal-tratt'); renderTratt();
+  saveTrattDB(t).then(() => {
+    loadPipe(); // fallback locale
+    if (PIPE_ID) { const idx=PIPE.findIndex(x=>x.id===PIPE_ID); if(idx>=0) PIPE[idx]=t; else PIPE.push(t); }
+    else PIPE.push(t);
+    savePipe();
+    closeModal('modal-tratt');
+    loadTrattDB().then(renderTratt);
+  });
 }
 
 function delTratt(id) {
   if (!confirm('Eliminare questa trattativa? L\'operazione non è reversibile.')) return;
-  loadPipe(); PIPE=PIPE.filter(t=>t.id!==id); savePipe(); renderTratt();
+  delTrattDB(id).then(() => {
+    loadPipe(); PIPE=PIPE.filter(t=>t.id!==id); savePipe();
+    loadTrattDB().then(renderTratt);
+  });
 }
 
 function exportRecalling() {
@@ -1966,12 +1992,355 @@ function loadDemo() {
 // ─── MODAL HELPER ─────────────────────────────────────────────────────────────
 function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
 
+// ─── MULTI-UTENZA ─────────────────────────────────────────────────────────────
+let PROFILO = null; // profilo utente corrente con ruolo
+
+const RUOLI = {
+  top_master: { label:'TOP Master', color:'#E8500A', bg:'rgba(232,80,10,.12)' },
+  master:     { label:'Master',     color:'#2c7abf', bg:'var(--blu-bg)' },
+  operativo:  { label:'Operativo',  color:'#1a8a5a', bg:'var(--grn-bg)' }
+};
+
+// Permessi per ruolo
+const PERMESSI = {
+  top_master: { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, ai:true, utenti:true, modifica:true },
+  master:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, ai:true, utenti:true, modifica:false },
+  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, ai:false,utenti:false,modifica:true }
+};
+
+async function caricaProfilo(userId) {
+  if (!db) return null;
+  try {
+    const { data, error } = await db.from('iam_utenti').select('*').eq('id', userId).single();
+    if (error || !data) {
+      // Prima volta: crea profilo top_master per il primo utente
+      const { data: cnt } = await db.from('iam_utenti').select('id', { count: 'exact', head: true });
+      const ruolo = (cnt === 0 || cnt === null) ? 'top_master' : 'operativo';
+      const { data: nuovo } = await db.from('iam_utenti').insert({
+        id: userId, email: ME.email,
+        nome: ME.user_metadata?.full_name?.split(' ')[0] || '',
+        cognome: ME.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+        ruolo
+      }).select().single();
+      return nuovo;
+    }
+    return data;
+  } catch(e) { console.warn('Errore carica profilo:', e); return null; }
+}
+
+function applicaPermessi(ruolo) {
+  const perm = PERMESSI[ruolo] || PERMESSI.operativo;
+  // Mostra/nasconde tab nav in base ai permessi
+  const tabs = {
+    'nb-carica':    perm.carica,
+    'nb-dashboard': perm.dashboard,
+    'nb-anomalie':  perm.anomalie,
+    'nb-sospesi':   perm.sospesi,
+    'nb-storico':   perm.storico,
+    'nb-conto':     perm.conto,
+    'nb-team':      perm.team,
+    'nb-pipeline':  perm.pipeline,
+    'nb-ai':        perm.ai,
+  };
+  Object.entries(tabs).forEach(([id, visibile]) => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = visibile ? 'flex' : 'none';
+  });
+  // Tab utenti — solo per chi può gestire utenti
+  const nbUtenti = document.getElementById('nb-utenti');
+  if (nbUtenti) nbUtenti.style.display = perm.utenti ? 'flex' : 'none';
+}
+
+function mostraBadgeRuolo() {
+  if (!PROFILO) return;
+  const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
+  const existing = document.getElementById('ruolo-badge');
+  if (existing) existing.remove();
+  const badge = document.createElement('span');
+  badge.id = 'ruolo-badge';
+  badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};margin-right:4px;`;
+  badge.textContent = r.label;
+  const hdrRight = document.querySelector('.hdr-right');
+  if (hdrRight) hdrRight.insertBefore(badge, hdrRight.firstChild);
+}
+
+// ─── CARICA TRATTATIVE DA SUPABASE ────────────────────────────────────────────
+async function loadTrattDB() {
+  if (!db || !ME) return;
+  try {
+    let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
+    // Operativi vedono solo le proprie
+    if (PROFILO?.ruolo === 'operativo') q = q.eq('utente_id', ME.id);
+    const { data } = await q;
+    if (data) PIPE = data.map(t => ({...t, id: String(t.id)}));
+  } catch(e) { console.warn('Errore load trattative:', e); }
+}
+
+async function saveTrattDB(t) {
+  if (!db || !ME) { savePipe(); return; }
+  try {
+    await db.from('iam_trattative').upsert({...t, utente_id: ME.id, aggiornato_il: new Date().toISOString()});
+  } catch(e) { console.warn('Errore save trattativa:', e); savePipe(); }
+}
+
+async function delTrattDB(id) {
+  if (!db) { loadPipe(); PIPE=PIPE.filter(t=>t.id!==id); savePipe(); return; }
+  try { await db.from('iam_trattative').delete().eq('id', id); } catch(e) { console.warn(e); }
+}
+
+// ─── CARICA AGENDA DA SUPABASE ────────────────────────────────────────────────
+async function loadAgendaDB() {
+  if (!db || !ME) return;
+  try {
+    let q = db.from('iam_agenda').select('*').order('data', { ascending: true });
+    if (PROFILO?.ruolo === 'operativo') {
+      q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
+    }
+    const { data } = await q;
+    if (data) AGENDA = data.map(a => ({...a, id: String(a.id)}));
+  } catch(e) { console.warn('Errore load agenda:', e); }
+}
+
+async function saveAgendaDB(a) {
+  if (!db || !ME) { saveAg(); return; }
+  try {
+    await db.from('iam_agenda').upsert({...a, utente_id: ME.id, creato_il: new Date().toISOString()});
+  } catch(e) { console.warn('Errore save agenda:', e); saveAg(); }
+}
+
+// ─── GESTIONE UTENTI ──────────────────────────────────────────────────────────
+let UTENTI_LISTA = [];
+
+async function caricaUtenti() {
+  if (!db) return;
+  try {
+    const { data } = await db.from('iam_utenti').select('*').order('creato_il', { ascending: true });
+    UTENTI_LISTA = data || [];
+  } catch(e) { console.warn('Errore carica utenti:', e); }
+}
+
+async function renderUtenti() {
+  await caricaUtenti();
+  const panel = document.getElementById('panel-utenti');
+  if (!panel) return;
+  const perm = PERMESSI[PROFILO?.ruolo] || {};
+  panel.innerHTML = `
+    <div style="padding:12px 12px 0;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:15px;font-weight:700;">Gestione utenti</div>
+      ${perm.utenti?`<button onclick="apriNuovoUtente()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo utente</button>`:''}
+    </div>
+    <div style="padding:12px;">
+      ${UTENTI_LISTA.map(u => {
+        const r = RUOLI[u.ruolo] || RUOLI.operativo;
+        const isSelf = u.id === ME?.id;
+        const canEdit = PROFILO?.ruolo === 'top_master' || (PROFILO?.ruolo === 'master' && u.ruolo === 'operativo');
+        return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${(u.nome||u.email||'?')[0].toUpperCase()}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;">${u.nome||''} ${u.cognome||''} ${isSelf?'<span style="font-size:10px;color:var(--txt3);">(tu)</span>':''}</div>
+            <div style="font-size:11px;color:var(--txt2);">${u.email}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>
+              ${!u.attivo?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);">SOSPESO</span>':''}
+            </div>
+          </div>
+          ${canEdit && !isSelf ? `<div style="display:flex;flex-direction:column;gap:4px;">
+            <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
+            ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
+          </div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function apriNuovoUtente() {
+  const ruoloOpts = PROFILO?.ruolo === 'top_master'
+    ? '<option value="master">Master</option><option value="operativo">Operativo</option>'
+    : '<option value="operativo">Operativo</option>';
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="nu-overlay" onclick="if(event.target.id==='nu-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">Nuovo utente IAM</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Email</label><input type="email" id="nu-email" placeholder="email@esempio.com"></div>
+          <div class="fld"><label>Nome</label><input type="text" id="nu-nome" placeholder="Mario"></div>
+          <div class="fld"><label>Cognome</label><input type="text" id="nu-cogn" placeholder="Rossi"></div>
+          <div class="fld"><label>Ruolo</label><select id="nu-ruolo">${ruoloOpts}</select></div>
+          <div class="fld"><label>Password temporanea</label><input type="text" id="nu-pass" placeholder="min. 6 caratteri" value="IAM${Math.random().toString(36).slice(2,8).toUpperCase()}"></div>
+          <div id="nu-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="creaNuovoUtente()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Crea utente</button>
+            <button onclick="document.getElementById('nu-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function creaNuovoUtente() {
+  const email = document.getElementById('nu-email')?.value.trim();
+  const nome  = document.getElementById('nu-nome')?.value.trim();
+  const cogn  = document.getElementById('nu-cogn')?.value.trim();
+  const ruolo = document.getElementById('nu-ruolo')?.value;
+  const pass  = document.getElementById('nu-pass')?.value.trim();
+  const err   = document.getElementById('nu-err');
+  if (!email || !pass || pass.length < 6) { if(err) err.textContent='Email e password obbligatorie (min 6 car.)'; return; }
+  if(err) err.textContent = 'Creazione in corso...';
+  try {
+    // Crea utente Supabase Auth (solo admin SDK può farlo, usiamo signUp)
+    const { data, error } = await db.auth.signUp({ email, password: pass, options: { data: { full_name: nome+' '+cogn } } });
+    if (error) throw error;
+    // Inserisci profilo
+    if (data.user) {
+      await db.from('iam_utenti').insert({ id: data.user.id, email, nome, cognome: cogn, ruolo, creato_da: ME.id });
+    }
+    document.getElementById('nu-overlay')?.remove();
+    await renderUtenti();
+    alert(`✓ Utente creato!\nEmail: ${email}\nPassword temporanea: ${pass}\nCondividila in modo sicuro con l'utente.`);
+  } catch(e) {
+    if(err) err.textContent = e.message || 'Errore creazione utente.';
+  }
+}
+
+async function toggleSospendi(userId, attivo) {
+  if (!confirm(`${attivo?'Sospendere':'Riattivare'} questo utente?`)) return;
+  try {
+    await db.from('iam_utenti').update({ attivo: !attivo }).eq('id', userId);
+    await renderUtenti();
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+async function cambiaRuolo(userId, ruoloAttuale) {
+  const nuovo = prompt(`Ruolo attuale: ${ruoloAttuale}\nNuovo ruolo (top_master / master / operativo):`);
+  if (!nuovo || !['top_master','master','operativo'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
+  if (!confirm(`Cambiare ruolo in "${nuovo}"?`)) return;
+  try {
+    await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    await renderUtenti();
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+// ─── PANNELLO PERSONALE ───────────────────────────────────────────────────────
+async function renderPannelloPersonale() {
+  const panel = document.getElementById('panel-profilo');
+  if (!panel || !ME || !PROFILO) return;
+  const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
+  panel.innerHTML = `
+    <div style="padding:16px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="width:50px;height:50px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">${(PROFILO.nome||ME.email||'?')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-size:16px;font-weight:700;">${PROFILO.nome||''} ${PROFILO.cognome||''}</div>
+            <span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--txt2);margin-bottom:6px;"><b>Email:</b> ${ME.email}</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+          <button onclick="apriCambioEmail()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;">✉️ Cambia email di accesso</button>
+          <button onclick="apriCambioPassword()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;">🔑 Cambia password</button>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);margin-bottom:8px;">Le mie preferenze calendario</div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:14px;box-shadow:var(--shd);">
+        <div class="sw-row">
+          <span class="sw-lbl">Usa Google Calendar (Windows)</span>
+          <label class="sw"><input type="checkbox" id="pref-gcal" ${localStorage.getItem('iam_cal')==='google'?'checked':''} onchange="localStorage.setItem('iam_cal',this.checked?'google':'ical')"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:6px;">Se disattivato usa iCal (Mac/iPhone)</div>
+      </div>
+    </div>`;
+}
+
+function apriCambioEmail() {
+  const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="ce-overlay" onclick="if(event.target.id==='ce-overlay')this.remove()">
+    <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px;">Cambia email</div>
+      <div class="fld" style="margin-bottom:10px;"><label>Nuova email</label><input type="email" id="ce-new" placeholder="nuova@email.com"></div>
+      <div id="ce-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="doCambioEmail()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Conferma</button>
+        <button onclick="document.getElementById('ce-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function doCambioEmail() {
+  const newEmail = document.getElementById('ce-new')?.value.trim();
+  const err = document.getElementById('ce-err');
+  if (!newEmail) { if(err) err.textContent='Inserisci la nuova email.'; return; }
+  try {
+    const { error } = await db.auth.updateUser({ email: newEmail });
+    if (error) throw error;
+    await db.from('iam_utenti').update({ email: newEmail }).eq('id', ME.id);
+    document.getElementById('ce-overlay')?.remove();
+    alert('✓ Email aggiornata! Controlla la casella per confermare.');
+  } catch(e) { if(err) err.textContent = e.message || 'Errore.'; }
+}
+
+function apriCambioPassword() {
+  const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="cp-overlay" onclick="if(event.target.id==='cp-overlay')this.remove()">
+    <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:14px;">Cambia password</div>
+      <div class="fld" style="margin-bottom:8px;"><label>Password attuale</label><input type="password" id="cp-old" placeholder="••••••••"></div>
+      <div class="fld" style="margin-bottom:8px;"><label>Nuova password</label><input type="password" id="cp-new" placeholder="min. 6 caratteri"></div>
+      <div class="fld" style="margin-bottom:10px;"><label>Conferma nuova password</label><input type="password" id="cp-new2" placeholder="ripeti"></div>
+      <div id="cp-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="doCambioPassword()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="document.getElementById('cp-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function doCambioPassword() {
+  const old  = document.getElementById('cp-old')?.value;
+  const np1  = document.getElementById('cp-new')?.value;
+  const np2  = document.getElementById('cp-new2')?.value;
+  const err  = document.getElementById('cp-err');
+  if (!old) { if(err) err.textContent='Inserisci la password attuale.'; return; }
+  if (!np1 || np1.length < 6) { if(err) err.textContent='Nuova password: min. 6 caratteri.'; return; }
+  if (np1 !== np2) { if(err) err.textContent='Le password non coincidono.'; return; }
+  try {
+    // Verifica password attuale
+    const { error: e1 } = await db.auth.signInWithPassword({ email: ME.email, password: old });
+    if (e1) { if(err) err.textContent='Password attuale errata.'; return; }
+    const { error: e2 } = await db.auth.updateUser({ password: np1 });
+    if (e2) throw e2;
+    document.getElementById('cp-overlay')?.remove();
+    alert('✓ Password aggiornata con successo!');
+  } catch(e) { if(err) err.textContent = e.message || 'Errore.'; }
+}
+
+// Aggiorna openGCal per rispettare preferenza calendario
+function openGCal(titolo, data, ora, note) {
+  const ora_ = ora || '09:00';
+  const dt  = data.replace(/-/g,'')+'T'+(ora_.replace(':',''))+'00';
+  const dtE = data.replace(/-/g,'')+'T'+(String(parseInt(ora_.split(':')[0])+1).padStart(2,'0')+ora_.split(':')[1])+'00';
+  const useGoogle = localStorage.getItem('iam_cal') === 'google';
+  if (useGoogle) {
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${dt}/${dtE}&details=${encodeURIComponent(note||'')}`;
+    window.open(url, '_blank');
+  } else {
+    // iCal per Mac/iPhone
+    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART:${dt}\r\nDTEND:${dtE}\r\nSUMMARY:${titolo}\r\nDESCRIPTION:${note||''}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+    const blob = new Blob([ics],{type:'text/calendar'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href=url; a.download=(titolo.replace(/[^a-z0-9]/gi,'_')||'appuntamento')+'.ics';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('i-data').value = new Date().toISOString().split('T')[0];
   initDB();
   loadTeam(); loadPipe();
-  // Ripristina abbinamenti conto da localStorage
   ['hdi','pluri'].forEach(t => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });

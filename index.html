@@ -1871,7 +1871,7 @@ async function loadTeamDB() {
   if (!db) { loadTeam(); return; }
   try {
     const { data, error } = await db.from('iam_team').select('*').order('cogn', { ascending: true });
-    if (error) throw error;
+    if (error) { console.warn("loadTeamDB:", error.message); loadTeam(); return; }
     if (data && data.length > 0) {
       TEAM = data.map(c => ({
         id:       c.id,
@@ -2638,7 +2638,7 @@ async function loadTrattDB() {
     let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
     if (PROFILO?.ruolo === 'operativo') q = q.eq('utente_id', ME.id);
     const { data, error } = await q;
-    if (error) throw error;
+    if (error) { console.warn("loadTrattDB:", error.message); loadPipe(); return; }
     if (data && data.length) {
       PIPE = data.map(t => ({
         id:       String(t.id),

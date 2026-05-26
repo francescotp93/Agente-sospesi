@@ -2085,7 +2085,7 @@ async function caricaProfilo(userId) {
 }
 
 function applicaPermessi(ruolo) {
-  const perm = PERMESSI[ruolo] || PERMESSI.operativo;
+  const perm = PERMESSI[ruolo] || PERMESSI.top_master; // default mostra tutto
   const tabs = {
     'nb-carica':    perm.carica,
     'nb-dashboard': perm.dashboard,

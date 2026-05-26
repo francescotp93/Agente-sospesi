@@ -3130,7 +3130,22 @@ async function salvaModificaStorico(dataRif) {
       aggiornato_il: new Date().toISOString()
     }).eq('data_riferimento', dataRif);
     document.getElementById('st-edit-overlay')?.remove();
+
+    // Se stiamo modificando la sessione corrente, aggiorna anche i campi input
+    const dataCorrente = document.getElementById('i-data')?.value;
+    if (dataRif === dataCorrente) {
+      const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
+      setVal('i-cassa', cassa);
+      setVal('i-vers', vers);
+      setVal('i-spese', spese);
+      setVal('i-note', note);
+      // Ricostruisce dashboard e anomalie con i nuovi dati
+      buildDashboard();
+      buildAnomalie();
+      updatePill();
+    }
     buildStorico();
+    showSavemsg('✅ Sessione aggiornata');
   } catch(e) { if(err) err.textContent='Errore: '+e.message; }
 }
 

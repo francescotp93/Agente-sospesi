@@ -1068,7 +1068,7 @@ function goTab(t) {
   if (pp) pp.classList.add('act');
   if (t === 'storico')  buildStorico();
   if (t === 'team')     renderTeam();
-  if (t === 'pipeline') { loadTrattDB().then(renderTratt); }
+  if (t === 'pipeline') { loadTrattDB().then(() => renderTratt()); }
   if (t === 'utenti')   renderUtenti();
   if (t === 'profilo')  renderPannelloPersonale();
 }
@@ -2128,14 +2128,35 @@ function mostraBadgeRuolo() {
 
 // ─── CARICA TRATTATIVE DA SUPABASE ────────────────────────────────────────────
 async function loadTrattDB() {
-  if (!db || !ME) return;
+  if (!db || !ME) { loadPipe(); return; }
   try {
     let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
-    // Operativi vedono solo le proprie
     if (PROFILO?.ruolo === 'operativo') q = q.eq('utente_id', ME.id);
-    const { data } = await q;
-    if (data) PIPE = data.map(t => ({...t, id: String(t.id)}));
-  } catch(e) { console.warn('Errore load trattative:', e); }
+    const { data, error } = await q;
+    if (error) throw error;
+    if (data && data.length) {
+      PIPE = data.map(t => ({
+        id:       String(t.id),
+        cliente:  t.cliente  || '',
+        prodotto: t.prodotto || '',
+        importo:  t.importo  || 0,
+        status:   t.status   || 'prospect',
+        recall:   t.recall   || '',
+        prob:     t.prob     || 30,
+        prior:    t.prior    || 'normale',
+        collab:   t.collab   || '',
+        note:     t.note     || '',
+        data_ins: t.data_ins || '',
+        utente_id:t.utente_id|| '',
+      }));
+    } else {
+      // Fallback localStorage
+      loadPipe();
+    }
+  } catch(e) {
+    console.warn('loadTrattDB error:', e);
+    loadPipe(); // fallback
+  }
 }
 
 async function saveTrattDB(t) {

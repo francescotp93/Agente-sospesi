@@ -387,8 +387,6 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-conto" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Conto</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
-  <button class="nbtn" id="nb-utenti" onclick="goTab('utenti')" style="display:none;"><i class="ti ti-shield-lock"></i><span>Utenti</span></button>
-  <button class="nbtn" id="nb-profilo" onclick="goTab('profilo')"><i class="ti ti-user-circle"></i><span>Profilo</span></button>
   <button class="nbtn" id="nb-ai" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>AI</span></button>
 </div>
 
@@ -1240,6 +1238,14 @@ function buildDashboard() {
   APP.loaded = true;
 }
 
+// Fix: assicura che il contenuto dashboard sia sempre visibile dopo caricamento
+function showDashContent() {
+  const e = document.getElementById('d-empty');
+  const c = document.getElementById('d-content');
+  if (e) e.style.display = 'none';
+  if (c) c.style.display = 'block';
+}
+
 // ─── ANOMALIE ─────────────────────────────────────────────────────────────────
 function buildAnomalie() {
   APP.anomalie = [];
@@ -2049,7 +2055,6 @@ async function caricaProfilo(userId) {
 
 function applicaPermessi(ruolo) {
   const perm = PERMESSI[ruolo] || PERMESSI.operativo;
-  // Mostra/nasconde tab nav in base ai permessi
   const tabs = {
     'nb-carica':    perm.carica,
     'nb-dashboard': perm.dashboard,
@@ -2065,9 +2070,6 @@ function applicaPermessi(ruolo) {
     const el = document.getElementById(id);
     if (el) el.style.display = visibile ? 'flex' : 'none';
   });
-  // Tab utenti — solo per chi può gestire utenti
-  const nbUtenti = document.getElementById('nb-utenti');
-  if (nbUtenti) nbUtenti.style.display = perm.utenti ? 'flex' : 'none';
 }
 
 function mostraBadgeRuolo() {

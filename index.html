@@ -2783,8 +2783,8 @@ function renderWD() {
   }).join('') : '<div class="empty" style="padding:24px;"><i class="ti ti-notebook" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessuna operazione. Premi + per aggiungerne una.</p></div>';
 }
 
-function openWDModal(id) {
-  loadWD(); loadTeam(); WD_ID = id; WD_FILE = null;
+async function openWDModal(id) {
+  WD_ID = id; WD_FILE = null;
   const w = id ? WD.find(x=>x.id===id) : null;
   document.getElementById('wd-modal-title').textContent = w ? w.titolo||'Modifica' : 'Nuova operazione';
   const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
@@ -2792,14 +2792,28 @@ function openWDModal(id) {
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
-  // Popola select condivisione con UUID degli utenti (per Supabase) ma mostra nomi leggibili
+
+  // Popola condividi con utenti IAM da Supabase (escludi se stesso)
   const sel = document.getElementById('wd-condividi');
   if (sel) {
-    sel.innerHTML = TEAM.map(c => {
-      const nome = c.nome+' '+c.cogn;
-      const sel_ = (w?.condivisi||[]).includes(nome) ? 'selected' : '';
-      return `<option value="${nome}" ${sel_}>${nome}</option>`;
-    }).join('');
+    sel.innerHTML = '<option disabled style="font-size:12px;color:var(--txt3);">Caricamento utenti...</option>';
+    try {
+      const { data } = await db.from('iam_utenti')
+        .select('id,nome,cognome,email').eq('attivo', true);
+      const altri = (data||[]).filter(u => u.id !== ME?.id);
+      if (altri.length) {
+        sel.innerHTML = altri.map(u => {
+          const nome = ((u.nome||'')+' '+(u.cognome||'')).trim() || u.email;
+          const isSelected = (w?.condivisi||[]).includes(u.id) ? 'selected' : '';
+          return `<option value="${u.id}" ${isSelected}>${nome}</option>`;
+        }).join('');
+      } else {
+        sel.innerHTML = '<option disabled>Nessun altro utente IAM registrato</option>';
+      }
+    } catch(e) {
+      sel.innerHTML = '<option disabled>Errore caricamento utenti</option>';
+      console.warn('openWDModal utenti error:', e);
+    }
   }
   document.getElementById('modal-wd').classList.add('show');
 }

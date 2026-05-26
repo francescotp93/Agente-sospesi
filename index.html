@@ -849,31 +849,30 @@ input[type=file]{display:none;}
         <button class="mbtn sec" onclick="closeCollabModal()">✕</button>
       </div>
     </div>
-    <div class="modal-body">
-      <div class="fsec"><div class="fsec-title">Dati anagrafici</div>
+    <!-- Tab interne -->
+    <div style="display:flex;border-bottom:.5px solid var(--bord);background:var(--surf);position:sticky;top:56px;z-index:1;">
+      <button class="ptab act" id="mct-ana" onclick="selCollabTab('ana')" style="flex:1;font-size:11px;">Anagrafica</button>
+      <button class="ptab" id="mct-fat" onclick="selCollabTab('fat')" style="flex:1;font-size:11px;">Fatturazione</button>
+      <button class="ptab" id="mct-doc" onclick="selCollabTab('doc')" style="flex:1;font-size:11px;">Documenti</button>
+    </div>
+
+    <!-- TAB 1: ANAGRAFICA -->
+    <div id="mcp-ana" class="modal-body">
+      <div class="fsec"><div class="fsec-title">Dati personali</div>
         <div class="fgrid">
-          <div class="fld"><label>Nome</label><input type="text" id="mc-nome"></div>
-          <div class="fld"><label>Cognome</label><input type="text" id="mc-cogn"></div>
+          <div class="fld"><label>Nome</label><input type="text" id="mc-nome" placeholder="Mario"></div>
+          <div class="fld"><label>Cognome</label><input type="text" id="mc-cogn" placeholder="Rossi"></div>
           <div class="fld"><label>Email</label><input type="email" id="mc-email"></div>
           <div class="fld"><label>Telefono</label><input type="tel" id="mc-tel"></div>
           <div class="fld ffull"><label>Indirizzo</label><input type="text" id="mc-ind"></div>
           <div class="fld"><label>Codice fiscale</label><input type="text" id="mc-cf"></div>
           <div class="fld"><label>Data di nascita</label><input type="date" id="mc-ddn"></div>
-        </div>
-      </div>
-      <div class="fsec"><div class="fsec-title">Dati professionali</div>
-        <div class="fgrid">
           <div class="fld"><label>N. iscrizione RUI</label><input type="text" id="mc-rui" placeholder="A000000000"></div>
-          <div class="fld"><label>Tipo collaborazione</label><select id="mc-tipo"><option>Subagente</option><option>Produttore</option><option>Dipendente</option><option>Altro</option></select></div>
+          <div class="fld"><label>Tipo collaborazione</label>
+            <select id="mc-tipo"><option>Subagente</option><option>Produttore</option><option>Dipendente</option><option>Altro</option></select>
+          </div>
           <div class="fld"><label>Valore portafoglio (€)</label><input type="number" id="mc-port" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Data inizio</label><input type="date" id="mc-dinizio"></div>
-        </div>
-      </div>
-      <div class="fsec"><div class="fsec-title">Dati fatturazione</div>
-        <div class="fgrid">
-          <div class="fld ffull"><label>Ragione sociale / P.IVA</label><input type="text" id="mc-piva"></div>
-          <div class="fld ffull"><label>IBAN provvigioni</label><input type="text" id="mc-iban1" placeholder="IT60 X054..."></div>
-          <div class="fld ffull"><label>IBAN conto separato</label><input type="text" id="mc-iban2" placeholder="IT60 X054..."></div>
         </div>
       </div>
       <div class="fsec"><div class="fsec-title">Rami abilitati</div>
@@ -892,19 +891,96 @@ input[type=file]{display:none;}
         </div>
         <div id="mc-anni"></div>
       </div>
-      <div class="fsec"><div class="fsec-title">Documenti</div>
-        <div id="mc-docs">
-          <div class="doc-btn" onclick="document.getElementById('doc-id').click()"><i class="ti ti-id-badge" style="font-size:16px;"></i> Documento d'identità <span id="docn-id" style="margin-left:auto;font-size:11px;color:var(--grn);"></span><input type="file" id="doc-id" accept=".pdf,.jpg,.png" onchange="loadDoc(this,'id')"></div>
-          <div class="doc-btn" onclick="document.getElementById('doc-ts').click()"><i class="ti ti-heart-plus" style="font-size:16px;"></i> Tessera sanitaria <span id="docn-ts" style="margin-left:auto;font-size:11px;color:var(--grn);"></span><input type="file" id="doc-ts" accept=".pdf,.jpg,.png" onchange="loadDoc(this,'ts')"></div>
-          <div class="doc-btn" onclick="document.getElementById('doc-vis').click()"><i class="ti ti-building" style="font-size:16px;"></i> Visura camerale <span id="docn-vis" style="margin-left:auto;font-size:11px;color:var(--grn);"></span><input type="file" id="doc-vis" accept=".pdf" onchange="loadDoc(this,'vis')"></div>
-          <div class="doc-btn" onclick="document.getElementById('doc-priv').click()"><i class="ti ti-file-check" style="font-size:16px;"></i> Privacy agenzia <span id="docn-priv" style="margin-left:auto;font-size:11px;color:var(--grn);"></span><input type="file" id="doc-priv" accept=".pdf" onchange="loadDoc(this,'priv')"></div>
-          <div class="doc-btn" onclick="document.getElementById('doc-altri').click()"><i class="ti ti-paperclip" style="font-size:16px;"></i> Altri documenti <span id="docn-altri" style="margin-left:auto;font-size:11px;color:var(--grn);"></span><input type="file" id="doc-altri" accept=".pdf,.jpg,.png" multiple onchange="loadDoc(this,'altri')"></div>
-        </div>
-      </div>
       <div class="fsec"><div class="fsec-title">Note</div>
         <div class="fld"><textarea id="mc-note" rows="3" placeholder="Note libere..."></textarea></div>
       </div>
     </div>
+
+    <!-- TAB 2: FATTURAZIONE & PROVVIGIONI -->
+    <div id="mcp-fat" class="modal-body" style="display:none;">
+      <div class="fsec"><div class="fsec-title">Dati fatturazione</div>
+        <div class="fgrid">
+          <div class="fld ffull"><label>Ragione sociale / P.IVA</label><input type="text" id="mc-piva"></div>
+          <div class="fld ffull"><label>IBAN provvigioni</label><input type="text" id="mc-iban1" placeholder="IT60 X054..."></div>
+          <div class="fld ffull"><label>IBAN conto separato</label><input type="text" id="mc-iban2" placeholder="IT60 X054..."></div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
+          Livelli provvigionali
+          <button onclick="aggiungiProvv()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Prodotto</button>
+        </div>
+        <div id="mc-provv" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: DOCUMENTI & ALLEGATI -->
+    <div id="mcp-doc" class="modal-body" style="display:none;">
+      <div class="fsec"><div class="fsec-title">Documenti obbligatori</div>
+        <div id="mc-docs">
+          <div class="doc-btn" onclick="document.getElementById('doc-id').click()">
+            <i class="ti ti-id-badge" style="font-size:16px;"></i> Documento d'identità
+            <span id="docn-id" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-id" accept=".pdf,.jpg,.png" onchange="loadDoc(this,'id')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-ts').click()">
+            <i class="ti ti-heart-plus" style="font-size:16px;"></i> Tessera sanitaria
+            <span id="docn-ts" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-ts" accept=".pdf,.jpg,.png" onchange="loadDoc(this,'ts')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-vis').click()">
+            <i class="ti ti-building" style="font-size:16px;"></i> Visura camerale
+            <span id="docn-vis" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-vis" accept=".pdf" onchange="loadDoc(this,'vis')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-dip').click()">
+            <i class="ti ti-certificate" style="font-size:16px;"></i> Diploma
+            <span id="docn-dip" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-dip" accept=".pdf,.jpg,.png" onchange="loadDoc(this,'dip')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-cas').click()">
+            <i class="ti ti-gavel" style="font-size:16px;"></i> Casellario giudiziario / Carichi pendenti
+            <span id="docn-cas" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-cas" accept=".pdf" onchange="loadDoc(this,'cas')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-cs').click()">
+            <i class="ti ti-building-bank" style="font-size:16px;"></i> Certificazione conto separato
+            <span id="docn-cs" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-cs" accept=".pdf" onchange="loadDoc(this,'cs')">
+          </div>
+          <div class="doc-btn" onclick="document.getElementById('doc-priv').click()">
+            <i class="ti ti-file-check" style="font-size:16px;"></i> Privacy agenzia firmata
+            <span id="docn-priv" style="margin-left:auto;font-size:11px;"></span>
+            <input type="file" id="doc-priv" accept=".pdf" onchange="loadDoc(this,'priv')">
+          </div>
+        </div>
+      </div>
+      <div class="fsec"><div class="fsec-title">Documenti contrattuali</div>
+        <div class="doc-btn" onclick="document.getElementById('doc-mand').click()">
+          <i class="ti ti-writing" style="font-size:16px;"></i> Mandato firmato
+          <span id="docn-mand" style="margin-left:auto;font-size:11px;"></span>
+          <input type="file" id="doc-mand" accept=".pdf" onchange="loadDoc(this,'mand')">
+        </div>
+        <div class="doc-btn" onclick="document.getElementById('doc-tabp').click()">
+          <i class="ti ti-table" style="font-size:16px;"></i> Tabella provvigionale
+          <span id="docn-tabp" style="margin-left:auto;font-size:11px;"></span>
+          <input type="file" id="doc-tabp" accept=".pdf,.xlsx" onchange="loadDoc(this,'tabp')">
+        </div>
+        <div class="doc-btn" onclick="document.getElementById('doc-altri').click()">
+          <i class="ti ti-paperclip" style="font-size:16px;"></i> Altri documenti
+          <span id="docn-altri" style="margin-left:auto;font-size:11px;"></span>
+          <input type="file" id="doc-altri" accept=".pdf,.jpg,.png" multiple onchange="loadDoc(this,'altri')">
+        </div>
+      </div>
+      <!-- Bottone NEWNEW -->
+      <div style="margin-top:12px;">
+        <button onclick="inviaEmailNEWNEW()" style="display:flex;align-items:center;gap:8px;width:100%;padding:12px 14px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;justify-content:center;">
+          <i class="ti ti-mail" style="font-size:16px;"></i> Invia email documenti (NEWNEW)
+        </button>
+        <div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:4px;">Invia email al collaboratore con la lista documenti necessari</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1707,9 +1783,10 @@ async function buildStorico() {
         <div class="rname">${new Date(r.data_riferimento+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'})}</div>
         <div class="rsub">${r.totale_sospesi} sospesi · Cassa € ${fmt(r.contanti)}${r.note?' · '+r.note:''}</div>
       </div>
-      <div class="rright">
+      <div class="rright" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <div class="ramt">€ ${fmt(r.valore_totale)}</div>
         <div class="rbadge bblu">vers. € ${fmt(r.versamenti)}</div>
+        <button onclick="apriModificaStorico('${r.data_riferimento}')" style="font-size:10px;padding:2px 8px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;margin-top:2px;">✏️ Modifica</button>
       </div>
     </div>`).join('');
 }
@@ -1864,7 +1941,9 @@ function openCollabModal(id) {
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=false; });
     ['id','ts','vis','priv','altri'].forEach(k=>{ const el=document.getElementById('docn-'+k); if(el) el.innerHTML=''; });
   }
-  renderAnni(); renderCollabDocs();
+  TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
+  renderAnni(); renderProvv(); renderCollabDocs();
+  selCollabTab('ana');
   document.getElementById('modal-collab').classList.add('show');
 }
 
@@ -1883,6 +1962,7 @@ function saveCollab() {
     iban2: gv('mc-iban2'), port: gv('mc-port'), note: gv('mc-note'), dinizio: gv('mc-dinizio'),
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
+    provv: TEAM_PROVV.map(p=>({...p})),
     docs: {}
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
@@ -2676,7 +2756,116 @@ function openGCal(titolo, data, ora, note) {
   }
 }
 
-// ─── WORK DIARY (Supabase) ────────────────────────────────────────────────────
+// ─── TAB MODAL COLLABORATORE ──────────────────────────────────────────────────
+let TEAM_PROVV = [];
+
+function selCollabTab(t) {
+  ['ana','fat','doc'].forEach(x => {
+    document.getElementById('mcp-'+x).style.display = x===t?'block':'none';
+    document.getElementById('mct-'+x).classList.toggle('act', x===t);
+  });
+}
+
+function aggiungiProvv() {
+  TEAM_PROVV.push({prodotto:'', perc:'', speciale:false, note:''});
+  renderProvv();
+}
+
+function renderProvv() {
+  document.getElementById('mc-provv').innerHTML = TEAM_PROVV.length
+    ? TEAM_PROVV.map((p,i) => `
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:grid;grid-template-columns:1fr 80px auto;gap:8px;align-items:center;">
+          <input type="text" value="${p.prodotto||''}" placeholder="Prodotto (es. RC Auto)" style="padding:7px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="TEAM_PROVV[${i}].prodotto=this.value">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="number" value="${p.perc||''}" placeholder="%" step="0.1" min="0" max="100" style="width:60px;padding:7px 8px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:13px;color:var(--txt);font-family:inherit;text-align:center;" oninput="TEAM_PROVV[${i}].perc=this.value">
+            <span style="font-size:12px;color:var(--txt3);">%</span>
+          </div>
+          <button onclick="if(confirm('Eliminare?')){TEAM_PROVV.splice(${i},1);renderProvv();}" style="padding:6px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:6px;cursor:pointer;font-size:12px;">✕</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
+            <input type="checkbox" ${p.speciale?'checked':''} onchange="TEAM_PROVV[${i}].speciale=this.checked;renderProvv();" style="accent-color:#E8500A;">
+            <span style="color:${p.speciale?'#E8500A':'var(--txt3)'};">Provvigione Speciale</span>
+          </label>
+        </div>
+        ${p.speciale?`<textarea placeholder="Note provvigione speciale (es. pattuito diversamente il 20/05/2026)..." style="padding:7px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:12px;color:var(--txt);font-family:inherit;resize:none;min-height:52px;" oninput="TEAM_PROVV[${i}].note=this.value">${p.note||''}</textarea>`:''}
+      </div>`).join('')
+    : '<div style="color:var(--txt3);font-size:13px;padding:4px 0;">Nessun prodotto aggiunto. Premi + Prodotto.</div>';
+}
+
+function inviaEmailNEWNEW() {
+  const nome  = document.getElementById('mc-nome')?.value.trim();
+  const cogn  = document.getElementById('mc-cogn')?.value.trim();
+  const email = document.getElementById('mc-email')?.value.trim();
+  if (!email) { alert('Inserisci prima l\'email del collaboratore nella tab Anagrafica.'); return; }
+  const nomeColl = (nome+' '+cogn).trim() || 'Collaboratore';
+  const subject  = encodeURIComponent(`Documenti necessari per avvio collaborazione — ${nomeColl}`);
+  const body     = encodeURIComponent(
+`Gentile ${nomeColl},
+
+per avviare la collaborazione con la nostra agenzia, le chiediamo di fornire i seguenti documenti:
+
+1. Documento d'identità in corso di validità
+2. Diploma (titolo di studio)
+3. Certificazione conto separato (se abilitato all'incasso delle polizze)
+4. Visura camerale (se soggetto IVA)
+5. Certificazione o autocertificazione casellario giudiziario e carichi pendenti
+6. Privacy di agenzia firmata (allegata alla presente)
+
+La preghiamo di inviare i documenti il prima possibile per completare l'iter di registrazione.
+
+Per qualsiasi informazione non esiti a contattarci.
+
+Cordiali saluti,
+Agenzia IAM`);
+  window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+}
+
+// ─── MODIFICA STORICO ─────────────────────────────────────────────────────────
+async function apriModificaStorico(dataRif) {
+  if (!db) return;
+  try {
+    const { data } = await db.from('sessioni_giornaliere')
+      .select('*').eq('data_riferimento', dataRif).single();
+    if (!data) return;
+    const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="st-edit-overlay" onclick="if(event.target.id==='st-edit-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">Modifica sessione · ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="fld"><label>Contanti in cassa (€)</label><input type="number" id="ste-cassa" value="${data.contanti||0}" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="ste-vers" value="${data.versamenti||0}" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="ste-spese" value="${data.spese||0}" step="0.01" inputmode="decimal"></div>
+        </div>
+        <div class="fld" style="margin-bottom:10px;"><label>Note</label><input type="text" id="ste-note" value="${data.note||''}"></div>
+        <div id="ste-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="salvaModificaStorico('${dataRif}')" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva modifiche</button>
+          <button onclick="document.getElementById('st-edit-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
+        </div>
+      </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+  } catch(e) { alert('Errore apertura storico: '+e.message); }
+}
+
+async function salvaModificaStorico(dataRif) {
+  const cassa = parseNum(document.getElementById('ste-cassa')?.value||0);
+  const vers  = parseNum(document.getElementById('ste-vers')?.value||0);
+  const spese = parseNum(document.getElementById('ste-spese')?.value||0);
+  const note  = document.getElementById('ste-note')?.value.trim()||'';
+  const err   = document.getElementById('ste-err');
+  try {
+    await db.from('sessioni_giornaliere').update({
+      contanti: cassa, versamenti: vers, spese, note,
+      aggiornato_il: new Date().toISOString()
+    }).eq('data_riferimento', dataRif);
+    document.getElementById('st-edit-overlay')?.remove();
+    buildStorico();
+  } catch(e) { if(err) err.textContent='Errore: '+e.message; }
+}
+
+
 let WD = [], WD_ID = null, WD_FILE = null, WD_CAL_DATE = new Date();
 
 function loadWD() { try { WD = JSON.parse(localStorage.getItem('iam_wd')||'[]'); } catch(e){ WD=[]; } }

@@ -433,10 +433,10 @@ input[type=file]{display:none;}
   <div id="d-content" style="display:none;">
     <div class="slbl">Riepilogo</div>
     <div class="mgrid" id="d-metrics"></div>
-    <div class="slbl">Distribuzione compagnie</div>
-    <div class="card"><div class="plist" id="d-comp" style="padding-top:12px;"></div></div>
-    <div class="slbl">Distribuzione produttori</div>
-    <div class="card"><div class="plist" id="d-prod" style="padding-top:12px;"></div></div>
+    <div class="slbl">Distribuzione per tipo sospeso</div>
+    <div class="card"><div class="plist" id="d-tipo" style="padding-top:12px;"></div></div>
+    <div class="slbl">Distribuzione per anzianità</div>
+    <div class="card"><div class="plist" id="d-anz" style="padding-top:12px;"></div></div>
     <div class="slbl">Movimenti cassa</div>
     <div class="card" id="d-mov"></div>
     <div style="height:16px;"></div>
@@ -463,8 +463,8 @@ input[type=file]{display:none;}
       <input type="search" id="s-search" placeholder="Cerca nominativo, polizza, compagnia..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderSospesi()">
     </div>
     <div style="padding:0 12px 4px;">
-      <select id="s-collab" onchange="renderSospesi()" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;">
-        <option value="">Tutti i produttori</option>
+      <select id="s-tipo" onchange="renderSospesi()" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti i tipi sospeso</option>
       </select>
     </div>
     <div id="s-chart" style="display:none;" class="card" style="margin-top:8px;">
@@ -1469,20 +1469,35 @@ function buildDashboard() {
       <div class="msub">${m.sub}</div>
     </div>`).join('') || '<div class="mcard" style="grid-column:1/-1;"><div class="mlbl">Nessun widget attivo</div><div class="msub">Usa ⚙️ per configurare</div></div>';
 
-  const COLORS = ['#2c7abf','#1a8a5a','#9a6010','#c0392b','#7b5ea7','#2a7a6a'];
-  const byComp = {};
-  sosp.forEach(s => byComp[s.compagnia||'—'] = (byComp[s.compagnia||'—']||0)+s.importo);
-  const maxC = Math.max(...Object.values(byComp),1);
-  document.getElementById('d-comp').innerHTML = Object.entries(byComp).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v],i)=>`
-    <div class="prow"><div class="phd"><span>${k}</span><span>€ ${fmt(v)}</span></div>
-    <div class="pbar"><div class="pfill" style="width:${Math.round(v/maxC*100)}%;background:${COLORS[i%COLORS.length]};"></div></div></div>`).join('');
+  // Distribuzione per tipo sospeso
+  const TIPO_LABEL = {
+    'RATA': 'Rata', 'PRIMA RATA': 'Prima rata', 'RINNOVO': 'Rinnovo',
+    'QUIETANZA': 'Quietanza', 'REGOLAZIONE': 'Regolazione',
+  };
+  const byTipo = {};
+  sosp.forEach(s => {
+    const t = s.tipoSospeso || s.modPag || 'Non specificato';
+    byTipo[t] = (byTipo[t]||0) + s.importo;
+  });
+  const COLORS = ['#E8500A','#2c7abf','#1a8a5a','#9a6010','#7b5ea7','#2a7a6a'];
+  const maxT = Math.max(...Object.values(byTipo), 1);
+  document.getElementById('d-tipo').innerHTML = Object.entries(byTipo)
+    .sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v],i)=>`
+    <div class="prow"><div class="phd"><span>${TIPO_LABEL[k]||k}</span><span>€ ${fmt(v)}</span></div>
+    <div class="pbar"><div class="pfill" style="width:${Math.round(v/maxT*100)}%;background:${COLORS[i%COLORS.length]};"></div></div></div>`).join('') ||
+    '<div style="color:var(--txt3);font-size:13px;padding:4px 0;">Dati non disponibili — verifica colonna "Tipo Sospeso" nel file</div>';
 
-  const byProd = {};
-  sosp.forEach(s => { const p=s.produttore||'Agenzia'; byProd[p]=(byProd[p]||0)+1; });
-  const maxP = Math.max(...Object.values(byProd),1);
-  document.getElementById('d-prod').innerHTML = Object.entries(byProd).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>`
-    <div class="prow"><div class="phd"><span>${k}</span><span>${v} sospesi</span></div>
-    <div class="pbar"><div class="pfill" style="width:${Math.round(v/maxP*100)}%;background:#E8500A;"></div></div></div>`).join('');
+  // Distribuzione per anzianità
+  const anzFasce = [
+    { lbl:'Oltre 60 giorni', val: sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0), color:'var(--red)' },
+    { lbl:'30–60 giorni',    val: sosp.filter(s=>s.gg>=30&&s.gg<=60).reduce((a,s)=>a+s.importo,0), color:'var(--amb)' },
+    { lbl:'15–29 giorni',    val: sosp.filter(s=>s.gg>=15&&s.gg<30).reduce((a,s)=>a+s.importo,0), color:'#E8500A' },
+    { lbl:'Meno di 15 gg',   val: sosp.filter(s=>s.gg<15).reduce((a,s)=>a+s.importo,0), color:'var(--grn)' },
+  ];
+  const maxA = Math.max(...anzFasce.map(a=>a.val), 1);
+  document.getElementById('d-anz').innerHTML = anzFasce.map(a=>`
+    <div class="prow"><div class="phd"><span>${a.lbl}</span><span>€ ${fmt(a.val)}</span></div>
+    <div class="pbar"><div class="pfill" style="width:${Math.round(a.val/maxA*100)}%;background:${a.color};"></div></div></div>`).join('');
 
   const movs = [];
   if (valInc>0) movs.push({ico:'ti-arrow-down-circle',color:'grn',desc:`Incassi (${APP.incassi.length} polizze)`,amt:'+€'+fmt(valInc)});
@@ -1611,17 +1626,22 @@ function buildSospesi() {
   const sosp = APP.sospesi.filter(s=>s.importo>=0);
   if (!sosp.length) return;
   loadTeam();
-  // Popola select produttori con nome leggibile
-  const prods = [...new Set(sosp.map(s=>s.produttore).filter(Boolean))].sort();
-  const sel = document.getElementById('s-collab');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">Tutti i produttori</option>' +
-    prods.map(p=>`<option value="${p}" ${cur===p?'selected':''}>${getProdNome(p)}</option>`).join('');
+
+  // Popola select tipi sospeso
+  const tipi = [...new Set(sosp.map(s=>s.tipoSospeso||s.modPag||'').filter(Boolean))].sort();
+  const sel = document.getElementById('s-tipo');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Tutti i tipi sospeso</option>' +
+      tipi.map(t=>`<option value="${t}" ${cur===t?'selected':''}>${t}</option>`).join('');
+  }
+
   // Chips compagnie
   const comps = [...new Set(sosp.map(s=>s.compagnia))].sort();
   document.getElementById('s-chips').innerHTML =
     `<div class="chip" onclick="setFC('')" style="${!filtComp?'background:#E8500A;color:#fff;border-color:#E8500A':''}">Tutte</div>` +
     comps.map(c=>`<div class="chip" onclick="setFC('${c}')" style="${filtComp===c?'background:#E8500A;color:#fff;border-color:#E8500A':''}">${c}</div>`).join('');
+
   renderSospesi();
   document.getElementById('s-empty').style.display = 'none';
   document.getElementById('s-content').style.display = 'block';
@@ -1630,39 +1650,24 @@ function buildSospesi() {
 function setFC(c) { filtComp = c; buildSospesi(); }
 
 function renderSospesi() {
-  const q    = (document.getElementById('s-search')?.value||'').toLowerCase();
-  const prod = document.getElementById('s-collab')?.value||'';
+  const q    = (document.getElementById("s-search")?.value||"").toLowerCase();
+  const tipo = document.getElementById("s-tipo")?.value||"";
   let sosp   = APP.sospesi.filter(s=>s.importo>=0);
   if (filtComp) sosp = sosp.filter(s=>s.compagnia===filtComp);
-  if (prod)     sosp = sosp.filter(s=>s.produttore===prod);
-  if (q) sosp = sosp.filter(s=>(s.nominativo+s.polizza+s.compagnia+s.produttore).toLowerCase().includes(q));
+  if (tipo)     sosp = sosp.filter(s=>(s.tipoSospeso||s.modPag||"")=== tipo);
+  if (q) sosp = sosp.filter(s=>(s.nominativo+s.polizza+s.compagnia+(s.tipoSospeso||"")).toLowerCase().includes(q));
   sosp.sort((a,b)=>b.gg-a.gg);
-
-  // Grafico mini produttore
-  const chart = document.getElementById('s-chart');
-  if (prod && sosp.length) {
-    const v60 = sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0);
-    const v30 = sosp.filter(s=>s.gg>=30&&s.gg<=60).reduce((a,s)=>a+s.importo,0);
-    const vRec= sosp.filter(s=>s.gg<30).reduce((a,s)=>a+s.importo,0);
-    const mx  = Math.max(v60,v30,vRec,1);
-    document.getElementById('s-chart-title').textContent = `${prod} — ${sosp.length} sospesi · € ${fmt(sosp.reduce((a,s)=>a+s.importo,0))}`;
-    document.getElementById('s-chart-bars').innerHTML = [
-      {l:'Oltre 60gg',v:v60,c:'var(--red)'},
-      {l:'30–60 gg',v:v30,c:'var(--amb)'},
-      {l:'Recenti',v:vRec,c:'#E8500A'},
-    ].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
-      <div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div>
-      <div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;">
-        <div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div>
-      </div>
-      <div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div>
-    </div>`).join('');
-    chart.style.display = 'block';
-  } else { chart.style.display = 'none'; }
-
-  document.getElementById('s-list').innerHTML = sosp.length
-    ? sosp.map(s=>rowSosp(s, s.gg>60?'red':s.gg>=30?'amb':'blu')).join('')
-    : '<div class="empty" style="padding:20px;"><p>Nessun risultato</p></div>';
+  const chart = document.getElementById("s-chart");
+  if (tipo && sosp.length) {
+    const v60=sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0);
+    const v30=sosp.filter(s=>s.gg>=30&&s.gg<=60).reduce((a,s)=>a+s.importo,0);
+    const vRec=sosp.filter(s=>s.gg<30).reduce((a,s)=>a+s.importo,0);
+    const mx=Math.max(v60,v30,vRec,1);
+    document.getElementById("s-chart-title").textContent=tipo+" — "+sosp.length+" sospesi · € "+fmt(sosp.reduce((a,s)=>a+s.importo,0));
+    document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"#E8500A"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
+    chart.style.display="block";
+  } else { if(chart) chart.style.display="none"; }
+  document.getElementById("s-list").innerHTML=sosp.length?sosp.map(s=>rowSosp(s,s.gg>60?"red":s.gg>=30?"amb":"blu")).join(""):"<div class="empty" style="padding:20px;"><p>Nessun risultato</p></div>";
 }
 
 function rowSosp(s, c) {

@@ -2431,9 +2431,14 @@ let UTENTI_LISTA = [];
 async function caricaUtenti() {
   if (!db) return;
   try {
-    const { data } = await db.from('iam_utenti').select('*').order('creato_il', { ascending: true });
+    const { data, error } = await db.from('iam_utenti')
+      .select('*').order('creato_il', { ascending: true });
+    if (error) throw error;
     UTENTI_LISTA = data || [];
-  } catch(e) { console.warn('Errore carica utenti:', e); }
+  } catch(e) {
+    console.warn('caricaUtenti error:', e);
+    UTENTI_LISTA = PROFILO ? [PROFILO] : [];
+  }
 }
 
 async function renderUtenti() {
@@ -2505,18 +2510,29 @@ async function creaNuovoUtente() {
   if (!email || !pass || pass.length < 6) { if(err) err.textContent='Email e password obbligatorie (min 6 car.)'; return; }
   if(err) err.textContent = 'Creazione in corso...';
   try {
-    // Crea utente Supabase Auth (solo admin SDK può farlo, usiamo signUp)
-    const { data, error } = await db.auth.signUp({ email, password: pass, options: { data: { full_name: nome+' '+cogn } } });
+    // Crea utente Auth
+    const { data, error } = await db.auth.signUp({
+      email, password: pass,
+      options: { data: { full_name: (nome+' '+cogn).trim() } }
+    });
     if (error) throw error;
-    // Inserisci profilo
-    if (data.user) {
-      await db.from('iam_utenti').insert({ id: data.user.id, email, nome, cognome: cogn, ruolo, creato_da: ME.id });
-    }
+    const userId = data.user?.id;
+    if (!userId) throw new Error('Utente non creato correttamente.');
+
+    // Inserisci profilo — usa upsert per evitare duplicati
+    const { error: e2 } = await db.from('iam_utenti').upsert({
+      id: userId, email, nome, cognome: cogn,
+      ruolo, attivo: true, creato_da: ME?.id
+    }, { onConflict: 'id' });
+    if (e2) throw e2;
+
     document.getElementById('nu-overlay')?.remove();
     await renderUtenti();
-    alert(`✓ Utente creato!\nEmail: ${email}\nPassword temporanea: ${pass}\nCondividila in modo sicuro con l'utente.`);
+    alert(`✓ Utente creato!\n\nEmail: ${email}\nPassword: ${pass}\n\nCondividi queste credenziali in modo sicuro.\nL'utente dovrà cambiarle al primo accesso.`);
   } catch(e) {
-    if(err) err.textContent = e.message || 'Errore creazione utente.';
+    if(err) err.textContent = e.message?.includes('already registered')
+      ? 'Email già registrata. Prova con un\'altra email.'
+      : (e.message || 'Errore creazione utente.');
   }
 }
 

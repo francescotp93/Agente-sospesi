@@ -342,9 +342,28 @@ input[type=file]{display:none;}
 </div>
 
 <div class="umenu" id="umenu" style="display:none;">
-  <div class="umenu-name" id="um-name">—</div>
-  <div class="umenu-email" id="um-email">—</div>
-  <button class="umenu-btn" onclick="doLogout()"><i class="ti ti-logout"></i> Esci</button>
+  <div style="padding:12px 12px 10px;border-bottom:.5px solid var(--bord);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="um-av2" style="width:38px;height:38px;border-radius:50%;background:#E8500A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;">F</div>
+      <div>
+        <div class="umenu-name" style="padding:0;margin-bottom:2px;" id="um-name">—</div>
+        <div class="umenu-email" style="padding:0;border:none;margin:0;" id="um-email">—</div>
+        <div id="um-ruolo-badge" style="margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:6px 8px;">
+    <button onclick="goTab('profilo');document.getElementById('umenu').style.display='none';" style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--txt);width:100%;text-align:left;font-family:inherit;">
+      <i class="ti ti-user-circle" style="font-size:16px;color:var(--txt2);"></i> Il mio profilo
+    </button>
+    <button onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" id="um-btn-utenti" style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--txt);width:100%;text-align:left;font-family:inherit;">
+      <i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt2);"></i> Gestione utenti
+    </button>
+    <div style="height:.5px;background:var(--bord);margin:4px 0;"></div>
+    <button class="umenu-btn" onclick="doLogout()" style="width:100%;">
+      <i class="ti ti-logout"></i> Esci dall'account
+    </button>
+  </div>
 </div>
 
 <!-- Settings overlay -->
@@ -2054,14 +2073,24 @@ function applicaPermessi(ruolo) {
 function mostraBadgeRuolo() {
   if (!PROFILO) return;
   const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
+  // Badge nell'header
   const existing = document.getElementById('ruolo-badge');
   if (existing) existing.remove();
   const badge = document.createElement('span');
   badge.id = 'ruolo-badge';
-  badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};margin-right:4px;`;
+  badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};`;
   badge.textContent = r.label;
   const hdrRight = document.querySelector('.hdr-right');
   if (hdrRight) hdrRight.insertBefore(badge, hdrRight.firstChild);
+  // Badge nel menu
+  const umBadge = document.getElementById('um-ruolo-badge');
+  if (umBadge) umBadge.innerHTML = `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>`;
+  // Mostra/nasconde pulsante gestione utenti nel menu
+  const btnUtenti = document.getElementById('um-btn-utenti');
+  if (btnUtenti) btnUtenti.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
+  // Aggiorna avatar nel menu
+  const av2 = document.getElementById('um-av2');
+  if (av2) av2.textContent = (PROFILO.nome||ME?.email||'?')[0].toUpperCase();
 }
 
 // ─── CARICA TRATTATIVE DA SUPABASE ────────────────────────────────────────────

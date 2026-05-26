@@ -387,6 +387,8 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-conto" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Conto</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
+  <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
+  <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
   <button class="nbtn" id="nb-ai" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>AI</span></button>
 </div>
 
@@ -601,6 +603,219 @@ input[type=file]{display:none;}
 <!-- PROFILO PERSONALE -->
 <div class="panel" id="panel-profilo" style="overflow-y:auto;"></div>
 
+<!-- WORK DIARY -->
+<div class="panel" id="panel-workdiary">
+  <div class="ptabs">
+    <button class="ptab act" id="wd-tab-lista" onclick="selWDTab('lista')">Operazioni</button>
+    <button class="ptab" id="wd-tab-cal" onclick="selWDTab('cal')">Calendario</button>
+  </div>
+  <div id="wd-lista">
+    <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
+      <input type="search" id="wd-search" placeholder="Cerca operazione..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderWD()">
+      <button onclick="openWDModal(null)" style="width:36px;height:36px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+    </div>
+    <div style="display:flex;gap:6px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none;">
+      <select id="wd-tipo" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti i tipi</option>
+        <option value="riunione">Riunione</option>
+        <option value="reclutamento">Reclutamento</option>
+        <option value="formazione">Formazione</option>
+        <option value="obiettivo">Obiettivo</option>
+        <option value="altro">Altro</option>
+      </select>
+      <select id="wd-stato" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti</option>
+        <option value="aperto">Aperti</option>
+        <option value="completato">Completati</option>
+      </select>
+    </div>
+    <div class="card"><div id="wd-list"></div></div>
+    <div style="height:16px;"></div>
+  </div>
+  <div id="wd-cal" style="display:none;">
+    <div style="padding:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <button onclick="wdCalPrev()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">‹</button>
+        <div style="font-size:14px;font-weight:700;" id="wd-cal-title"></div>
+        <button onclick="wdCalNext()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">›</button>
+      </div>
+      <div id="wd-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+      <div id="wd-cal-eventi" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WORK DIARY -->
+<div class="modal" id="modal-wd">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="wd-modal-title">Nuova operazione</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="saveWD()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-wd')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Tipo operazione</label>
+          <select id="wd-tipo-m">
+            <option value="riunione">Riunione</option>
+            <option value="reclutamento">Reclutamento</option>
+            <option value="formazione">Formazione</option>
+            <option value="obiettivo">Obiettivo</option>
+            <option value="altro">Altro</option>
+          </select>
+        </div>
+        <div class="fld"><label>Stato</label>
+          <select id="wd-stato-m">
+            <option value="aperto">Aperto</option>
+            <option value="completato">Completato</option>
+          </select>
+        </div>
+        <div class="fld ffull"><label>Titolo</label><input type="text" id="wd-titolo" placeholder="es. Riunione agenti gennaio"></div>
+        <div class="fld"><label>Data</label><input type="date" id="wd-data"></div>
+        <div class="fld"><label>Ora</label><input type="time" id="wd-ora" value="09:00"></div>
+        <div class="fld"><label>Priorità</label>
+          <select id="wd-prior">
+            <option value="normale">Normale</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+        <div class="fld"><label>Condividi con</label>
+          <select id="wd-condividi" multiple style="min-height:80px;">
+          </select>
+        </div>
+      </div>
+      <div class="fld"><label>Descrizione / Note</label><textarea id="wd-note" rows="3" placeholder="Dettagli operazione..."></textarea></div>
+      <div class="fld"><label>Allegato</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="flex:1;padding:9px 12px;background:var(--surf2);border:.5px dashed var(--bord2);border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--txt2);">
+            <i class="ti ti-paperclip" style="font-size:14px;vertical-align:-2px;margin-right:6px;"></i>
+            <span id="wd-file-nome">Seleziona file</span>
+            <input type="file" id="wd-file" style="display:none;" onchange="loadWDFile(this)">
+          </label>
+        </div>
+      </div>
+      <button onclick="addToCalWD()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;justify-content:center;"><i class="ti ti-calendar-plus" style="font-size:15px;"></i> Aggiungi al calendario</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERFORMANCE -->
+<div class="panel" id="panel-performance">
+  <div class="ptabs" id="perf-tabs">
+    <button class="ptab act" id="pt-hdi" onclick="selPerfTab('hdi')">HDI</button>
+    <button class="ptab" id="pt-consap" onclick="selPerfTab('consap')">CONSAP</button>
+    <button class="ptab" id="pt-re" onclick="selPerfTab('re')">Rami El.</button>
+  </div>
+
+  <!-- HDI Overview -->
+  <div id="pp-hdi">
+    <div class="slbl">Performance HDI</div>
+    <div style="padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Obiettivo annuo</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div class="fld"><label>Anno precedente (€)</label><input type="number" id="hdi-prev" placeholder="0" oninput="renderHDI()"></div>
+          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="hdi-obj" placeholder="0" oninput="renderHDI()"></div>
+        </div>
+        <!-- Indicatore gauge -->
+        <div id="hdi-gauge" style="text-align:center;padding:10px 0;"></div>
+      </div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;">Posizioni registrate</div>
+          <button onclick="openHDIPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="hdi-pos-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSAP -->
+  <div id="pp-consap" style="display:none;">
+    <div class="slbl">CONSAP</div>
+    <div style="padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div class="fld"><label>Dato anno precedente (€)</label><input type="number" id="cs-prev" placeholder="0" oninput="renderCONSAP()"></div>
+          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="cs-obj" placeholder="0" oninput="renderCONSAP()"></div>
+        </div>
+        <div id="cs-gauge" style="text-align:center;padding:10px 0;"></div>
+      </div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;">Aggiornamenti posizione</div>
+          <button onclick="openCSPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="cs-pos-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RAMI ELEMENTARI -->
+  <div id="pp-re" style="display:none;">
+    <div class="slbl">Rami Elementari</div>
+    <div style="padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div class="fld"><label>Volume anno precedente (€)</label><input type="number" id="re-prev" placeholder="0" oninput="renderRE()"></div>
+          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="re-obj" placeholder="0" oninput="renderRE()"></div>
+        </div>
+        <div id="re-gauge" style="text-align:center;padding:10px 0;"></div>
+      </div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;">Posizioni RE</div>
+          <button onclick="openREPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="re-pos-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL POSIZIONE HDI/CONSAP/RE -->
+<div class="modal" id="modal-pos">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="pos-title">Nuova posizione</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="savePos()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-pos')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Nominativo</label><input type="text" id="pos-nome" placeholder="Nome cliente"></div>
+        <div class="fld"><label>Data</label><input type="date" id="pos-data"></div>
+        <div class="fld"><label>Importo (€)</label><input type="number" id="pos-importo" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+        <div class="fld"><label>Produttore</label><select id="pos-prod"><option value="">— nessuno —</option></select></div>
+        <div class="fld ffull" id="pos-frz-wrap" style="display:none;">
+          <label>Frazionamento</label>
+          <select id="pos-frz">
+            <option value="1">Annuale (x1)</option>
+            <option value="2">Semestrale (x2)</option>
+            <option value="3">Quadrimestrale (x3)</option>
+            <option value="4">Trimestrale (x4)</option>
+            <option value="12">Mensile (x12)</option>
+          </select>
+        </div>
+        <div class="fld ffull" id="pos-tipo-wrap" style="display:none;">
+          <label>Tipo operazione</label>
+          <select id="pos-tipo-cs">
+            <option value="Riscattato">Riscattato</option>
+            <option value="Nuovo">Nuovo</option>
+            <option value="Aggiornato">Aggiornato</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld"><label>Note</label><textarea id="pos-note" rows="2" placeholder="Note..."></textarea></div>
+    </div>
+  </div>
+</div>
+
 <!-- AI CHAT -->
 <div class="panel" id="panel-ai">
   <div class="chips" style="padding:10px 12px 4px;">
@@ -792,12 +1007,15 @@ function onLogin(user) {
   document.getElementById('um-email').textContent = user.email;
 
   // Carica profilo e applica permessi
-  caricaProfilo(user.id).then(profilo => {
+  caricaProfilo(user.id).then(async profilo => {
     PROFILO = profilo;
     if (PROFILO) {
       applicaPermessi(PROFILO.ruolo);
       mostraBadgeRuolo();
     }
+    // Precarica trattative e agenda in background
+    await loadTrattDB();
+    loadAgendaDB();
     loadLastSession();
   });
 }
@@ -1066,11 +1284,25 @@ function goTab(t) {
   const pp = document.getElementById('panel-'+t);
   if (nb) nb.classList.add('act');
   if (pp) pp.classList.add('act');
-  if (t === 'storico')  buildStorico();
-  if (t === 'team')     renderTeam();
-  if (t === 'pipeline') { loadTrattDB().then(() => renderTratt()); }
-  if (t === 'utenti')   renderUtenti();
-  if (t === 'profilo')  renderPannelloPersonale();
+  if (t === 'storico')     buildStorico();
+  if (t === 'team')        renderTeam();
+  if (t === 'pipeline') {
+    // Mostra subito quello che c'è in PIPE, poi ricarica da DB
+    renderTratt();
+    if (db && ME) {
+      db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
+        .then(({data}) => {
+          if (data?.length) {
+            PIPE = data.map(t=>({...t,id:String(t.id)}));
+            renderTratt();
+          }
+        });
+    }
+  }
+  if (t === 'workdiary')   { loadWD(); renderWD(); }
+  if (t === 'performance') { loadPerf(); renderHDI(); }
+  if (t === 'utenti')      renderUtenti();
+  if (t === 'profilo')     renderPannelloPersonale();
 }
 
 // ─── WIDGET PREFS ─────────────────────────────────────────────────────────────
@@ -2059,9 +2291,9 @@ const RUOLI = {
 
 // Permessi per ruolo
 const PERMESSI = {
-  top_master: { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, ai:true, utenti:true, modifica:true },
-  master:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, ai:true, utenti:true, modifica:false },
-  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, ai:false,utenti:false,modifica:true }
+  top_master: { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
+  master:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
+  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:false,utenti:false,modifica:true }
 };
 
 async function caricaProfilo(userId) {
@@ -2085,17 +2317,19 @@ async function caricaProfilo(userId) {
 }
 
 function applicaPermessi(ruolo) {
-  const perm = PERMESSI[ruolo] || PERMESSI.top_master; // default mostra tutto
+  const perm = PERMESSI[ruolo] || PERMESSI.top_master;
   const tabs = {
-    'nb-carica':    perm.carica,
-    'nb-dashboard': perm.dashboard,
-    'nb-anomalie':  perm.anomalie,
-    'nb-sospesi':   perm.sospesi,
-    'nb-storico':   perm.storico,
-    'nb-conto':     perm.conto,
-    'nb-team':      perm.team,
-    'nb-pipeline':  perm.pipeline,
-    'nb-ai':        perm.ai,
+    'nb-carica':      perm.carica,
+    'nb-dashboard':   perm.dashboard,
+    'nb-anomalie':    perm.anomalie,
+    'nb-sospesi':     perm.sospesi,
+    'nb-storico':     perm.storico,
+    'nb-conto':       perm.conto,
+    'nb-team':        perm.team,
+    'nb-pipeline':    perm.pipeline,
+    'nb-workdiary':   perm.workdiary,
+    'nb-performance': perm.performance,
+    'nb-ai':          perm.ai,
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
     const el = document.getElementById(id);
@@ -2419,11 +2653,291 @@ function openGCal(titolo, data, ora, note) {
   }
 }
 
+// ─── WORK DIARY ───────────────────────────────────────────────────────────────
+let WD = [], WD_ID = null, WD_FILE = null, WD_CAL_DATE = new Date();
+
+function loadWD() { try { WD = JSON.parse(localStorage.getItem('iam_wd')||'[]'); } catch(e){ WD=[]; } }
+function saveWD_store() { localStorage.setItem('iam_wd', JSON.stringify(WD)); }
+
+const WD_TIPI = { riunione:{lbl:'Riunione',ic:'ti-users',c:'var(--blu-txt)',bg:'var(--blu-bg)'}, reclutamento:{lbl:'Reclutamento',ic:'ti-user-plus',c:'var(--grn-txt)',bg:'var(--grn-bg)'}, formazione:{lbl:'Formazione',ic:'ti-school',c:'var(--amb-txt)',bg:'var(--amb-bg)'}, obiettivo:{lbl:'Obiettivo',ic:'ti-target',c:'#E8500A',bg:'rgba(232,80,10,.1)'}, altro:{lbl:'Altro',ic:'ti-note',c:'var(--txt2)',bg:'var(--surf2)'} };
+
+function selWDTab(t) {
+  document.getElementById('wd-lista').style.display = t==='lista'?'block':'none';
+  document.getElementById('wd-cal').style.display   = t==='cal'?'block':'none';
+  document.getElementById('wd-tab-lista').classList.toggle('act', t==='lista');
+  document.getElementById('wd-tab-cal').classList.toggle('act', t==='cal');
+  if (t==='cal') renderWDCal();
+}
+
+function renderWD() {
+  loadWD();
+  const q  = (document.getElementById('wd-search')?.value||'').toLowerCase();
+  const tp = document.getElementById('wd-tipo')?.value||'';
+  const st = document.getElementById('wd-stato')?.value||'';
+  let lista = WD;
+  if (tp) lista = lista.filter(w=>w.tipo===tp);
+  if (st) lista = lista.filter(w=>w.stato===st);
+  if (q)  lista = lista.filter(w=>(w.titolo+w.note).toLowerCase().includes(q));
+  lista.sort((a,b)=>b.data?.localeCompare(a.data||'')||0);
+  document.getElementById('wd-list').innerHTML = lista.length ? lista.map(w => {
+    const tc = WD_TIPI[w.tipo]||WD_TIPI.altro;
+    const sharedWith = (w.condivisi||[]).join(', ');
+    return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:9px;background:${tc.bg};color:${tc.c};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;"><i class="ti ${tc.ic}"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:600;">${w.titolo||'—'}</span>
+            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>
+            ${w.stato==='completato'?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);font-weight:600;">✓ Completato</span>':''}
+            ${w.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':w.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
+          </div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${w.data||''}${w.ora?' · '+w.ora:''}${sharedWith?' · 👥 '+sharedWith:''}</div>
+          ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.note}</div>`:''}
+          ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅</button>
+          <button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️</button>
+          <button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:24px;"><i class="ti ti-notebook" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessuna operazione. Premi + per aggiungerne una.</p></div>';
+}
+
+function openWDModal(id) {
+  loadWD(); loadTeam(); WD_ID = id; WD_FILE = null;
+  const w = id ? WD.find(x=>x.id===id) : null;
+  document.getElementById('wd-modal-title').textContent = w ? w.titolo||'Modifica' : 'Nuova operazione';
+  const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  sv('wd-titolo', w?.titolo); sv('wd-note', w?.note); sv('wd-data', w?.data);
+  sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
+  sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
+  document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
+  // Popola select condivisione
+  const sel = document.getElementById('wd-condividi');
+  if (sel) {
+    sel.innerHTML = TEAM.map(c=>`<option value="${c.nome} ${c.cogn}" ${(w?.condivisi||[]).includes(c.nome+' '+c.cogn)?'selected':''}>${c.nome} ${c.cogn}</option>`).join('');
+  }
+  document.getElementById('modal-wd').classList.add('show');
+}
+
+function loadWDFile(inp) {
+  const file = inp.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => { WD_FILE = {nome:file.name,tipo:file.type,data:e.target.result}; document.getElementById('wd-file-nome').textContent='✓ '+file.name; };
+  r.readAsDataURL(file);
+}
+
+function saveWD() {
+  const gv = id => (document.getElementById(id)?.value||'').trim();
+  const sel = document.getElementById('wd-condividi');
+  const condivisi = sel ? Array.from(sel.selectedOptions).map(o=>o.value) : [];
+  const w = {
+    id: WD_ID||Date.now().toString(), titolo:gv('wd-titolo'), tipo:gv('wd-tipo-m'),
+    stato:gv('wd-stato-m'), prior:gv('wd-prior'), data:gv('wd-data'), ora:gv('wd-ora'),
+    note:gv('wd-note'), condivisi,
+    file_nome: WD_FILE?.nome || (WD_ID ? WD.find(x=>x.id===WD_ID)?.file_nome : null),
+    file_data: WD_FILE?.data || (WD_ID ? WD.find(x=>x.id===WD_ID)?.file_data : null),
+  };
+  if (!w.titolo) { alert('Inserisci un titolo.'); return; }
+  loadWD();
+  if (WD_ID) { const idx=WD.findIndex(x=>x.id===WD_ID); if(idx>=0) WD[idx]=w; else WD.push(w); }
+  else WD.push(w);
+  saveWD_store(); closeModal('modal-wd'); renderWD();
+}
+
+function delWD(id) {
+  if (!confirm('Eliminare questa operazione?')) return;
+  loadWD(); WD=WD.filter(w=>w.id!==id); saveWD_store(); renderWD();
+}
+
+function addToCalWD() {
+  const titolo = document.getElementById('wd-titolo')?.value;
+  const data   = document.getElementById('wd-data')?.value;
+  const ora    = document.getElementById('wd-ora')?.value;
+  const note   = document.getElementById('wd-note')?.value;
+  if (!data) { alert('Imposta prima la data.'); return; }
+  openGCal(titolo||'Operazione IAM', data, ora, note);
+}
+
+function addToCalWDItem(id) {
+  loadWD();
+  const w = WD.find(x=>x.id===id);
+  if (!w?.data) { alert('Nessuna data impostata.'); return; }
+  openGCal(w.titolo||'Operazione IAM', w.data, w.ora, w.note);
+}
+
+// Calendario Work Diary
+function renderWDCal() {
+  loadWD();
+  const y = WD_CAL_DATE.getFullYear();
+  const m = WD_CAL_DATE.getMonth();
+  document.getElementById('wd-cal-title').textContent = WD_CAL_DATE.toLocaleString('it-IT',{month:'long',year:'numeric'});
+  const giorni = ['Lu','Ma','Me','Gi','Ve','Sa','Do'];
+  const primoGiorno = new Date(y,m,1).getDay()||7;
+  const ultimoGiorno = new Date(y,m+1,0).getDate();
+  const eventiMese = WD.filter(w => w.data?.startsWith(`${y}-${String(m+1).padStart(2,'0')}`));
+  let html = giorni.map(g=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--txt3);padding:4px 0;">${g}</div>`).join('');
+  for(let i=1;i<primoGiorno;i++) html+=`<div></div>`;
+  for(let d=1;d<=ultimoGiorno;d++) {
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ev = eventiMese.filter(w=>w.data===ds);
+    const oggi = new Date().toISOString().split('T')[0]===ds;
+    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:6px 2px;border-radius:8px;cursor:pointer;background:${oggi?'#E8500A':ev.length?'rgba(232,80,10,.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};position:relative;font-size:13px;">
+      ${d}${ev.length?`<div style="width:5px;height:5px;border-radius:50%;background:${oggi?'#fff':'#E8500A'};margin:1px auto 0;"></div>`:''}
+    </div>`;
+  }
+  document.getElementById('wd-cal-grid').innerHTML = html;
+  document.getElementById('wd-cal-eventi').innerHTML = '';
+}
+function wdCalPrev() { WD_CAL_DATE.setMonth(WD_CAL_DATE.getMonth()-1); renderWDCal(); }
+function wdCalNext() { WD_CAL_DATE.setMonth(WD_CAL_DATE.getMonth()+1); renderWDCal(); }
+function showWDDay(ds) {
+  loadWD();
+  const ev = WD.filter(w=>w.data===ds);
+  document.getElementById('wd-cal-eventi').innerHTML = ev.length ? `
+    <div style="font-size:12px;font-weight:700;color:var(--txt3);margin-bottom:8px;">${new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long'})}</div>
+    ${ev.map(w=>{ const tc=WD_TIPI[w.tipo]||WD_TIPI.altro; return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;"><i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i><div><div style="font-size:13px;font-weight:600;">${w.titolo}</div><div style="font-size:11px;color:var(--txt2);">${w.ora||''}${(w.condivisi||[]).length?' · 👥 '+(w.condivisi||[]).join(', '):''}</div></div></div>`; }).join('')}` : '';
+}
+
+// ─── PERFORMANCE ──────────────────────────────────────────────────────────────
+let PERF = { hdi:[], cs:[], re:[] };
+let PERF_CUR = 'hdi';
+
+function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||'{"hdi":[],"cs":[],"re":[]}'); } catch(e){ PERF={hdi:[],cs:[],re:[]}; } }
+function savePerf() { localStorage.setItem('iam_perf', JSON.stringify(PERF)); }
+
+function selPerfTab(t) {
+  ['hdi','consap','re'].forEach(x => {
+    document.getElementById('pp-'+x).style.display = x===t||x==='consap'&&t==='consap'?'block':'none';
+    document.getElementById('pt-'+x).classList.toggle('act', x===t);
+  });
+  document.getElementById('pp-hdi').style.display    = t==='hdi'?'block':'none';
+  document.getElementById('pp-consap').style.display  = t==='consap'?'block':'none';
+  document.getElementById('pp-re').style.display      = t==='re'?'block':'none';
+  PERF_CUR = t;
+  if(t==='hdi')    renderHDI();
+  if(t==='consap') renderCONSAP();
+  if(t==='re')     renderRE();
+}
+
+function buildGauge(elId, attuale, obiettivo) {
+  const el = document.getElementById(elId); if(!el) return;
+  const perc = obiettivo > 0 ? Math.min(100, Math.round(attuale/obiettivo*100)) : 0;
+  const color = perc >= 80 ? '#1a8a5a' : perc >= 50 ? '#ba7517' : '#c0392b';
+  const label = perc >= 80 ? '🟢 In target' : perc >= 50 ? '🟡 Attenzione' : '🔴 Sotto target';
+  el.innerHTML = `
+    <div style="font-size:28px;font-weight:800;color:${color};">${perc}%</div>
+    <div style="font-size:12px;color:var(--txt2);margin:4px 0;">${label}</div>
+    <div style="background:var(--surf2);border-radius:6px;height:12px;overflow:hidden;margin:8px 0;max-width:280px;margin:8px auto;">
+      <div style="height:100%;background:${color};border-radius:6px;width:${perc}%;transition:width .6s;"></div>
+    </div>
+    <div style="font-size:12px;color:var(--txt2);">Raggiunto: €${fmt(attuale)} / Obiettivo: €${fmt(obiettivo)}</div>
+    <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Mancano: €${fmt(Math.max(0,obiettivo-attuale))}</div>`;
+}
+
+function renderHDI() {
+  loadPerf();
+  const obj = parseNum(document.getElementById('hdi-obj')?.value||0);
+  const att = PERF.hdi.reduce((a,p)=>a+parseNum(p.importo),0);
+  buildGauge('hdi-gauge', att, obj);
+  document.getElementById('hdi-pos-list').innerHTML = PERF.hdi.length
+    ? PERF.hdi.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+        <div style="flex:1;"><b>${p.nome}</b> · ${p.data} · €${fmt(parseNum(p.importo))}${p.prod?' · '+p.prod:''}</div>
+        <button onclick="delPos('hdi',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+      </div>`).join('')
+    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione registrata</div>';
+}
+
+function renderCONSAP() {
+  loadPerf();
+  const obj = parseNum(document.getElementById('cs-obj')?.value||0);
+  const att = PERF.cs.reduce((a,p)=>a+parseNum(p.importo),0);
+  buildGauge('cs-gauge', att, obj);
+  document.getElementById('cs-pos-list').innerHTML = PERF.cs.length
+    ? PERF.cs.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+        <div style="flex:1;"><b>${p.nome}</b> · ${p.data} · ${p.tipoCS||''} · €${fmt(parseNum(p.importo))}${p.prod?' · '+p.prod:''}</div>
+        <button onclick="delPos('cs',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+      </div>`).join('')
+    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessun aggiornamento</div>';
+}
+
+function renderRE() {
+  loadPerf();
+  const obj = parseNum(document.getElementById('re-obj')?.value||0);
+  const att = PERF.re.reduce((a,p)=>{
+    const frz = parseInt(p.frz)||1;
+    return a + parseNum(p.importo)*frz;
+  },0);
+  buildGauge('re-gauge', att, obj);
+  document.getElementById('re-pos-list').innerHTML = PERF.re.length
+    ? PERF.re.map((p,i)=>{
+        const frz = parseInt(p.frz)||1;
+        const frzLabel = {1:'Annuale',2:'Semestrale',3:'Quadrimestrale',4:'Trimestrale',12:'Mensile'}[frz]||frz+'x';
+        const valPolizza = parseNum(p.importo)*frz;
+        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+          <div style="flex:1;">
+            <b>${p.nome}</b> · ${p.data}<br>
+            €${fmt(parseNum(p.importo))} incassato · ${frzLabel} · Valore polizza: <b>€${fmt(valPolizza)}</b>${p.prod?' · '+p.prod:''}
+          </div>
+          <button onclick="delPos('re',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione RE</div>';
+}
+
+function openHDIPos() { openPosModal('hdi','Nuova posizione HDI', false, false); }
+function openCSPos()  { openPosModal('cs', 'Aggiornamento CONSAP', false, true); }
+function openREPos()  { openPosModal('re', 'Nuova posizione RE',   true,  false); }
+
+function openPosModal(tipo, titolo, showFrz, showTipoCS) {
+  PERF_CUR = tipo;
+  document.getElementById('pos-title').textContent = titolo;
+  ['pos-nome','pos-importo','pos-note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('pos-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('pos-frz-wrap').style.display  = showFrz ?'block':'none';
+  document.getElementById('pos-tipo-wrap').style.display = showTipoCS?'block':'none';
+  loadTeam();
+  const sel = document.getElementById('pos-prod');
+  if(sel) sel.innerHTML = '<option value="">— nessuno —</option>'+TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  document.getElementById('modal-pos').classList.add('show');
+}
+
+function savePos() {
+  const gv = id => (document.getElementById(id)?.value||'').trim();
+  const p = {
+    nome:   gv('pos-nome'), data: gv('pos-data'), importo: gv('pos-importo'),
+    prod:   gv('pos-prod'), note: gv('pos-note'),
+    frz:    gv('pos-frz')  || '1',
+    tipoCS: gv('pos-tipo-cs') || '',
+  };
+  if (!p.nome) { alert('Inserisci il nominativo.'); return; }
+  loadPerf();
+  if (!PERF[PERF_CUR]) PERF[PERF_CUR] = [];
+  PERF[PERF_CUR].push(p);
+  savePerf(); closeModal('modal-pos');
+  if(PERF_CUR==='hdi')    renderHDI();
+  if(PERF_CUR==='cs')     renderCONSAP();
+  if(PERF_CUR==='re')     renderRE();
+}
+
+function delPos(tipo, idx) {
+  if (!confirm('Eliminare questa posizione?')) return;
+  loadPerf();
+  PERF[tipo].splice(idx,1);
+  savePerf();
+  if(tipo==='hdi')  renderHDI();
+  if(tipo==='cs')   renderCONSAP();
+  if(tipo==='re')   renderRE();
+}
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('i-data').value = new Date().toISOString().split('T')[0];
   initDB();
-  loadTeam(); loadPipe();
+  loadTeam(); loadPipe(); loadWD(); loadPerf();
   ['hdi','pluri'].forEach(t => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });

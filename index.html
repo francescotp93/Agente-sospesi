@@ -1908,22 +1908,40 @@ async function loadTeamDB() {
 async function saveTeamDB(c) {
   if (!db) { saveTeam(); return; }
   try {
-    // Salva senza docs base64 su Supabase (troppo pesanti)
-    // I docs rimangono in localStorage
-    const { docs, ...cSenzaDocs } = c;
-    await db.from('iam_team').upsert({
-      ...cSenzaDocs,
-      docs:         {}, // docs salvati solo in locale
-      creato_da:    ME?.id,
+    const payload = {
+      id:           c.id,
+      nome:         c.nome     || null,
+      cogn:         c.cogn     || null,
+      email:        c.email    || null,
+      tel:          c.tel      || null,
+      ind:          c.ind      || null,
+      cf:           c.cf       || null,
+      ddn:          c.ddn      || null,
+      rui:          c.rui      || null,
+      tipo:         c.tipo     || 'Subagente',
+      piva:         c.piva     || null,
+      iban1:        c.iban1    || null,
+      iban2:        c.iban2    || null,
+      port:         c.port     ? parseNum(c.port) : null,
+      note:         c.note     || null,
+      dinizio:      c.dinizio  || null,
+      rami:         c.rami     || {},
+      anni:         c.anni     || [],
+      provv:        c.provv    || [],
+      docs:         {},
+      creato_da:    ME?.id     || null,
       aggiornato_il: new Date().toISOString(),
-    });
-    // Salva anche in locale con i docs
+    };
+    const { error } = await db.from('iam_team').upsert(payload);
+    if (error) throw error;
+    // Aggiorna cache locale con docs
     loadTeam();
     const idx = TEAM.findIndex(x=>x.id===c.id);
-    if (idx>=0) TEAM[idx]=c; else TEAM.push(c);
+    if (idx>=0) TEAM[idx]={...payload, docs:c.docs}; else TEAM.push({...payload, docs:c.docs});
     saveTeam();
   } catch(e) {
-    console.warn('saveTeamDB error:', e);
+    console.error('saveTeamDB error:', e);
+    alert('Errore salvataggio collaboratore: ' + e.message);
     // Fallback locale
     loadTeam();
     const idx = TEAM.findIndex(x=>x.id===c.id);

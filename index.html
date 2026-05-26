@@ -1299,7 +1299,7 @@ function goTab(t) {
         });
     }
   }
-  if (t === 'workdiary')   { loadWD(); renderWD(); }
+  if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'utenti')      renderUtenti();
   if (t === 'profilo')     renderPannelloPersonale();
@@ -2653,13 +2653,71 @@ function openGCal(titolo, data, ora, note) {
   }
 }
 
-// ─── WORK DIARY ───────────────────────────────────────────────────────────────
+// ─── WORK DIARY (Supabase) ────────────────────────────────────────────────────
 let WD = [], WD_ID = null, WD_FILE = null, WD_CAL_DATE = new Date();
 
 function loadWD() { try { WD = JSON.parse(localStorage.getItem('iam_wd')||'[]'); } catch(e){ WD=[]; } }
 function saveWD_store() { localStorage.setItem('iam_wd', JSON.stringify(WD)); }
 
-const WD_TIPI = { riunione:{lbl:'Riunione',ic:'ti-users',c:'var(--blu-txt)',bg:'var(--blu-bg)'}, reclutamento:{lbl:'Reclutamento',ic:'ti-user-plus',c:'var(--grn-txt)',bg:'var(--grn-bg)'}, formazione:{lbl:'Formazione',ic:'ti-school',c:'var(--amb-txt)',bg:'var(--amb-bg)'}, obiettivo:{lbl:'Obiettivo',ic:'ti-target',c:'#E8500A',bg:'rgba(232,80,10,.1)'}, altro:{lbl:'Altro',ic:'ti-note',c:'var(--txt2)',bg:'var(--surf2)'} };
+async function loadWD_DB() {
+  if (!db || !ME) { loadWD(); return; }
+  try {
+    const { data, error } = await db.from('iam_workdiary')
+      .select('*').order('data', { ascending: false });
+    if (error) throw error;
+    if (data) {
+      WD = data.map(w => ({
+        id:         String(w.id),
+        titolo:     w.titolo     || '',
+        tipo:       w.tipo       || 'altro',
+        stato:      w.stato      || 'aperto',
+        prior:      w.prior      || 'normale',
+        data:       w.data       || '',
+        ora:        w.ora        || '09:00',
+        note:       w.note       || '',
+        condivisi:  w.condivisi_con || [],
+        file_nome:  w.file_nome  || '',
+        file_data:  w.file_data  || '',
+        utente_id:  w.utente_id  || '',
+      }));
+      saveWD_store(); // cache locale
+    }
+  } catch(e) { console.warn('loadWD_DB error:', e); loadWD(); }
+}
+
+async function saveWD_DB(w) {
+  if (!db || !ME) { saveWD_store(); return; }
+  try {
+    await db.from('iam_workdiary').upsert({
+      id:            w.id,
+      utente_id:     ME.id,
+      titolo:        w.titolo,
+      tipo:          w.tipo,
+      stato:         w.stato,
+      prior:         w.prior,
+      data:          w.data || null,
+      ora:           w.ora,
+      note:          w.note,
+      condivisi_con: w.condivisi || [],
+      file_nome:     w.file_nome || null,
+      file_data:     w.file_data || null,
+      aggiornato_il: new Date().toISOString(),
+    });
+  } catch(e) { console.warn('saveWD_DB error:', e); }
+}
+
+async function delWD_DB(id) {
+  if (!db) return;
+  try { await db.from('iam_workdiary').delete().eq('id', id); } catch(e) { console.warn(e); }
+}
+
+const WD_TIPI = {
+  riunione:     {lbl:'Riunione',     ic:'ti-users',     c:'var(--blu-txt)', bg:'var(--blu-bg)'},
+  reclutamento: {lbl:'Reclutamento', ic:'ti-user-plus',  c:'var(--grn-txt)', bg:'var(--grn-bg)'},
+  formazione:   {lbl:'Formazione',   ic:'ti-school',     c:'var(--amb-txt)', bg:'var(--amb-bg)'},
+  obiettivo:    {lbl:'Obiettivo',    ic:'ti-target',     c:'#E8500A',        bg:'rgba(232,80,10,.1)'},
+  altro:        {lbl:'Altro',        ic:'ti-note',       c:'var(--txt2)',    bg:'var(--surf2)'}
+};
 
 function selWDTab(t) {
   document.getElementById('wd-lista').style.display = t==='lista'?'block':'none';
@@ -2670,7 +2728,6 @@ function selWDTab(t) {
 }
 
 function renderWD() {
-  loadWD();
   const q  = (document.getElementById('wd-search')?.value||'').toLowerCase();
   const tp = document.getElementById('wd-tipo')?.value||'';
   const st = document.getElementById('wd-stato')?.value||'';
@@ -2678,10 +2735,12 @@ function renderWD() {
   if (tp) lista = lista.filter(w=>w.tipo===tp);
   if (st) lista = lista.filter(w=>w.stato===st);
   if (q)  lista = lista.filter(w=>(w.titolo+w.note).toLowerCase().includes(q));
-  lista.sort((a,b)=>b.data?.localeCompare(a.data||'')||0);
+  lista = lista.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+
   document.getElementById('wd-list').innerHTML = lista.length ? lista.map(w => {
     const tc = WD_TIPI[w.tipo]||WD_TIPI.altro;
-    const sharedWith = (w.condivisi||[]).join(', ');
+    const isMine = !w.utente_id || w.utente_id === ME?.id;
+    const sharedWith = (w.condivisi||[]).filter(Boolean).join(', ');
     return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);">
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <div style="width:34px;height:34px;border-radius:9px;background:${tc.bg};color:${tc.c};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;"><i class="ti ${tc.ic}"></i></div>
@@ -2691,15 +2750,17 @@ function renderWD() {
             <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>
             ${w.stato==='completato'?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);font-weight:600;">✓ Completato</span>':''}
             ${w.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':w.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
+            ${!isMine?'<span style="font-size:10px;color:var(--txt3);">📩 condiviso</span>':''}
           </div>
-          <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${w.data||''}${w.ora?' · '+w.ora:''}${sharedWith?' · 👥 '+sharedWith:''}</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${w.data||''}${w.ora?' · '+w.ora:''}</div>
+          ${sharedWith?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">👥 ${sharedWith}</div>`:''}
           ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${w.note}</div>`:''}
-          ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
+          ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
           <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅</button>
-          <button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️</button>
-          <button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+          ${isMine?`<button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️</button>
+          <button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>`:''}
         </div>
       </div>
     </div>`;
@@ -2715,10 +2776,14 @@ function openWDModal(id) {
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
-  // Popola select condivisione
+  // Popola select condivisione con UUID degli utenti (per Supabase) ma mostra nomi leggibili
   const sel = document.getElementById('wd-condividi');
   if (sel) {
-    sel.innerHTML = TEAM.map(c=>`<option value="${c.nome} ${c.cogn}" ${(w?.condivisi||[]).includes(c.nome+' '+c.cogn)?'selected':''}>${c.nome} ${c.cogn}</option>`).join('');
+    sel.innerHTML = TEAM.map(c => {
+      const nome = c.nome+' '+c.cogn;
+      const sel_ = (w?.condivisi||[]).includes(nome) ? 'selected' : '';
+      return `<option value="${nome}" ${sel_}>${nome}</option>`;
+    }).join('');
   }
   document.getElementById('modal-wd').classList.add('show');
 }
@@ -2730,27 +2795,38 @@ function loadWDFile(inp) {
   r.readAsDataURL(file);
 }
 
+function openWDFile(id) {
+  const w = WD.find(x=>x.id===id);
+  if (!w?.file_data) { alert('File non disponibile.'); return; }
+  const a = document.createElement('a');
+  a.href=w.file_data; a.download=w.file_nome||'file';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
 function saveWD() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
   const sel = document.getElementById('wd-condividi');
   const condivisi = sel ? Array.from(sel.selectedOptions).map(o=>o.value) : [];
+  const existing = WD_ID ? WD.find(x=>x.id===WD_ID) : null;
   const w = {
-    id: WD_ID||Date.now().toString(), titolo:gv('wd-titolo'), tipo:gv('wd-tipo-m'),
-    stato:gv('wd-stato-m'), prior:gv('wd-prior'), data:gv('wd-data'), ora:gv('wd-ora'),
-    note:gv('wd-note'), condivisi,
-    file_nome: WD_FILE?.nome || (WD_ID ? WD.find(x=>x.id===WD_ID)?.file_nome : null),
-    file_data: WD_FILE?.data || (WD_ID ? WD.find(x=>x.id===WD_ID)?.file_data : null),
+    id:        WD_ID||Date.now().toString(),
+    titolo:    gv('wd-titolo'), tipo:  gv('wd-tipo-m'),
+    stato:     gv('wd-stato-m'), prior: gv('wd-prior'),
+    data:      gv('wd-data'), ora: gv('wd-ora'), note: gv('wd-note'),
+    condivisi,
+    file_nome: WD_FILE?.nome  || existing?.file_nome || '',
+    file_data: WD_FILE?.data  || existing?.file_data || '',
   };
   if (!w.titolo) { alert('Inserisci un titolo.'); return; }
-  loadWD();
-  if (WD_ID) { const idx=WD.findIndex(x=>x.id===WD_ID); if(idx>=0) WD[idx]=w; else WD.push(w); }
-  else WD.push(w);
-  saveWD_store(); closeModal('modal-wd'); renderWD();
+  saveWD_DB(w).then(() => {
+    loadWD_DB().then(() => { renderWD(); if(document.getElementById('wd-cal').style.display!=='none') renderWDCal(); });
+  });
+  closeModal('modal-wd');
 }
 
 function delWD(id) {
   if (!confirm('Eliminare questa operazione?')) return;
-  loadWD(); WD=WD.filter(w=>w.id!==id); saveWD_store(); renderWD();
+  delWD_DB(id).then(() => loadWD_DB().then(renderWD));
 }
 
 function addToCalWD() {
@@ -2763,7 +2839,6 @@ function addToCalWD() {
 }
 
 function addToCalWDItem(id) {
-  loadWD();
   const w = WD.find(x=>x.id===id);
   if (!w?.data) { alert('Nessuna data impostata.'); return; }
   openGCal(w.titolo||'Operazione IAM', w.data, w.ora, w.note);
@@ -2771,12 +2846,11 @@ function addToCalWDItem(id) {
 
 // Calendario Work Diary
 function renderWDCal() {
-  loadWD();
   const y = WD_CAL_DATE.getFullYear();
   const m = WD_CAL_DATE.getMonth();
   document.getElementById('wd-cal-title').textContent = WD_CAL_DATE.toLocaleString('it-IT',{month:'long',year:'numeric'});
   const giorni = ['Lu','Ma','Me','Gi','Ve','Sa','Do'];
-  const primoGiorno = new Date(y,m,1).getDay()||7;
+  const primoGiorno = (new Date(y,m,1).getDay()||7);
   const ultimoGiorno = new Date(y,m+1,0).getDate();
   const eventiMese = WD.filter(w => w.data?.startsWith(`${y}-${String(m+1).padStart(2,'0')}`));
   let html = giorni.map(g=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--txt3);padding:4px 0;">${g}</div>`).join('');
@@ -2785,22 +2859,31 @@ function renderWDCal() {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ev = eventiMese.filter(w=>w.data===ds);
     const oggi = new Date().toISOString().split('T')[0]===ds;
-    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:6px 2px;border-radius:8px;cursor:pointer;background:${oggi?'#E8500A':ev.length?'rgba(232,80,10,.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};position:relative;font-size:13px;">
+    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:5px 2px;border-radius:8px;cursor:pointer;background:${oggi?'#E8500A':ev.length?'rgba(232,80,10,.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};font-size:13px;">
       ${d}${ev.length?`<div style="width:5px;height:5px;border-radius:50%;background:${oggi?'#fff':'#E8500A'};margin:1px auto 0;"></div>`:''}
     </div>`;
   }
   document.getElementById('wd-cal-grid').innerHTML = html;
   document.getElementById('wd-cal-eventi').innerHTML = '';
 }
-function wdCalPrev() { WD_CAL_DATE.setMonth(WD_CAL_DATE.getMonth()-1); renderWDCal(); }
-function wdCalNext() { WD_CAL_DATE.setMonth(WD_CAL_DATE.getMonth()+1); renderWDCal(); }
+
+function wdCalPrev() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()-1, 1); renderWDCal(); }
+function wdCalNext() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()+1, 1); renderWDCal(); }
+
 function showWDDay(ds) {
-  loadWD();
   const ev = WD.filter(w=>w.data===ds);
   document.getElementById('wd-cal-eventi').innerHTML = ev.length ? `
     <div style="font-size:12px;font-weight:700;color:var(--txt3);margin-bottom:8px;">${new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long'})}</div>
-    ${ev.map(w=>{ const tc=WD_TIPI[w.tipo]||WD_TIPI.altro; return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;"><i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i><div><div style="font-size:13px;font-weight:600;">${w.titolo}</div><div style="font-size:11px;color:var(--txt2);">${w.ora||''}${(w.condivisi||[]).length?' · 👥 '+(w.condivisi||[]).join(', '):''}</div></div></div>`; }).join('')}` : '';
+    ${ev.map(w=>{
+      const tc=WD_TIPI[w.tipo]||WD_TIPI.altro;
+      return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;" onclick="openWDModal('${w.id}')">
+        <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
+        <div><div style="font-size:13px;font-weight:600;">${w.titolo}</div>
+        <div style="font-size:11px;color:var(--txt2);">${w.ora||''}${(w.condivisi||[]).length?' · 👥 '+(w.condivisi||[]).join(', '):''}</div></div>
+      </div>`;
+    }).join('')}` : `<div style="font-size:12px;color:var(--txt3);padding:8px 0;">${new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long'})} — Nessun evento</div>`;
 }
+
 
 // ─── PERFORMANCE ──────────────────────────────────────────────────────────────
 let PERF = { hdi:[], cs:[], re:[] };

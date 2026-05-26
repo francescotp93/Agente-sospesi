@@ -3131,21 +3131,20 @@ async function salvaModificaStorico(dataRif) {
     }).eq('data_riferimento', dataRif);
     document.getElementById('st-edit-overlay')?.remove();
 
-    // Se stiamo modificando la sessione corrente, aggiorna anche i campi input
-    const dataCorrente = document.getElementById('i-data')?.value;
-    if (dataRif === dataCorrente) {
-      const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
-      setVal('i-cassa', cassa);
-      setVal('i-vers', vers);
-      setVal('i-spese', spese);
-      setVal('i-note', note);
-      // Ricostruisce dashboard e anomalie con i nuovi dati
-      buildDashboard();
-      buildAnomalie();
-      updatePill();
-    }
+    // Aggiorna sempre i campi input con i nuovi valori
+    const setVal = (id, val) => { const el=document.getElementById(id); if(el) el.value=val; };
+    setVal('i-cassa', cassa);
+    setVal('i-vers', vers);
+    setVal('i-spese', spese);
+    setVal('i-note', note);
+    setVal('i-data', dataRif);
+
+    // Ricostruisce tutto con i nuovi dati
+    buildDashboard();
+    buildAnomalie();
+    updatePill();
     buildStorico();
-    showSavemsg('✅ Sessione aggiornata');
+    showSavemsg('✅ Sessione del ' + new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT') + ' aggiornata');
   } catch(e) { if(err) err.textContent='Errore: '+e.message; }
 }
 

@@ -1667,7 +1667,9 @@ function renderSospesi() {
     document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"#E8500A"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
     chart.style.display="block";
   } else { if(chart) chart.style.display="none"; }
-  document.getElementById("s-list").innerHTML=sosp.length?sosp.map(s=>rowSosp(s,s.gg>60?"red":s.gg>=30?"amb":"blu")).join(""):"<div class="empty" style="padding:20px;"><p>Nessun risultato</p></div>";
+  document.getElementById('s-list').innerHTML = sosp.length
+    ? sosp.map(s=>rowSosp(s, s.gg>60?'red':s.gg>=30?'amb':'blu')).join('')
+    : '<div class="empty" style="padding:20px;"><p>Nessun risultato</p></div>';
 }
 
 function rowSosp(s, c) {

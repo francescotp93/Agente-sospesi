@@ -1098,9 +1098,10 @@ function onLogin(user) {
       }
       if (pendenti.length) localStorage.removeItem('iam_utenti_pendenti');
     } catch(e) {}
-    // Precarica trattative e agenda in background
+    // Precarica trattative, agenda e team in background
     await loadTrattDB();
     loadAgendaDB();
+    loadTeamDB();
     loadLastSession();
   });
 }
@@ -1370,7 +1371,7 @@ function goTab(t) {
   if (nb) nb.classList.add('act');
   if (pp) pp.classList.add('act');
   if (t === 'storico')     buildStorico();
-  if (t === 'team')        renderTeam();
+  if (t === 'team')        { loadTeamDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
     // Mostra subito quello che c'è in PIPE, poi ricarica da DB
     renderTratt();
@@ -1866,6 +1867,79 @@ let TEAM_DOCS = {};
 function loadTeam() { try { TEAM = JSON.parse(localStorage.getItem('iam_team')||'[]'); } catch(e){ TEAM=[]; } }
 function saveTeam() { localStorage.setItem('iam_team', JSON.stringify(TEAM)); }
 
+async function loadTeamDB() {
+  if (!db) { loadTeam(); return; }
+  try {
+    const { data, error } = await db.from('iam_team').select('*').order('cogn', { ascending: true });
+    if (error) throw error;
+    if (data && data.length > 0) {
+      TEAM = data.map(c => ({
+        id:       c.id,
+        nome:     c.nome     || '',
+        cogn:     c.cogn     || '',
+        email:    c.email    || '',
+        tel:      c.tel      || '',
+        ind:      c.ind      || '',
+        cf:       c.cf       || '',
+        ddn:      c.ddn      || '',
+        rui:      c.rui      || '',
+        tipo:     c.tipo     || 'Subagente',
+        piva:     c.piva     || '',
+        iban1:    c.iban1    || '',
+        iban2:    c.iban2    || '',
+        port:     c.port     || '',
+        note:     c.note     || '',
+        dinizio:  c.dinizio  || '',
+        rami:     c.rami     || {},
+        anni:     c.anni     || [],
+        provv:    c.provv    || [],
+        docs:     c.docs     || {},
+      }));
+      saveTeam(); // cache locale
+    } else {
+      loadTeam(); // fallback localStorage
+    }
+  } catch(e) {
+    console.warn('loadTeamDB error:', e);
+    loadTeam();
+  }
+}
+
+async function saveTeamDB(c) {
+  if (!db) { saveTeam(); return; }
+  try {
+    // Salva senza docs base64 su Supabase (troppo pesanti)
+    // I docs rimangono in localStorage
+    const { docs, ...cSenzaDocs } = c;
+    await db.from('iam_team').upsert({
+      ...cSenzaDocs,
+      docs:         {}, // docs salvati solo in locale
+      creato_da:    ME?.id,
+      aggiornato_il: new Date().toISOString(),
+    });
+    // Salva anche in locale con i docs
+    loadTeam();
+    const idx = TEAM.findIndex(x=>x.id===c.id);
+    if (idx>=0) TEAM[idx]=c; else TEAM.push(c);
+    saveTeam();
+  } catch(e) {
+    console.warn('saveTeamDB error:', e);
+    // Fallback locale
+    loadTeam();
+    const idx = TEAM.findIndex(x=>x.id===c.id);
+    if (idx>=0) TEAM[idx]=c; else TEAM.push(c);
+    saveTeam();
+  }
+}
+
+async function delTeamDB(id) {
+  if (!db) { loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); return; }
+  try {
+    await db.from('iam_team').delete().eq('id', id);
+    loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam();
+  } catch(e) { console.warn('delTeamDB error:', e); }
+}
+
 function calcPerf(c) {
   let s = 0;
   const port = parseNum(c.port)||0;
@@ -2046,9 +2120,10 @@ function saveCollab() {
   const c = {
     id: TEAM_ID || Date.now().toString(),
     nome: gv('mc-nome'), cogn: gv('mc-cogn'), email: gv('mc-email'), tel: gv('mc-tel'),
-    ind: gv('mc-ind'), cf: gv('mc-cf'), ddn: gv('mc-ddn'), rui: gv('mc-rui'),
+    ind: gv('mc-ind'), cf: gv('mc-cf'), ddn: gv('mc-ddn')||null, rui: gv('mc-rui'),
     tipo: gv('mc-tipo')||'Subagente', piva: gv('mc-piva'), iban1: gv('mc-iban1'),
-    iban2: gv('mc-iban2'), port: gv('mc-port'), note: gv('mc-note'), dinizio: gv('mc-dinizio'),
+    iban2: gv('mc-iban2'), port: parseNum(gv('mc-port'))||null, note: gv('mc-note'),
+    dinizio: gv('mc-dinizio')||null,
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
     provv: TEAM_PROVV.map(p=>({...p})),
@@ -2056,12 +2131,14 @@ function saveCollab() {
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
   loadTeam();
-  // Merge documenti
+  // Merge documenti (restano in locale)
   if (TEAM_ID) { const ex = TEAM.find(x=>x.id===TEAM_ID); if(ex?.docs) c.docs={...ex.docs}; }
   Object.entries(TEAM_DOCS).forEach(([k,v])=>{ c.docs[k]=v; });
-  if (TEAM_ID) { const idx=TEAM.findIndex(x=>x.id===TEAM_ID); if(idx>=0) TEAM[idx]=c; else TEAM.push(c); }
-  else TEAM.push(c);
-  saveTeam(); closeCollabModal(); renderTeam();
+  closeCollabModal();
+  // Salva su Supabase e aggiorna lista
+  saveTeamDB(c).then(() => {
+    loadTeamDB().then(() => renderTeam());
+  });
 }
 
 function addAnno() {

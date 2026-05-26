@@ -1101,8 +1101,29 @@ function onLogin(user) {
     // Precarica trattative, agenda e team in background
     // Carica direttamente senza aspettare PROFILO
     if (db) {
-      db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
-        .then(({data}) => { if(data?.length){ PIPE=data.map(t=>({...t,id:String(t.id)})); savePipe(); }});
+      // Carica trattative: proprie + assegnate a me
+      // TOP master e master vedono tutto
+      const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
+      let trattQ = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
+      if (!isAdmin) {
+        // Operativo: vede le proprie e quelle dove collab corrisponde al suo nome
+        const nomeUtente = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
+        // Carica tutto e filtra lato client (più semplice con la struttura attuale)
+      }
+      trattQ.then(({data}) => {
+        if (data?.length) {
+          let lista = data;
+          if (!isAdmin && ME) {
+            const nomeMe = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
+            lista = data.filter(t =>
+              t.utente_id === ME.id ||                    // mia
+              (nomeMe && t.collab === nomeMe)             // assegnata a me
+            );
+          }
+          PIPE = lista.map(t=>({...t, id:String(t.id)}));
+          savePipe();
+        }
+      });
       db.from('iam_team').select('*').order('cogn',{ascending:true})
         .then(({data}) => { if(data?.length){ TEAM=data.map(c=>({...c})); saveTeam(); }});
     }
@@ -1380,11 +1401,17 @@ function goTab(t) {
   if (t === 'pipeline') {
     renderTratt();
     if (db) {
+      const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
       db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
         .then(({data, error}) => {
           if (error) { console.warn('pipeline load:', error.message); return; }
           if (data?.length) {
-            PIPE = data.map(t=>({...t, id:String(t.id)}));
+            let lista = data;
+            if (!isAdmin && ME) {
+              const nomeMe = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
+              lista = data.filter(t => t.utente_id === ME.id || (nomeMe && t.collab === nomeMe));
+            }
+            PIPE = lista.map(t=>({...t, id:String(t.id)}));
             savePipe();
             renderTratt();
           }
@@ -2477,13 +2504,14 @@ async function sendMsg() {
     const key = window.GROQ_API_KEY||'';
     const hdrs = {'Content-Type':'application/json'};
     if (key) hdrs['Authorization'] = 'Bearer '+key;
+    const isOperativo = PROFILO?.ruolo === 'operativo';
     const ctx = buildCtx();
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST', headers:hdrs,
       body:JSON.stringify({
         model:'llama-3.3-70b-versatile', max_tokens:1000,
         messages:[
-          {role:'system', content:`Sei l'assistente AI dell'app IAM - Insurance Agency Management per un'agenzia di assicurazioni italiana. Rispondi in italiano, in modo professionale e conciso. Usa € per gli importi. Dati dell'agenzia: ${ctx}`},
+          {role:'system', content:`Sei l'assistente AI dell'app IAM - Insurance Agency Management. Rispondi in italiano, in modo professionale e conciso. Usa € per gli importi. ${isOperativo ? 'Stai parlando con un operatore che può vedere sospesi, team e le proprie trattative.' : 'Stai parlando con un utente con accesso completo.'} Dati disponibili: ${ctx}`},
           {role:'user', content:txt}
         ]
       })
@@ -2500,20 +2528,26 @@ async function sendMsg() {
 }
 
 function buildCtx() {
+  const isOperativo = PROFILO?.ruolo === 'operativo';
+  // Operativo vede solo sospesi, team e pipeline proprie
   const sosp = APP.sospesi.filter(s=>s.importo>=0);
-  return JSON.stringify({
-    totale_sospesi: sosp.length,
-    valore_totale:  sosp.reduce((a,s)=>a+s.importo,0).toFixed(2),
-    sospesi_oltre60: sosp.filter(s=>s.gg>60).length,
-    sospesi_30_60:   sosp.filter(s=>s.gg>=30&&s.gg<=60).length,
-    incassi: APP.incassi.length,
-    valore_incassato: APP.incassi.reduce((a,i)=>a+i.importo,0).toFixed(2),
-    contanti: parseNum(g('i-cassa')),
-    versamenti: parseNum(g('i-vers')),
-    spese: parseNum(g('i-spese')),
-    anomalie: APP.anomalie.map(a=>({tipo:a.tipo,titolo:a.titolo})),
-    top5_anziani: sosp.sort((a,b)=>b.gg-a.gg).slice(0,5).map(s=>({nome:s.nominativo,importo:s.importo,gg:s.gg,comp:s.compagnia}))
-  });
+  const ctx = {
+    ruolo: PROFILO?.ruolo || 'operativo',
+    nome_utente: PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '',
+  };
+  // Sospesi — operativo vede tutto (filtrabile per produttore)
+  ctx.sospesi = { totale: sosp.length, valore: sosp.reduce((a,s)=>a+s.importo,0).toFixed(2), oltre60: sosp.filter(s=>s.gg>60).length };
+  // Pipeline — solo le proprie per operativo
+  ctx.trattative = { totale: PIPE.length, pipeline_valore: PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0).toFixed(2), chiuse: PIPE.filter(t=>t.status==='chiusa').length };
+  // Team — visibile a tutti
+  ctx.team = { totale: TEAM.length };
+  // Cassa — solo per chi ha accesso
+  if (!isOperativo) {
+    ctx.cassa = { contanti: parseNum(g('i-cassa')), versamenti: parseNum(g('i-vers')), spese: parseNum(g('i-spese')) };
+    ctx.incassi = APP.incassi.length;
+    ctx.anomalie = APP.anomalie.map(a=>({tipo:a.tipo,titolo:a.titolo}));
+  }
+  return JSON.stringify(ctx);
 }
 
 let MID = 0;
@@ -2570,7 +2604,7 @@ const RUOLI = {
 const PERMESSI = {
   top_master: { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
   master:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
-  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:false,utenti:false,modifica:true }
+  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
 
 async function caricaProfilo(userId) {

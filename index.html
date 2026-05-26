@@ -2074,16 +2074,20 @@ function renderTeam() {
           ${c.iban1?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">IBAN Provvigioni</div><div style="font-weight:500;font-size:11px;word-break:break-all;">${c.iban1}</div></div>`:''}
           ${c.iban2?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">IBAN Conto separato</div><div style="font-weight:500;font-size:11px;word-break:break-all;">${c.iban2}</div></div>`:''}
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);">Provvigioni</div>
+          <button onclick="openCollabModal('${c.id}');setTimeout(()=>selCollabTab('fat'),100)" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
         ${(c.provv||[]).length?`
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;">Provvigioni</div>
-          ${c.provv.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:${p.speciale?'rgba(232,80,10,.08)':'var(--surf2)'};border-radius:6px;margin-bottom:4px;border:.5px solid ${p.speciale?'rgba(232,80,10,.3)':'transparent'};">
+          ${c.provv.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:${p.speciale?'rgba(232,80,10,.08)':'var(--surf2)'};border-radius:8px;margin-bottom:4px;border:.5px solid ${p.speciale?'rgba(232,80,10,.3)':'var(--bord)'};">
             <div>
               <span style="font-size:12px;font-weight:600;">${p.prodotto}</span>
               ${p.speciale?'<span style="font-size:10px;color:#E8500A;margin-left:6px;font-weight:700;">★ Speciale</span>':''}
               ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${p.note}</div>`:''}
             </div>
-            <span style="font-size:14px;font-weight:700;color:${p.speciale?'#E8500A':'var(--txt)'};">${p.perc}%</span>
-          </div>`).join('')}`:''}
+            <span style="font-size:15px;font-weight:800;color:${p.speciale?'#E8500A':'var(--txt)'};">${p.perc}%</span>
+          </div>`).join('')}`
+        :`<div style="color:var(--txt3);font-size:12px;padding:8px 0;text-align:center;">Nessuna provvigione inserita</div>`}
       </div>
 
       <!-- TAB: Documenti -->
@@ -2329,10 +2333,18 @@ function selPTab(t) {
 function renderTratt() {
   loadPipe(); loadTeam();
   const selC = document.getElementById('tr-collab');
-  if (selC) {
+  if (selC && db) {
     const curC = selC.value;
-    selC.innerHTML = '<option value="">Tutti i collab.</option>'+TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
-    if (curC) selC.value = curC;
+    db.from('iam_utenti').select('id,nome,cognome').eq('attivo', true)
+      .then(({data}) => {
+        if (data) {
+          selC.innerHTML = '<option value="">Tutti i collab.</option>' +
+            data.map(u => {
+              const nome = ((u.nome||'')+' '+(u.cognome||'')).trim();
+              return `<option value="${nome}" ${curC===nome?'selected':''}>${nome}</option>`;
+            }).join('');
+        }
+      });
   }
   const q       = (document.getElementById('tr-search')?.value||'').toLowerCase();
   const ft      = document.getElementById('tr-filt')?.value||'';
@@ -2405,8 +2417,26 @@ function openTrattModal(id) {
     ['mt-cliente','mt-prodotto','mt-importo','mt-recall','mt-note'].forEach(id=>sv(id,''));
     sv('mt-status','prospect'); sv('mt-prob','30'); sv('mt-prior','normale');
   }
+  // Popola select con utenti IAM registrati
   const sel = document.getElementById('mt-collab');
-  if (sel) { sel.innerHTML = '<option value="">— nessuno —</option>'+TEAM.map(c=>`<option value="${c.nome} ${c.cogn}" ${t?.collab===c.nome+' '+c.cogn?'selected':''}>${c.nome} ${c.cogn}</option>`).join(''); if(t) sel.value=t.collab||''; }
+  if (sel && db) {
+    sel.innerHTML = '<option value="">— nessuno —</option>';
+    db.from('iam_utenti').select('id,nome,cognome,email').eq('attivo', true)
+      .then(({data}) => {
+        if (data) {
+          data.forEach(u => {
+            const nome = ((u.nome||'')+' '+(u.cognome||'')).trim() || u.email;
+            const opt = document.createElement('option');
+            opt.value = nome;
+            opt.textContent = nome;
+            if (t?.collab === nome) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        }
+      });
+  } else if (sel) {
+    sel.innerHTML = '<option value="">— nessuno —</option>';
+  }
   document.getElementById('modal-tratt').classList.add('show');
 }
 

@@ -1099,9 +1099,14 @@ function onLogin(user) {
       if (pendenti.length) localStorage.removeItem('iam_utenti_pendenti');
     } catch(e) {}
     // Precarica trattative, agenda e team in background
-    await loadTrattDB();
+    // Carica direttamente senza aspettare PROFILO
+    if (db) {
+      db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
+        .then(({data}) => { if(data?.length){ PIPE=data.map(t=>({...t,id:String(t.id)})); savePipe(); }});
+      db.from('iam_team').select('*').order('cogn',{ascending:true})
+        .then(({data}) => { if(data?.length){ TEAM=data.map(c=>({...c})); saveTeam(); }});
+    }
     loadAgendaDB();
-    loadTeamDB();
     loadLastSession();
   });
 }
@@ -1373,13 +1378,14 @@ function goTab(t) {
   if (t === 'storico')     buildStorico();
   if (t === 'team')        { loadTeamDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
-    // Mostra subito quello che c'è in PIPE, poi ricarica da DB
     renderTratt();
-    if (db && ME) {
+    if (db) {
       db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
-        .then(({data}) => {
+        .then(({data, error}) => {
+          if (error) { console.warn('pipeline load:', error.message); return; }
           if (data?.length) {
-            PIPE = data.map(t=>({...t,id:String(t.id)}));
+            PIPE = data.map(t=>({...t, id:String(t.id)}));
+            savePipe();
             renderTratt();
           }
         });

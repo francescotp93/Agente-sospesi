@@ -941,24 +941,55 @@ async function saveSession(sospesi, incassi, dati) {
 }
 
 async function loadLastSession() {
-  if (!db) return;
+  if (!db) { goTab('carica'); return; }
   try {
     const { data } = await db.from('sessioni_giornaliere')
       .select('*').order('data_riferimento', { ascending: false }).limit(1);
     if (!data || !data.length) { goTab('carica'); return; }
     const s = data[0];
-    APP.sospesi = JSON.parse(s.sospesi_json || '[]');
-    APP.incassi = JSON.parse(s.incassi_json || '[]');
-    document.getElementById('i-data').value  = s.data_riferimento || '';
-    document.getElementById('i-cassa').value = s.contanti  || 0;
-    document.getElementById('i-vers').value  = s.versamenti || 0;
-    document.getElementById('i-spese').value = s.spese     || 0;
-    document.getElementById('i-note').value  = s.note      || '';
-    showSavemsg('📂 Ultima sessione: ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT'));
-    buildDashboard(); buildAnomalie(); buildSospesi(); buildStorico();
+
+    // Parse sospesi con validazione
+    try { APP.sospesi = JSON.parse(s.sospesi_json || '[]'); } catch(e) { APP.sospesi = []; }
+    try { APP.incassi = JSON.parse(s.incassi_json || '[]'); } catch(e) { APP.incassi = []; }
+
+    // Imposta valori nei campi input
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
+    setVal('i-data',  s.data_riferimento);
+    setVal('i-cassa', s.contanti   || 0);
+    setVal('i-vers',  s.versamenti || 0);
+    setVal('i-spese', s.spese      || 0);
+    setVal('i-note',  s.note       || '');
+
+    // Assicura che i sospesi abbiano la struttura corretta
+    APP.sospesi = APP.sospesi.map(s => ({
+      nominativo: s.nominativo || '',
+      polizza:    s.polizza    || '',
+      targa:      s.targa      || '',
+      importo:    parseNum(s.importo),
+      compagnia:  s.compagnia  || '',
+      produttore: s.produttore || '',
+      prog:       String(s.prog || ''),
+      gg:         parseInt(s.gg) || 0,
+    }));
+
+    showSavemsg('📂 Sessione del ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT'));
+
+    // Aspetta un tick prima di costruire UI
+    await new Promise(r => setTimeout(r, 50));
+
+    buildDashboard();
+    buildAnomalie();
+    buildSospesi();
     updatePill();
+    APP.loaded = true;
     goTab('dashboard');
-  } catch(e) { goTab('carica'); }
+    // Storico in background
+    setTimeout(() => buildStorico(), 500);
+
+  } catch(e) {
+    console.warn('loadLastSession error:', e);
+    goTab('carica');
+  }
 }
 
 async function loadStorico() {

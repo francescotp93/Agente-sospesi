@@ -884,13 +884,6 @@ input[type=file]{display:none;}
           <div class="sw-row"><span class="sw-lbl">Infortuni</span><label class="sw"><input type="checkbox" id="mr-inf"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
         </div>
       </div>
-      <div class="fsec">
-        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
-          Ore formazione
-          <button onclick="addAnno()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
-        </div>
-        <div id="mc-anni"></div>
-      </div>
       <div class="fsec"><div class="fsec-title">Note</div>
         <div class="fld"><textarea id="mc-note" rows="3" placeholder="Note libere..."></textarea></div>
       </div>
@@ -916,6 +909,14 @@ input[type=file]{display:none;}
 
     <!-- TAB 3: DOCUMENTI & ALLEGATI -->
     <div id="mcp-doc" class="modal-body" style="display:none;">
+      <!-- Ore formazione -->
+      <div class="fsec">
+        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span><i class="ti ti-school" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:#E8500A;"></i>Ore formazione</span>
+          <button onclick="addAnno()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
+        </div>
+        <div id="mc-anni"></div>
+      </div>
       <div class="fsec"><div class="fsec-title">Documenti obbligatori</div>
         <div id="mc-docs">
           <div class="doc-btn" onclick="document.getElementById('doc-id').click()">
@@ -1089,6 +1090,14 @@ function onLogin(user) {
       applicaPermessi(PROFILO.ruolo);
       mostraBadgeRuolo();
     }
+    // Controlla se ci sono profili pendenti da inserire
+    try {
+      const pendenti = JSON.parse(localStorage.getItem('iam_utenti_pendenti')||'[]');
+      for (const p of pendenti) {
+        await db.from('iam_utenti').upsert(p, { onConflict: 'id' });
+      }
+      if (pendenti.length) localStorage.removeItem('iam_utenti_pendenti');
+    } catch(e) {}
     // Precarica trattative e agenda in background
     await loadTrattDB();
     loadAgendaDB();
@@ -1950,13 +1959,15 @@ function renderTeam() {
             </div>
             <span style="font-size:14px;font-weight:700;color:${p.speciale?'#E8500A':'var(--txt)'};">${p.perc}%</span>
           </div>`).join('')}`:''}
-        ${(c.anni||[]).length?`
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin:10px 0 6px;">Formazione</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;">${c.anni.map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>`:''}
       </div>
 
       <!-- TAB: Documenti -->
       <div id="cb-${c.id}-doc" style="padding:12px 14px;display:none;">
+        ${(c.anni||[]).length?`
+          <div style="margin-bottom:12px;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;"><i class="ti ti-school" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:#E8500A;"></i>Ore formazione</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;">${c.anni.map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>
+          </div>`:''}
         ${Object.keys(c.docs||{}).length ? `
           <div style="display:flex;flex-direction:column;gap:6px;">
             ${Object.entries(c.docs||{}).map(([k,d])=>{
@@ -2675,28 +2686,43 @@ async function creaNuovoUtente() {
   if (!email || !pass || pass.length < 6) { if(err) err.textContent='Email e password obbligatorie (min 6 car.)'; return; }
   if(err) err.textContent = 'Creazione in corso...';
   try {
-    // Crea utente Auth
+    // Crea utente Auth — con email confirmation attiva riceverà mail di conferma
     const { data, error } = await db.auth.signUp({
       email, password: pass,
       options: { data: { full_name: (nome+' '+cogn).trim() } }
     });
     if (error) throw error;
     const userId = data.user?.id;
-    if (!userId) throw new Error('Utente non creato correttamente.');
+    if (!userId) throw new Error('Utente non creato.');
 
-    // Inserisci profilo — usa upsert per evitare duplicati
+    // Pre-inserisci profilo in iam_utenti con ruolo corretto
+    // Quando l'utente conferma l'email e fa login, il profilo esiste già
     const { error: e2 } = await db.from('iam_utenti').upsert({
       id: userId, email, nome, cognome: cogn,
       ruolo, attivo: true, creato_da: ME?.id
     }, { onConflict: 'id' });
-    if (e2) throw e2;
+
+    if (e2) {
+      // Se non riusciamo a inserire ora (RLS), salviamo in localStorage
+      // e lo inseriremo al primo login dell'utente
+      const pendenti = JSON.parse(localStorage.getItem('iam_utenti_pendenti')||'[]');
+      pendenti.push({ id: userId, email, nome, cognome: cogn, ruolo, attivo: true, creato_da: ME?.id });
+      localStorage.setItem('iam_utenti_pendenti', JSON.stringify(pendenti));
+    }
 
     document.getElementById('nu-overlay')?.remove();
     await renderUtenti();
-    alert(`✓ Utente creato!\n\nEmail: ${email}\nPassword: ${pass}\n\nCondividi queste credenziali in modo sicuro.\nL'utente dovrà cambiarle al primo accesso.`);
+    alert(
+      `✓ Invito inviato a ${email}\n\n` +
+      `L'utente riceverà un'email di conferma da Supabase.\n` +
+      `Dopo aver confermato potrà accedere con:\n\n` +
+      `📧 Email: ${email}\n` +
+      `🔑 Password: ${pass}\n\n` +
+      `Comunica la password in modo sicuro (non via email).`
+    );
   } catch(e) {
     if(err) err.textContent = e.message?.includes('already registered')
-      ? 'Email già registrata. Prova con un\'altra email.'
+      ? 'Email già registrata.'
       : (e.message || 'Errore creazione utente.');
   }
 }

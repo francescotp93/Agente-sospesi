@@ -1872,11 +1872,13 @@ function renderTeam() {
   loadTeam();
   const q = (document.getElementById('tm-search')?.value||'').toLowerCase();
   let lista = TEAM;
-  if (q) lista = TEAM.filter(c=>(c.nome+' '+c.cogn).toLowerCase().includes(q)||
-    Object.entries(c.rami||{}).some(([k,v])=>v&&k.toLowerCase().includes(q)));
+  if (q) lista = TEAM.filter(c =>
+    (c.nome+' '+c.cogn).toLowerCase().includes(q) ||
+    Object.entries(c.rami||{}).some(([k,v])=>v&&k.toLowerCase().includes(q))
+  );
   document.getElementById('tm-count').textContent = TEAM.length;
   document.getElementById('tm-empty').style.display = lista.length?'none':'block';
-  document.getElementById('tm-list').innerHTML = lista.map(c=>{
+  document.getElementById('tm-list').innerHTML = lista.map(c => {
     const perf = calcPerf(c);
     const plbl = perf>=70?'Alto':perf>=40?'Medio':'Base';
     const pcls = perf>=70?'palt':perf>=40?'pmed':'pbas';
@@ -1886,36 +1888,112 @@ function renderTeam() {
     if(c.rami?.vita) rami.push('<span class="rc rc-vita">Vita</span>');
     if(c.rami?.re)   rami.push('<span class="rc rc-re">Rami El.</span>');
     if(c.rami?.cau)  rami.push('<span class="rc rc-cau">Cauzioni</span>');
-    return `<div class="coll-card">
-      <div class="coll-hdr" onclick="toggleCC('cc${c.id}')">
-        <div class="coll-av">${ini}</div>
-        <div class="coll-info">
-          <div class="coll-nome">${c.nome} ${c.cogn}</div>
-          <div class="rami-row">${rami.join('')}</div>
-          <div class="perf-bar"><div class="perf-fill" style="width:${perf}%"></div></div>
+    if(c.rami?.inf)  rami.push('<span class="rc rc-re">Infortuni</span>');
+
+    return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;">
+
+      <!-- Header scheda -->
+      <div style="background:linear-gradient(135deg,#1E1E1C 0%,#2a2a28 100%);padding:16px;display:flex;align-items:center;gap:12px;">
+        <div style="width:52px;height:52px;border-radius:50%;background:#E8500A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;border:2px solid rgba(255,255,255,.2);">${ini}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:16px;font-weight:700;color:#fff;">${c.nome||''} ${c.cogn||''}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">${c.tipo||'Subagente'}${c.rui?' · RUI '+c.rui:''}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${rami.join('')}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           <span class="pbadge ${pcls}">${plbl} ${perf}%</span>
-          <button onclick="event.stopPropagation();openCollabModal('${c.id}')" style="font-size:11px;padding:3px 9px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;color:var(--txt2);">Modifica</button>
+          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;">✏️ Modifica</button>
         </div>
       </div>
-      <div class="coll-body" id="cc${c.id}">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;padding-top:8px;">
-          ${c.rui?`<div><span style="color:var(--txt3)">RUI</span><br><b>${c.rui}</b></div>`:''}
-          ${c.port?`<div><span style="color:var(--txt3)">Portafoglio</span><br><b>€ ${fmt(parseNum(c.port))}</b></div>`:''}
-          ${c.email?`<div><span style="color:var(--txt3)">Email</span><br><b>${c.email}</b></div>`:''}
-          ${c.tel?`<div><span style="color:var(--txt3)">Tel.</span><br><b>${c.tel}</b></div>`:''}
-          ${c.iban1?`<div style="grid-column:1/-1"><span style="color:var(--txt3)">IBAN Prov.</span><br><b style="font-size:11px;">${c.iban1}</b></div>`:''}
-        </div>
-        ${c.note?`<div style="background:var(--surf2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--txt2);margin-top:8px;">${c.note}</div>`:''}
-        ${(c.anni||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${(c.anni||[]).map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>`:''}
-        ${Object.keys(c.docs||{}).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">${Object.entries(c.docs||{}).map(([k,d])=>`<button onclick="viewDoc('${c.id}','${k}')" style="font-size:11px;padding:3px 9px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;">👁 ${d.nome||k}</button>`).join('')}</div>`:''}
+
+      <!-- Barra performance -->
+      <div style="height:4px;background:rgba(0,0,0,.1);">
+        <div style="height:100%;background:${perf>=70?'var(--grn)':perf>=40?'var(--amb)':'var(--red)'};width:${perf}%;transition:width .6s;"></div>
       </div>
+
+      <!-- Tab interne scheda -->
+      <div style="display:flex;border-bottom:.5px solid var(--bord);">
+        <button onclick="selCardTab('${c.id}','dati')" id="ct-${c.id}-dati" style="flex:1;padding:8px 6px;font-size:11px;font-weight:600;border:none;background:none;color:#E8500A;border-bottom:2px solid #E8500A;cursor:pointer;font-family:inherit;">Dati utente</button>
+        <button onclick="selCardTab('${c.id}','int')" id="ct-${c.id}-int" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Dati intermediario</button>
+        <button onclick="selCardTab('${c.id}','doc')" id="ct-${c.id}-doc" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Documenti</button>
+      </div>
+
+      <!-- TAB: Dati utente -->
+      <div id="cb-${c.id}-dati" style="padding:12px 14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+          ${c.email?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Email</div><div style="font-weight:500;">${c.email}</div></div>`:''}
+          ${c.tel?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Telefono</div><div style="font-weight:500;">${c.tel}</div></div>`:''}
+          ${c.cf?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Codice fiscale</div><div style="font-weight:500;">${c.cf}</div></div>`:''}
+          ${c.ddn?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Data di nascita</div><div style="font-weight:500;">${c.ddn}</div></div>`:''}
+          ${c.ind?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Indirizzo</div><div style="font-weight:500;">${c.ind}</div></div>`:''}
+          ${c.dinizio?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Data inizio</div><div style="font-weight:500;">${c.dinizio}</div></div>`:''}
+        </div>
+        ${c.note?`<div style="background:var(--surf2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--txt2);margin-top:10px;"><i class="ti ti-notes" style="font-size:12px;vertical-align:-1px;margin-right:4px;"></i>${c.note}</div>`:''}
+      </div>
+
+      <!-- TAB: Dati intermediario -->
+      <div id="cb-${c.id}-int" style="padding:12px 14px;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;margin-bottom:10px;">
+          ${c.rui?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">N. RUI</div><div style="font-weight:600;color:#E8500A;">${c.rui}</div></div>`:''}
+          ${c.port?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Portafoglio</div><div style="font-weight:600;">€ ${fmt(parseNum(c.port))}</div></div>`:''}
+          ${c.piva?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">P.IVA / Ragione sociale</div><div style="font-weight:500;">${c.piva}</div></div>`:''}
+          ${c.iban1?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">IBAN Provvigioni</div><div style="font-weight:500;font-size:11px;word-break:break-all;">${c.iban1}</div></div>`:''}
+          ${c.iban2?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">IBAN Conto separato</div><div style="font-weight:500;font-size:11px;word-break:break-all;">${c.iban2}</div></div>`:''}
+        </div>
+        ${(c.provv||[]).length?`
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;">Provvigioni</div>
+          ${c.provv.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:${p.speciale?'rgba(232,80,10,.08)':'var(--surf2)'};border-radius:6px;margin-bottom:4px;border:.5px solid ${p.speciale?'rgba(232,80,10,.3)':'transparent'};">
+            <div>
+              <span style="font-size:12px;font-weight:600;">${p.prodotto}</span>
+              ${p.speciale?'<span style="font-size:10px;color:#E8500A;margin-left:6px;font-weight:700;">★ Speciale</span>':''}
+              ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${p.note}</div>`:''}
+            </div>
+            <span style="font-size:14px;font-weight:700;color:${p.speciale?'#E8500A':'var(--txt)'};">${p.perc}%</span>
+          </div>`).join('')}`:''}
+        ${(c.anni||[]).length?`
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin:10px 0 6px;">Formazione</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${c.anni.map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>`:''}
+      </div>
+
+      <!-- TAB: Documenti -->
+      <div id="cb-${c.id}-doc" style="padding:12px 14px;display:none;">
+        ${Object.keys(c.docs||{}).length ? `
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            ${Object.entries(c.docs||{}).map(([k,d])=>{
+              const docNomi = {id:"Doc. identità",ts:"Tessera sanitaria",vis:"Visura camerale",priv:"Privacy",dip:"Diploma",cas:"Casellario",cs:"Conto separato",mand:"Mandato",tabp:"Tab. provvigionale",altri:"Allegato"};
+              return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surf2);border-radius:var(--rs);">
+                <i class="ti ti-file-check" style="font-size:15px;color:var(--grn);flex-shrink:0;"></i>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:600;">${docNomi[k]||k}</div>
+                  <div style="font-size:11px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.nome||''}</div>
+                </div>
+                <button onclick="viewDoc('${c.id}','${k}')" style="font-size:11px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:5px;cursor:pointer;">Apri</button>
+              </div>`;
+            }).join('')}
+          </div>` :
+          '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:16px 0;"><i class="ti ti-files" style="font-size:24px;display:block;margin-bottom:6px;opacity:.3;"></i>Nessun documento caricato</div>'
+        }
+        <button onclick="openCollabModal('${c.id}');selCollabTab('doc')" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:10px;padding:9px;background:var(--surf2);border:.5px dashed var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;">
+          <i class="ti ti-upload" style="font-size:14px;"></i> Carica documenti
+        </button>
+      </div>
+
     </div>`;
   }).join('');
 }
 
-function toggleCC(id) { document.getElementById(id)?.classList.toggle('open'); }
+function selCardTab(collabId, tab) {
+  ['dati','int','doc'].forEach(t => {
+    const btn = document.getElementById(`ct-${collabId}-${t}`);
+    const body = document.getElementById(`cb-${collabId}-${t}`);
+    if (btn) {
+      btn.style.color = t===tab ? '#E8500A' : 'var(--txt3)';
+      btn.style.borderBottomColor = t===tab ? '#E8500A' : 'transparent';
+      btn.style.fontWeight = t===tab ? '600' : '500';
+    }
+    if (body) body.style.display = t===tab ? 'block' : 'none';
+  });
+}
 
 function openCollabModal(id) {
   loadTeam();
@@ -1931,8 +2009,8 @@ function openCollabModal(id) {
     if(document.getElementById('mc-tipo')) document.getElementById('mc-tipo').value=c.tipo||'Subagente';
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=!!(c.rami?.[r]); });
     TEAM_ANNI = (c.anni||[]).map(a=>({...a,files:[...(a.files||[])]}));
-    // Ripristina doc labels
-    ['id','ts','vis','priv','altri'].forEach(k=>{
+    // Ripristina doc labels — tutti i tipi inclusi i nuovi
+    ['id','ts','vis','priv','altri','dip','cas','cs','mand','tabp'].forEach(k=>{
       const el = document.getElementById('docn-'+k); if(el) el.innerHTML='';
       if(c.docs?.[k]) setDocLabel(k, c.docs[k].nome);
     });
@@ -1967,7 +2045,7 @@ function saveCollab() {
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
   loadTeam();
-  // Merge docs
+  // Merge documenti
   if (TEAM_ID) { const ex = TEAM.find(x=>x.id===TEAM_ID); if(ex?.docs) c.docs={...ex.docs}; }
   Object.entries(TEAM_DOCS).forEach(([k,v])=>{ c.docs[k]=v; });
   if (TEAM_ID) { const idx=TEAM.findIndex(x=>x.id===TEAM_ID); if(idx>=0) TEAM[idx]=c; else TEAM.push(c); }

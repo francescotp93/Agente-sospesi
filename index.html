@@ -359,6 +359,7 @@ input[type=file]{display:none;}
   </div>
   <button class="umenu-item" onclick="goTab('profilo');document.getElementById('umenu').style.display='none';"><i class="ti ti-user-circle" style="font-size:16px;color:var(--txt3);"></i> Il mio profilo</button>
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
+  <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
   <div style="height:.5px;background:var(--bord);margin:4px 0;"></div>
   <button class="umenu-item danger" onclick="doLogout()"><i class="ti ti-logout" style="font-size:16px;"></i> Esci dall'account</button>
 </div>
@@ -382,12 +383,23 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
-  <button class="nbtn" id="nb-ai" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>AI</span></button>
-  <button class="nbtn" id="nb-azienda" onclick="goTab('azienda')"><i class="ti ti-building"></i><span>Azienda</span></button>
+
   <button class="nbtn" onclick="window.open('https://withus.assieasy.com/assieasy/','_blank')" style="color:var(--blu-txt);">
     <i class="ti ti-external-link"></i><span>Assieasy</span>
   </button>
 </div>
+
+<!-- ── AI FAB (bottone flottante) ── -->
+<button id="ai-fab" onclick="toggleAIPanel()" aria-label="Assistente AI"
+  style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;
+    width:52px;height:52px;border-radius:50%;
+    background:linear-gradient(135deg,#E8500A,#c44008);
+    color:#fff;border:none;cursor:pointer;z-index:300;
+    box-shadow:0 4px 20px rgba(232,80,10,.45);
+    display:none;align-items:center;justify-content:center;
+    transition:transform .2s,box-shadow .2s;font-size:22px;">
+  <i class="ti ti-message-circle"></i>
+</button>
 
 <div class="panels">
 
@@ -1413,6 +1425,20 @@ document.addEventListener('click', e => {
     document.getElementById('umenu').style.display = 'none';
 });
 
+function toggleAIPanel() {
+  const cur = sessionStorage.getItem('iam_last_tab');
+  if (cur === 'ai') {
+    // Torna al tab precedente
+    const prev = sessionStorage.getItem('iam_prev_tab') || 'dashboard';
+    goTab(prev);
+  } else {
+    sessionStorage.setItem('iam_prev_tab', cur || 'dashboard');
+    goTab('ai');
+    const fab = document.getElementById('ai-fab');
+    if (fab) fab.style.display = 'none';
+  }
+}
+
 // ─── SUPABASE DATA ─────────────────────────────────────────────────────────────
 async function saveSession(sospesi, incassi, dati) {
   if (!db) return;
@@ -1486,6 +1512,9 @@ async function loadLastSession() {
     APP.loaded = true;
     // Vai a dashboard solo al primo login fresco, non su ogni ricarica pagina
     const lastTab = sessionStorage.getItem('iam_last_tab');
+    // Mostra FAB AI
+    const fab = document.getElementById('ai-fab');
+    if (fab && lastTab !== 'ai') fab.style.display = 'flex';
     if (!lastTab) {
       goTab('dashboard');
     } else {
@@ -1651,6 +1680,9 @@ function goTab(t) {
     }
   }
   sessionStorage.setItem('iam_last_tab', t);
+  // Mostra/nascondi FAB AI: visibile su tutti i tab tranne AI stesso
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = t === 'ai' ? 'none' : 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'azienda')     { loadAzienda(); }
@@ -3134,7 +3166,7 @@ function applicaPermessi(ruolo) {
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
-    'nb-ai':          perm.ai,
+    'nb-ai':          false, // AI spostato su FAB flottante
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
     const el = document.getElementById(id);

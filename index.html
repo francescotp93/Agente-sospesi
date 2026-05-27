@@ -387,6 +387,7 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
   <button class="nbtn" id="nb-ai" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>AI</span></button>
+  <button class="nbtn" id="nb-azienda" onclick="goTab('azienda')"><i class="ti ti-building"></i><span>Azienda</span></button>
   <button class="nbtn" onclick="window.open('https://withus.assieasy.com/assieasy/','_blank')" style="color:var(--blu-txt);">
     <i class="ti ti-external-link"></i><span>Assieasy</span>
   </button>
@@ -431,7 +432,12 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-dashboard">
   <div id="d-empty" class="empty" style="margin-top:50px;"><i class="ti ti-chart-bar"></i><p>Carica i file per vedere la dashboard</p></div>
   <div id="d-content" style="display:none;">
-    <div class="slbl">Riepilogo</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;">
+      <div class="slbl" style="padding:0;">Riepilogo</div>
+      <button onclick="apriGiacenza()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(232,80,10,.3);">
+        <i class="ti ti-wallet" style="font-size:14px;"></i> Giacenza contanti
+      </button>
+    </div>
     <div class="mgrid" id="d-metrics"></div>
     <div class="slbl">Distribuzione per tipo sospeso</div>
     <div class="card"><div class="plist" id="d-tipo" style="padding-top:12px;"></div></div>
@@ -812,6 +818,90 @@ input[type=file]{display:none;}
         </div>
       </div>
       <div class="fld"><label>Note</label><textarea id="pos-note" rows="2" placeholder="Note..."></textarea></div>
+    </div>
+  </div>
+</div>
+
+<!-- AZIENDA -->
+<div class="panel" id="panel-azienda">
+  <div class="ptabs" id="az-tabs">
+    <button class="ptab act" id="azt-dati" onclick="selAzTab('dati')">Dati azienda</button>
+    <button class="ptab" id="azt-doc" onclick="selAzTab('doc')">Documenti</button>
+  </div>
+
+  <!-- TAB DATI -->
+  <div id="azp-dati">
+    <div class="modal-body" style="padding:16px;">
+      <div class="fsec"><div class="fsec-title">Dati generali</div>
+        <div class="fgrid">
+          <div class="fld ffull"><label>Ragione sociale</label><input type="text" id="az-rs" placeholder="Nome azienda S.r.l."></div>
+          <div class="fld"><label>P.IVA</label><input type="text" id="az-piva" placeholder="IT00000000000"></div>
+          <div class="fld"><label>Codice fiscale</label><input type="text" id="az-cf" placeholder="00000000000"></div>
+          <div class="fld ffull"><label>Sede legale</label><input type="text" id="az-sede" placeholder="Via, numero, città, CAP"></div>
+          <div class="fld"><label>Email</label><input type="email" id="az-email"></div>
+          <div class="fld"><label>Telefono</label><input type="tel" id="az-tel"></div>
+          <div class="fld"><label>PEC</label><input type="email" id="az-pec" placeholder="pec@domain.it"></div>
+          <div class="fld"><label>SDI / Codice destinatario</label><input type="text" id="az-sdi" placeholder="XXXXXXX"></div>
+        </div>
+      </div>
+      <div class="fsec"><div class="fsec-title">Dati bancari</div>
+        <div class="fgrid">
+          <div class="fld ffull"><label>IBAN principale</label><input type="text" id="az-iban1" placeholder="IT60 X054..."></div>
+          <div class="fld ffull"><label>IBAN secondario</label><input type="text" id="az-iban2" placeholder="IT60 X054..."></div>
+          <div class="fld"><label>Banca</label><input type="text" id="az-banca" placeholder="Nome banca"></div>
+          <div class="fld"><label>BIC/SWIFT</label><input type="text" id="az-bic" placeholder="XXXXXXXX"></div>
+        </div>
+      </div>
+      <div class="fsec"><div class="fsec-title">Utenze e contratti</div>
+        <div class="fgrid">
+          <div class="fld"><label>Canone affitto (€/mese)</label><input type="number" id="az-affitto" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>Scadenza contratto affitto</label><input type="date" id="az-sc-affitto"></div>
+          <div class="fld ffull"><label>Note utenze / contratti</label><textarea id="az-note-utenze" rows="2" placeholder="Luce, gas, internet, telefono..."></textarea></div>
+        </div>
+      </div>
+      <div class="fsec"><div class="fsec-title">Note generali</div>
+        <div class="fld"><textarea id="az-note" rows="3" placeholder="Note libere sull'azienda..."></textarea></div>
+      </div>
+      <button onclick="salvaAzienda()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 4px 16px rgba(232,80,10,.3);">
+        <i class="ti ti-device-floppy" style="font-size:18px;"></i> Salva dati azienda
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB DOCUMENTI -->
+  <div id="azp-doc" style="display:none;">
+    <div style="padding:12px 16px;">
+      <!-- Sezioni documenti -->
+      <div id="az-sezioni"></div>
+      <button onclick="aggiungiSezioneAz()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:var(--surf2);border:1.5px dashed var(--bord2);border-radius:var(--r);font-size:13px;color:var(--txt2);cursor:pointer;font-family:inherit;margin-top:10px;">
+        <i class="ti ti-folder-plus" style="font-size:16px;"></i> Aggiungi sezione documenti
+      </button>
+      <div style="height:80px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GIACENZA -->
+<div id="giacenza-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:flex-end;">
+  <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -4px 32px rgba(0,0,0,.15);">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px;">💰 Giacenza contanti</div>
+    <div style="font-size:12px;color:var(--txt3);margin-bottom:16px;">Aggiorna il totale contanti in giacenza al momento</div>
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:13px;color:var(--txt2);">Cassa progressiva attuale</span>
+      <span style="font-size:16px;font-weight:700;color:var(--grn);" id="giac-attuale">€0,00</span>
+    </div>
+    <div class="fld" style="margin-bottom:12px;">
+      <label>Contanti fisici contati (€)</label>
+      <input type="number" id="giac-importo" placeholder="0.00" step="0.01" inputmode="decimal" style="font-size:18px;font-weight:700;text-align:center;">
+    </div>
+    <div class="fld" style="margin-bottom:16px;">
+      <label>Note (opzionale)</label>
+      <input type="text" id="giac-note" placeholder="es. conteggio fisico cassa ore 18:00">
+    </div>
+    <div id="giac-diff" style="padding:10px 14px;border-radius:var(--rs);margin-bottom:14px;display:none;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="salvaGiacenza()" style="flex:1;padding:14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Aggiorna giacenza</button>
+      <button onclick="document.getElementById('giacenza-overlay').style.display='none'" style="padding:14px 18px;background:var(--surf2);color:var(--txt);border:1px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
     </div>
   </div>
 </div>
@@ -1418,7 +1508,7 @@ function goTab(t) {
   }
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
-  if (t === 'utenti')      renderUtenti();
+  if (t === 'azienda')     { loadAzienda(); }
   if (t === 'profilo')     renderPannelloPersonale();
 }
 
@@ -3497,7 +3587,186 @@ function showWDDay(ds) {
 }
 
 
-// ─── PERFORMANCE ──────────────────────────────────────────────────────────────
+// ─── GIACENZA CONTANTI ────────────────────────────────────────────────────────
+function apriGiacenza() {
+  const el = document.getElementById('giacenza-overlay');
+  el.style.display = 'flex';
+  document.getElementById('giac-attuale').textContent = '€' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo||0);
+  document.getElementById('giac-importo').value = '';
+  document.getElementById('giac-note').value = '';
+  document.getElementById('giac-diff').style.display = 'none';
+  // Mostra differenza in tempo reale
+  document.getElementById('giac-importo').oninput = function() {
+    const val = parseNum(this.value);
+    const diff = val - (APP.saldoCumulativo||0);
+    const el = document.getElementById('giac-diff');
+    if (this.value) {
+      el.style.display = 'block';
+      el.style.background = Math.abs(diff) < 0.01 ? 'var(--grn-bg)' : diff > 0 ? 'var(--amb-bg)' : 'var(--red-bg)';
+      el.style.color = Math.abs(diff) < 0.01 ? 'var(--grn-txt)' : diff > 0 ? 'var(--amb-txt)' : 'var(--red-txt)';
+      el.textContent = Math.abs(diff) < 0.01 ? '✓ La cassa quadra perfettamente' :
+        (diff > 0 ? `↑ Eccedenza: +€${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(diff)}` :
+                    `↓ Ammanсo: -€${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(Math.abs(diff))}`);
+    } else { el.style.display = 'none'; }
+  };
+}
+
+async function salvaGiacenza() {
+  const importo = parseNum(document.getElementById('giac-importo')?.value||0);
+  const note    = document.getElementById('giac-note')?.value.trim()||'';
+  const diff    = importo - (APP.saldoCumulativo||0);
+  const dataOggi = new Date().toISOString().split('T')[0];
+
+  // Salva come rettifica nella sessione di oggi
+  try {
+    if (db) {
+      // Cerca se esiste una sessione per oggi
+      const { data } = await db.from('sessioni_giornaliere')
+        .select('contanti,versamenti,spese').eq('data_riferimento', dataOggi).single();
+
+      if (data) {
+        // Aggiusta i contanti della sessione di oggi per far quadrare il totale
+        const nuovaCassa = parseNum(data.contanti) + diff;
+        await db.from('sessioni_giornaliere').update({
+          contanti: Math.max(0, nuovaCassa),
+          note: note ? (data.note ? data.note + ' | ' + note : note) : data.note,
+          aggiornato_il: new Date().toISOString()
+        }).eq('data_riferimento', dataOggi);
+      } else {
+        // Crea nuova sessione con la giacenza
+        await db.from('sessioni_giornaliere').insert({
+          data_riferimento: dataOggi,
+          contanti: importo, versamenti: 0, spese: 0, note,
+          sospesi_json: JSON.stringify(APP.sospesi),
+          totale_sospesi: APP.sospesi.length,
+          valore_totale: APP.sospesi.reduce((a,s)=>a+s.importo,0),
+        });
+      }
+    }
+    // Aggiorna saldo in memoria
+    APP.saldoCumulativo = (APP.saldoCumulativo||0) + diff;
+    // Aggiorna campo cassa
+    const cassaEl = document.getElementById('i-cassa');
+    if (cassaEl) cassaEl.value = parseNum(cassaEl.value) + diff;
+    document.getElementById('giacenza-overlay').style.display = 'none';
+    buildDashboard();
+    showSavemsg('✅ Giacenza aggiornata: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo));
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+// ─── AZIENDA ──────────────────────────────────────────────────────────────────
+let AZ_DOCS = {}; // { sezione: [{nome, rinomina, tipo, data}] }
+
+function selAzTab(t) {
+  ['dati','doc'].forEach(x => {
+    document.getElementById('azp-'+x).style.display = x===t?'block':'none';
+    document.getElementById('azt-'+x).classList.toggle('act', x===t);
+  });
+  if (t==='doc') renderSezioniAz();
+}
+
+function loadAzienda() {
+  try {
+    const d = JSON.parse(localStorage.getItem('iam_azienda')||'{}');
+    const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+    fields.forEach(f => { const el=document.getElementById('az-'+f); if(el&&d[f]) el.value=d[f]; });
+    AZ_DOCS = JSON.parse(localStorage.getItem('iam_az_docs')||'{}');
+  } catch(e) {}
+}
+
+function salvaAzienda() {
+  const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+  const d = {};
+  fields.forEach(f => { const el=document.getElementById('az-'+f); if(el) d[f]=el.value; });
+  localStorage.setItem('iam_azienda', JSON.stringify(d));
+  showSavemsg('✅ Dati azienda salvati');
+}
+
+function renderSezioniAz() {
+  const SEZIONI_DEFAULT = ['Visura camerale','Documenti amministratori','Contratti affitto','Utenze','Altri documenti'];
+  // Assicura che esistano le sezioni default
+  SEZIONI_DEFAULT.forEach(s => { if (!AZ_DOCS[s]) AZ_DOCS[s] = []; });
+  const sezioni = Object.keys(AZ_DOCS);
+  document.getElementById('az-sezioni').innerHTML = sezioni.map(sez => `
+    <div style="background:var(--surf);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--shd);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:.5px solid var(--bord);">
+        <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;">
+          <i class="ti ti-folder" style="font-size:16px;color:#E8500A;"></i> ${sez}
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(232,80,10,.08);color:#E8500A;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;">
+          <i class="ti ti-upload" style="font-size:13px;"></i> Carica
+          <input type="file" style="display:none;" multiple accept=".pdf,.jpg,.png,.xlsx,.docx" onchange="caricaDocAz('${sez}',this)">
+        </label>
+      </div>
+      <div style="padding:8px 14px 12px;">
+        ${(AZ_DOCS[sez]||[]).length ? (AZ_DOCS[sez]||[]).map((f,i) => `
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:.5px solid var(--bord);">
+            <i class="ti ti-file" style="font-size:14px;color:var(--txt3);flex-shrink:0;"></i>
+            <div style="flex:1;min-width:0;">
+              <input type="text" value="${f.rinomina||f.nome}" onchange="rinominaDocAz('${sez}',${i},this.value)"
+                style="width:100%;background:transparent;border:none;font-size:13px;color:var(--txt);font-family:inherit;outline:none;border-bottom:1px dashed transparent;transition:border-color .15s;"
+                onfocus="this.style.borderBottomColor='#E8500A'" onblur="this.style.borderBottomColor='transparent'">
+              <div style="font-size:10px;color:var(--txt3);margin-top:1px;">${f.nome}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              ${f.data?`<button onclick="anteprimaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">👁</button>`:''}
+              <button onclick="eliminaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">🗑</button>
+            </div>
+          </div>`).join('')
+        : '<div style="color:var(--txt3);font-size:12px;padding:6px 0;">Nessun documento caricato</div>'}
+      </div>
+    </div>`).join('');
+}
+
+function caricaDocAz(sez, inp) {
+  Array.from(inp.files).forEach(file => {
+    const r = new FileReader();
+    r.onload = e => {
+      if (!AZ_DOCS[sez]) AZ_DOCS[sez] = [];
+      AZ_DOCS[sez].push({ nome: file.name, rinomina: file.name, tipo: file.type, data: e.target.result });
+      localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+      renderSezioniAz();
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function rinominaDocAz(sez, idx, nuovoNome) {
+  if (AZ_DOCS[sez]?.[idx]) {
+    AZ_DOCS[sez][idx].rinomina = nuovoNome;
+    localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+  }
+}
+
+function anteprimaDocAz(sez, idx) {
+  const f = AZ_DOCS[sez]?.[idx];
+  if (!f?.data) { alert('File non disponibile.'); return; }
+  if (f.tipo?.startsWith('image/')) {
+    const w = window.open('','_blank','width=700,height=800');
+    w?.document.write(`<body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${f.data}" style="max-width:100%;max-height:100vh;object-fit:contain;"></body>`);
+  } else {
+    const a = document.createElement('a');
+    a.href = f.data; a.download = f.rinomina||f.nome;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+}
+
+function eliminaDocAz(sez, idx) {
+  if (!confirm(`Eliminare "${AZ_DOCS[sez]?.[idx]?.rinomina||'questo file'}"? Non sarà recuperabile.`)) return;
+  AZ_DOCS[sez].splice(idx, 1);
+  localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+  renderSezioniAz();
+}
+
+function aggiungiSezioneAz() {
+  const nome = prompt('Nome della nuova sezione:');
+  if (!nome?.trim()) return;
+  AZ_DOCS[nome.trim()] = [];
+  localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+  renderSezioniAz();
+}
+
+
 let PERF = { hdi:[], cs:[], re:[] };
 let PERF_CUR = 'hdi';
 
@@ -3632,7 +3901,7 @@ function delPos(tipo, idx) {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('i-data').value = new Date().toISOString().split('T')[0];
   initDB();
-  loadTeam(); loadPipe(); loadWD(); loadPerf();
+  loadTeam(); loadPipe(); loadWD(); loadPerf(); loadAzienda();
   ['hdi','pluri'].forEach(t => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });

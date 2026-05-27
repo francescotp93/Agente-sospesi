@@ -1534,6 +1534,7 @@ function goTab(t) {
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'azienda')     { loadAzienda(); }
+  if (t === 'utenti')      renderUtenti();
   if (t === 'profilo')     renderPannelloPersonale();
 }
 

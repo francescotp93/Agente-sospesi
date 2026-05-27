@@ -3908,26 +3908,80 @@ async function logAudit(azione, tabella, riferimento, dettaglio) {
   } catch(e) { console.warn('logAudit:', e); }
 }
 
-async function renderAuditLog(el) {
+async function renderAuditLog(el, filtro) {
   if (!el || !db) return;
+  // ── Calcola range date dal filtro ──
+  const oggi = new Date(); oggi.setHours(23,59,59,999);
+  let dal = null;
+  const f = filtro || document.getElementById('audit-filtro')?.value || '7';
+  if (f === '0') {
+    const s = new Date(); s.setHours(0,0,0,0);
+    dal = s.toISOString();
+  } else if (f === 'custom') {
+    const da = document.getElementById('audit-dal')?.value;
+    const a  = document.getElementById('audit-al')?.value;
+    dal = da ? new Date(da+'T00:00:00').toISOString() : null;
+    if (a) oggi.setTime(new Date(a+'T23:59:59').getTime());
+  } else {
+    const s = new Date(); s.setDate(s.getDate() - parseInt(f));
+    dal = s.toISOString();
+  }
   try {
-    const { data } = await db.from('iam_audit')
-      .select('*').order('creato_il', {ascending:false}).limit(100);
-    if (!data?.length) { el.innerHTML='<div style="color:var(--txt3);font-size:13px;padding:12px 14px;">Nessuna modifica registrata</div>'; return; }
-    el.innerHTML = data.map(a => {
-      const d = new Date(a.creato_il);
-      const ds = d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-      const det = a.dettaglio ? Object.entries(a.dettaglio).map(([k,v])=>`${k}: ${v}`).join(' · ') : '';
-      return `<div style="padding:10px 14px;border-top:.5px solid var(--bord);display:flex;gap:10px;align-items:flex-start;">
-        <div style="width:32px;height:32px;border-radius:8px;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-edit" style="font-size:14px;"></i></div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:600;">${a.utente_nome||'—'} <span style="font-weight:400;color:var(--txt3);">· ${a.azione}</span></div>
-          ${det?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;">${det}</div>`:''}
-          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${ds}</div>
+    let q = db.from('iam_audit').select('*').order('creato_il', {ascending:false}).limit(200);
+    if (dal) q = q.gte('creato_il', dal);
+    q = q.lte('creato_il', oggi.toISOString());
+    const { data } = await q;
+    // ── Render filtri ──
+    el.innerHTML = `
+      <div style="padding:12px 14px;border-bottom:.5px solid var(--bord);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+        <select id="audit-filtro" onchange="auditCambiaFiltro()" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
+          <option value="0"  ${f==='0' ?'selected':''}>Oggi</option>
+          <option value="7"  ${f==='7' ?'selected':''}>Ultimi 7 giorni</option>
+          <option value="30" ${f==='30'?'selected':''}>Ultimi 30 giorni</option>
+          <option value="90" ${f==='90'?'selected':''}>Ultimi 90 giorni</option>
+          <option value="365"${f==='365'?'selected':''}>Ultimo anno</option>
+          <option value="custom" ${f==='custom'?'selected':''}>Intervallo personalizzato</option>
+        </select>
+        <div id="audit-custom-range" style="display:${f==='custom'?'flex':'none'};gap:6px;align-items:center;flex-wrap:wrap;">
+          <input type="date" id="audit-dal" value="${f==='custom'?(document.getElementById('audit-dal')?.value||''):''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);">
+          <span style="font-size:12px;color:var(--txt3);">→</span>
+          <input type="date" id="audit-al" value="${f==='custom'?(document.getElementById('audit-al')?.value||''):''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);">
+          <button onclick="auditCambiaFiltro()" style="font-size:12px;padding:4px 10px;background:#E8500A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">Applica</button>
         </div>
+        <span style="font-size:11px;color:var(--txt3);margin-left:auto;">${data?.length||0} modifiche</span>
+      </div>
+      <div id="audit-rows">
+        ${!data?.length
+          ? '<div style="color:var(--txt3);font-size:13px;padding:12px 14px;">Nessuna modifica nel periodo selezionato</div>'
+          : data.map(a => {
+              const d = new Date(a.creato_il);
+              const ds = d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+              const det = a.dettaglio ? Object.entries(a.dettaglio).map(([k,v])=>`${k}: ${v}`).join(' · ') : '';
+              const icone = {
+                SALVA:'ti-device-floppy', LOGIN:'ti-login', LOGOUT:'ti-logout',
+                CREA:'ti-plus', MODIFICA:'ti-edit', ELIMINA:'ti-trash',
+                CREA_OBIETTIVO:'ti-target', SOSPENDI:'ti-user-off', RIATTIVA:'ti-user-check'
+              };
+              const ic = icone[a.azione] || icone[Object.keys(icone).find(k=>a.azione?.includes(k))||''] || 'ti-edit';
+              return `<div style="padding:10px 14px;border-top:.5px solid var(--bord);display:flex;gap:10px;align-items:flex-start;">
+                <div style="width:32px;height:32px;border-radius:8px;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ${ic}" style="font-size:14px;"></i></div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:600;">${a.utente_nome||'—'} <span style="font-weight:400;color:var(--txt3);">· ${a.azione}</span></div>
+                  ${det?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;">${det}</div>`:''}
+                  <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${ds}</div>
+                </div>
+              </div>`;
+            }).join('')
+        }
       </div>`;
-    }).join('');
   } catch(e) { el.innerHTML='<div style="color:var(--red);font-size:12px;padding:12px 14px;">Accesso non autorizzato</div>'; }
+}
+
+function auditCambiaFiltro() {
+  const f = document.getElementById('audit-filtro')?.value;
+  const cr = document.getElementById('audit-custom-range');
+  if (cr) cr.style.display = f === 'custom' ? 'flex' : 'none';
+  if (f !== 'custom') renderAuditLog(document.getElementById('audit-log-list'), f);
 }
 
 // ─── OBIETTIVI OPERATORI ──────────────────────────────────────────────────────

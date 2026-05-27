@@ -1587,9 +1587,12 @@ function goTab(t) {
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'utenti') {
-    renderUtenti();
-    renderGestioneObiettivi('obiettivi-admin-list');
-    renderAuditLog(document.getElementById('audit-log-list'));
+    caricaProfilo(ME?.id).then(p => {
+      if (p) { PROFILO = p; applicaPermessi(p.ruolo); }
+      renderUtenti();
+      renderGestioneObiettivi('obiettivi-admin-list');
+      renderAuditLog(document.getElementById('audit-log-list'));
+    });
   }
   if (t === 'profilo') {
     renderPannelloPersonale();

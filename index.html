@@ -3711,7 +3711,25 @@ function selAzTab(t) {
   if (t==='doc') renderSezioniAz();
 }
 
-function loadAzienda() {
+// ─── AZIENDA (Supabase) ───────────────────────────────────────────────────────
+async function loadAzienda() {
+  // Carica da Supabase
+  if (db) {
+    try {
+      const { data } = await db.from('iam_azienda').select('dati,docs').eq('id',1).single();
+      if (data) {
+        const d = data.dati || {};
+        const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+        fields.forEach(f => { const el=document.getElementById('az-'+f); if(el&&d[f]) el.value=d[f]; });
+        AZ_DOCS = data.docs || {};
+        // Cache locale
+        localStorage.setItem('iam_azienda', JSON.stringify(d));
+        localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+        return;
+      }
+    } catch(e) { console.warn('loadAzienda DB:', e); }
+  }
+  // Fallback locale
   try {
     const d = JSON.parse(localStorage.getItem('iam_azienda')||'{}');
     const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
@@ -3720,12 +3738,38 @@ function loadAzienda() {
   } catch(e) {}
 }
 
-function salvaAzienda() {
+async function salvaAzienda() {
   const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
   const d = {};
   fields.forEach(f => { const el=document.getElementById('az-'+f); if(el) d[f]=el.value; });
   localStorage.setItem('iam_azienda', JSON.stringify(d));
-  showSavemsg('✅ Dati azienda salvati');
+  if (db) {
+    try {
+      await db.from('iam_azienda').upsert({
+        id: 1, dati: d, docs: AZ_DOCS,
+        aggiornato_il: new Date().toISOString(),
+        aggiornato_da: ME?.id
+      });
+      showSavemsg('✅ Dati azienda salvati e condivisi');
+    } catch(e) { showSavemsg('✅ Salvato in locale (errore DB: '+e.message+')'); }
+  } else {
+    showSavemsg('✅ Dati azienda salvati');
+  }
+}
+
+async function salvaAzDocsDB() {
+  if (!db) { localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS)); return; }
+  try {
+    await db.from('iam_azienda').update({
+      docs: AZ_DOCS,
+      aggiornato_il: new Date().toISOString(),
+      aggiornato_da: ME?.id
+    }).eq('id', 1);
+    localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+  } catch(e) {
+    console.warn('salvaAzDocsDB:', e);
+    localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+  }
 }
 
 function renderSezioniAz() {
@@ -3770,8 +3814,7 @@ function caricaDocAz(sez, inp) {
     r.onload = e => {
       if (!AZ_DOCS[sez]) AZ_DOCS[sez] = [];
       AZ_DOCS[sez].push({ nome: file.name, rinomina: file.name, tipo: file.type, data: e.target.result });
-      localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
-      renderSezioniAz();
+      salvaAzDocsDB().then(() => renderSezioniAz());
     };
     r.readAsDataURL(file);
   });
@@ -3780,8 +3823,14 @@ function caricaDocAz(sez, inp) {
 function rinominaDocAz(sez, idx, nuovoNome) {
   if (AZ_DOCS[sez]?.[idx]) {
     AZ_DOCS[sez][idx].rinomina = nuovoNome;
-    localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
+    salvaAzDocsDB();
   }
+}
+
+function eliminaDocAz(sez, idx) {
+  if (!confirm(`Eliminare "${AZ_DOCS[sez]?.[idx]?.rinomina||'questo file'}"? Non sarà recuperabile.`)) return;
+  AZ_DOCS[sez].splice(idx, 1);
+  salvaAzDocsDB().then(() => renderSezioniAz());
 }
 
 function anteprimaDocAz(sez, idx) {
@@ -3797,19 +3846,11 @@ function anteprimaDocAz(sez, idx) {
   }
 }
 
-function eliminaDocAz(sez, idx) {
-  if (!confirm(`Eliminare "${AZ_DOCS[sez]?.[idx]?.rinomina||'questo file'}"? Non sarà recuperabile.`)) return;
-  AZ_DOCS[sez].splice(idx, 1);
-  localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
-  renderSezioniAz();
-}
-
 function aggiungiSezioneAz() {
   const nome = prompt('Nome della nuova sezione:');
   if (!nome?.trim()) return;
   AZ_DOCS[nome.trim()] = [];
-  localStorage.setItem('iam_az_docs', JSON.stringify(AZ_DOCS));
-  renderSezioniAz();
+  salvaAzDocsDB().then(() => renderSezioniAz());
 }
 
 

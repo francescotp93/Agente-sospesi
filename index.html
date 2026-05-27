@@ -113,6 +113,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .mval{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1;}
 .msub{font-size:11px;color:var(--txt3);margin-top:4px;}
 @keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes aiSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 .mcard:nth-child(1){animation-delay:.05s}.mcard:nth-child(2){animation-delay:.1s}
 .mcard:nth-child(3){animation-delay:.15s}.mcard:nth-child(4){animation-delay:.2s}
 .mcard:nth-child(5){animation-delay:.25s}.mcard:nth-child(6){animation-delay:.3s}
@@ -990,22 +991,60 @@ input[type=file]{display:none;}
   </div>
 </div>
 
-<!-- AI CHAT -->
-<div class="panel" id="panel-ai">
-  <div class="chips" style="padding:10px 12px 4px;">
+<!-- AI CHAT OVERLAY (non è più un panel, ma un overlay fullscreen) -->
+<div id="ai-overlay" style="
+  display:none;position:fixed;inset:0;z-index:600;
+  background:var(--bg);flex-direction:column;
+  animation:aiSlideIn .25s ease;">
+  <!-- Header chat -->
+  <div style="
+    background:var(--surf);border-bottom:1px solid var(--bord);
+    padding:0 16px;height:56px;display:flex;align-items:center;
+    justify-content:space-between;flex-shrink:0;
+    box-shadow:0 1px 0 var(--bord);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:34px;height:34px;border-radius:50%;
+        background:linear-gradient(135deg,#E8500A,#c44008);
+        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ti-robot" style="color:#fff;font-size:17px;"></i>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;">IAM AI</div>
+        <div style="font-size:11px;color:var(--grn-txt);font-weight:600;">● Online</div>
+      </div>
+    </div>
+    <button onclick="chiudiAI()" style="
+      background:none;border:none;cursor:pointer;
+      width:36px;height:36px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      color:var(--txt2);font-size:20px;transition:background .15s;"
+      onmouseover="this.style.background='var(--surf2)'"
+      onmouseout="this.style.background='none'">
+      <i class="ti ti-x"></i>
+    </button>
+  </div>
+  <!-- Chips suggerimenti -->
+  <div class="chips" style="padding:10px 12px 6px;flex-shrink:0;background:var(--surf);border-bottom:.5px solid var(--bord);">
     <div class="chip" onclick="sendChip('Ci sono sospesi spariti senza incasso?')">Sospesi spariti 👻</div>
     <div class="chip" onclick="sendChip('Quali sono i sospesi più vecchi?')">Sospesi anziani ⏳</div>
-    <div class="chip" onclick="sendChip('La cassa è in equilibrio?')">Equilibrio cassa 💰</div>
+    <div class="chip" onclick="sendChip('La cassa è in equilibrio?')">Cassa 💰</div>
     <div class="chip" onclick="sendChip('Anomalie critiche')">Anomalie 🚨</div>
     <div class="chip" onclick="sendChip('Chi ha più sospesi aperti?')">Per produttore 👤</div>
+    <div class="chip" onclick="sendChip('Dammi un riepilogo completo della situazione')">Riepilogo 📊</div>
   </div>
-  <div class="cbody" id="c-body">
+  <!-- Messaggi -->
+  <div class="cbody" id="c-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="cmsgs" id="c-msgs">
-      <div class="cmsg agent"><div class="clbl">IAM AI</div><div class="cbubble">Ciao! Sono l'assistente IAM. Carica i file nella sezione Carica, poi posso aiutarti ad analizzare sospesi, anomalie, cassa e molto altro.</div></div>
+      <div class="cmsg agent">
+        <div class="clbl">IAM AI</div>
+        <div class="cbubble">Ciao! Sono l'assistente IAM 👋<br>Carica i file nella sezione <b>Contabilità</b>, poi posso aiutarti ad analizzare sospesi, anomalie, cassa e molto altro.</div>
+      </div>
     </div>
   </div>
-  <div class="cbar">
-    <input class="cinp" id="c-inp" placeholder="Scrivi una domanda..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
+  <!-- Input -->
+  <div class="cbar" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);">
+    <input class="cinp" id="c-inp" placeholder="Scrivi una domanda..."
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
     <button class="csend" onclick="sendMsg()"><i class="ti ti-send" style="font-size:18px;"></i></button>
   </div>
 </div>
@@ -1426,17 +1465,33 @@ document.addEventListener('click', e => {
 });
 
 function toggleAIPanel() {
-  const cur = sessionStorage.getItem('iam_last_tab');
-  if (cur === 'ai') {
-    // Torna al tab precedente
-    const prev = sessionStorage.getItem('iam_prev_tab') || 'dashboard';
-    goTab(prev);
+  const overlay = document.getElementById('ai-overlay');
+  if (!overlay) return;
+  const isOpen = overlay.style.display === 'flex';
+  if (isOpen) {
+    chiudiAI();
   } else {
-    sessionStorage.setItem('iam_prev_tab', cur || 'dashboard');
-    goTab('ai');
-    const fab = document.getElementById('ai-fab');
-    if (fab) fab.style.display = 'none';
+    apriAI();
   }
+}
+
+function apriAI() {
+  const overlay = document.getElementById('ai-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = 'none';
+  // Focus sull'input
+  setTimeout(() => document.getElementById('c-inp')?.focus(), 300);
+}
+
+function chiudiAI() {
+  const overlay = document.getElementById('ai-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  const fab = document.getElementById('ai-fab');
+  if (fab) fab.style.display = 'flex';
 }
 
 // ─── SUPABASE DATA ─────────────────────────────────────────────────────────────
@@ -1514,7 +1569,7 @@ async function loadLastSession() {
     const lastTab = sessionStorage.getItem('iam_last_tab');
     // Mostra FAB AI
     const fab = document.getElementById('ai-fab');
-    if (fab && lastTab !== 'ai') fab.style.display = 'flex';
+    if (fab) fab.style.display = 'flex';
     if (!lastTab) {
       goTab('dashboard');
     } else {
@@ -1522,6 +1577,8 @@ async function loadLastSession() {
       const contabSub = ['anomalie','sospesi','storico','conto'];
       if (contabSub.includes(lastTab)) {
         goTab('carica'); selContabTab(lastTab);
+      } else if (lastTab === 'ai') {
+        goTab('dashboard'); // AI è overlay, non tab
       } else {
         goTab(lastTab);
       }
@@ -1680,9 +1737,9 @@ function goTab(t) {
     }
   }
   sessionStorage.setItem('iam_last_tab', t);
-  // Mostra/nascondi FAB AI: visibile su tutti i tab tranne AI stesso
+  // FAB AI sempre visibile tranne quando l'overlay è aperto
   const fab = document.getElementById('ai-fab');
-  if (fab) fab.style.display = t === 'ai' ? 'none' : 'flex';
+  if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'azienda')     { loadAzienda(); }

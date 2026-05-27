@@ -1602,18 +1602,66 @@ function loadSospesi(inp) {
 function loadIncassi(inp) {
   const file = inp.files[0]; if (!file) return;
   const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'docx') {
+
+  const parseDocHtml = (htmlText) => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = htmlText;
+    const lines = [];
+    tmp.querySelectorAll('td,th,p').forEach(el => {
+      const t = el.textContent.trim();
+      if (t) lines.push(t);
+    });
+    let start = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].toLowerCase().includes('totale sospesi incassati')) { start = i + 4; break; }
+    }
+    if (start < 0) return [];
+    while (start < lines.length && !lines[start].match(/^\d{2}\/\d{2}\/\d{4}$/)) start++;
+    const rows = [];
+    let i = start;
+    while (i < lines.length - 4) {
+      const data = lines[i];
+      if (!data.match(/^\d{2}\/\d{2}\/\d{4}$/)) { i++; continue; }
+      const nominativo = lines[i+1]||'';
+      const produttore = lines[i+2]||'';
+      const pagamento  = lines[i+3]||'';
+      const importoStr = lines[i+4]||'0';
+      const importo    = parseFloat(importoStr.replace(/\./g,'').replace(',','.')) || 0;
+      if (nominativo && importo > 0) rows.push({ nominativo, produttore, pagamento, importo, data });
+      i += 5;
+    }
+    return rows;
+  };
+
+  const aggiornaUI = (nomeFile) => {
+    const n = APP.incassi.length;
+    const tot = APP.incassi.reduce((a,x)=>a+x.importo,0);
+    document.getElementById('ok-inc').textContent = `✓ ${nomeFile} (${n} incassi sospesi · €${fmt(tot)})`;
+    document.getElementById('ok-inc').style.display = 'block';
+    document.getElementById('sub-inc').style.display = 'none';
+    if (APP.sospesi.length) { buildAnomalie(); buildDashboard(); }
+  };
+
+  if (ext === 'doc' || ext === 'htm' || ext === 'html') {
+    const r = new FileReader();
+    r.onload = e => { APP.incassi = parseDocHtml(e.target.result); aggiornaUI(file.name); };
+    r.readAsText(file);
+  } else if (ext === 'docx') {
     const r = new FileReader();
     r.onload = e => {
       mammoth.extractRawText({arrayBuffer: e.target.result}).then(res => {
-        const rows = [];
-        res.value.split('\n').forEach(l => {
-          const m = l.match(/([\d,.]+)/);
-          if (m) rows.push({ importo: parseNum(m[1]), descrizione: l });
-        });
-        APP.incassi = rows;
-        document.getElementById('ok-inc').textContent = '✓ ' + file.name;
-        document.getElementById('ok-inc').style.display = 'block';
+        const lines = res.value.split('\n').filter(l=>l.trim());
+        let start = lines.findIndex(l=>l.toLowerCase().includes('totale sospesi incassati'));
+        if (start < 0) start = Math.floor(lines.length * 0.7);
+        APP.incassi = []; let i = start;
+        while (i < lines.length - 4) {
+          if (lines[i].match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            const imp = parseFloat((lines[i+4]||'0').replace(/\./g,'').replace(',','.')) || 0;
+            if (imp > 0) APP.incassi.push({ nominativo: lines[i+1]||'', produttore: lines[i+2]||'', pagamento: lines[i+3]||'', importo: imp, data: lines[i] });
+            i += 5;
+          } else i++;
+        }
+        aggiornaUI(file.name);
       });
     };
     r.readAsArrayBuffer(file);
@@ -1624,18 +1672,17 @@ function loadIncassi(inp) {
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
       APP.incassi = data.map(row => ({
-        nominativo: row['Nominativo'] || '',
-        polizza:    row['Polizza']    || '',
-        importo:    parseNum(row['Importo'] ?? row['Importo Sospeso'] ?? row['importo'] ?? 0),
-        data:       row['Data'] || '',
-        modalita:   row['Mod.Pagamento'] || '',
-      }));
-      document.getElementById('ok-inc').textContent = '✓ ' + file.name + ' (' + APP.incassi.length + ' righe)';
-      document.getElementById('ok-inc').style.display = 'block';
+        nominativo: row['Nominativo']||row['Descrizione']||'',
+        produttore: row['Tipo Sospeso']||row['Produttore']||'',
+        importo:    parseNum(row['Importo']??row['Importo Sospeso']??0),
+        data: row['Data']||'', pagamento: row['Pagamento']||'',
+      })).filter(r=>r.importo>0);
+      aggiornaUI(file.name);
     };
     r.readAsArrayBuffer(file);
   }
 }
+
 
 function loadConto(inp, tipo) {
   const file = inp.files[0]; if (!file) return;
@@ -1666,7 +1713,12 @@ async function doAnalisi() {
   const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), note: g('i-note') };
   APP.prevProg = await loadPrevProg();
   await saveSession(APP.sospesi, APP.incassi, dati);
-  try { localStorage.setItem('iam_prev', JSON.stringify(APP.sospesi.map(s=>s.prog).filter(Boolean))); } catch(e){}
+  try {
+    localStorage.setItem('iam_prev', JSON.stringify(APP.sospesi.map(s=>s.prog).filter(Boolean)));
+    localStorage.setItem('iam_prev_sosp', JSON.stringify(APP.sospesi.map(s=>({
+      prog: s.prog, nominativo: s.nominativo, importo: s.importo, compagnia: s.compagnia
+    }))));
+  } catch(e){}
   showSavemsg('✅ Dati salvati');
   buildDashboard(); buildAnomalie(); buildSospesi(); buildStorico();
   updatePill(); APP.loaded = true;
@@ -1804,18 +1856,41 @@ function buildAnomalie() {
   const spese  = parseNum(g('i-spese'));
   const valInc = APP.incassi.reduce((a,i)=>a+i.importo,0);
 
-  // Sospesi spariti
+  // Sospesi spariti — confronto con sessione precedente e incassi
   const prev = APP.prevProg.length ? APP.prevProg :
     (() => { try { return JSON.parse(localStorage.getItem('iam_prev')||'[]'); } catch(e){return[];} })();
   if (prev.length) {
     const attuali = new Set(sosp.map(s=>s.prog));
+    // Nomi incassati (dal file doc)
+    const nomiIncassati = new Set(
+      APP.incassi.map(i => i.nominativo?.trim().toUpperCase().split(/[-–]/)[0].trim())
+    );
     const spariti = prev.filter(p=>p&&!attuali.has(p));
-    if (spariti.length) APP.anomalie.push({
-      tipo:'crit', icon:'ti-ghost',
-      titolo:`${spariti.length} sospesi spariti senza incasso`,
-      desc:`Progressivi: ${spariti.slice(0,5).join(', ')}${spariti.length>5?'…':''}. Verificare immediatamente.`,
-      sospesi: spariti.map(p=>({nominativo:'Prog. '+p,importo:0,gg:0,compagnia:'—',polizza:p,nota:'Sparito senza incasso'}))
-    });
+    if (spariti.length) {
+      // Cerca info sui sospesi spariti nella sessione precedente
+      const prevSosp = (() => { try { return JSON.parse(localStorage.getItem('iam_prev_sosp')||'[]'); } catch(e){return[];} })();
+      const sparitiConInfo = spariti.map(prog => {
+        const info = prevSosp.find(s=>s.prog===prog);
+        if (!info) return { prog, trovato: false };
+        const nomeUp = (info.nominativo||'').toUpperCase().split(/[-–]/)[0].trim();
+        const trovato = nomiIncassati.has(nomeUp);
+        return { prog, trovato, nominativo: info.nominativo, importo: info.importo, compagnia: info.compagnia };
+      });
+      const nonIncassati = sparitiConInfo.filter(s=>!s.trovato);
+      const incassati    = sparitiConInfo.filter(s=>s.trovato);
+      if (nonIncassati.length) APP.anomalie.push({
+        tipo:'crit', icon:'ti-ghost',
+        titolo:`${nonIncassati.length} sospesi spariti SENZA corrispondenza negli incassi`,
+        desc: nonIncassati.map(s=>s.nominativo||('Prog. '+s.prog)).slice(0,5).join(', ') + (nonIncassati.length>5?'…':'') + ' — Verificare immediatamente!',
+        sospesi: nonIncassati.map(s=>({nominativo:(s.nominativo||'Prog. '+s.prog), importo:s.importo||0, gg:0, compagnia:s.compagnia||'—', polizza:s.prog||'', nota:'⚠️ Sparito senza incasso'}))
+      });
+      if (incassati.length) APP.anomalie.push({
+        tipo:'ok', icon:'ti-circle-check',
+        titolo:`${incassati.length} sospesi incassati correttamente`,
+        desc: incassati.map(s=>s.nominativo||('Prog. '+s.prog)).slice(0,5).join(', ') + (incassati.length>5?'…':''),
+        sospesi: []
+      });
+    }
   }
 
   // Scostamento cassa (solo se ci sono incassi)

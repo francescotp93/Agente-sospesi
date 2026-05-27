@@ -638,10 +638,10 @@ input[type=file]{display:none;}
   <!-- Sezione Gestione Utenti -->
   <div id="utenti-lista-section">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;">
-      <div class="slbl" style="padding:0;">Utenti IAM</div>
-      <button onclick="mostraFormNuovoUtente()" style="padding:6px 14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ Nuovo utente</button>
+      <div class="slbl" style="padding:0;">Gestione utenti</div>
+      <div id="utenti-btn-wrap"></div>
     </div>
-    <div class="card"><div id="utenti-list"></div></div>
+    <div class="card" style="padding:12px;"><div id="utenti-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
   </div>
   <!-- Sezione Obiettivi -->
   <div style="margin-top:16px;">
@@ -651,7 +651,7 @@ input[type=file]{display:none;}
   <!-- Audit Log -->
   <div style="margin-top:16px;">
     <div class="slbl">Log modifiche</div>
-    <div class="card"><div id="audit-log-list"></div></div>
+    <div class="card"><div id="audit-log-list"><div style="color:var(--txt3);font-size:13px;padding:12px 14px;">Caricamento...</div></div></div>
   </div>
   <div style="height:24px;"></div>
 </div>
@@ -3165,36 +3165,39 @@ async function caricaUtenti() {
 
 async function renderUtenti() {
   await caricaUtenti();
-  const panel = document.getElementById('panel-utenti');
-  if (!panel) return;
+  const el = document.getElementById('utenti-list');
+  if (!el) return;
   const perm = PERMESSI[PROFILO?.ruolo] || {};
-  panel.innerHTML = `
-    <div style="padding:12px 12px 0;display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-size:15px;font-weight:700;">Gestione utenti</div>
-      ${perm.utenti?`<button onclick="apriNuovoUtente()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo utente</button>`:''}
-    </div>
-    <div style="padding:12px;">
-      ${UTENTI_LISTA.map(u => {
-        const r = RUOLI[u.ruolo] || RUOLI.operativo;
-        const isSelf = u.id === ME?.id;
-        const canEdit = PROFILO?.ruolo === 'top_master' || (PROFILO?.ruolo === 'master' && u.ruolo === 'operativo');
-        return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
-          <div style="width:40px;height:40px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${(u.nome||u.email||'?')[0].toUpperCase()}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;">${u.nome||''} ${u.cognome||''} ${isSelf?'<span style="font-size:10px;color:var(--txt3);">(tu)</span>':''}</div>
-            <div style="font-size:11px;color:var(--txt2);">${u.email}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-              <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>
-              ${!u.attivo?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);">SOSPESO</span>':''}
-            </div>
-          </div>
-          ${canEdit && !isSelf ? `<div style="display:flex;flex-direction:column;gap:4px;">
-            <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
-            ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
-          </div>` : ''}
-        </div>`;
-      }).join('')}
+
+  // Aggiorna solo il pulsante "+ Nuovo utente" nell'header statico
+  const btnWrap = document.getElementById('utenti-btn-wrap');
+  if (btnWrap) {
+    btnWrap.innerHTML = perm.utenti
+      ? `<button onclick="apriNuovoUtente()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo utente</button>`
+      : '';
+  }
+
+  // Aggiorna solo la lista utenti
+  el.innerHTML = UTENTI_LISTA.map(u => {
+    const r = RUOLI[u.ruolo] || RUOLI.operativo;
+    const isSelf = u.id === ME?.id;
+    const canEdit = PROFILO?.ruolo === 'top_master' || (PROFILO?.ruolo === 'master' && u.ruolo === 'operativo');
+    return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
+      <div style="width:40px;height:40px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${(u.nome||u.email||'?')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${u.nome||''} ${u.cognome||''} ${isSelf?'<span style="font-size:10px;color:var(--txt3);">(tu)</span>':''}</div>
+        <div style="font-size:11px;color:var(--txt2);">${u.email}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>
+          ${!u.attivo?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);">SOSPESO</span>':''}
+        </div>
+      </div>
+      ${canEdit && !isSelf ? `<div style="display:flex;flex-direction:column;gap:4px;">
+        <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
+        ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
+      </div>` : ''}
     </div>`;
+  }).join('');
 }
 
 function apriNuovoUtente() {

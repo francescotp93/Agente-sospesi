@@ -433,6 +433,22 @@ input[type=file]{display:none;}
         <input type="text" id="i-scostamento" readonly style="background:var(--surf2);font-weight:700;cursor:default;">
       </div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld">
+        <label style="display:flex;align-items:center;gap:5px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #555;display:inline-block;flex-shrink:0;"></span>
+          POS Bianco (€)
+        </label>
+        <input type="number" id="i-pos-bianco" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+      </div>
+      <div class="fld">
+        <label style="display:flex;align-items:center;gap:5px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#333;border:2px solid #333;display:inline-block;flex-shrink:0;"></span>
+          POS Nero (€)
+        </label>
+        <input type="number" id="i-pos-nero" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+      </div>
+    </div>
     <div class="fld"><label>Note cassa</label><textarea id="i-note" rows="2" placeholder="es. versamento banca, rimborso..."></textarea></div>
   </div>
   <div id="savemsg"></div>
@@ -618,10 +634,33 @@ input[type=file]{display:none;}
 </div>
 
 <!-- UTENTI -->
-<div class="panel" id="panel-utenti" style="overflow-y:auto;"></div>
+<div class="panel" id="panel-utenti" style="overflow-y:auto;">
+  <!-- Sezione Gestione Utenti -->
+  <div id="utenti-lista-section">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;">
+      <div class="slbl" style="padding:0;">Utenti IAM</div>
+      <button onclick="mostraFormNuovoUtente()" style="padding:6px 14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">+ Nuovo utente</button>
+    </div>
+    <div class="card"><div id="utenti-list"></div></div>
+  </div>
+  <!-- Sezione Obiettivi -->
+  <div style="margin-top:16px;">
+    <div class="slbl">Obiettivi operatori</div>
+    <div class="card" style="padding:14px 16px;"><div id="obiettivi-admin-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div></div>
+  </div>
+  <!-- Audit Log -->
+  <div style="margin-top:16px;">
+    <div class="slbl">Log modifiche</div>
+    <div class="card"><div id="audit-log-list"></div></div>
+  </div>
+  <div style="height:24px;"></div>
+</div>
 
 <!-- PROFILO PERSONALE -->
-<div class="panel" id="panel-profilo" style="overflow-y:auto;"></div>
+<div class="panel" id="panel-profilo" style="overflow-y:auto;">
+  <div id="profilo-content"></div>
+  <div id="profilo-obiettivi" style="padding:0 12px 12px;"></div>
+</div>
 
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
@@ -1377,6 +1416,8 @@ async function saveSession(sospesi, incassi, dati) {
       versamenti:  dati.vers,
       spese:       dati.spese,
       fondo_cassa: dati.fondo || 0,
+      pos_bianco:  dati.pos_bianco || 0,
+      pos_nero:    dati.pos_nero   || 0,
       note:        dati.note,
       totale_sospesi: sospesi.length,
       valore_totale:  sospesi.reduce((a,s)=>a+s.importo,0),
@@ -1390,7 +1431,7 @@ async function loadLastSession() {
   try {
     // Carica TUTTE le sessioni per calcolare il saldo cumulativo
     const { data: tutte } = await db.from('sessioni_giornaliere')
-      .select('data_riferimento,contanti,versamenti,spese,fondo_cassa,sospesi_json,incassi_json,note')
+      .select('data_riferimento,contanti,versamenti,spese,fondo_cassa,pos_bianco,pos_nero,sospesi_json,incassi_json,note')
       .order('data_riferimento', { ascending: true });
     if (!tutte || !tutte.length) { goTab('carica'); return; }
 
@@ -1420,11 +1461,13 @@ async function loadLastSession() {
 
     const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ''; };
     setVal('i-data',  s.data_riferimento);
-    setVal('i-cassa', s.contanti    || 0);
-    setVal('i-vers',  s.versamenti  || 0);
-    setVal('i-spese', s.spese       || 0);
-    setVal('i-fondo', s.fondo_cassa > 0 ? s.fondo_cassa : (APP.fondoCassa || 0));
-    setVal('i-note',  s.note        || '');
+    setVal('i-cassa',      s.contanti    || 0);
+    setVal('i-vers',       s.versamenti  || 0);
+    setVal('i-spese',      s.spese       || 0);
+    setVal('i-fondo',      s.fondo_cassa > 0 ? s.fondo_cassa : (APP.fondoCassa || 0));
+    setVal('i-pos-bianco', s.pos_bianco  || 0);
+    setVal('i-pos-nero',   s.pos_nero    || 0);
+    setVal('i-note',       s.note        || '');
 
     showSavemsg('📂 ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT') +
       ' · Cassa progressiva: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
@@ -1543,13 +1586,20 @@ function goTab(t) {
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); renderHDI(); }
   if (t === 'azienda')     { loadAzienda(); }
-  if (t === 'utenti')      renderUtenti();
-  if (t === 'profilo')     renderPannelloPersonale();
+  if (t === 'utenti') {
+    renderUtenti();
+    renderGestioneObiettivi('obiettivi-admin-list');
+    renderAuditLog(document.getElementById('audit-log-list'));
+  }
+  if (t === 'profilo') {
+    renderPannelloPersonale();
+    renderObiettiviOperatore();
+  }
 }
 
 // ─── WIDGET PREFS ─────────────────────────────────────────────────────────────
-const WDEF = { sospesi_n:true, valore:true, oltre60:true, cassa:true, vers:true, saldo:true, fondo:true, scostamento:true, incassato:false, spese:false };
-const WLBL = { sospesi_n:'Sospesi aperti', valore:'Valore sospesi', oltre60:'Oltre 60 giorni', cassa:'Contanti oggi', vers:'Versato compagnie', saldo:'Cassa progressiva', fondo:'Fondo cassa', scostamento:'Scostamento cassa', incassato:'Incassato oggi', spese:'Spese agenzia' };
+const WDEF = { sospesi_n:true, valore:true, oltre60:true, cassa:true, vers:true, saldo:true, fondo:true, scostamento:true, pos_bianco:true, pos_nero:true, incassato:false, spese:false };
+const WLBL = { sospesi_n:'Sospesi aperti', valore:'Valore sospesi', oltre60:'Oltre 60 giorni', cassa:'Contanti oggi', vers:'Versato compagnie', saldo:'Cassa progressiva', fondo:'Fondo cassa', scostamento:'Scostamento cassa', pos_bianco:'POS Bianco', pos_nero:'POS Nero', incassato:'Incassato oggi', spese:'Spese agenzia' };
 function getW() { try { return {...WDEF,...JSON.parse(localStorage.getItem('iam_w')||'{}')}; } catch(e){ return {...WDEF}; } }
 function saveW(w) { localStorage.setItem('iam_w', JSON.stringify(w)); }
 
@@ -1710,7 +1760,7 @@ function loadConto(inp, tipo) {
 async function doAnalisi() {
   if (!APP.sospesi.length) { alert('Carica prima il file sospesi.'); return; }
   showSavemsg('💾 Salvataggio in corso...');
-  const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), note: g('i-note') };
+  const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), pos_bianco: parseNum(g('i-pos-bianco')), pos_nero: parseNum(g('i-pos-nero')), note: g('i-note') };
   APP.prevProg = await loadPrevProg();
   await saveSession(APP.sospesi, APP.incassi, dati);
   try {
@@ -1720,6 +1770,10 @@ async function doAnalisi() {
     }))));
   } catch(e){}
   showSavemsg('✅ Dati salvati');
+  // Audit trail
+  await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, {
+    contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese
+  });
   buildDashboard(); buildAnomalie(); buildSospesi(); buildStorico();
   updatePill(); APP.loaded = true;
   goTab('dashboard');
@@ -1749,6 +1803,8 @@ function buildDashboard() {
   const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
   const fondoIeri = APP.fondoIeri || fondo;
   const varFondo = fondo - fondoIeri;
+  const posBianco = parseNum(g('i-pos-bianco')) || 0;
+  const posNero   = parseNum(g('i-pos-nero'))   || 0;
   const valInc = APP.incassi.reduce((a,i)=>a+i.importo,0);
   const saldoOggi = cassa - vers - spese;
   const saldoCumulativo = APP.saldoCumulativo !== undefined ? APP.saldoCumulativo : saldoOggi;
@@ -1785,6 +1841,8 @@ function buildDashboard() {
     metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub: varSub, color: varColor});
   }
   if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'cassa sopra soglia':'⚠️ sotto il fondo cassa', color: scostamento>=0?'var(--grn)':'var(--red)'});
+  if (W.pos_bianco)   metrics.push({lbl:'POS Bianco', val:'€'+fmt(posBianco), sub:'pagamenti elettronici', color:'var(--blu)'});
+  if (W.pos_nero)     metrics.push({lbl:'POS Nero', val:'€'+fmt(posNero), sub:'pagamenti contanti POS', color:'var(--txt)'});
   if (W.incassato)    metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)'});
   if (W.spese)        metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)'});
 
@@ -3235,11 +3293,11 @@ async function cambiaRuolo(userId, ruoloAttuale) {
 
 // ─── PANNELLO PERSONALE ───────────────────────────────────────────────────────
 async function renderPannelloPersonale() {
-  const panel = document.getElementById('panel-profilo');
+  const panel = document.getElementById('profilo-content');
   if (!panel || !ME || !PROFILO) return;
   const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
   panel.innerHTML = `
-    <div style="padding:16px;">
+    <div style="padding:16px 16px 0;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
           <div style="width:50px;height:50px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;">${(PROFILO.nome||ME.email||'?')[0].toUpperCase()}</div>
@@ -3429,6 +3487,8 @@ async function apriModificaStorico(dataRif) {
           <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="ste-vers" value="${data.versamenti||0}" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="ste-spese" value="${data.spese||0}" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Fondo cassa (€)</label><input type="number" id="ste-fondo" value="${data.fondo_cassa||0}" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>POS Bianco (€)</label><input type="number" id="ste-pos-bianco" value="${data.pos_bianco||0}" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>POS Nero (€)</label><input type="number" id="ste-pos-nero" value="${data.pos_nero||0}" step="0.01" inputmode="decimal"></div>
         </div>
         <div class="fld" style="margin-bottom:10px;"><label>Note</label><input type="text" id="ste-note" value="${data.note||''}"></div>
         <div id="ste-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
@@ -3451,9 +3511,16 @@ async function salvaModificaStorico(dataRif) {
   const err   = document.getElementById('ste-err');
   try {
     await db.from('sessioni_giornaliere').update({
-      contanti: cassa, versamenti: vers, spese, fondo_cassa: fondo, note,
-      aggiornato_il: new Date().toISOString()
+      contanti: cassa, versamenti: vers, spese, fondo_cassa: fondo,
+      pos_bianco: parseNum(document.getElementById('ste-pos-bianco')?.value||0),
+      pos_nero:   parseNum(document.getElementById('ste-pos-nero')?.value||0),
+      note, aggiornato_il: new Date().toISOString()
     }).eq('data_riferimento', dataRif);
+
+    // Audit trail
+    await logAudit('MODIFICA_SESSIONE', 'sessioni_giornaliere', dataRif, {
+      contanti: cassa, versamenti: vers, spese, fondo_cassa: fondo, note
+    });
     document.getElementById('st-edit-overlay')?.remove();
 
     // Aggiorna campi input se è la sessione più recente
@@ -3821,6 +3888,128 @@ function showWDDay(ds) {
     }).join('')}` : `<div style="font-size:12px;color:var(--txt3);padding:8px 0;">${new Date(ds+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long'})} — Nessun evento</div>`;
 }
 
+
+// ─── AUDIT TRAIL ──────────────────────────────────────────────────────────────
+async function logAudit(azione, tabella, riferimento, dettaglio) {
+  if (!db || !ME) return;
+  try {
+    const nome = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim()||ME.email : ME.email;
+    await db.from('iam_audit').insert({
+      utente_id: ME.id, utente_nome: nome,
+      azione, tabella, riferimento,
+      dettaglio: dettaglio || {},
+    });
+  } catch(e) { console.warn('logAudit:', e); }
+}
+
+async function renderAuditLog(el) {
+  if (!el || !db) return;
+  try {
+    const { data } = await db.from('iam_audit')
+      .select('*').order('creato_il', {ascending:false}).limit(100);
+    if (!data?.length) { el.innerHTML='<div style="color:var(--txt3);font-size:13px;padding:12px 14px;">Nessuna modifica registrata</div>'; return; }
+    el.innerHTML = data.map(a => {
+      const d = new Date(a.creato_il);
+      const ds = d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+      const det = a.dettaglio ? Object.entries(a.dettaglio).map(([k,v])=>`${k}: ${v}`).join(' · ') : '';
+      return `<div style="padding:10px 14px;border-top:.5px solid var(--bord);display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:32px;height:32px;border-radius:8px;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-edit" style="font-size:14px;"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;">${a.utente_nome||'—'} <span style="font-weight:400;color:var(--txt3);">· ${a.azione}</span></div>
+          ${det?`<div style="font-size:11px;color:var(--txt2);margin-top:2px;">${det}</div>`:''}
+          <div style="font-size:10px;color:var(--txt3);margin-top:2px;">${ds}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML='<div style="color:var(--red);font-size:12px;padding:12px 14px;">Accesso non autorizzato</div>'; }
+}
+
+// ─── OBIETTIVI OPERATORI ──────────────────────────────────────────────────────
+let OBJ_LIST = [];
+
+async function loadObiettivi() {
+  if (!db) return;
+  try {
+    const { data } = await db.from('iam_obiettivi').select('*').order('creato_il');
+    OBJ_LIST = data || [];
+  } catch(e) { console.warn('loadObiettivi:', e); }
+}
+
+async function renderObiettiviOperatore() {
+  if (!ME) return;
+  await loadObiettivi();
+  const anno = new Date().getFullYear();
+  const miei = OBJ_LIST.filter(o => o.utente_id === ME.id && o.anno === anno);
+  const el = document.getElementById('profilo-obiettivi');
+  if (!el || !miei.length) return;
+  const html = await Promise.all(miei.map(async o => {
+    const { data: prog } = await db.from('iam_progressi')
+      .select('valore').eq('obiettivo_id', o.id);
+    const tot  = (prog||[]).reduce((a,p)=>a+parseNum(p.valore),0);
+    const perc = o.obiettivo>0 ? Math.min(100,Math.round(tot/o.obiettivo*100)) : 0;
+    const c    = perc>=80?'var(--grn)':perc>=50?'var(--amb)':'var(--red)';
+    return `<div style="background:var(--surf2);border-radius:var(--rs);padding:14px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;">${o.label||o.tipo}</div>
+        <div style="font-size:13px;font-weight:800;color:${c};">${perc}%</div>
+      </div>
+      <div style="background:var(--bord);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;">
+        <div style="height:100%;background:${c};border-radius:4px;width:${perc}%;transition:width .6s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);">
+        <span>Raggiunto: €${fmt(tot)}</span><span>Obiettivo: €${fmt(o.obiettivo)}</span>
+      </div>
+      ${perc>=100
+        ? '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:6px;">🎉 OBIETTIVO RAGGIUNTO!</div>'
+        : `<div style="font-size:11px;color:var(--txt2);margin-top:4px;">Mancano: €${fmt(Math.max(0,o.obiettivo-tot))}</div>`}
+    </div>`;
+  }));
+  el.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:8px;">I miei obiettivi '+anno+'</div>' + html.join('');
+}
+
+async function renderGestioneObiettivi(elId) {
+  const el = document.getElementById(elId);
+  if (!el || PROFILO?.ruolo !== 'top_master') return;
+  await loadObiettivi(); await caricaUtenti();
+  const anno = new Date().getFullYear();
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:10px;">Obiettivi operatori ${anno}</div>
+    ${UTENTI_LISTA.filter(u=>u.ruolo==='operativo'&&u.attivo).map(u => {
+      const objU = OBJ_LIST.filter(o=>o.utente_id===u.id&&o.anno===anno);
+      return `<div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome} ${u.cognome||''}</div>
+        ${objU.map(o=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">
+          <span style="flex:1;color:var(--txt2);">${o.label||o.tipo}</span>
+          <span style="font-weight:700;">€${fmt(o.obiettivo)}</span>
+          <button onclick="eliminaObiettivo(${o.id})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        </div>`).join('')}
+        <button onclick="aggiungiObiettivo('${u.id}','${u.nome} ${u.cognome||''}')" style="font-size:11px;padding:5px 12px;background:rgba(232,80,10,.1);color:#E8500A;border:none;border-radius:6px;cursor:pointer;font-family:inherit;margin-top:4px;">+ Aggiungi obiettivo</button>
+      </div>`;
+    }).join('')||'<div style="color:var(--txt3);font-size:13px;">Nessun operativo registrato</div>'}`;
+}
+
+async function aggiungiObiettivo(userId, nomeUtente) {
+  const tipi = ['CONSAP','Finanziamenti','Rami Elementari','Vita','Sinistri','Altro'];
+  const scelta = prompt(`Tipo obiettivo per ${nomeUtente}:\n${tipi.map((t,i)=>`${i+1}. ${t}`).join('\n')}`);
+  if (!scelta) return;
+  const label = tipi[(parseInt(scelta)||1)-1]||'Obiettivo';
+  const importo = parseNum(prompt(`Obiettivo annuo (€) per "${label}":`)||'0');
+  if (!importo) return;
+  try {
+    await db.from('iam_obiettivi').insert({
+      utente_id: userId, tipo: label.toLowerCase(), label,
+      obiettivo: importo, anno: new Date().getFullYear(), creato_da: ME?.id
+    });
+    await logAudit('CREA_OBIETTIVO', 'iam_obiettivi', userId, {label, importo});
+    renderGestioneObiettivi('obiettivi-admin-list');
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+async function eliminaObiettivo(id) {
+  if (!confirm('Eliminare questo obiettivo e tutti i progressi?')) return;
+  try { await db.from('iam_obiettivi').delete().eq('id', id); renderGestioneObiettivi('obiettivi-admin-list'); }
+  catch(e) { alert('Errore: '+e.message); }
+}
 
 // ─── GIACENZA CONTANTI ────────────────────────────────────────────────────────
 function apriGiacenza() {

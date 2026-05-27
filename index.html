@@ -452,7 +452,7 @@ input[type=file]{display:none;}
       </button>
     </div>
     <div class="mgrid" id="d-metrics"></div>
-    <div class="slbl">Distribuzione per tipo sospeso</div>
+    <div class="slbl">Distribuzione per produttore</div>
     <div class="card"><div class="plist" id="d-tipo" style="padding-top:12px;"></div></div>
     <div class="slbl">Distribuzione per anzianità</div>
     <div class="card"><div class="plist" id="d-anz" style="padding-top:12px;"></div></div>
@@ -483,7 +483,7 @@ input[type=file]{display:none;}
     </div>
     <div style="padding:0 12px 4px;">
       <select id="s-tipo" onchange="renderSospesi()" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;">
-        <option value="">Tutti i tipi sospeso</option>
+        <option value="">Tutti i produttori</option>
       </select>
     </div>
     <div id="s-chart" style="display:none;" class="card" style="margin-top:8px;">
@@ -1575,19 +1575,23 @@ function loadSospesi(inp) {
     const wb = XLSX.read(e.target.result, {type:'array', raw:true});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
-    APP.sospesi = data.map(row => ({
-      nominativo: row['Nominativo'] || row['nominativo'] || '',
-      polizza:    row['Polizza']    || row['polizza']    || '',
-      targa:      row['Targa']      || row['targa']      || '',
-      importo:    parseNum(row['Importo Sospeso'] ?? row['importo'] ?? 0),
-      data:       row['Data']       || row['data']       || '',
-      compagnia:  row['Compagnia']  || row['compagnia']  || '',
-      produttore: row['Autore Pagamento'] || row['Produttore Sospeso'] || '',
-      modPag:     row['Mod.Pagamento'] || '',
-      prog:       String(row['Prog_movimento'] || row['prog'] || ''),
-      gg:         daysSince(row['Data'] || row['data']),
-    }));
-    document.getElementById('ok-sosp').textContent = '✓ ' + file.name + ' (' + APP.sospesi.length + ' righe)';
+    APP.sospesi = data
+      .filter(row => row['Nominativo'] && parseNum(row['Importo Sospeso'] ?? 0) > 0)
+      .map(row => ({
+        nominativo: String(row['Nominativo'] || '').trim(),
+        importo:    parseNum(row['Importo Sospeso'] ?? 0),
+        data:       row['Data'] || '',
+        compagnia:  String(row['Compagnia'] || '').trim(),
+        // "Tipo Sospeso" nel file contiene il nome del produttore
+        produttore: String(row['Tipo Sospeso'] || row['Autore Pagamento'] || '').trim(),
+        // Campi extra mantenuti per compatibilità
+        polizza:    String(row['Polizza']        || '').trim(),
+        targa:      String(row['Targa']          || '').trim(),
+        prog:       String(row['Prog_movimento'] || '').trim(),
+        gg:         daysSince(row['Data']),
+      }));
+    const filtrati = APP.sospesi.filter(s => s.importo > 0).length;
+    document.getElementById('ok-sosp').textContent = '✓ ' + file.name + ' (' + filtrati + ' sospesi)';
     document.getElementById('ok-sosp').style.display = 'block';
     document.getElementById('sub-sosp').style.display = 'none';
   };
@@ -1738,23 +1742,20 @@ function buildDashboard() {
       <div class="msub">${m.sub}</div>
     </div>`).join('') || '<div class="mcard" style="grid-column:1/-1;"><div class="mlbl">Nessun widget attivo</div><div class="msub">Usa ⚙️ per configurare</div></div>';
 
-  // Distribuzione per tipo sospeso
-  const TIPO_LABEL = {
-    'RATA': 'Rata', 'PRIMA RATA': 'Prima rata', 'RINNOVO': 'Rinnovo',
-    'QUIETANZA': 'Quietanza', 'REGOLAZIONE': 'Regolazione',
-  };
-  const byTipo = {};
+  // Distribuzione per produttore (ex Tipo Sospeso nel file)
+  const byProd = {};
   sosp.forEach(s => {
-    const t = s.tipoSospeso || s.modPag || 'Non specificato';
-    byTipo[t] = (byTipo[t]||0) + s.importo;
+    const p = s.produttore || 'Non assegnato';
+    if (!byProd[p]) byProd[p] = { n: 0, val: 0 };
+    byProd[p].n++; byProd[p].val += s.importo;
   });
-  const COLORS = ['#E8500A','#2c7abf','#1a8a5a','#9a6010','#7b5ea7','#2a7a6a'];
-  const maxT = Math.max(...Object.values(byTipo), 1);
-  document.getElementById('d-tipo').innerHTML = Object.entries(byTipo)
-    .sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v],i)=>`
-    <div class="prow"><div class="phd"><span>${TIPO_LABEL[k]||k}</span><span>€ ${fmt(v)}</span></div>
-    <div class="pbar"><div class="pfill" style="width:${Math.round(v/maxT*100)}%;background:${COLORS[i%COLORS.length]};"></div></div></div>`).join('') ||
-    '<div style="color:var(--txt3);font-size:13px;padding:4px 0;">Dati non disponibili — verifica colonna "Tipo Sospeso" nel file</div>';
+  const COLORS = ['#E8500A','#2c7abf','#1a8a5a','#9a6010','#7b5ea7','#2a7a6a','#c0392b','#16a085'];
+  const maxP = Math.max(...Object.values(byProd).map(v=>v.val), 1);
+  document.getElementById('d-tipo').innerHTML = Object.entries(byProd)
+    .sort((a,b)=>b[1].val-a[1].val).slice(0,8).map(([k,v],i)=>`
+    <div class="prow"><div class="phd"><span>${k}</span><span>${v.n} · €${fmt(v.val)}</span></div>
+    <div class="pbar"><div class="pfill" style="width:${Math.round(v.val/maxP*100)}%;background:${COLORS[i%COLORS.length]};"></div></div></div>`).join('') ||
+    '<div style="color:var(--txt3);font-size:13px;padding:4px 0;">Nessun dato produttore disponibile</div>';
 
   // Distribuzione per anzianità
   const anzFasce = [
@@ -1896,13 +1897,13 @@ function buildSospesi() {
   if (!sosp.length) return;
   loadTeam();
 
-  // Popola select tipi sospeso
-  const tipi = [...new Set(sosp.map(s=>s.tipoSospeso||s.modPag||'').filter(Boolean))].sort();
+  // Popola select produttori
+  const produttori = [...new Set(sosp.map(s=>s.produttore).filter(Boolean))].sort();
   const sel = document.getElementById('s-tipo');
   if (sel) {
     const cur = sel.value;
-    sel.innerHTML = '<option value="">Tutti i tipi sospeso</option>' +
-      tipi.map(t=>`<option value="${t}" ${cur===t?'selected':''}>${t}</option>`).join('');
+    sel.innerHTML = '<option value="">Tutti i produttori</option>' +
+      produttori.map(p=>`<option value="${p}" ${cur===p?'selected':''}>${p}</option>`).join('');
   }
 
   // Chips compagnie
@@ -1920,19 +1921,19 @@ function setFC(c) { filtComp = c; buildSospesi(); }
 
 function renderSospesi() {
   const q    = (document.getElementById("s-search")?.value||"").toLowerCase();
-  const tipo = document.getElementById("s-tipo")?.value||"";
+  const prod = document.getElementById("s-tipo")?.value||"";
   let sosp   = APP.sospesi.filter(s=>s.importo>=0);
   if (filtComp) sosp = sosp.filter(s=>s.compagnia===filtComp);
-  if (tipo)     sosp = sosp.filter(s=>(s.tipoSospeso||s.modPag||"")=== tipo);
-  if (q) sosp = sosp.filter(s=>(s.nominativo+s.polizza+s.compagnia+(s.tipoSospeso||"")).toLowerCase().includes(q));
+  if (prod)     sosp = sosp.filter(s=>s.produttore===prod);
+  if (q) sosp = sosp.filter(s=>(s.nominativo+s.polizza+s.compagnia+(s.produttore||"")).toLowerCase().includes(q));
   sosp.sort((a,b)=>b.gg-a.gg);
   const chart = document.getElementById("s-chart");
-  if (tipo && sosp.length) {
+  if (prod && sosp.length) {
     const v60=sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0);
     const v30=sosp.filter(s=>s.gg>=30&&s.gg<=60).reduce((a,s)=>a+s.importo,0);
     const vRec=sosp.filter(s=>s.gg<30).reduce((a,s)=>a+s.importo,0);
     const mx=Math.max(v60,v30,vRec,1);
-    document.getElementById("s-chart-title").textContent=tipo+" — "+sosp.length+" sospesi · € "+fmt(sosp.reduce((a,s)=>a+s.importo,0));
+    document.getElementById("s-chart-title").textContent=prod+" — "+sosp.length+" sospesi · € "+fmt(sosp.reduce((a,s)=>a+s.importo,0));
     document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"#E8500A"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
     chart.style.display="block";
   } else { if(chart) chart.style.display="none"; }

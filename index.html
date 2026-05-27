@@ -1398,9 +1398,11 @@ async function loadLastSession() {
       return tot + (parseNum(r.contanti) - parseNum(r.versamenti) - parseNum(r.spese));
     }, 0);
 
-    // Fondo cassa = ultimo valore non-zero impostato (non si accumula)
-    const ultimoFondo = [...tutte].reverse().find(r => parseNum(r.fondo_cassa) > 0);
-    APP.fondoCassa = ultimoFondo ? parseNum(ultimoFondo.fondo_cassa) : 0;
+    // Fondo cassa oggi = ultimo valore non-zero
+    const sessConFondo = tutte.filter(r => parseNum(r.fondo_cassa) > 0);
+    APP.fondoCassa = sessConFondo.length > 0 ? parseNum(sessConFondo[sessConFondo.length-1].fondo_cassa) : 0;
+    // Fondo cassa ieri = penultimo valore non-zero
+    APP.fondoIeri  = sessConFondo.length > 1 ? parseNum(sessConFondo[sessConFondo.length-2].fondo_cassa) : APP.fondoCassa;
 
     // Ultima sessione per i dati correnti
     const s = tutte[tutte.length - 1];
@@ -1467,6 +1469,7 @@ const APP = {
   prevProg: [], loaded: false,
   saldoCumulativo: 0,
   fondoCassa: 0,
+  fondoIeri: 0,
   conto: { hdi: { movimenti: [], abb: {} }, pluri: { movimenti: [], abb: {} }, att: 'hdi' }
 };
 
@@ -1687,6 +1690,8 @@ function buildDashboard() {
   const vers  = parseNum(g('i-vers'));
   const spese = parseNum(g('i-spese'));
   const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
+  const fondoIeri = APP.fondoIeri || fondo;
+  const varFondo = fondo - fondoIeri;
   const valInc = APP.incassi.reduce((a,i)=>a+i.importo,0);
   const saldoOggi = cassa - vers - spese;
   const saldoCumulativo = APP.saldoCumulativo !== undefined ? APP.saldoCumulativo : saldoOggi;
@@ -1716,7 +1721,12 @@ function buildDashboard() {
   if (W.cassa)        metrics.push({lbl:'Contanti oggi', val:'€'+fmt(cassa), sub:'inseriti nella sessione'});
   if (W.vers)         metrics.push({lbl:'Versato compagnie', val:'-€'+fmt(vers), sub:'uscite giornata', color:'var(--red)'});
   if (W.saldo)        metrics.push({lbl:'Cassa progressiva', val:'€'+fmt(saldoCumulativo), sub:'totale accumulato', color: saldoCumulativo>=0?'var(--grn)':'var(--red)'});
-  if (W.fondo)        metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub:'soglia minima giornaliera', color:'var(--blu)'});
+  if (W.fondo) {
+    const varSub = varFondo === 0 ? 'invariato rispetto a ieri' :
+      (varFondo > 0 ? `↑ +€${fmt(varFondo)} rispetto a ieri` : `↓ -€${fmt(Math.abs(varFondo))} rispetto a ieri`);
+    const varColor = varFondo > 0 ? 'var(--amb)' : varFondo < 0 ? 'var(--red)' : 'var(--blu)';
+    metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub: varSub, color: varColor});
+  }
   if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'cassa sopra soglia':'⚠️ sotto il fondo cassa', color: scostamento>=0?'var(--grn)':'var(--red)'});
   if (W.incassato)    metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)'});
   if (W.spese)        metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)'});

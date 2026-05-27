@@ -890,6 +890,16 @@ input[type=file]{display:none;}
       <span style="font-size:13px;color:var(--txt2);">Cassa progressiva attuale</span>
       <span style="font-size:16px;font-weight:700;color:var(--grn);" id="giac-attuale">€0,00</span>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="fld">
+        <label>Data riferimento</label>
+        <input type="date" id="giac-data">
+      </div>
+      <div class="fld">
+        <label>Ora (opzionale)</label>
+        <input type="time" id="giac-ora" placeholder="18:00">
+      </div>
+    </div>
     <div class="fld" style="margin-bottom:12px;">
       <label>Contanti fisici contati (€)</label>
       <input type="number" id="giac-importo" placeholder="0.00" step="0.01" inputmode="decimal" style="font-size:18px;font-weight:700;text-align:center;">
@@ -3594,8 +3604,9 @@ function apriGiacenza() {
   document.getElementById('giac-attuale').textContent = '€' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo||0);
   document.getElementById('giac-importo').value = '';
   document.getElementById('giac-note').value = '';
+  document.getElementById('giac-data').value = new Date().toISOString().split('T')[0];
+  document.getElementById('giac-ora').value = new Date().toTimeString().slice(0,5);
   document.getElementById('giac-diff').style.display = 'none';
-  // Mostra differenza in tempo reale
   document.getElementById('giac-importo').oninput = function() {
     const val = parseNum(this.value);
     const diff = val - (APP.saldoCumulativo||0);
@@ -3606,51 +3617,50 @@ function apriGiacenza() {
       el.style.color = Math.abs(diff) < 0.01 ? 'var(--grn-txt)' : diff > 0 ? 'var(--amb-txt)' : 'var(--red-txt)';
       el.textContent = Math.abs(diff) < 0.01 ? '✓ La cassa quadra perfettamente' :
         (diff > 0 ? `↑ Eccedenza: +€${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(diff)}` :
-                    `↓ Ammanсo: -€${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(Math.abs(diff))}`);
+                    `↓ Ammanco: -€${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(Math.abs(diff))}`);
     } else { el.style.display = 'none'; }
   };
 }
 
 async function salvaGiacenza() {
-  const importo = parseNum(document.getElementById('giac-importo')?.value||0);
-  const note    = document.getElementById('giac-note')?.value.trim()||'';
-  const diff    = importo - (APP.saldoCumulativo||0);
-  const dataOggi = new Date().toISOString().split('T')[0];
+  const importo  = parseNum(document.getElementById('giac-importo')?.value||0);
+  const note     = document.getElementById('giac-note')?.value.trim()||'';
+  const dataRif  = document.getElementById('giac-data')?.value || new Date().toISOString().split('T')[0];
+  const ora      = document.getElementById('giac-ora')?.value || '';
+  const diff     = importo - (APP.saldoCumulativo||0);
+  const notaFull = `Giacenza fisica${ora?' ore '+ora:''}: €${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo)}${note?' — '+note:''}`;
 
-  // Salva come rettifica nella sessione di oggi
   try {
     if (db) {
-      // Cerca se esiste una sessione per oggi
       const { data } = await db.from('sessioni_giornaliere')
-        .select('contanti,versamenti,spese').eq('data_riferimento', dataOggi).single();
-
+        .select('contanti,versamenti,spese,note').eq('data_riferimento', dataRif).single();
       if (data) {
-        // Aggiusta i contanti della sessione di oggi per far quadrare il totale
         const nuovaCassa = parseNum(data.contanti) + diff;
         await db.from('sessioni_giornaliere').update({
           contanti: Math.max(0, nuovaCassa),
-          note: note ? (data.note ? data.note + ' | ' + note : note) : data.note,
+          note: data.note ? data.note + ' | ' + notaFull : notaFull,
           aggiornato_il: new Date().toISOString()
-        }).eq('data_riferimento', dataOggi);
+        }).eq('data_riferimento', dataRif);
       } else {
-        // Crea nuova sessione con la giacenza
         await db.from('sessioni_giornaliere').insert({
-          data_riferimento: dataOggi,
-          contanti: importo, versamenti: 0, spese: 0, note,
+          data_riferimento: dataRif,
+          contanti: importo, versamenti: 0, spese: 0,
+          note: notaFull,
           sospesi_json: JSON.stringify(APP.sospesi),
           totale_sospesi: APP.sospesi.length,
           valore_totale: APP.sospesi.reduce((a,s)=>a+s.importo,0),
         });
       }
     }
-    // Aggiorna saldo in memoria
     APP.saldoCumulativo = (APP.saldoCumulativo||0) + diff;
-    // Aggiorna campo cassa
     const cassaEl = document.getElementById('i-cassa');
-    if (cassaEl) cassaEl.value = parseNum(cassaEl.value) + diff;
+    if (cassaEl && dataRif === document.getElementById('i-data')?.value) {
+      cassaEl.value = parseNum(cassaEl.value) + diff;
+    }
     document.getElementById('giacenza-overlay').style.display = 'none';
     buildDashboard();
-    showSavemsg('✅ Giacenza aggiornata: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo));
+    buildStorico();
+    showSavemsg(`✅ Giacenza del ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT')}: €${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo)}`);
   } catch(e) { alert('Errore: '+e.message); }
 }
 

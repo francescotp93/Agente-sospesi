@@ -2691,7 +2691,7 @@ async function sendMsg() {
       body:JSON.stringify({
         model:'llama-3.3-70b-versatile', max_tokens:1000,
         messages:[
-          {role:'system', content:`Sei l'assistente AI dell'app IAM - Insurance Agency Management. Rispondi in italiano, in modo professionale e conciso. Usa € per gli importi. ${isOperativo ? 'Stai parlando con un operatore che può vedere sospesi, team e le proprie trattative.' : 'Stai parlando con un utente con accesso completo.'} Dati disponibili: ${ctx}`},
+          {role:'system', content:`Sei l'assistente AI dell'app IAM - Insurance Agency Management per un'agenzia assicurativa italiana. Rispondi in italiano, in modo professionale e conciso. Usa € per gli importi. I dati reali dell'agenzia sono nel JSON seguente — usali sempre per rispondere con precisione. Non inventare dati non presenti nel JSON. Campi importanti: cassa.fondo_cassa=fondo cassa odierno, cassa.cassa_progressiva=totale accumulato, cassa.scostamento=differenza cassa-fondo, cassa.variazione_fondo=variazione fondo rispetto a ieri. ${isOperativo?'Utente operativo: mostra solo sospesi, team e pipeline proprie.':''} Dati: ${ctx}`},
           {role:'user', content:txt}
         ]
       })
@@ -2709,24 +2709,47 @@ async function sendMsg() {
 
 function buildCtx() {
   const isOperativo = PROFILO?.ruolo === 'operativo';
-  // Operativo vede solo sospesi, team e pipeline proprie
   const sosp = APP.sospesi.filter(s=>s.importo>=0);
+  const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
+  const fondoIeri = APP.fondoIeri || fondo;
+  const varFondo = fondo - fondoIeri;
+  const saldoCumulativo = APP.saldoCumulativo || 0;
+  const scostamento = saldoCumulativo - fondo;
+
   const ctx = {
     ruolo: PROFILO?.ruolo || 'operativo',
     nome_utente: PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '',
+    data_sessione: g('i-data'),
+    sospesi: {
+      totale: sosp.length,
+      valore: sosp.reduce((a,s)=>a+s.importo,0).toFixed(2),
+      oltre60: sosp.filter(s=>s.gg>60).length,
+      tra30e60: sosp.filter(s=>s.gg>=30&&s.gg<=60).length,
+    },
+    cassa: {
+      contanti_oggi: parseNum(g('i-cassa')),
+      versamenti: parseNum(g('i-vers')),
+      spese: parseNum(g('i-spese')),
+      cassa_progressiva: saldoCumulativo,
+      fondo_cassa: fondo,
+      fondo_cassa_ieri: fondoIeri,
+      variazione_fondo: varFondo,
+      scostamento: scostamento,
+    },
+    pipeline: {
+      totale: PIPE.length,
+      valore: PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0).toFixed(2),
+      chiuse: PIPE.filter(t=>t.status==='chiusa').length,
+      perse: PIPE.filter(t=>t.status==='persa').length,
+    },
+    team: { totale: TEAM.length },
   };
-  // Sospesi — operativo vede tutto (filtrabile per produttore)
-  ctx.sospesi = { totale: sosp.length, valore: sosp.reduce((a,s)=>a+s.importo,0).toFixed(2), oltre60: sosp.filter(s=>s.gg>60).length };
-  // Pipeline — solo le proprie per operativo
-  ctx.trattative = { totale: PIPE.length, pipeline_valore: PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0).toFixed(2), chiuse: PIPE.filter(t=>t.status==='chiusa').length };
-  // Team — visibile a tutti
-  ctx.team = { totale: TEAM.length };
-  // Cassa — solo per chi ha accesso
+
   if (!isOperativo) {
-    ctx.cassa = { contanti: parseNum(g('i-cassa')), versamenti: parseNum(g('i-vers')), spese: parseNum(g('i-spese')) };
-    ctx.incassi = APP.incassi.length;
-    ctx.anomalie = APP.anomalie.map(a=>({tipo:a.tipo,titolo:a.titolo}));
+    ctx.anomalie = APP.anomalie?.map(a=>({tipo:a.tipo,titolo:a.titolo}))||[];
+    ctx.incassato = APP.incassi.reduce((a,i)=>a+i.importo,0).toFixed(2);
   }
+
   return JSON.stringify(ctx);
 }
 

@@ -1398,6 +1398,10 @@ async function loadLastSession() {
       return tot + (parseNum(r.contanti) - parseNum(r.versamenti) - parseNum(r.spese));
     }, 0);
 
+    // Fondo cassa = ultimo valore non-zero impostato (non si accumula)
+    const ultimoFondo = [...tutte].reverse().find(r => parseNum(r.fondo_cassa) > 0);
+    APP.fondoCassa = ultimoFondo ? parseNum(ultimoFondo.fondo_cassa) : 0;
+
     // Ultima sessione per i dati correnti
     const s = tutte[tutte.length - 1];
     try { APP.sospesi = JSON.parse(s.sospesi_json || '[]'); } catch(e) { APP.sospesi = []; }
@@ -1416,7 +1420,7 @@ async function loadLastSession() {
     setVal('i-cassa', s.contanti    || 0);
     setVal('i-vers',  s.versamenti  || 0);
     setVal('i-spese', s.spese       || 0);
-    setVal('i-fondo', s.fondo_cassa || 0);
+    setVal('i-fondo', s.fondo_cassa > 0 ? s.fondo_cassa : (APP.fondoCassa || 0));
     setVal('i-note',  s.note        || '');
 
     showSavemsg('📂 ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT') +
@@ -1462,6 +1466,7 @@ const APP = {
   sospesi: [], incassi: [], anomalie: [],
   prevProg: [], loaded: false,
   saldoCumulativo: 0,
+  fondoCassa: 0,
   conto: { hdi: { movimenti: [], abb: {} }, pluri: { movimenti: [], abb: {} }, att: 'hdi' }
 };
 
@@ -1681,7 +1686,7 @@ function buildDashboard() {
   const cassa = parseNum(g('i-cassa'));
   const vers  = parseNum(g('i-vers'));
   const spese = parseNum(g('i-spese'));
-  const fondo = parseNum(g('i-fondo'));
+  const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
   const valInc = APP.incassi.reduce((a,i)=>a+i.importo,0);
   const saldoOggi = cassa - vers - spese;
   const saldoCumulativo = APP.saldoCumulativo !== undefined ? APP.saldoCumulativo : saldoOggi;

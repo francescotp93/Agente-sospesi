@@ -1,16 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-//  CONFIGURAZIONE AGENTE SOSPESI
-//  Inserisci qui la tua API key di Groq (GRATUITA)
-//  Registrati su: https://console.groq.com → API Keys → Create
+//  CONFIGURAZIONE IAM — Insurance Agency Management
 // ═══════════════════════════════════════════════════════════════
+window.GROQ_API_KEY  = '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';
 
-window.GROQ_API_KEY = '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';
-
-// ── SUPABASE (database cloud per salvare i dati) ──────────────
+// ── SUPABASE ──────────────────────────────────────────────────
 window.SUPABASE_URL  = 'https://ekjxrnsfqxnfxzrthdcf.supabase.co';
-window.SUPABASE_KEY  = 'sb_publishable_Rq3qH44zdc8wUOsY7pfHvw_ny0XF9Cv';
+window.SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVranhybnNmcXhuZnh6cnRoZGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0MzU4NjcsImV4cCI6MjA5NTAxMTg2N30.2OF2COAcLgM22xbmtqLWXgaDcVLtNh3AuX5MQ4_L02I';
 
-// Soglie di allerta (puoi modificarle)
+// ── SOGLIE DI ALLERTA ─────────────────────────────────────────
 window.CONFIG = {
   SOGLIA_GIORNI_CRITICO:    60,
   SOGLIA_GIORNI_ATTENZIONE: 30,

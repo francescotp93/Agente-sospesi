@@ -420,6 +420,19 @@ input[type=file]{display:none;}
       <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="i-vers" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
       <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="i-spese" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="fld">
+        <label>Fondo cassa (€)</label>
+        <input type="number" id="i-fondo" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+      </div>
+      <div class="fld">
+        <label style="display:flex;align-items:center;gap:4px;">
+          Scostamento
+          <span id="i-scostamento-badge" style="font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;"></span>
+        </label>
+        <input type="text" id="i-scostamento" readonly style="background:var(--surf2);font-weight:700;cursor:default;">
+      </div>
+    </div>
     <div class="fld"><label>Note cassa</label><textarea id="i-note" rows="2" placeholder="es. versamento banca, rimborso..."></textarea></div>
   </div>
   <div id="savemsg"></div>
@@ -1362,6 +1375,7 @@ async function saveSession(sospesi, incassi, dati) {
       contanti:    dati.cassa,
       versamenti:  dati.vers,
       spese:       dati.spese,
+      fondo_cassa: dati.fondo || 0,
       note:        dati.note,
       totale_sospesi: sospesi.length,
       valore_totale:  sospesi.reduce((a,s)=>a+s.importo,0),
@@ -1402,6 +1416,7 @@ async function loadLastSession() {
     setVal('i-cassa', s.contanti   || 0);
     setVal('i-vers',  s.versamenti || 0);
     setVal('i-spese', s.spese      || 0);
+    setVal('i-fondo', s.fondo_cassa|| 0);
     setVal('i-note',  s.note       || '');
 
     showSavemsg('📂 ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT') +
@@ -1523,8 +1538,8 @@ function goTab(t) {
 }
 
 // ─── WIDGET PREFS ─────────────────────────────────────────────────────────────
-const WDEF = { sospesi_n:true, valore:true, oltre60:true, cassa:true, vers:true, saldo:true, incassato:false, spese:false };
-const WLBL = { sospesi_n:'Sospesi aperti', valore:'Valore sospesi', oltre60:'Oltre 60 giorni', cassa:'Contanti cassa', vers:'Versato compagnie', saldo:'Saldo netto cassa', incassato:'Incassato oggi', spese:'Spese agenzia' };
+const WDEF = { sospesi_n:true, valore:true, oltre60:true, cassa:true, vers:true, saldo:true, fondo:true, scostamento:true, incassato:false, spese:false };
+const WLBL = { sospesi_n:'Sospesi aperti', valore:'Valore sospesi', oltre60:'Oltre 60 giorni', cassa:'Contanti oggi', vers:'Versato compagnie', saldo:'Cassa progressiva', fondo:'Fondo cassa', scostamento:'Scostamento cassa', incassato:'Incassato oggi', spese:'Spese agenzia' };
 function getW() { try { return {...WDEF,...JSON.parse(localStorage.getItem('iam_w')||'{}')}; } catch(e){ return {...WDEF}; } }
 function saveW(w) { localStorage.setItem('iam_w', JSON.stringify(w)); }
 
@@ -1634,7 +1649,7 @@ function loadConto(inp, tipo) {
 async function doAnalisi() {
   if (!APP.sospesi.length) { alert('Carica prima il file sospesi.'); return; }
   showSavemsg('💾 Salvataggio in corso...');
-  const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), note: g('i-note') };
+  const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), note: g('i-note') };
   APP.prevProg = await loadPrevProg();
   await saveSession(APP.sospesi, APP.incassi, dati);
   try { localStorage.setItem('iam_prev', JSON.stringify(APP.sospesi.map(s=>s.prog).filter(Boolean))); } catch(e){}
@@ -1665,22 +1680,40 @@ function buildDashboard() {
   const cassa = parseNum(g('i-cassa'));
   const vers  = parseNum(g('i-vers'));
   const spese = parseNum(g('i-spese'));
+  const fondo = parseNum(g('i-fondo'));
   const valInc = APP.incassi.reduce((a,i)=>a+i.importo,0);
-  // Saldo giornata corrente
   const saldoOggi = cassa - vers - spese;
-  // Saldo cumulativo = somma di tutti i saldi giornalieri da Supabase
   const saldoCumulativo = APP.saldoCumulativo !== undefined ? APP.saldoCumulativo : saldoOggi;
+
+  // Calcola scostamento rispetto al fondo cassa
+  const scostamento = saldoCumulativo - fondo;
+  const scostEl = document.getElementById('i-scostamento');
+  const scostBadge = document.getElementById('i-scostamento-badge');
+  if (scostEl) {
+    scostEl.value = '€' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(scostamento);
+    scostEl.style.color = scostamento >= 0 ? 'var(--grn)' : 'var(--red)';
+  }
+  if (scostBadge) {
+    if (fondo > 0) {
+      const perc = Math.round(Math.abs(scostamento)/fondo*100);
+      scostBadge.textContent = scostamento >= 0 ? `+${perc}%` : `-${perc}%`;
+      scostBadge.style.background = scostamento >= 0 ? 'var(--grn-bg)' : 'var(--red-bg)';
+      scostBadge.style.color = scostamento >= 0 ? 'var(--grn-txt)' : 'var(--red-txt)';
+    } else { scostBadge.textContent = ''; }
+  }
   const oltre60 = sosp.filter(s=>s.gg>60).length;
   const W = getW();
   const metrics = [];
-  if (W.sospesi_n)  metrics.push({lbl:'Sospesi aperti', val:sosp.length, sub:'polizze in attesa', onclick:"goTab('sospesi')"});
-  if (W.valore)     metrics.push({lbl:'Valore sospesi', val:'€'+fmt(valTot), sub:'importo totale'});
-  if (W.oltre60)    metrics.push({lbl:'Oltre 60 giorni', val:oltre60, sub:'priorità urgente', color:'var(--red)', onclick:"goTab('anomalie')"});
-  if (W.cassa)      metrics.push({lbl:'Contanti oggi', val:'€'+fmt(cassa), sub:'inseriti nella sessione'});
-  if (W.vers)       metrics.push({lbl:'Versato compagnie', val:'-€'+fmt(vers), sub:'uscite giornata', color:'var(--red)'});
-  if (W.saldo)      metrics.push({lbl:'Cassa progressiva', val:'€'+fmt(saldoCumulativo), sub:'totale accumulato', color: saldoCumulativo>=0?'var(--grn)':'var(--red)'});
-  if (W.incassato)  metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)'});
-  if (W.spese)      metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)'});
+  if (W.sospesi_n)    metrics.push({lbl:'Sospesi aperti', val:sosp.length, sub:'polizze in attesa', onclick:"goTab('sospesi')"});
+  if (W.valore)       metrics.push({lbl:'Valore sospesi', val:'€'+fmt(valTot), sub:'importo totale'});
+  if (W.oltre60)      metrics.push({lbl:'Oltre 60 giorni', val:oltre60, sub:'priorità urgente', color:'var(--red)', onclick:"goTab('anomalie')"});
+  if (W.cassa)        metrics.push({lbl:'Contanti oggi', val:'€'+fmt(cassa), sub:'inseriti nella sessione'});
+  if (W.vers)         metrics.push({lbl:'Versato compagnie', val:'-€'+fmt(vers), sub:'uscite giornata', color:'var(--red)'});
+  if (W.saldo)        metrics.push({lbl:'Cassa progressiva', val:'€'+fmt(saldoCumulativo), sub:'totale accumulato', color: saldoCumulativo>=0?'var(--grn)':'var(--red)'});
+  if (W.fondo)        metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub:'soglia minima giornaliera', color:'var(--blu)'});
+  if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'cassa sopra soglia':'⚠️ sotto il fondo cassa', color: scostamento>=0?'var(--grn)':'var(--red)'});
+  if (W.incassato)    metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)'});
+  if (W.spese)        metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)'});
 
   document.getElementById('d-metrics').innerHTML = metrics.map((m,i) => `
     <div class="mcard" style="animation-delay:${i*.05+.05}s" ${m.onclick?`onclick="${m.onclick}"`:''}>
@@ -3206,6 +3239,7 @@ async function apriModificaStorico(dataRif) {
           <div class="fld"><label>Contanti in cassa (€)</label><input type="number" id="ste-cassa" value="${data.contanti||0}" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="ste-vers" value="${data.versamenti||0}" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="ste-spese" value="${data.spese||0}" step="0.01" inputmode="decimal"></div>
+          <div class="fld"><label>Fondo cassa (€)</label><input type="number" id="ste-fondo" value="${data.fondo_cassa||0}" step="0.01" inputmode="decimal"></div>
         </div>
         <div class="fld" style="margin-bottom:10px;"><label>Note</label><input type="text" id="ste-note" value="${data.note||''}"></div>
         <div id="ste-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
@@ -3223,11 +3257,12 @@ async function salvaModificaStorico(dataRif) {
   const cassa = parseNum(document.getElementById('ste-cassa')?.value||0);
   const vers  = parseNum(document.getElementById('ste-vers')?.value||0);
   const spese = parseNum(document.getElementById('ste-spese')?.value||0);
+  const fondo = parseNum(document.getElementById('ste-fondo')?.value||0);
   const note  = document.getElementById('ste-note')?.value.trim()||'';
   const err   = document.getElementById('ste-err');
   try {
     await db.from('sessioni_giornaliere').update({
-      contanti: cassa, versamenti: vers, spese, note,
+      contanti: cassa, versamenti: vers, spese, fondo_cassa: fondo, note,
       aggiornato_il: new Date().toISOString()
     }).eq('data_riferimento', dataRif);
     document.getElementById('st-edit-overlay')?.remove();

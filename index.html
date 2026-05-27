@@ -493,6 +493,7 @@ input[type=file]{display:none;}
       </div>
     </div>
     <div class="chips" id="s-chips"></div>
+    <div id="s-prod-stats" style="display:none;"></div>
     <div class="card"><div id="s-list"></div></div>
     <div style="height:16px;"></div>
   </div>
@@ -1927,6 +1928,78 @@ function renderSospesi() {
   if (prod)     sosp = sosp.filter(s=>s.produttore===prod);
   if (q) sosp = sosp.filter(s=>(s.nominativo+s.polizza+s.compagnia+(s.produttore||"")).toLowerCase().includes(q));
   sosp.sort((a,b)=>b.gg-a.gg);
+
+  // Scheda statistiche produttore selezionato
+  const statsEl = document.getElementById('s-prod-stats');
+  if (prod && statsEl) {
+    const tuttiSosp = APP.sospesi.filter(s=>s.produttore===prod && s.importo>=0);
+    const totale    = tuttiSosp.length;
+    const valore    = tuttiSosp.reduce((a,s)=>a+s.importo,0);
+    const oltre60   = tuttiSosp.filter(s=>s.gg>60);
+    const tra30e60  = tuttiSosp.filter(s=>s.gg>=30&&s.gg<=60);
+    const recenti   = tuttiSosp.filter(s=>s.gg<30);
+    const mediGg    = totale ? Math.round(tuttiSosp.reduce((a,s)=>a+s.gg,0)/totale) : 0;
+    // Rating ritardo: verde <15gg media, giallo 15-30, rosso >30
+    const rating    = mediGg < 15 ? {lbl:'Ottimo',c:'var(--grn)',bg:'var(--grn-bg)',stars:'★★★★★'} :
+                      mediGg < 30 ? {lbl:'Buono', c:'var(--amb)',bg:'var(--amb-bg)',stars:'★★★★☆'} :
+                      mediGg < 60 ? {lbl:'Attenzione',c:'#E8500A',bg:'rgba(232,80,10,.1)',stars:'★★★☆☆'} :
+                                    {lbl:'Critico',c:'var(--red)',bg:'var(--red-bg)',stars:'★★☆☆☆'};
+    // Compagnie del produttore
+    const comps = [...new Set(tuttiSosp.map(s=>s.compagnia).filter(Boolean))];
+
+    statsEl.innerHTML = `
+      <div style="margin:0 12px 8px;background:var(--surf);border-radius:var(--r);border:1px solid var(--bord);box-shadow:var(--shd);overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#1E1E1C,#2a2a28);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#fff;">${prod}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;">${comps.slice(0,3).join(' · ')}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:18px;">${rating.stars}</div>
+            <div style="font-size:11px;font-weight:700;color:${rating.c};background:${rating.bg};padding:2px 8px;border-radius:10px;margin-top:3px;">${rating.lbl}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;">
+          <div style="padding:12px;border-right:.5px solid var(--bord);text-align:center;">
+            <div style="font-size:20px;font-weight:800;">${totale}</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:2px;">Sospesi totali</div>
+          </div>
+          <div style="padding:12px;border-right:.5px solid var(--bord);text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--red);">${oltre60.length}</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:2px;">Oltre 60gg</div>
+          </div>
+          <div style="padding:12px;border-right:.5px solid var(--bord);text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--amb);">${tra30e60.length}</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:2px;">30–60 gg</div>
+          </div>
+          <div style="padding:12px;text-align:center;">
+            <div style="font-size:16px;font-weight:800;color:var(--grn);">${recenti.length}</div>
+            <div style="font-size:10px;color:var(--txt3);margin-top:2px;">Recenti</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:.5px solid var(--bord);">
+          <div style="padding:10px 14px;border-right:.5px solid var(--bord);">
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Valore totale</div>
+            <div style="font-size:15px;font-weight:700;color:#E8500A;">€${fmt(valore)}</div>
+          </div>
+          <div style="padding:10px 14px;">
+            <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Ritardo medio</div>
+            <div style="font-size:15px;font-weight:700;color:${rating.c};">${mediGg} giorni</div>
+          </div>
+        </div>
+        ${oltre60.length ? `
+        <div style="padding:8px 14px;background:var(--red-bg);border-top:.5px solid var(--bord);">
+          <div style="font-size:11px;color:var(--red-txt);font-weight:600;">
+            ⚠️ ${oltre60.length} sospesi critici · €${fmt(oltre60.reduce((a,s)=>a+s.importo,0))} da recuperare con urgenza
+          </div>
+        </div>` : ''}
+      </div>`;
+    statsEl.style.display = 'block';
+  } else if (statsEl) {
+    statsEl.innerHTML = '';
+    statsEl.style.display = 'none';
+  }
+
   const chart = document.getElementById("s-chart");
   if (prod && sosp.length) {
     const v60=sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0);
@@ -1937,6 +2010,7 @@ function renderSospesi() {
     document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"#E8500A"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
     chart.style.display="block";
   } else { if(chart) chart.style.display="none"; }
+
   document.getElementById('s-list').innerHTML = sosp.length
     ? sosp.map(s=>rowSosp(s, s.gg>60?'red':s.gg>=30?'amb':'blu')).join('')
     : '<div class="empty" style="padding:20px;"><p>Nessun risultato</p></div>';

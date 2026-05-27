@@ -376,12 +376,8 @@ input[type=file]{display:none;}
 </div>
 
 <div class="nav">
-  <button class="nbtn act" id="nb-carica" onclick="goTab('carica')"><i class="ti ti-upload"></i><span>Carica</span></button>
+  <button class="nbtn act" id="nb-carica" onclick="goTab('carica')"><i class="ti ti-calculator"></i><span>Contabilità</span></button>
   <button class="nbtn" id="nb-dashboard" onclick="goTab('dashboard')"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></button>
-  <button class="nbtn" id="nb-anomalie" onclick="goTab('anomalie')"><i class="ti ti-alert-triangle"></i><span>Anomalie</span><span class="nbadge" id="n-anom" style="display:none">0</span></button>
-  <button class="nbtn" id="nb-sospesi" onclick="goTab('sospesi')"><i class="ti ti-list"></i><span>Sospesi</span></button>
-  <button class="nbtn" id="nb-storico" onclick="goTab('storico')"><i class="ti ti-history"></i><span>Storico</span></button>
-  <button class="nbtn" id="nb-conto" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Conto</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
@@ -395,66 +391,157 @@ input[type=file]{display:none;}
 
 <div class="panels">
 
-<!-- CARICA -->
+<!-- CONTABILITÀ -->
 <div class="panel act" id="panel-carica">
-  <div class="slbl">File da caricare</div>
-  <div class="uarea">
-    <button class="ubtn" onclick="document.getElementById('f-sosp').click()">
-      <i class="ti ti-file-spreadsheet"></i>
-      <div><div class="ublbl">Sospesi (Excel)</div><div class="ubsub" id="sub-sosp">Nominativo, Polizza, Importo Sospeso, Compagnia…</div><div class="ubok" id="ok-sosp" style="display:none"></div></div>
-    </button>
-    <button class="ubtn" onclick="document.getElementById('f-inc').click()">
-      <i class="ti ti-file-euro"></i>
-      <div><div class="ublbl">Incassi sospesi (Excel o Word)</div><div class="ubsub" id="sub-inc">Report incassi del giorno precedente</div><div class="ubok" id="ok-inc" style="display:none"></div></div>
-    </button>
-    <input type="file" id="f-sosp" accept=".xlsx,.xls,.csv" onchange="loadSospesi(this)">
-    <input type="file" id="f-inc" accept=".xlsx,.xls,.csv,.docx" onchange="loadIncassi(this)">
+  <!-- Sotto-tab Contabilità -->
+  <div class="ptabs" id="contab-tabs">
+    <button class="ptab act" id="ctab-carica"   onclick="selContabTab('carica')">Carica</button>
+    <button class="ptab"     id="ctab-anomalie" onclick="selContabTab('anomalie')">Anomalie<span class="nbadge" id="n-anom-tab" style="display:none;position:static;margin-left:4px;"></span></button>
+    <button class="ptab"     id="ctab-sospesi"  onclick="selContabTab('sospesi')">Sospesi</button>
+    <button class="ptab"     id="ctab-storico"  onclick="selContabTab('storico')">Storico</button>
+    <button class="ptab"     id="ctab-conto"    onclick="selContabTab('conto')">Conto</button>
   </div>
-  <div class="slbl">Dati giornalieri</div>
-  <div style="padding:0 12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="fld"><label>Data riferimento</label><input type="date" id="i-data"></div>
-      <div class="fld"><label>Contanti in cassa (€)</label><input type="number" id="i-cassa" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
+
+  <!-- SUB: Carica -->
+  <div id="contab-panel-carica">
+    <div class="slbl">File da caricare</div>
+    <div class="uarea">
+      <button class="ubtn" onclick="document.getElementById('f-sosp').click()">
+        <i class="ti ti-file-spreadsheet"></i>
+        <div><div class="ublbl">Sospesi (Excel)</div><div class="ubsub" id="sub-sosp">Nominativo, Polizza, Importo Sospeso, Compagnia…</div><div class="ubok" id="ok-sosp" style="display:none"></div></div>
+      </button>
+      <button class="ubtn" onclick="document.getElementById('f-inc').click()">
+        <i class="ti ti-file-euro"></i>
+        <div><div class="ublbl">Incassi sospesi (Excel o Word)</div><div class="ubsub" id="sub-inc">Report incassi del giorno precedente</div><div class="ubok" id="ok-inc" style="display:none"></div></div>
+      </button>
+      <input type="file" id="f-sosp" accept=".xlsx,.xls,.csv" onchange="loadSospesi(this)">
+      <input type="file" id="f-inc" accept=".xlsx,.xls,.csv,.docx" onchange="loadIncassi(this)">
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="i-vers" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
-      <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="i-spese" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
+    <div class="slbl">Dati giornalieri</div>
+    <div style="padding:0 12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fld">
+          <label>Data riferimento</label>
+          <input type="date" id="i-data" onchange="caricaDatiPerData(this.value)">
+        </div>
+        <div class="fld"><label>Contanti in cassa (€)</label><input type="number" id="i-cassa" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fld"><label>Versamento compagnia (€)</label><input type="number" id="i-vers" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
+        <div class="fld"><label>Spese agenzia (€)</label><input type="number" id="i-spese" placeholder="0.00" step="0.01" inputmode="decimal" value="0"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fld">
+          <label>Fondo cassa (€)</label>
+          <input type="number" id="i-fondo" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+        </div>
+        <div class="fld">
+          <label style="display:flex;align-items:center;gap:4px;">
+            Scostamento
+            <span id="i-scostamento-badge" style="font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;"></span>
+          </label>
+          <input type="text" id="i-scostamento" readonly style="background:var(--surf2);font-weight:700;cursor:default;">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="fld">
+          <label style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #555;display:inline-block;flex-shrink:0;"></span>
+            POS Bianco (€)
+          </label>
+          <input type="number" id="i-pos-bianco" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+        </div>
+        <div class="fld">
+          <label style="display:flex;align-items:center;gap:5px;">
+            <span style="width:10px;height:10px;border-radius:50%;background:#333;border:2px solid #333;display:inline-block;flex-shrink:0;"></span>
+            POS Nero (€)
+          </label>
+          <input type="number" id="i-pos-nero" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
+        </div>
+      </div>
+      <div class="fld"><label>Note cassa</label><textarea id="i-note" rows="2" placeholder="es. versamento banca, rimborso..."></textarea></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="fld">
-        <label>Fondo cassa (€)</label>
-        <input type="number" id="i-fondo" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
-      </div>
-      <div class="fld">
-        <label style="display:flex;align-items:center;gap:4px;">
-          Scostamento
-          <span id="i-scostamento-badge" style="font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;"></span>
-        </label>
-        <input type="text" id="i-scostamento" readonly style="background:var(--surf2);font-weight:700;cursor:default;">
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="fld">
-        <label style="display:flex;align-items:center;gap:5px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #555;display:inline-block;flex-shrink:0;"></span>
-          POS Bianco (€)
-        </label>
-        <input type="number" id="i-pos-bianco" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
-      </div>
-      <div class="fld">
-        <label style="display:flex;align-items:center;gap:5px;">
-          <span style="width:10px;height:10px;border-radius:50%;background:#333;border:2px solid #333;display:inline-block;flex-shrink:0;"></span>
-          POS Nero (€)
-        </label>
-        <input type="number" id="i-pos-nero" placeholder="0.00" step="0.01" inputmode="decimal" value="0" oninput="buildDashboard()">
-      </div>
-    </div>
-    <div class="fld"><label>Note cassa</label><textarea id="i-note" rows="2" placeholder="es. versamento banca, rimborso..."></textarea></div>
+    <div id="savemsg"></div>
+    <button class="btn" onclick="doAnalisi()"><i class="ti ti-brain"></i> Analizza ora</button>
+    <button class="btn sec" onclick="loadDemo()"><i class="ti ti-database"></i> Carica dati esempio</button>
+    <div style="height:16px;"></div>
   </div>
-  <div id="savemsg"></div>
-  <button class="btn" onclick="doAnalisi()"><i class="ti ti-brain"></i> Analizza ora</button>
-  <button class="btn sec" onclick="loadDemo()"><i class="ti ti-database"></i> Carica dati esempio</button>
-  <div style="height:16px;"></div>
+
+  <!-- SUB: Anomalie -->
+  <div id="contab-panel-anomalie" style="display:none;">
+    <div id="a-empty" class="empty" style="margin-top:50px;"><i class="ti ti-shield-check"></i><p>Nessuna anomalia rilevata</p></div>
+    <div id="a-content" style="display:none;">
+      <div class="slbl">Alert rilevati</div>
+      <div class="card" id="a-alerts"></div>
+      <div class="slbl">Sospesi anomali</div>
+      <div class="card" id="a-list"></div>
+      <div style="height:16px;"></div>
+    </div>
+  </div>
+
+  <!-- SUB: Sospesi -->
+  <div id="contab-panel-sospesi" style="display:none;">
+    <div id="s-empty" class="empty" style="margin-top:50px;"><i class="ti ti-list"></i><p>Carica il file sospesi</p></div>
+    <div id="s-content" style="display:none;">
+      <div style="padding:10px 12px 4px;display:flex;gap:8px;">
+        <input type="search" id="s-search" placeholder="Cerca nominativo, polizza, compagnia..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderSospesi()">
+      </div>
+      <div style="padding:0 12px 4px;">
+        <select id="s-tipo" onchange="renderSospesi()" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;">
+          <option value="">Tutti i produttori</option>
+        </select>
+      </div>
+      <div id="s-chart" style="display:none;" class="card">
+        <div style="padding:12px 14px;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:8px;" id="s-chart-title"></div>
+          <div id="s-chart-bars" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
+      <div class="chips" id="s-chips"></div>
+      <div id="s-prod-stats" style="display:none;"></div>
+      <div class="card"><div id="s-list"></div></div>
+      <div style="height:16px;"></div>
+    </div>
+  </div>
+
+  <!-- SUB: Storico -->
+  <div id="contab-panel-storico" style="display:none;">
+    <div id="st-empty" class="empty" style="margin-top:50px;"><i class="ti ti-history"></i><p>Nessuno storico ancora salvato</p></div>
+    <div id="st-content" style="display:none;">
+      <div class="card" id="st-list"></div>
+      <div style="height:16px;"></div>
+    </div>
+  </div>
+
+  <!-- SUB: Conto -->
+  <div id="contab-panel-conto" style="display:none;">
+    <div class="slbl">Conti correnti</div>
+    <div class="conto-tabs">
+      <button class="ctab act" id="ct-hdi" onclick="selConto('hdi')">Conto HDI</button>
+      <button class="ctab" id="ct-pluri" onclick="selConto('pluri')">Plurimandato</button>
+    </div>
+    <div id="cu-hdi">
+      <div class="uarea" style="margin:0 12px 10px;">
+        <button class="ubtn" onclick="document.getElementById('f-hdi').click()">
+          <i class="ti ti-file-spreadsheet"></i>
+          <div><div class="ublbl">Estratto conto HDI</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-hdi" style="display:none"></div></div>
+        </button>
+        <input type="file" id="f-hdi" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'hdi')">
+      </div>
+    </div>
+    <div id="cu-pluri" style="display:none;">
+      <div class="uarea" style="margin:0 12px 10px;">
+        <button class="ubtn" onclick="document.getElementById('f-pluri').click()">
+          <i class="ti ti-file-spreadsheet"></i>
+          <div><div class="ublbl">Estratto conto Plurimandato</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-pluri" style="display:none"></div></div>
+        </button>
+        <input type="file" id="f-pluri" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'pluri')">
+      </div>
+    </div>
+    <div id="co-empty" class="empty"><i class="ti ti-building-bank"></i><p>Carica l'estratto conto</p></div>
+    <div id="co-content" style="display:none;"></div>
+    <div style="height:16px;"></div>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
@@ -479,91 +566,13 @@ input[type=file]{display:none;}
 </div>
 
 <!-- ANOMALIE -->
-<div class="panel" id="panel-anomalie">
-  <div id="a-empty" class="empty" style="margin-top:50px;"><i class="ti ti-shield-check"></i><p>Nessuna anomalia rilevata</p></div>
-  <div id="a-content" style="display:none;">
-    <div class="slbl">Alert rilevati</div>
-    <div class="card" id="a-alerts"></div>
-    <div class="slbl">Sospesi anomali</div>
-    <div class="card" id="a-list"></div>
-    <div style="height:16px;"></div>
-  </div>
-</div>
 
-<!-- SOSPESI -->
-<div class="panel" id="panel-sospesi">
-  <div id="s-empty" class="empty" style="margin-top:50px;"><i class="ti ti-list"></i><p>Carica il file sospesi</p></div>
-  <div id="s-content" style="display:none;">
-    <div style="padding:10px 12px 4px;display:flex;gap:8px;">
-      <input type="search" id="s-search" placeholder="Cerca nominativo, polizza, compagnia..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderSospesi()">
-    </div>
-    <div style="padding:0 12px 4px;">
-      <select id="s-tipo" onchange="renderSospesi()" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;">
-        <option value="">Tutti i produttori</option>
-      </select>
-    </div>
-    <div id="s-chart" style="display:none;" class="card" style="margin-top:8px;">
-      <div style="padding:12px 14px;">
-        <div style="font-size:12px;font-weight:600;margin-bottom:8px;" id="s-chart-title"></div>
-        <div id="s-chart-bars" style="display:flex;flex-direction:column;gap:6px;"></div>
-      </div>
-    </div>
-    <div class="chips" id="s-chips"></div>
-    <div id="s-prod-stats" style="display:none;"></div>
-    <div class="card"><div id="s-list"></div></div>
-    <div style="height:16px;"></div>
-  </div>
-</div>
 
-<!-- STORICO -->
-<div class="panel" id="panel-storico">
-  <div id="st-empty" class="empty" style="margin-top:50px;"><i class="ti ti-history"></i><p>Nessuno storico ancora salvato</p></div>
-  <div id="st-content" style="display:none;">
-    <div class="card" id="st-list"></div>
-    <div style="height:16px;"></div>
-  </div>
-</div>
 
-<!-- CONTO -->
-<div class="panel" id="panel-conto">
-  <div class="slbl">Conti correnti</div>
-  <div class="conto-tabs">
-    <button class="ctab act" id="ct-hdi" onclick="selConto('hdi')">Conto HDI</button>
-    <button class="ctab" id="ct-pluri" onclick="selConto('pluri')">Plurimandato</button>
-  </div>
-  <div id="cu-hdi">
-    <div class="uarea" style="margin:0 12px 10px;">
-      <button class="ubtn" onclick="document.getElementById('f-hdi').click()">
-        <i class="ti ti-file-spreadsheet"></i>
-        <div><div class="ublbl">Estratto conto HDI</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-hdi" style="display:none"></div></div>
-      </button>
-      <input type="file" id="f-hdi" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'hdi')">
-    </div>
-  </div>
-  <div id="cu-pluri" style="display:none;">
-    <div class="uarea" style="margin:0 12px 10px;">
-      <button class="ubtn" onclick="document.getElementById('f-pluri').click()">
-        <i class="ti ti-file-spreadsheet"></i>
-        <div><div class="ublbl">Estratto conto Plurimandato</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-pluri" style="display:none"></div></div>
-      </button>
-      <input type="file" id="f-pluri" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'pluri')">
-    </div>
-  </div>
-  <div id="co-empty" class="empty"><i class="ti ti-building-bank"></i><p>Carica l'estratto conto</p></div>
-  <div id="co-content" style="display:none;">
-    <div class="mgrid" id="co-metrics" style="padding:10px 12px;"></div>
-    <div style="padding:4px 12px;display:flex;gap:8px;flex-wrap:wrap;">
-      <input type="search" id="co-search" placeholder="Cerca movimento..." style="flex:1;min-width:100px;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderConto()">
-      <select id="co-filt" onchange="renderConto()" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:12px;color:var(--txt);font-family:inherit;">
-        <option value="">Tutti</option>
-        <option value="0">Da abbinare</option>
-        <option value="1">Abbinati ✓</option>
-      </select>
-    </div>
-    <div class="card"><div style="padding:8px 14px;font-size:11px;color:var(--txt2);">Spunta i movimenti abbinati a polizze o incassi</div><div class="divider"></div><div id="co-list"></div></div>
-    <div style="height:16px;"></div>
-  </div>
-</div>
+
+
+
+
 
 <!-- TEAM -->
 <div class="panel" id="panel-team">
@@ -1554,7 +1563,52 @@ function showSavemsg(txt) {
 }
 
 // ─── TAB NAV ──────────────────────────────────────────────────────────────────
+function selContabTab(sub) {
+  ['carica','anomalie','sospesi','storico','conto'].forEach(s => {
+    const btn = document.getElementById('ctab-'+s);
+    const pnl = document.getElementById('contab-panel-'+s);
+    if (btn) btn.classList.toggle('act', s===sub);
+    if (pnl) pnl.style.display = s===sub ? '' : 'none';
+  });
+  if (sub==='storico') buildStorico();
+}
+
+async function caricaDatiPerData(dataSelezionata) {
+  if (!db || !dataSelezionata) return;
+  try {
+    const { data: sess } = await db.from('sessioni_giornaliere')
+      .select('contanti,versamenti,spese,fondo_cassa,pos_bianco,pos_nero,sospesi_json,incassi_json,note')
+      .eq('data_riferimento', dataSelezionata).single();
+    const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val ?? ''; };
+    if (sess) {
+      setVal('i-cassa',     sess.contanti    || 0);
+      setVal('i-vers',      sess.versamenti  || 0);
+      setVal('i-spese',     sess.spese       || 0);
+      setVal('i-fondo',     sess.fondo_cassa || 0);
+      setVal('i-pos-bianco',sess.pos_bianco  || 0);
+      setVal('i-pos-nero',  sess.pos_nero    || 0);
+      setVal('i-note',      sess.note        || '');
+      try { APP.sospesi = JSON.parse(sess.sospesi_json||'[]'); } catch(e){ APP.sospesi=[]; }
+      try { APP.incassi = JSON.parse(sess.incassi_json||'[]'); } catch(e){ APP.incassi=[]; }
+      showSavemsg('📂 Dati del '+new Date(dataSelezionata+'T12:00:00').toLocaleDateString('it-IT')+' caricati');
+      buildDashboard();
+    } else {
+      setVal('i-cassa',0); setVal('i-vers',0); setVal('i-spese',0);
+      setVal('i-fondo',0); setVal('i-pos-bianco',0); setVal('i-pos-nero',0); setVal('i-note','');
+      APP.sospesi=[]; APP.incassi=[];
+      showSavemsg('📅 Nuova giornata — nessun dato precedente');
+    }
+  } catch(e) { console.warn('caricaDatiPerData:', e); }
+}
+
 function goTab(t) {
+  // Anomalie, sospesi, storico, conto → aprono Contabilità con sotto-tab
+  const contabSub = ['anomalie','sospesi','storico','conto'];
+  if (contabSub.includes(t)) {
+    goTab('carica');
+    selContabTab(t);
+    return;
+  }
   document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
   const nb = document.getElementById('nb-'+t);
@@ -1792,8 +1846,14 @@ function updatePill() {
   else if (att > 0) { pill.textContent = 'Attenzione'; pill.className = 'spill warn'; }
   else { pill.textContent = 'OK'; pill.className = 'spill ok'; }
   const nb = document.getElementById('n-anom');
-  if (crit > 0) { nb.textContent = crit; nb.style.display = 'block'; }
-  else nb.style.display = 'none';
+  const nbt = document.getElementById('n-anom-tab');
+  if (crit > 0) {
+    if(nb){nb.textContent=crit;nb.style.display='block';}
+    if(nbt){nbt.textContent=crit;nbt.style.display='inline-block';}
+  } else {
+    if(nb) nb.style.display='none';
+    if(nbt) nbt.style.display='none';
+  }
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -3046,10 +3106,10 @@ function applicaPermessi(ruolo) {
   const tabs = {
     'nb-carica':      perm.carica,
     'nb-dashboard':   perm.dashboard,
-    'nb-anomalie':    perm.anomalie,
-    'nb-sospesi':     perm.sospesi,
-    'nb-storico':     perm.storico,
-    'nb-conto':       perm.conto,
+    'ctab-anomalie':  perm.anomalie,
+    'ctab-sospesi':   perm.sospesi,
+    'ctab-storico':   perm.storico,
+    'ctab-conto':     perm.conto,
     'nb-team':        perm.team,
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,

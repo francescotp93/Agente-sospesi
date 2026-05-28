@@ -5230,18 +5230,19 @@ async function salvaGaraPos(tipo) {
   const prodotto = document.getElementById('gpos-prodotto')?.value.trim();
   const note     = document.getElementById('gpos-note')?.value.trim();
   if (!cliente) { alert('Inserisci il cliente.'); return; }
-  const p = { tipo_gara: tipo, cliente, prodotto, note, utente_id: ME?.id, creato_il: new Date().toISOString() };
+  const p = { tipo: tipo, anno: new Date().getFullYear(), cliente, prodotto: prodotto||null, note: note||null, utente_id: ME?.id, utente_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email, pezzi: 1, aggiornato_il: new Date().toISOString() };
   try {
     if (db && ME) {
-      const utente_nome = PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME.email;
-      p.utente_nome = utente_nome;
-      await db.from('iam_gare_posizioni').insert(p);
+      const {error} = await db.from('iam_gare_posizioni').insert(p);
+      if (error) throw error;
     } else {
       if(!GARE_POS[tipo]) GARE_POS[tipo]=[];
       GARE_POS[tipo].unshift({...p, id: Date.now().toString()});
       localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
     }
   } catch(e) {
+    console.error('salvaGaraPos error:', e);
+    alert('Errore salvataggio: '+(e.message||e));
     if(!GARE_POS[tipo]) GARE_POS[tipo]=[];
     GARE_POS[tipo].unshift({...p, id: Date.now().toString()});
     localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));

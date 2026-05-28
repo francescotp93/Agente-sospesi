@@ -1244,12 +1244,24 @@ input[type=file]{display:none;}
       <div style="width:34px;height:34px;border-radius:50%;
         background:linear-gradient(135deg,#E8500A,#c44008);
         display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i class="ti ti-robot" style="color:#fff;font-size:17px;"></i>
+        <i id="ai-hdr-icon" class="ti ti-robot" style="color:#fff;font-size:17px;"></i>
       </div>
       <div>
-        <div style="font-size:14px;font-weight:700;">IAM AI</div>
-        <div style="font-size:11px;color:var(--grn-txt);font-weight:600;">● Online</div>
+        <div style="font-size:14px;font-weight:700;" id="ai-hdr-title">IAM AI</div>
+        <div style="font-size:11px;color:var(--grn-txt);font-weight:600;" id="ai-hdr-sub">● Online</div>
       </div>
+    </div>
+    <!-- Tab AI / Ticket -->
+    <div style="display:flex;align-items:center;gap:4px;background:var(--surf2);border-radius:20px;padding:3px;">
+      <button id="ai-tab-chat" onclick="selAITab('chat')"
+        style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:#E8500A;color:#fff;">
+        💬 Chat
+      </button>
+      <button id="ai-tab-ticket" onclick="selAITab('ticket')"
+        style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:transparent;color:var(--txt2);position:relative;">
+        🎫 Ticket
+        <span id="ai-ticket-badge" style="display:none;position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#c0392b;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;">0</span>
+      </button>
     </div>
     <button onclick="chiudiAI()" style="
       background:none;border:none;cursor:pointer;
@@ -1279,11 +1291,57 @@ input[type=file]{display:none;}
       </div>
     </div>
   </div>
-  <!-- Input -->
-  <div class="cbar" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);">
+  <!-- Input chat -->
+  <div id="ai-chat-input" class="cbar" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);">
     <input class="cinp" id="c-inp" placeholder="Scrivi una domanda..."
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
     <button class="csend" onclick="sendMsg()"><i class="ti ti-send" style="font-size:18px;"></i></button>
+  </div>
+
+  <!-- Pannello Ticket -->
+  <div id="ai-ticket-panel" style="display:none;flex:1;overflow-y:auto;flex-direction:column;">
+
+    <!-- Form nuovo ticket -->
+    <div style="padding:14px 16px;border-bottom:.5px solid var(--bord);background:var(--surf);flex-shrink:0;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🎫 Segnala un problema</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <input type="text" id="tk-titolo" placeholder="Descrivi brevemente il problema *"
+          style="padding:10px 14px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:13px;color:var(--txt);font-family:inherit;"
+          onfocus="this.style.borderColor='#E8500A'" onblur="this.style.borderColor='var(--bord)'">
+        <textarea id="tk-descr" placeholder="Dettagli aggiuntivi (opzionale)..." rows="2"
+          style="padding:10px 14px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:13px;color:var(--txt);font-family:inherit;resize:none;"
+          onfocus="this.style.borderColor='#E8500A'" onblur="this.style.borderColor='var(--bord)'"></textarea>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="tk-priorita"
+            style="flex:1;padding:8px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:12px;color:var(--txt);font-family:inherit;">
+            <option value="bassa">🟢 Priorità bassa</option>
+            <option value="normale" selected>🟡 Priorità normale</option>
+            <option value="alta">🟠 Priorità alta</option>
+            <option value="critica">🔴 Critica</option>
+          </select>
+          <button onclick="inviaTicket()"
+            style="padding:8px 18px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            Invia
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista ticket -->
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <!-- Filtri (solo top_master) -->
+      <div id="tk-filtri" style="display:none;padding:10px 16px 6px;display:flex;gap:6px;background:var(--surf);border-bottom:.5px solid var(--bord);flex-wrap:wrap;">
+        <button id="tk-f-aperti"   onclick="setTKFilter('aperto')"    style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;">Aperti</button>
+        <button id="tk-f-lavoraz"  onclick="setTKFilter('in_lavorazione')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">In lavorazione</button>
+        <button id="tk-f-risolti"  onclick="setTKFilter('risolto')"   style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Risolti</button>
+        <button id="tk-f-tutti"    onclick="setTKFilter('tutti')"     style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Tutti</button>
+      </div>
+      <div id="tk-list" style="padding:8px 0;">
+        <div style="color:var(--txt3);font-size:13px;padding:20px 16px;text-align:center;">Caricamento...</div>
+      </div>
+    </div>
+
+    <div style="height:calc(env(safe-area-inset-bottom,0px) + 8px);flex-shrink:0;"></div>
   </div>
 </div>
 
@@ -1782,8 +1840,11 @@ function apriAI() {
   overlay.style.flexDirection = 'column';
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'none';
-  // Focus sull'input
+  // Assicura tab chat attivo
+  selAITab('chat');
   setTimeout(() => document.getElementById('c-inp')?.focus(), 300);
+  // Carica badge ticket
+  setTimeout(() => loadTickets(), 500);
 }
 
 function chiudiAI() {
@@ -5518,6 +5579,178 @@ function delPos(tipo, idx) {
   if(tipo==='hdi')  renderHDI();
   if(tipo==='cs')   renderCONSAP();
   if(tipo==='re')   renderRE();
+}
+
+// ─── TICKET ───────────────────────────────────────────────────────────────────
+let TK_LIST   = [];
+let TK_FILTER = 'aperto';
+let AI_TAB    = 'chat';
+
+const TK_PRIORITA = {
+  bassa:   { label:'🟢 Bassa',   color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
+  normale: { label:'🟡 Normale', color:'var(--amb-txt)',  bg:'var(--amb-bg)'  },
+  alta:    { label:'🟠 Alta',    color:'#d4500a',         bg:'#fff0e6'        },
+  critica: { label:'🔴 Critica', color:'var(--red-txt)',  bg:'var(--red-bg)'  },
+};
+const TK_STATO = {
+  aperto:         { label:'Aperto',         color:'var(--red-txt)',  bg:'var(--red-bg)'  },
+  in_lavorazione: { label:'In lavorazione', color:'var(--amb-txt)',  bg:'var(--amb-bg)'  },
+  risolto:        { label:'Risolto ✓',      color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
+};
+
+function selAITab(tab) {
+  AI_TAB = tab;
+  const isChat   = tab === 'chat';
+  const isTicket = tab === 'ticket';
+  // Header
+  document.getElementById('ai-hdr-icon').className = isChat ? 'ti ti-robot' : 'ti ti-ticket';
+  document.getElementById('ai-hdr-title').textContent = isChat ? 'IAM AI' : 'Ticket';
+  document.getElementById('ai-hdr-sub').textContent   = isChat ? '● Online' : 'Segnalazioni piattaforma';
+  document.getElementById('ai-hdr-sub').style.color   = isChat ? 'var(--grn-txt)' : 'var(--txt3)';
+  // Bottoni tab
+  const btnChat   = document.getElementById('ai-tab-chat');
+  const btnTicket = document.getElementById('ai-tab-ticket');
+  btnChat.style.background   = isChat   ? '#E8500A'         : 'transparent';
+  btnChat.style.color        = isChat   ? '#fff'            : 'var(--txt2)';
+  btnTicket.style.background = isTicket ? '#E8500A'         : 'transparent';
+  btnTicket.style.color      = isTicket ? '#fff'            : 'var(--txt2)';
+  // Pannelli
+  const chatBody  = document.getElementById('c-body');
+  const chatChips = chatBody?.previousElementSibling;
+  const chatInput = document.getElementById('ai-chat-input');
+  const tkPanel   = document.getElementById('ai-ticket-panel');
+  if (chatBody)  chatBody.style.display  = isChat ? 'block' : 'none';
+  if (chatInput) chatInput.style.display = isChat ? 'flex'  : 'none';
+  if (tkPanel)   { tkPanel.style.display = isTicket ? 'flex' : 'none'; }
+  // Chips solo in chat
+  const chips = document.querySelector('#ai-overlay .chips');
+  if (chips) chips.style.display = isChat ? '' : 'none';
+  if (isTicket) { loadTickets(); }
+}
+
+async function loadTickets() {
+  if (!db) return;
+  try {
+    let q = db.from('iam_ticket').select('*').order('creato_il', {ascending: false});
+    if (PROFILO?.ruolo !== 'top_master') {
+      q = q.eq('segnalato_da', ME?.id);
+    } else {
+      // top_master vede filtro
+      const filtri = document.getElementById('tk-filtri');
+      if (filtri) filtri.style.display = 'flex';
+      if (TK_FILTER !== 'tutti') q = q.eq('stato', TK_FILTER);
+    }
+    const { data } = await q;
+    TK_LIST = data || [];
+    // Badge aperti
+    const badge = document.getElementById('ai-ticket-badge');
+    const nAperti = TK_LIST.filter(t=>t.stato==='aperto').length;
+    if (badge) {
+      badge.style.display = nAperti > 0 ? 'flex' : 'none';
+      badge.textContent   = nAperti;
+    }
+    renderTickets();
+  } catch(e) { console.error('loadTickets:', e); }
+}
+
+function setTKFilter(f) {
+  TK_FILTER = f;
+  ['aperti','lavoraz','risolti','tutti'].forEach(x => {
+    const s = x==='aperti'?'aperto':x==='lavoraz'?'in_lavorazione':x==='risolti'?'risolto':'tutti';
+    const btn = document.getElementById('tk-f-'+x);
+    if (btn) {
+      btn.style.background = s===f ? 'var(--acc)' : 'var(--surf2)';
+      btn.style.color      = s===f ? '#fff'       : 'var(--txt2)';
+    }
+  });
+  loadTickets();
+}
+
+function renderTickets() {
+  const el = document.getElementById('tk-list'); if (!el) return;
+  if (!TK_LIST.length) {
+    el.innerHTML = `<div style="text-align:center;padding:30px 16px;color:var(--txt3);">
+      <div style="font-size:28px;margin-bottom:8px;">🎫</div>
+      <div style="font-size:13px;">${TK_FILTER==='risolto'?'Nessun ticket risolto':'Nessun ticket aperto'}</div>
+    </div>`;
+    return;
+  }
+  const isAdmin = PROFILO?.ruolo === 'top_master';
+  el.innerHTML = TK_LIST.map(t => {
+    const pr  = TK_PRIORITA[t.priorita] || TK_PRIORITA.normale;
+    const st  = TK_STATO[t.stato]       || TK_STATO.aperto;
+    const dt  = new Date(t.creato_il).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<div style="padding:12px 16px;border-bottom:.5px solid var(--bord);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:700;">${t.titolo}</span>
+          </div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
+            <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:${pr.bg};color:${pr.color};">${pr.label}</span>
+            <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:${st.bg};color:${st.color};">${st.label}</span>
+          </div>
+          ${t.descrizione?`<div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${t.descrizione}</div>`:''}
+          <div style="font-size:10px;color:var(--txt3);">👤 ${t.segnalato_nome||'—'} · ${dt}</div>
+          ${t.stato==='risolto'&&t.risolto_nome?`<div style="font-size:10px;color:var(--grn-txt);margin-top:2px;">✓ Risolto da ${t.risolto_nome}</div>`:''}
+        </div>
+        ${isAdmin && t.stato !== 'risolto' ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          ${t.stato==='aperto'?`<button onclick="setTKStato(${t.id},'in_lavorazione')"
+            style="font-size:10px;padding:3px 8px;background:var(--amb-bg);color:var(--amb-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">🔧 Prendi in carico</button>`:''}
+          <button onclick="setTKStato(${t.id},'risolto')"
+            style="font-size:10px;padding:3px 8px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">✓ Segna risolto</button>
+          <button onclick="delTicket(${t.id})"
+            style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:6px;cursor:pointer;">✕</button>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function inviaTicket() {
+  const titolo = document.getElementById('tk-titolo')?.value?.trim();
+  if (!titolo) { alert('Inserisci un titolo per il ticket.'); return; }
+  const descr    = document.getElementById('tk-descr')?.value?.trim()   || null;
+  const priorita = document.getElementById('tk-priorita')?.value || 'normale';
+  if (!db) return;
+  try {
+    await db.from('iam_ticket').insert({
+      titolo, descrizione: descr, priorita,
+      stato: 'aperto',
+      segnalato_da:   ME?.id,
+      segnalato_nome: PROFILO ? `${PROFILO.nome} ${PROFILO.cognome}`.trim() : ME?.email,
+      creato_il: new Date().toISOString(),
+    });
+    document.getElementById('tk-titolo').value = '';
+    document.getElementById('tk-descr').value  = '';
+    // Feedback visivo
+    const btn = document.querySelector('[onclick="inviaTicket()"]');
+    if (btn) { btn.textContent='✓ Inviato!'; btn.style.background='#1a8a5a'; setTimeout(()=>{btn.textContent='Invia';btn.style.background='linear-gradient(135deg,#E8500A,#c44008)';},2000); }
+    await loadTickets();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+async function setTKStato(id, stato) {
+  if (!db) return;
+  const payload = { stato, aggiornato_il: new Date().toISOString() };
+  if (stato === 'risolto') {
+    payload.risolto_da   = ME?.id;
+    payload.risolto_nome = PROFILO ? `${PROFILO.nome} ${PROFILO.cognome}`.trim() : ME?.email;
+    payload.risolto_il   = new Date().toISOString();
+  }
+  try {
+    await db.from('iam_ticket').update(payload).eq('id', id);
+    await loadTickets();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+async function delTicket(id) {
+  if (!confirm('Eliminare questo ticket?')) return;
+  if (!db) return;
+  try {
+    await db.from('iam_ticket').delete().eq('id', id);
+    await loadTickets();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────

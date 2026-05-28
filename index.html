@@ -5204,6 +5204,8 @@ async function salvaGaraPos(tipo) {
   const p = { tipo_gara: tipo, cliente, prodotto, note, utente_id: ME?.id, creato_il: new Date().toISOString() };
   try {
     if (db && ME) {
+      const utente_nome = PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME.email;
+      p.utente_nome = utente_nome;
       await db.from('iam_gare_posizioni').insert(p);
     } else {
       if(!GARE_POS[tipo]) GARE_POS[tipo]=[];

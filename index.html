@@ -5122,7 +5122,7 @@ async function loadGareData() {
       const { data: posDB } = await db.from('iam_gare_posizioni').select('*').eq('utente_id', ME.id).order('creato_il', {ascending:false});
       if (posDB) {
         GARE_POS = {};
-        posDB.forEach(p => { if(!GARE_POS[p.tipo_gara]) GARE_POS[p.tipo_gara]=[]; GARE_POS[p.tipo_gara].push(p); });
+        posDB.forEach(p => { const k = p.tipo||p.tipo_gara; if(!GARE_POS[k]) GARE_POS[k]=[]; GARE_POS[k].push(p); });
         localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
       }
     }

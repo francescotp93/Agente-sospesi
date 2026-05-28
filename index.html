@@ -1612,9 +1612,9 @@ async function saveSession(sospesi, incassi, dati) {
 async function loadLastSession() {
   if (!db) { goTab('carica'); return; }
   try {
-    // Carica TUTTE le sessioni per calcolare il saldo cumulativo
+    // Carica TUTTE le sessioni ordinate per data per il saldo cumulativo
     const { data: tutte } = await db.from('sessioni_giornaliere')
-      .select('data_riferimento,contanti,versamenti,spese,fondo_cassa,pos_bianco,pos_nero,sospesi_json,incassi_json,note')
+      .select('data_riferimento,contanti,versamenti,spese,fondo_cassa,pos_bianco,pos_nero,sospesi_json,incassi_json,note,aggiornato_il')
       .order('data_riferimento', { ascending: true });
     if (!tutte || !tutte.length) { goTab('carica'); return; }
 
@@ -1623,14 +1623,18 @@ async function loadLastSession() {
       return tot + (parseNum(r.contanti) - parseNum(r.versamenti) - parseNum(r.spese));
     }, 0);
 
-    // Fondo cassa oggi = ultimo valore non-zero
+    // Fondo cassa oggi = ultimo valore non-zero per data
     const sessConFondo = tutte.filter(r => parseNum(r.fondo_cassa) > 0);
     APP.fondoCassa = sessConFondo.length > 0 ? parseNum(sessConFondo[sessConFondo.length-1].fondo_cassa) : 0;
-    // Fondo cassa ieri = penultimo valore non-zero
     APP.fondoIeri  = sessConFondo.length > 1 ? parseNum(sessConFondo[sessConFondo.length-2].fondo_cassa) : APP.fondoCassa;
 
-    // Ultima sessione per i dati correnti
-    const s = tutte[tutte.length - 1];
+    // Sessione più recente = quella con aggiornato_il più alto (ultimo salvataggio effettivo)
+    const s = tutte.reduce((best, r) => {
+      if (!best) return r;
+      const tBest = best.aggiornato_il || best.data_riferimento;
+      const tR    = r.aggiornato_il    || r.data_riferimento;
+      return tR > tBest ? r : best;
+    }, null);
     try { APP.sospesi = JSON.parse(s.sospesi_json || '[]'); } catch(e) { APP.sospesi = []; }
     try { APP.incassi = JSON.parse(s.incassi_json || '[]'); } catch(e) { APP.incassi = []; }
 
@@ -1652,8 +1656,10 @@ async function loadLastSession() {
     setVal('i-pos-nero',   s.pos_nero    || 0);
     setVal('i-note',       s.note        || '');
 
-    showSavemsg('📂 ' + new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT') +
-      ' · Cassa progressiva: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
+    // Indica chiaramente che stiamo mostrando i dati più recenti
+    const dataLabel = new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT');
+    const aggLabel  = s.aggiornato_il ? new Date(s.aggiornato_il).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : dataLabel;
+    showSavemsg('📂 Dati del '+dataLabel+' · salvati il '+aggLabel+' · Cassa progressiva: €'+new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
 
     await new Promise(r => setTimeout(r, 50));
     buildDashboard(); buildAnomalie(); buildSospesi(); updatePill();

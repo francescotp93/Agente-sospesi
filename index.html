@@ -3784,7 +3784,7 @@ async function loadTrattDB() {
 async function saveTrattDB(t) {
   if (!db || !ME) { savePipe(); return; }
   try {
-    const payload = {...t, utente_id: ME.id, aggiornato_il: new Date().toISOString()};
+    const payload = {...t, importo: parseNum(t.importo) || 0, prob: t.prob ? parseInt(t.prob) : null, utente_id: ME.id, aggiornato_il: new Date().toISOString()};
     // IDs temporanei generati con Date.now() hanno 13 cifre; gli ID Supabase sono numeri brevi
     const isTemp = !t.id || String(t.id).length >= 13;
     if (isTemp) {

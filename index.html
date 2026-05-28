@@ -5293,9 +5293,10 @@ async function salvaConfigGara(tipo) {
   const pezzi = document.getElementById('gcfg-pezzi')?.value;
   const periodo = document.getElementById('gcfg-periodo')?.value.trim();
   const regolamento = document.getElementById('gcfg-regolamento')?.value.trim();
-  const cfg = { tipo, periodo, regolamento, aggiornato_il: new Date().toISOString() };
-  if (isFinanziati) cfg.anno_prec_n = parseInt(pezzi)||0;
+  const cfg = { tipo, anno: new Date().getFullYear(), regolamento: regolamento||null, aggiornato_il: new Date().toISOString(), attiva: true };
+  if (isFinanziati) cfg.pezzi_min = parseInt(pezzi)||0;
   else if (pezzi !== undefined) cfg.pezzi_min = parseInt(pezzi)||0;
+  if (periodo) { cfg.periodo_dal = periodo; }
   try {
     if (db) {
       const { data: ex } = await db.from('iam_gare_config').select('id').eq('tipo', tipo).maybeSingle();
@@ -5305,6 +5306,8 @@ async function salvaConfigGara(tipo) {
     GARE_CONFIG[tipo] = cfg;
     localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
   } catch(e) {
+    console.error('salvaConfigGara error:', e);
+    alert('Errore config: '+(e.message||e));
     GARE_CONFIG[tipo] = cfg;
     localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
   }

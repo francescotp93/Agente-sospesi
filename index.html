@@ -3464,18 +3464,22 @@ function openTrattModal(id) {
   document.getElementById('modal-tratt').classList.add('show');
 }
 
-function saveTratt() {
+async function saveTratt() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
   const t = { id: PIPE_ID||Date.now().toString(), cliente:gv('mt-cliente'), prodotto:gv('mt-prodotto'), importo:gv('mt-importo'), status:gv('mt-status'), recall:gv('mt-recall')||null, prob:gv('mt-prob'), prior:gv('mt-prior'), collab:gv('mt-collab'), note:gv('mt-note'), data_ins: new Date().toISOString().split('T')[0] };
   if (!t.cliente) { alert('Inserisci il nome del cliente.'); return; }
-  saveTrattDB(t).then(() => {
-    loadPipe(); // fallback locale
-    if (PIPE_ID) { const idx=PIPE.findIndex(x=>x.id===PIPE_ID); if(idx>=0) PIPE[idx]=t; else PIPE.push(t); }
-    else PIPE.push(t);
-    savePipe();
+  const btn = document.querySelector('#modal-tratt .mbtn.prim');
+  if (btn) { btn.textContent='...'; btn.disabled=true; }
+  try {
+    await saveTrattDB(t);
     closeModal('modal-tratt');
-    loadTrattDB().then(renderTratt);
-  });
+    await loadTrattDB();
+    renderTratt();
+  } catch(e) {
+    alert('Errore: '+(e.message||e));
+  } finally {
+    if (btn) { btn.textContent='Salva'; btn.disabled=false; }
+  }
 }
 
 function delTratt(id) {

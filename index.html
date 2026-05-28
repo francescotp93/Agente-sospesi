@@ -831,22 +831,88 @@ input[type=file]{display:none;}
 
   <!-- CONSAP -->
   <div id="pp-consap" style="display:none;">
-    <div class="slbl">CONSAP</div>
     <div style="padding:0 12px 12px;">
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-          <div class="fld"><label>Dato anno precedente (€)</label><input type="number" id="cs-prev" placeholder="0" oninput="renderCONSAP()"></div>
-          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="cs-obj" placeholder="0" oninput="renderCONSAP()"></div>
+
+      <!-- Card contatori + compensi -->
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">📋 CONSAP</div>
+          <select id="cs-anno" onchange="loadCSFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
         </div>
-        <div id="cs-gauge" style="text-align:center;padding:10px 0;"></div>
+
+        <!-- Anno precedente con lock -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div class="fld" style="flex:1;margin:0;">
+            <label>N° CONSAP anno precedente (pezzi)</label>
+            <input type="number" id="cs-prev-n" placeholder="0" min="0" step="1"
+              readonly style="background:var(--surf2);cursor:not-allowed;font-weight:700;"
+              oninput="renderCONSAP()">
+          </div>
+          <button id="cs-prev-lock" onclick="toggleCSPrevLock()"
+            style="margin-top:18px;width:36px;height:36px;border-radius:10px;border:.5px solid var(--bord2);background:var(--surf2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"
+            title="Sblocca per modificare">🔒</button>
+        </div>
+
+        <!-- Contatore anno corrente (calcolato) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--blu-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--blu-txt);letter-spacing:.5px;margin-bottom:4px;">Anno corrente</div>
+            <div style="font-size:26px;font-weight:800;color:var(--blu-txt);" id="cs-count-anno">0</div>
+            <div style="font-size:10px;color:var(--blu-txt);">pezzi</div>
+          </div>
+          <div style="background:var(--grn-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--grn-txt);letter-spacing:.5px;margin-bottom:4px;">Compenso</div>
+            <div style="font-size:18px;font-weight:800;color:var(--grn-txt);" id="cs-compenso">€0</div>
+            <div style="font-size:10px;color:var(--grn-txt);" id="cs-compenso-label">a pezzo</div>
+          </div>
+          <div id="cs-bonus-card" style="background:var(--amb-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;display:none;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--amb-txt);letter-spacing:.5px;margin-bottom:4px;">Bonus crescita</div>
+            <div style="font-size:18px;font-weight:800;color:var(--amb-txt);" id="cs-bonus">€0</div>
+            <div style="font-size:10px;color:var(--amb-txt);">una tantum</div>
+          </div>
+        </div>
+
+        <!-- Totale -->
+        <div style="background:linear-gradient(135deg,#E8500A,#c44008);border-radius:var(--rs);padding:12px 16px;margin-bottom:14px;display:none;" id="cs-totale-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="color:#fff;font-size:12px;font-weight:600;opacity:.85;">Totale stimato anno</div>
+            <div style="color:#fff;font-size:20px;font-weight:800;" id="cs-totale">€0</div>
+          </div>
+          <div style="color:#fff;font-size:11px;opacity:.7;margin-top:2px;" id="cs-totale-detail"></div>
+        </div>
+
+        <!-- Grafico step -->
+        <div id="cs-chart" style="display:none;"></div>
+
+        <!-- Info fasce -->
+        <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Fasce compenso</div>
+          <div style="display:flex;flex-direction:column;gap:4px;" id="cs-fasce">
+            ${['3-5 pezzi → €200/cad','6-9 pezzi → €250/cad','10+ pezzi → €300/cad'].map(t=>`<div style="font-size:11px;color:var(--txt2);">• ${t}</div>`).join('')}
+          </div>
+          <div style="height:.5px;background:var(--bord);margin:8px 0;"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Bonus crescita vs anno prec.</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="font-size:11px;color:var(--txt2);">• +3 a +5 pezzi → €1.000 una tantum</div>
+            <div style="font-size:11px;color:var(--txt2);">• +6 a +9 pezzi → €2.000 una tantum</div>
+            <div style="font-size:11px;color:var(--txt2);">• +10 o più pezzi → €5.000 una tantum</div>
+          </div>
+        </div>
       </div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
+
+      <!-- Lista posizioni -->
+      <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:600;">Aggiornamenti posizione</div>
-          <button onclick="openCSPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <div style="font-size:13px;font-weight:700;">Posizioni registrate</div>
+          <button onclick="openCSPosModal()" style="padding:5px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
-        <div id="cs-pos-list"></div>
+        <div id="cs-pos-list"><div style="color:var(--txt3);font-size:13px;padding:8px 0;">Caricamento...</div></div>
       </div>
+
     </div>
   </div>
 
@@ -1028,6 +1094,41 @@ input[type=file]{display:none;}
         </div>
       </div>
       <div class="fld"><label>Note</label><textarea id="re-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONSAP -->
+<div class="modal" id="modal-cs-pos">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="cs-pos-title">Nuova posizione CONSAP</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="saveCSPos()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-cs-pos')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Cliente *</label><input type="text" id="cs-p-cliente" placeholder="Nome cliente"></div>
+        <div class="fld">
+          <label>Produttore</label>
+          <select id="cs-p-prod"><option value="">— nessuno —</option></select>
+        </div>
+        <div class="fld">
+          <label>Tipo operazione</label>
+          <select id="cs-p-tipo">
+            <option value="Nuovo">Nuovo</option>
+            <option value="Riscattato">Riscattato</option>
+            <option value="Aggiornato">Aggiornato</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Importo (€)</label>
+          <input type="number" id="cs-p-importo" placeholder="0.00" step="0.01" inputmode="decimal">
+        </div>
+      </div>
+      <div class="fld"><label>Note</label><textarea id="cs-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
     </div>
   </div>
 </div>
@@ -4743,7 +4844,7 @@ function selPerfTab(t) {
   document.getElementById('pp-re').style.display      = t==='re'?'block':'none';
   PERF_CUR = t;
   if(t==='hdi')    renderHDI();
-  if(t==='consap') renderCONSAP();
+  if(t==='consap') loadCSFromDB();
   if(t==='re')     loadREFromDB();
 }
 
@@ -4775,18 +4876,242 @@ function renderHDI() {
     : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione registrata</div>';
 }
 
-function renderCONSAP() {
-  loadPerf();
-  const obj = parseNum(document.getElementById('cs-obj')?.value||0);
-  const att = PERF.cs.reduce((a,p)=>a+parseNum(p.importo),0);
-  buildGauge('cs-gauge', att, obj);
-  document.getElementById('cs-pos-list').innerHTML = PERF.cs.length
-    ? PERF.cs.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
-        <div style="flex:1;"><b>${p.nome}</b> · ${p.data} · ${p.tipoCS||''} · €${fmt(parseNum(p.importo))}${p.prod?' · '+p.prod:''}</div>
-        <button onclick="delPos('cs',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
-      </div>`).join('')
-    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessun aggiornamento</div>';
+// ─── CONSAP (Supabase) ────────────────────────────────────────────────────────
+let CS_POSIZIONI  = [];
+let CS_CONFIG     = { consap_anno_prec: 0 };
+let CS_PREV_LOCKED = true;
+let CS_EDIT_ID    = null;
+
+function getCSAnno() { return parseInt(document.getElementById('cs-anno')?.value || new Date().getFullYear()); }
+
+function calcolaCompensoCONSAP(n) {
+  if (n < 3)  return { compenso: 0, label: 'Sotto soglia (min. 3)', totPerPezzo: 0 };
+  if (n <= 5)  return { compenso: n * 200,  label: `${n} × €200`,   totPerPezzo: 200 };
+  if (n <= 9)  return { compenso: n * 250,  label: `${n} × €250`,   totPerPezzo: 250 };
+  return             { compenso: n * 300,  label: `${n} × €300`,   totPerPezzo: 300 };
 }
+
+function calcolaBonusCONSAP(nAnnoCorr, nAnnoPre) {
+  const delta = nAnnoCorr - nAnnoPre;
+  if (nAnnoPre <= 0 || delta < 3) return { bonus: 0, label: '' };
+  if (delta <= 5)  return { bonus: 1000, label: `+${delta} pezzi vs anno prec. → €1.000 una tantum` };
+  if (delta <= 9)  return { bonus: 2000, label: `+${delta} pezzi vs anno prec. → €2.000 una tantum` };
+  return             { bonus: 5000, label: `+${delta} pezzi vs anno prec. → €5.000 una tantum` };
+}
+
+function toggleCSPrevLock() {
+  CS_PREV_LOCKED = !CS_PREV_LOCKED;
+  const inp = document.getElementById('cs-prev-n');
+  const btn = document.getElementById('cs-prev-lock');
+  if (CS_PREV_LOCKED) {
+    inp.readOnly = true; inp.style.cursor = 'not-allowed'; inp.style.background = 'var(--surf2)';
+    btn.textContent = '🔒'; btn.title = 'Sblocca per modificare';
+    saveCSConfig();
+  } else {
+    if (!confirm('Vuoi modificare il numero CONSAP anno precedente? Questo aggiornerà tutti i calcoli.')) {
+      CS_PREV_LOCKED = true; return;
+    }
+    inp.readOnly = false; inp.style.cursor = 'text'; inp.style.background = 'var(--surf)';
+    btn.textContent = '🔓'; btn.title = 'Blocca e salva';
+    inp.focus();
+  }
+}
+
+async function loadCSFromDB() {
+  if (!db) return;
+  const anno = getCSAnno();
+  try {
+    const { data: cfg } = await db.from('iam_kpi_re_config').select('consap_anno_prec').eq('anno', anno).maybeSingle();
+    CS_CONFIG = cfg || { consap_anno_prec: 0 };
+    const prevEl = document.getElementById('cs-prev-n');
+    if (prevEl) prevEl.value = CS_CONFIG.consap_anno_prec || '';
+    CS_PREV_LOCKED = true;
+    if (prevEl) { prevEl.readOnly = true; prevEl.style.cursor='not-allowed'; prevEl.style.background='var(--surf2)'; }
+    const lockBtn = document.getElementById('cs-prev-lock');
+    if (lockBtn) { lockBtn.textContent = '🔒'; }
+    const { data: pos } = await db.from('iam_kpi_consap_posizioni').select('*').eq('anno', anno).order('creato_il', {ascending: false});
+    CS_POSIZIONI = pos || [];
+    renderCONSAP();
+  } catch(e) { console.error('loadCSFromDB:', e); }
+}
+
+async function saveCSConfig() {
+  if (!db) return;
+  const anno   = getCSAnno();
+  const prevN  = parseInt(document.getElementById('cs-prev-n')?.value || 0);
+  try {
+    const { data: existing } = await db.from('iam_kpi_re_config').select('id').eq('anno', anno).maybeSingle();
+    if (existing?.id) {
+      await db.from('iam_kpi_re_config').update({ consap_anno_prec: prevN, aggiornato_il: new Date().toISOString() }).eq('id', existing.id);
+    } else {
+      await db.from('iam_kpi_re_config').insert({ anno, consap_anno_prec: prevN, creato_da: ME?.id });
+    }
+    CS_CONFIG.consap_anno_prec = prevN;
+  } catch(e) { console.error('saveCSConfig:', e); }
+}
+
+function renderCONSAP() {
+  const n      = CS_POSIZIONI.length;
+  const nPrec  = parseInt(document.getElementById('cs-prev-n')?.value || CS_CONFIG.consap_anno_prec || 0);
+  const delta  = n - nPrec;
+  const { compenso, label, totPerPezzo } = calcolaCompensoCONSAP(n);
+  const { bonus, label: bonusLabel }     = calcolaBonusCONSAP(n, nPrec);
+  const totale = compenso + bonus;
+
+  // Aggiorna contatore anno
+  const setEl = (id, val) => { const e=document.getElementById(id); if(e) e.innerHTML=val; };
+  setEl('cs-count-anno', n);
+  setEl('cs-compenso',   n >= 3 ? '€'+fmt(compenso) : '—');
+  setEl('cs-compenso-label', n >= 3 ? label : 'min. 3 pezzi');
+
+  // Bonus crescita
+  const bonusCard = document.getElementById('cs-bonus-card');
+  if (bonusCard) bonusCard.style.display = bonus > 0 ? 'block' : 'none';
+  setEl('cs-bonus', '€'+fmt(bonus));
+
+  // Totale
+  const totCard = document.getElementById('cs-totale-card');
+  if (totCard) totCard.style.display = n >= 3 ? 'block' : 'none';
+  setEl('cs-totale', '€'+fmt(totale));
+  setEl('cs-totale-detail', bonus > 0 ? `€${fmt(compenso)} compenso + €${fmt(bonus)} bonus crescita` : `€${fmt(compenso)} compenso`);
+
+  // Grafico step fasce
+  renderCSChart(n, nPrec);
+
+  // Lista posizioni
+  const listEl = document.getElementById('cs-pos-list');
+  if (!listEl) return;
+  if (!CS_POSIZIONI.length) { listEl.innerHTML='<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione registrata</div>'; return; }
+  listEl.innerHTML = CS_POSIZIONI.map((p,i) => {
+    const tipoColor = p.tipo==='Nuovo'?'var(--grn)':p.tipo==='Riscattato'?'var(--blu)':'var(--amb)';
+    return `<div style="padding:10px 0;border-top:.5px solid var(--bord);display:flex;align-items:flex-start;gap:8px;">
+      <div style="width:24px;height:24px;border-radius:50%;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;">${p.cliente}
+          <span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px;background:var(--surf2);color:${tipoColor};margin-left:4px;">${p.tipo||'Nuovo'}</span>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);">${p.produttore?'👤 '+p.produttore+' · ':''}${p.importo?'€'+fmt(p.importo)+' · ':''} ${new Date(p.creato_il).toLocaleDateString('it-IT')}</div>
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button onclick="editCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">✏️</button>
+        <button onclick="delCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCSChart(n, nPrec) {
+  const el = document.getElementById('cs-chart'); if(!el) return;
+  const steps = [
+    { min:3,  max:5,  comp:200, bonus:0,    label:'3-5 pezzi',  color:'#ba7517' },
+    { min:6,  max:9,  comp:250, bonus:2000, label:'6-9 pezzi',  color:'#E8500A' },
+    { min:10, max:99, comp:300, bonus:5000, label:'10+ pezzi',  color:'#1a8a5a' },
+  ];
+  const maxN = Math.max(n, 10) + 2;
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Progressione fasce</div>
+    ${steps.map(s => {
+      const target   = s.min;
+      const percBar  = Math.min(100, Math.round(n/Math.max(s.max===99?10:s.max,1)*100));
+      const raggiunto = n >= s.min;
+      const attivo    = n >= s.min && (s.max===99 || n <= s.max);
+      return `
+        <div style="margin-bottom:8px;padding:8px 10px;border-radius:var(--rs);
+          background:${attivo?'var(--surf2)':'transparent'};
+          border:${attivo?'1.5px solid '+s.color:'1px solid var(--bord)'};">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="font-size:11px;font-weight:700;color:${s.color};">${s.label}</span>
+              ${attivo?`<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:${s.color};color:#fff;">Attiva</span>`:''}
+              ${raggiunto&&!attivo?`<span style="font-size:9px;padding:1px 5px;border-radius:6px;background:#1a8a5a;color:#fff;">✓</span>`:''}
+            </div>
+            <span style="font-size:11px;color:var(--txt2);">€${s.comp}/cad${s.bonus?` + €${fmt(s.bonus)} bonus`:''}</span>
+          </div>
+          <div style="background:var(--surf2);border-radius:3px;height:8px;overflow:hidden;position:relative;">
+            <div style="position:absolute;top:0;left:0;height:100%;border-radius:3px;
+              background:${raggiunto?s.color:'var(--bord2)'};
+              width:${raggiunto?100:Math.round(n/s.min*100)}%;transition:width .6s;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--txt3);">
+            <span>Hai: ${n} pezzi</span>
+            <span>${n>=s.min?'✓ Raggiunta':'Mancano '+(s.min-n)+' pezzo'+(s.min-n>1?'i':'')}</span>
+          </div>
+        </div>`;
+    }).join('')}
+    ${nPrec>0 ? `<div style="margin-top:6px;padding:8px 10px;border-radius:var(--rs);background:var(--surf2);border:.5px solid var(--bord);">
+      <div style="font-size:11px;font-weight:700;margin-bottom:4px;">📈 Crescita vs anno precedente (${nPrec} pezzi)</div>
+      ${(()=>{
+        const d=n-nPrec;
+        const {bonus,label}=calcolaBonusCONSAP(n,nPrec);
+        if(d<=0) return '<div style="font-size:11px;color:var(--red-txt);">'+d+' pezzi — nessun bonus crescita</div>';
+        return `<div style="font-size:11px;color:var(--grn-txt);">+${d} pezzi ${bonus>0?'→ <b>€'+fmt(bonus)+'</b> una tantum':'→ ancora '+(3-d)+' pezzi al bonus min.'}</div>`;
+      })()}
+    </div>` : ''}`;
+}
+
+function openCSPosModal(editId) {
+  CS_EDIT_ID = editId || null;
+  document.getElementById('cs-pos-title').textContent = editId ? 'Modifica posizione CONSAP' : 'Nuova posizione CONSAP';
+  loadTeam();
+  const sel = document.getElementById('cs-p-prod');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  if (editId) {
+    const p = CS_POSIZIONI.find(x=>x.id===editId);
+    if (p) {
+      document.getElementById('cs-p-cliente').value  = p.cliente  || '';
+      document.getElementById('cs-p-tipo').value     = p.tipo     || 'Nuovo';
+      document.getElementById('cs-p-importo').value  = p.importo  || '';
+      document.getElementById('cs-p-note').value     = p.note     || '';
+      if (sel && p.produttore) sel.value = p.produttore;
+    }
+  } else {
+    ['cs-p-cliente','cs-p-importo','cs-p-note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    document.getElementById('cs-p-tipo').value = 'Nuovo';
+  }
+  document.getElementById('modal-cs-pos').classList.add('show');
+}
+
+async function saveCSPos() {
+  const gv = id => (document.getElementById(id)?.value||'').trim();
+  const cliente = gv('cs-p-cliente');
+  if (!cliente) { alert('Inserisci il nome del cliente.'); return; }
+  const payload = {
+    anno:          getCSAnno(),
+    cliente,
+    produttore:    gv('cs-p-prod')    || null,
+    tipo:          gv('cs-p-tipo')    || 'Nuovo',
+    importo:       parseNum(gv('cs-p-importo')) || 0,
+    note:          gv('cs-p-note')    || null,
+    aggiornato_il: new Date().toISOString(),
+  };
+  if (!db) return;
+  try {
+    if (CS_EDIT_ID) {
+      await db.from('iam_kpi_consap_posizioni').update(payload).eq('id', CS_EDIT_ID);
+    } else {
+      payload.creato_da = ME?.id;
+      await db.from('iam_kpi_consap_posizioni').insert(payload);
+    }
+    await saveCSConfig();
+    closeModal('modal-cs-pos');
+    await loadCSFromDB();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+async function editCSPos(id) { openCSPosModal(id); }
+
+async function delCSPos(id) {
+  if (!confirm('Eliminare questa posizione CONSAP?')) return;
+  if (!db) return;
+  try {
+    await db.from('iam_kpi_consap_posizioni').delete().eq('id', id);
+    await loadCSFromDB();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+function openCSPos() { openCSPosModal(); }
 
 // ─── RE — Rami Elementari (Supabase) ─────────────────────────────────────────
 let RE_POSIZIONI  = [];

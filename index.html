@@ -3776,8 +3776,7 @@ async function loadTrattDB() {
         utente_id:t.utente_id|| '',
       }));
     } else {
-      // Fallback localStorage
-      loadPipe();
+      PIPE = [];
     }
   } catch(e) {
     console.warn('loadTrattDB error:', e);

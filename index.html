@@ -852,22 +852,57 @@ input[type=file]{display:none;}
 
   <!-- RAMI ELEMENTARI -->
   <div id="pp-re" style="display:none;">
-    <div class="slbl">Rami Elementari</div>
     <div style="padding:0 12px 12px;">
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
+
+      <!-- Card obiettivo + indicatore -->
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;">📊 Volume Rami Elementari</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-          <div class="fld"><label>Volume anno precedente (€)</label><input type="number" id="re-prev" placeholder="0" oninput="renderRE()"></div>
-          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="re-obj" placeholder="0" oninput="renderRE()"></div>
+          <div class="fld">
+            <label>Volume anno precedente (€)</label>
+            <input type="number" id="re-prev" placeholder="0" step="0.01" oninput="renderRE()" onblur="saveREConfig()">
+          </div>
+          <div class="fld">
+            <label>Anno</label>
+            <select id="re-anno" onchange="loadREFromDB()">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
         </div>
-        <div id="re-gauge" style="text-align:center;padding:10px 0;"></div>
+        <!-- Gauge principale vs anno precedente -->
+        <div id="re-gauge" style="text-align:center;padding:8px 0 4px;"></div>
+        <!-- Contatori Target / No Target -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+          <div style="background:var(--grn-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--grn-txt);letter-spacing:.5px;margin-bottom:4px;">🎯 Target</div>
+            <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="re-count-target">0</div>
+            <div style="font-size:11px;color:var(--grn-txt);" id="re-val-target">€0,00</div>
+          </div>
+          <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;text-align:center;border:.5px solid var(--bord);">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--txt3);letter-spacing:.5px;margin-bottom:4px;">○ No Target</div>
+            <div style="font-size:22px;font-weight:800;" id="re-count-notarget">0</div>
+            <div style="font-size:11px;color:var(--txt3);" id="re-val-notarget">€0,00</div>
+          </div>
+        </div>
       </div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
+
+      <!-- Lista posizioni -->
+      <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:600;">Posizioni RE</div>
-          <button onclick="openREPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <div style="font-size:13px;font-weight:700;">Posizioni registrate</div>
+          <button onclick="openREPosModal()" style="padding:5px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
-        <div id="re-pos-list"></div>
+        <!-- Filtro target -->
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <button id="re-f-all"    onclick="setREFilter('all')"    style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;">Tutte</button>
+          <button id="re-f-target" onclick="setREFilter('target')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">🎯 Target</button>
+          <button id="re-f-no"     onclick="setREFilter('no')"     style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">No Target</button>
+        </div>
+        <div id="re-pos-list"><div style="color:var(--txt3);font-size:13px;padding:8px 0;">Caricamento...</div></div>
       </div>
+
     </div>
   </div>
 </div>
@@ -908,6 +943,62 @@ input[type=file]{display:none;}
         </div>
       </div>
       <div class="fld"><label>Note</label><textarea id="pos-note" rows="2" placeholder="Note..."></textarea></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RE -->
+<div class="modal" id="modal-re-pos">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="re-pos-title">Nuova posizione RE</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="saveREPos()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-re-pos')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Cliente *</label><input type="text" id="re-p-cliente" placeholder="Nome cliente"></div>
+        <div class="fld">
+          <label>Produttore</label>
+          <select id="re-p-prod"><option value="">— nessuno —</option></select>
+        </div>
+        <div class="fld ffull">
+          <label>Prodotto (campo libero)</label>
+          <input type="text" id="re-p-prodotto" placeholder="es. Infortuni, RC, Incendio, Cristalli...">
+        </div>
+        <div class="fld"><label>Premio netto (rata €)</label><input type="number" id="re-p-premio" placeholder="0.00" step="0.01" inputmode="decimal" oninput="aggiornaPremioAnnuo()"></div>
+        <div class="fld">
+          <label>Frazionamento</label>
+          <select id="re-p-frz" onchange="aggiornaPremioAnnuo()">
+            <option value="1">Annuale (×1)</option>
+            <option value="2">Semestrale (×2)</option>
+            <option value="3">Quadrimestrale (×3)</option>
+            <option value="4">Trimestrale (×4)</option>
+            <option value="6">Bimestrale (×6)</option>
+            <option value="12">Mensile (×12)</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Premio annualizzato</label>
+          <input type="text" id="re-p-annuo" readonly style="background:var(--surf2);font-weight:700;cursor:default;color:var(--acc);">
+        </div>
+        <div class="fld ffull">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+            <div style="position:relative;width:44px;height:24px;flex-shrink:0;">
+              <input type="checkbox" id="re-p-target" style="opacity:0;position:absolute;width:100%;height:100%;cursor:pointer;margin:0;z-index:1;"
+                onchange="document.getElementById('re-toggle-bg').style.background=this.checked?'#1a8a5a':'var(--bord2)'">
+              <div id="re-toggle-bg" style="position:absolute;inset:0;border-radius:12px;background:var(--bord2);transition:background .2s;"></div>
+              <div style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;"
+                id="re-toggle-knob"></div>
+            </div>
+            <span style="font-size:13px;font-weight:600;">🎯 Posizione Target</span>
+          </label>
+          <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Attiva se questa posizione rientra negli obiettivi target dell'agenzia</div>
+        </div>
+      </div>
+      <div class="fld"><label>Note</label><textarea id="re-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
     </div>
   </div>
 </div>
@@ -1840,7 +1931,7 @@ function goTab(t) {
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
-  if (t === 'performance') { loadPerf(); renderHDI(); }
+  if (t === 'performance') { loadPerf(); renderHDI(); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
@@ -4624,7 +4715,7 @@ function selPerfTab(t) {
   PERF_CUR = t;
   if(t==='hdi')    renderHDI();
   if(t==='consap') renderCONSAP();
-  if(t==='re')     renderRE();
+  if(t==='re')     loadREFromDB();
 }
 
 function buildGauge(elId, attuale, obiettivo) {
@@ -4668,33 +4759,224 @@ function renderCONSAP() {
     : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessun aggiornamento</div>';
 }
 
+// ─── RE — Rami Elementari (Supabase) ─────────────────────────────────────────
+let RE_POSIZIONI = [];
+let RE_CONFIG    = { volume_anno_prec: 0 };
+let RE_FILTER    = 'all'; // 'all' | 'target' | 'no'
+let RE_EDIT_ID   = null;
+
+const FRZ_MAP = {'1':1,'2':2,'3':3,'4':4,'6':6,'12':12};
+const FRZ_LABEL = {'1':'Annuale','2':'Semestrale','3':'Quadrimestrale','4':'Trimestrale','6':'Bimestrale','12':'Mensile'};
+
+function getREAnno() { return parseInt(document.getElementById('re-anno')?.value || new Date().getFullYear()); }
+
+async function loadREFromDB() {
+  if (!db) return;
+  const anno = getREAnno();
+  try {
+    // Config anno
+    const { data: cfg } = await db.from('iam_kpi_re_config').select('*').eq('anno', anno).maybeSingle();
+    RE_CONFIG = cfg || { volume_anno_prec: 0 };
+    const prevEl = document.getElementById('re-prev');
+    if (prevEl) prevEl.value = RE_CONFIG.volume_anno_prec || '';
+    // Posizioni
+    const { data: pos } = await db.from('iam_kpi_re_posizioni').select('*').eq('anno', anno).order('creato_il', {ascending: false});
+    RE_POSIZIONI = pos || [];
+    renderRE();
+  } catch(e) { console.error('loadREFromDB:', e); }
+}
+
+async function saveREConfig() {
+  if (!db) return;
+  const anno = getREAnno();
+  const prev = parseNum(document.getElementById('re-prev')?.value || 0);
+  try {
+    const { data: existing } = await db.from('iam_kpi_re_config').select('id').eq('anno', anno).maybeSingle();
+    if (existing?.id) {
+      await db.from('iam_kpi_re_config').update({ volume_anno_prec: prev, aggiornato_il: new Date().toISOString() }).eq('id', existing.id);
+    } else {
+      await db.from('iam_kpi_re_config').insert({ anno, volume_anno_prec: prev, creato_da: ME?.id });
+    }
+    RE_CONFIG.volume_anno_prec = prev;
+  } catch(e) { console.error('saveREConfig:', e); }
+}
+
+function aggiornaPremioAnnuo() {
+  const premio = parseNum(document.getElementById('re-p-premio')?.value || 0);
+  const frz    = parseInt(document.getElementById('re-p-frz')?.value || 1);
+  const annuo  = premio * frz;
+  const el = document.getElementById('re-p-annuo');
+  if (el) el.value = '€' + fmt(annuo);
+  // Aggiorna toggle knob visivo
+  const checked = document.getElementById('re-p-target')?.checked;
+  const knob = document.getElementById('re-toggle-knob');
+  if (knob) knob.style.transform = checked ? 'translateX(20px)' : 'translateX(0)';
+}
+
+function setREFilter(f) {
+  RE_FILTER = f;
+  ['all','target','no'].forEach(x => {
+    const btn = document.getElementById('re-f-'+x);
+    if (btn) {
+      btn.style.background = x===f ? 'var(--acc)' : 'var(--surf2)';
+      btn.style.color      = x===f ? '#fff'       : 'var(--txt2)';
+    }
+  });
+  renderREList();
+}
+
 function renderRE() {
-  loadPerf();
-  const obj = parseNum(document.getElementById('re-obj')?.value||0);
-  const att = PERF.re.reduce((a,p)=>{
-    const frz = parseInt(p.frz)||1;
-    return a + parseNum(p.importo)*frz;
-  },0);
-  buildGauge('re-gauge', att, obj);
-  document.getElementById('re-pos-list').innerHTML = PERF.re.length
-    ? PERF.re.map((p,i)=>{
-        const frz = parseInt(p.frz)||1;
-        const frzLabel = {1:'Annuale',2:'Semestrale',3:'Quadrimestrale',4:'Trimestrale',12:'Mensile'}[frz]||frz+'x';
-        const valPolizza = parseNum(p.importo)*frz;
-        return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
-          <div style="flex:1;">
-            <b>${p.nome}</b> · ${p.data}<br>
-            €${fmt(parseNum(p.importo))} incassato · ${frzLabel} · Valore polizza: <b>€${fmt(valPolizza)}</b>${p.prod?' · '+p.prod:''}
-          </div>
-          <button onclick="delPos('re',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
-        </div>`;
-      }).join('')
-    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione RE</div>';
+  // Calcoli totali
+  const totTarget   = RE_POSIZIONI.filter(p=>p.is_target).reduce((a,p)=>a+(p.premio_annuo||0),0);
+  const totNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).reduce((a,p)=>a+(p.premio_annuo||0),0);
+  const totale      = totTarget + totNoTarget;
+  const prev        = parseNum(document.getElementById('re-prev')?.value || RE_CONFIG.volume_anno_prec || 0);
+
+  // Gauge vs anno precedente
+  buildGaugeRE('re-gauge', totale, prev);
+
+  // Contatori
+  const cntTarget   = RE_POSIZIONI.filter(p=>p.is_target).length;
+  const cntNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).length;
+  const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.innerHTML = val; };
+  setEl('re-count-target',   cntTarget);
+  setEl('re-val-target',     '€'+fmt(totTarget));
+  setEl('re-count-notarget', cntNoTarget);
+  setEl('re-val-notarget',   '€'+fmt(totNoTarget));
+
+  renderREList();
+}
+
+function buildGaugeRE(elId, attuale, precedente) {
+  const el = document.getElementById(elId); if(!el) return;
+  const perc = precedente > 0 ? Math.round(attuale/precedente*100) : 0;
+  const delta = attuale - precedente;
+  const color = perc >= 100 ? '#1a8a5a' : perc >= 80 ? '#ba7517' : '#c0392b';
+  const label = perc >= 100 ? '🟢 Sopra anno precedente' : perc >= 80 ? '🟡 In linea' : '🔴 Sotto anno precedente';
+  el.innerHTML = `
+    <div style="font-size:30px;font-weight:800;color:${color};">${perc}%</div>
+    <div style="font-size:12px;color:var(--txt2);margin:4px 0;">${label}</div>
+    <div style="background:var(--surf2);border-radius:6px;height:12px;overflow:hidden;margin:8px auto;max-width:300px;">
+      <div style="height:100%;background:${color};border-radius:6px;width:${Math.min(perc,100)}%;transition:width .6s;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;text-align:center;">
+      <div><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Anno prec.</div><div style="font-size:14px;font-weight:700;">€${fmt(precedente)}</div></div>
+      <div><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Attuale</div><div style="font-size:14px;font-weight:700;color:${color};">€${fmt(attuale)}</div></div>
+      <div><div style="font-size:10px;color:var(--txt3);font-weight:600;text-transform:uppercase;">Delta</div><div style="font-size:14px;font-weight:700;color:${delta>=0?'var(--grn-txt)':'var(--red-txt)'};">${delta>=0?'+':''}€${fmt(Math.abs(delta))}</div></div>
+    </div>`;
+}
+
+function renderREList() {
+  const el = document.getElementById('re-pos-list'); if(!el) return;
+  let list = RE_POSIZIONI;
+  if (RE_FILTER === 'target') list = list.filter(p=>p.is_target);
+  if (RE_FILTER === 'no')     list = list.filter(p=>!p.is_target);
+  if (!list.length) { el.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:12px 0;">Nessuna posizione trovata</div>'; return; }
+  el.innerHTML = list.map(p => {
+    const frzLabel = FRZ_LABEL[String(p.frazionamento==='annuale'?1:p.frazionamento==='semestrale'?2:p.frazionamento==='quadrimestrale'?3:p.frazionamento==='trimestrale'?4:p.frazionamento==='bimestrale'?6:12)] || p.frazionamento;
+    const annuo = p.premio_annuo || 0;
+    const targetBadge = p.is_target
+      ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);">🎯 Target</span>'
+      : '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--surf2);color:var(--txt3);border:.5px solid var(--bord2);">No Target</span>';
+    return `<div style="padding:10px 0;border-top:.5px solid var(--bord);display:flex;align-items:flex-start;gap:8px;">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <span style="font-size:13px;font-weight:700;">${p.cliente}</span>
+          ${targetBadge}
+          ${p.prodotto?`<span style="font-size:11px;padding:1px 7px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);">${p.prodotto}</span>`:''}
+        </div>
+        <div style="font-size:11px;color:var(--txt2);">
+          ${p.produttore?'👤 '+p.produttore+' · ':''}€${fmt(p.premio_netto)} rata · ${frzLabel} · <b style="color:var(--acc);">€${fmt(annuo)} annuo</b>
+        </div>
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button onclick="editREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">✏️</button>
+        <button onclick="delREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openREPosModal(editId) {
+  RE_EDIT_ID = editId || null;
+  const titolo = editId ? 'Modifica posizione RE' : 'Nuova posizione RE';
+  document.getElementById('re-pos-title').textContent = titolo;
+  // Carica produttori
+  loadTeam();
+  const sel = document.getElementById('re-p-prod');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  if (editId) {
+    const p = RE_POSIZIONI.find(x=>x.id===editId);
+    if (p) {
+      document.getElementById('re-p-cliente').value  = p.cliente   || '';
+      document.getElementById('re-p-prodotto').value = p.prodotto  || '';
+      document.getElementById('re-p-premio').value   = p.premio_netto || '';
+      document.getElementById('re-p-note').value     = p.note      || '';
+      const frzVal = p.frazionamento==='annuale'?'1':p.frazionamento==='semestrale'?'2':p.frazionamento==='quadrimestrale'?'3':p.frazionamento==='trimestrale'?'4':p.frazionamento==='bimestrale'?'6':'12';
+      document.getElementById('re-p-frz').value = frzVal;
+      document.getElementById('re-p-target').checked = p.is_target || false;
+      document.getElementById('re-toggle-bg').style.background = p.is_target ? '#1a8a5a' : 'var(--bord2)';
+      document.getElementById('re-toggle-knob').style.transform = p.is_target ? 'translateX(20px)' : 'translateX(0)';
+      if (sel && p.produttore) sel.value = p.produttore;
+    }
+  } else {
+    ['re-p-cliente','re-p-prodotto','re-p-premio','re-p-note'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+    document.getElementById('re-p-frz').value = '1';
+    document.getElementById('re-p-target').checked = false;
+    document.getElementById('re-toggle-bg').style.background = 'var(--bord2)';
+    document.getElementById('re-toggle-knob').style.transform = 'translateX(0)';
+  }
+  aggiornaPremioAnnuo();
+  document.getElementById('modal-re-pos').classList.add('show');
+}
+
+async function saveREPos() {
+  const gv = id => (document.getElementById(id)?.value||'').trim();
+  const cliente = gv('re-p-cliente');
+  if (!cliente) { alert('Inserisci il nome del cliente.'); return; }
+  const frzTxt = {'1':'annuale','2':'semestrale','3':'quadrimestrale','4':'trimestrale','6':'bimestrale','12':'mensile'};
+  const frzSel = document.getElementById('re-p-frz')?.value || '1';
+  const payload = {
+    anno:          getREAnno(),
+    cliente,
+    produttore:    gv('re-p-prod')    || null,
+    prodotto:      gv('re-p-prodotto')|| null,
+    premio_netto:  parseNum(gv('re-p-premio')),
+    frazionamento: frzTxt[frzSel] || 'annuale',
+    is_target:     document.getElementById('re-p-target')?.checked || false,
+    note:          gv('re-p-note')    || null,
+    aggiornato_il: new Date().toISOString(),
+  };
+  if (!db) return;
+  try {
+    if (RE_EDIT_ID) {
+      await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID);
+    } else {
+      payload.creato_da = ME?.id;
+      await db.from('iam_kpi_re_posizioni').insert(payload);
+    }
+    // Salva anche config (volume anno prec)
+    await saveREConfig();
+    closeModal('modal-re-pos');
+    await loadREFromDB();
+  } catch(e) { alert('Errore salvataggio: '+(e.message||e)); }
+}
+
+async function editREPos(id) { openREPosModal(id); }
+
+async function delREPos(id) {
+  if (!confirm('Eliminare questa posizione? L'operazione non è reversibile.')) return;
+  if (!db) return;
+  try {
+    await db.from('iam_kpi_re_posizioni').delete().eq('id', id);
+    await loadREFromDB();
+  } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
 function openHDIPos() { openPosModal('hdi','Nuova posizione HDI', false, false); }
 function openCSPos()  { openPosModal('cs', 'Aggiornamento CONSAP', false, true); }
-function openREPos()  { openPosModal('re', 'Nuova posizione RE',   true,  false); }
+function openREPos()  { openREPosModal(); }
 
 function openPosModal(tipo, titolo, showFrz, showTipoCS) {
   PERF_CUR = tipo;

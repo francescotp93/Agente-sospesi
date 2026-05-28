@@ -3784,17 +3784,41 @@ async function loadTrattDB() {
 async function saveTrattDB(t) {
   if (!db || !ME) { savePipe(); return; }
   try {
-    const payload = {...t, importo: parseNum(t.importo) || 0, prob: t.prob ? parseInt(t.prob) : null, utente_id: ME.id, aggiornato_il: new Date().toISOString()};
-    // IDs temporanei generati con Date.now() hanno 13 cifre; gli ID Supabase sono numeri brevi
     const isTemp = !t.id || String(t.id).length >= 13;
     if (isTemp) {
-      const { id: _skip, ...rest } = payload;
-      const { data, error } = await db.from('iam_trattative').insert(rest).select('id').single();
+      const payload = {
+        cliente: t.cliente || '',
+        prodotto: t.prodotto || null,
+        importo: parseNum(t.importo) || 0,
+        status: t.status || 'aperta',
+        recall: t.recall || null,
+        prob: t.prob ? parseInt(t.prob) : null,
+        prior: t.prior || null,
+        collab: t.collab || null,
+        note: t.note || null,
+        data_ins: t.data_ins || new Date().toISOString().split('T')[0],
+        utente_id: ME.id,
+        aggiornato_il: new Date().toISOString()
+      };
+      const { data, error } = await db.from('iam_trattative').insert(payload).select('id').single();
       if (error) throw error;
-      // Aggiorna l'id locale con quello assegnato da Supabase
-      if (data?.id) { const idx = PIPE.findIndex(x=>x.id===t.id); if(idx>=0) PIPE[idx].id = String(data.id); savePipe(); }
+      if (data?.id) { const idx = PIPE.findIndex(x=>x.id===t.id); if(idx>=0) PIPE[idx].id = String(data.id); t.id = String(data.id); savePipe(); }
     } else {
-      const { error } = await db.from('iam_trattative').update(payload).eq('id', t.id);
+      const payload = {
+        cliente: t.cliente || '',
+        prodotto: t.prodotto || null,
+        importo: parseNum(t.importo) || 0,
+        status: t.status || 'aperta',
+        recall: t.recall || null,
+        prob: t.prob ? parseInt(t.prob) : null,
+        prior: t.prior || null,
+        collab: t.collab || null,
+        note: t.note || null,
+        data_ins: t.data_ins || new Date().toISOString().split('T')[0],
+        utente_id: ME.id,
+        aggiornato_il: new Date().toISOString()
+      };
+      const { error } = await db.from('iam_trattative').update(payload).eq('id', parseInt(t.id));
       if (error) throw error;
     }
   } catch(e) { console.warn('Errore save trattativa:', e); savePipe(); }

@@ -680,6 +680,13 @@ input[type=file]{display:none;}
     </div>
     <div class="card" style="padding:12px;"><div id="utenti-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
   </div>
+  <!-- Pannello Controllo KPI (solo top_master) -->
+  <div id="kpi-ctrl-section" style="display:none;margin-top:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;">
+      <div class="slbl" style="padding:0;">Pannello Controllo KPI</div>
+    </div>
+    <div class="card" style="padding:12px;"><div id="kpi-ctrl-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
+  </div>
   <!-- Sezione Obiettivi -->
   <div style="margin-top:16px;">
     <div class="slbl">Obiettivi operatori</div>
@@ -801,30 +808,133 @@ input[type=file]{display:none;}
 <!-- PERFORMANCE -->
 <div class="panel" id="panel-performance">
   <div class="ptabs" id="perf-tabs">
-    <button class="ptab act" id="pt-hdi" onclick="selPerfTab('hdi')">HDI</button>
+    <button class="ptab act" id="pt-gare" onclick="selPerfTab('gare')">Gare Interne</button>
     <button class="ptab" id="pt-consap" onclick="selPerfTab('consap')">CONSAP</button>
-    <button class="ptab" id="pt-re" onclick="selPerfTab('re')">Rami El.</button>
+    <button class="ptab" id="pt-re" onclick="selPerfTab('re')">RE</button>
   </div>
 
-  <!-- HDI Overview -->
-  <div id="pp-hdi">
-    <div class="slbl">Performance HDI</div>
-    <div style="padding:0 12px 12px;">
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Obiettivo annuo</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-          <div class="fld"><label>Anno precedente (€)</label><input type="number" id="hdi-prev" placeholder="0" oninput="renderHDI()"></div>
-          <div class="fld"><label>Obiettivo anno in corso (€)</label><input type="number" id="hdi-obj" placeholder="0" oninput="renderHDI()"></div>
+  <!-- GARE INTERNE -->
+  <div id="pp-gare">
+    <div class="slbl">Gare Interne</div>
+    <!-- Sub-tabs -->
+    <div style="display:flex;overflow-x:auto;gap:4px;padding:0 12px 10px;scrollbar-width:none;">
+      <button id="gt-re_pezzi"   onclick="selGaraTab('re_pezzi')"   style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid #E8500A;background:#E8500A;color:#fff;cursor:pointer;font-family:inherit;">RE Pezzi</button>
+      <button id="gt-rca"        onclick="selGaraTab('rca')"        style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">RCA Attack</button>
+      <button id="gt-finanziati" onclick="selGaraTab('finanziati')" style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Finanziati</button>
+      <button id="gt-cross"      onclick="selGaraTab('cross')"      style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Cross Selling</button>
+      <button id="gt-rinnovi"    onclick="selGaraTab('rinnovi')"    style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Rinnovi</button>
+    </div>
+
+    <!-- RE Pezzi -->
+    <div id="gp-re_pezzi" style="padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">🎯 RE Pezzi</div>
+          <div id="gare-re-admin" style="display:none;">
+            <button onclick="apriConfigGara('re_pezzi')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;">⚙ Config</button>
+          </div>
         </div>
-        <!-- Indicatore gauge -->
-        <div id="hdi-gauge" style="text-align:center;padding:10px 0;"></div>
+        <div id="gara-re-obiettivo" style="background:var(--amb-bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--amb-txt);text-transform:uppercase;letter-spacing:.5px;">Obiettivo pezzi</div>
+          <div style="font-size:24px;font-weight:800;color:var(--amb-txt);" id="gara-re-obj-val">—</div>
+        </div>
+        <div id="gara-re-gauge"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
+          <button onclick="apriPosGara('re_pezzi')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="gara-re-list" style="margin-top:8px;"></div>
       </div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:600;">Posizioni registrate</div>
-          <button onclick="openHDIPos()" style="padding:5px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+    </div>
+
+    <!-- RCA Attack -->
+    <div id="gp-rca" style="display:none;padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">🚗 RCA Attack</div>
+          <div id="gare-rca-admin" style="display:none;">
+            <button onclick="apriConfigGara('rca')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;">⚙ Config</button>
+          </div>
         </div>
-        <div id="hdi-pos-list"></div>
+        <div id="gara-rca-obiettivo" style="background:var(--blu-bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--blu-txt);text-transform:uppercase;letter-spacing:.5px;">Obiettivo pezzi</div>
+          <div style="font-size:24px;font-weight:800;color:var(--blu-txt);" id="gara-rca-obj-val">—</div>
+        </div>
+        <div id="gara-rca-gauge"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
+          <button onclick="apriPosGara('rca')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="gara-rca-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Finanziati -->
+    <div id="gp-finanziati" style="display:none;padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">💰 Finanziati</div>
+          <div id="gare-fin-admin" style="display:none;">
+            <button onclick="apriConfigGara('finanziati')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;">⚙ Config</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+          <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;text-align:center;border:.5px solid var(--bord);">
+            <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Anno precedente</div>
+            <div style="font-size:26px;font-weight:800;" id="fin-prev-count">0</div>
+            <div style="font-size:10px;color:var(--txt3);">polizze</div>
+          </div>
+          <div style="background:var(--grn-bg);border-radius:var(--rs);padding:12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--grn-txt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Anno corrente</div>
+            <div style="font-size:26px;font-weight:800;color:var(--grn-txt);" id="fin-curr-count">0</div>
+            <div style="font-size:10px;color:var(--grn-txt);">polizze</div>
+          </div>
+        </div>
+        <div id="gara-fin-gauge"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
+          <button onclick="apriPosGara('finanziati')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="gara-fin-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Cross Selling -->
+    <div id="gp-cross" style="display:none;padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">🔀 Cross Selling</div>
+          <div id="gare-cross-admin" style="display:none;">
+            <button onclick="apriConfigGara('cross')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;">⚙ Config</button>
+          </div>
+        </div>
+        <div id="gara-cross-obiettivo" style="background:var(--grn-bg);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--grn-txt);text-transform:uppercase;letter-spacing:.5px;">Obiettivo pezzi</div>
+          <div style="font-size:24px;font-weight:800;color:var(--grn-txt);" id="gara-cross-obj-val">—</div>
+        </div>
+        <div id="gara-cross-gauge"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
+          <button onclick="apriPosGara('cross')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="gara-cross-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- Rinnovi -->
+    <div id="gp-rinnovi" style="display:none;padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">🔄 Rinnovi</div>
+          <div id="gare-rinn-admin" style="display:none;">
+            <button onclick="apriConfigGara('rinnovi')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;">⚙ Config</button>
+          </div>
+        </div>
+        <div id="gara-rinn-regolamento" style="background:var(--surf2);border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;display:none;">
+          <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Regolamento</div>
+          <div style="font-size:12px;color:var(--txt2);" id="rinn-regolamento-text"></div>
+        </div>
+        <div id="gara-rinn-mesi"></div>
       </div>
     </div>
   </div>
@@ -2124,12 +2234,13 @@ function goTab(t) {
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
-  if (t === 'performance') { loadPerf(); renderHDI(); loadREFromDB(); }
+  if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
       if (p) { PROFILO = p; applicaPermessi(p.ruolo); }
       renderUtenti();
+      renderKpiCtrl();
       renderGestioneObiettivi('obiettivi-admin-list');
       renderAuditLog(document.getElementById('audit-log-list'));
     });
@@ -3673,7 +3784,19 @@ async function loadTrattDB() {
 async function saveTrattDB(t) {
   if (!db || !ME) { savePipe(); return; }
   try {
-    await db.from('iam_trattative').upsert({...t, utente_id: ME.id, aggiornato_il: new Date().toISOString()});
+    const payload = {...t, utente_id: ME.id, aggiornato_il: new Date().toISOString()};
+    // IDs temporanei generati con Date.now() hanno 13 cifre; gli ID Supabase sono numeri brevi
+    const isTemp = !t.id || String(t.id).length >= 13;
+    if (isTemp) {
+      const { id: _skip, ...rest } = payload;
+      const { data, error } = await db.from('iam_trattative').insert(rest).select('id').single();
+      if (error) throw error;
+      // Aggiorna l'id locale con quello assegnato da Supabase
+      if (data?.id) { const idx = PIPE.findIndex(x=>x.id===t.id); if(idx>=0) PIPE[idx].id = String(data.id); savePipe(); }
+    } else {
+      const { error } = await db.from('iam_trattative').update(payload).eq('id', t.id);
+      if (error) throw error;
+    }
   } catch(e) { console.warn('Errore save trattativa:', e); savePipe(); }
 }
 
@@ -4229,6 +4352,10 @@ function renderWD() {
   const tp = document.getElementById('wd-tipo')?.value||'';
   const st = document.getElementById('wd-stato')?.value||'';
   let lista = WD;
+  // Operatori vedono solo le proprie voci o quelle condivise con loro
+  if (PROFILO?.ruolo === 'operativo') {
+    lista = lista.filter(w => !w.utente_id || w.utente_id === ME?.id || (w.condivisi||[]).includes(ME?.id));
+  }
   if (tp) lista = lista.filter(w=>w.tipo===tp);
   if (st) lista = lista.filter(w=>w.stato===st);
   if (q)  lista = lista.filter(w=>(w.titolo+w.note).toLowerCase().includes(q));
@@ -4891,24 +5018,44 @@ function aggiungiSezioneAz() {
 }
 
 
-let PERF = { hdi:[], cs:[], re:[] };
-let PERF_CUR = 'hdi';
+let PERF = { gare_re_pezzi:[], gare_rca:[], gare_finanziati:[], gare_cross:[], gare_rinnovi:[], cs:[], re:[] };
+let PERF_CUR = 'gare';
+let GARA_CUR = 're_pezzi';
 
-function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||'{"hdi":[],"cs":[],"re":[]}'); } catch(e){ PERF={hdi:[],cs:[],re:[]}; } }
+function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||'{"gare_re_pezzi":[],"gare_rca":[],"gare_finanziati":[],"gare_cross":[],"gare_rinnovi":[],"cs":[],"re":[]}'); } catch(e){ PERF={gare_re_pezzi:[],gare_rca:[],gare_finanziati:[],gare_cross:[],gare_rinnovi:[],cs:[],re:[]}; } }
 function savePerf() { localStorage.setItem('iam_perf', JSON.stringify(PERF)); }
 
 function selPerfTab(t) {
-  ['hdi','consap','re'].forEach(x => {
-    document.getElementById('pp-'+x).style.display = x===t||x==='consap'&&t==='consap'?'block':'none';
-    document.getElementById('pt-'+x).classList.toggle('act', x===t);
+  ['gare','consap','re'].forEach(x => {
+    const el = document.getElementById('pp-'+x); if(el) el.style.display = x===t?'block':'none';
+    const btn = document.getElementById('pt-'+x); if(btn) btn.classList.toggle('act', x===t);
   });
-  document.getElementById('pp-hdi').style.display    = t==='hdi'?'block':'none';
-  document.getElementById('pp-consap').style.display  = t==='consap'?'block':'none';
-  document.getElementById('pp-re').style.display      = t==='re'?'block':'none';
   PERF_CUR = t;
-  if(t==='hdi')    renderHDI();
+  if(t==='gare')   { renderGaraTabs(); selGaraTab(GARA_CUR); }
   if(t==='consap') loadCSFromDB();
   if(t==='re')     loadREFromDB();
+}
+
+function selGaraTab(g) {
+  GARA_CUR = g;
+  const tabs = ['re_pezzi','rca','finanziati','cross','rinnovi'];
+  tabs.forEach(x => {
+    const el = document.getElementById('gp-'+x); if(el) el.style.display = x===g?'block':'none';
+    const btn = document.getElementById('gt-'+x);
+    if(btn) {
+      if(x===g) { btn.style.background='#E8500A'; btn.style.color='#fff'; btn.style.borderColor='#E8500A'; }
+      else       { btn.style.background='var(--surf2)'; btn.style.color='var(--txt2)'; btn.style.borderColor='var(--bord2)'; }
+    }
+  });
+  renderGara(g);
+}
+
+function renderGaraTabs() {
+  const isAdmin = PROFILO?.ruolo === 'top_master';
+  ['re','rca','fin','cross','rinn'].forEach(k => {
+    const el = document.getElementById('gare-'+k+'-admin');
+    if(el) el.style.display = isAdmin ? 'block' : 'none';
+  });
 }
 
 function buildGauge(elId, attuale, obiettivo) {
@@ -4926,17 +5073,302 @@ function buildGauge(elId, attuale, obiettivo) {
     <div style="font-size:11px;color:var(--txt3);margin-top:2px;">Mancano: €${fmt(Math.max(0,obiettivo-attuale))}</div>`;
 }
 
-function renderHDI() {
-  loadPerf();
-  const obj = parseNum(document.getElementById('hdi-obj')?.value||0);
-  const att = PERF.hdi.reduce((a,p)=>a+parseNum(p.importo),0);
-  buildGauge('hdi-gauge', att, obj);
-  document.getElementById('hdi-pos-list').innerHTML = PERF.hdi.length
-    ? PERF.hdi.map((p,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
-        <div style="flex:1;"><b>${p.nome}</b> · ${p.data} · €${fmt(parseNum(p.importo))}${p.prod?' · '+p.prod:''}</div>
-        <button onclick="delPos('hdi',${i})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
-      </div>`).join('')
-    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione registrata</div>';
+function renderHDI() { /* obsoleto — rimpiazzato da Gare Interne */ }
+
+// ─── GARE INTERNE ────────────────────────────────────────────────────────────
+let GARE_CONFIG = {};   // { re_pezzi:{pezzi_min,periodo,regolamento}, rca:{...}, ... }
+let GARE_POS    = {};   // { re_pezzi:[{...}], rca:[...], ... }
+
+const GARA_LABELS = { re_pezzi:'RE Pezzi', rca:'RCA Attack', finanziati:'Finanziati', cross:'Cross Selling', rinnovi:'Rinnovi' };
+
+async function loadGareData() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem('iam_gare_config')||'{}');
+    GARE_CONFIG = cfg;
+    const pos = JSON.parse(localStorage.getItem('iam_gare_pos')||'{}');
+    GARE_POS = pos;
+    if (db && ME) {
+      const { data: cfgDB } = await db.from('iam_gare_config').select('*');
+      if (cfgDB) { GARE_CONFIG = {}; cfgDB.forEach(r => { GARE_CONFIG[r.tipo] = r; }); localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG)); }
+      const { data: posDB } = await db.from('iam_gare_posizioni').select('*').eq('utente_id', ME.id).order('creato_il', {ascending:false});
+      if (posDB) {
+        GARE_POS = {};
+        posDB.forEach(p => { if(!GARE_POS[p.tipo_gara]) GARE_POS[p.tipo_gara]=[]; GARE_POS[p.tipo_gara].push(p); });
+        localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+      }
+    }
+  } catch(e) { console.warn('loadGareData:', e); }
+}
+
+function buildGaraPezziGauge(elId, fatti, obiettivo) {
+  const el = document.getElementById(elId); if(!el) return;
+  const perc = obiettivo > 0 ? Math.min(100, Math.round(fatti/obiettivo*100)) : 0;
+  const color = perc>=100?'#1a8a5a':perc>=60?'#ba7517':'#c0392b';
+  el.innerHTML = `
+    <div style="font-size:26px;font-weight:800;color:${color};">${fatti} / ${obiettivo||'—'}</div>
+    <div style="font-size:11px;color:var(--txt2);margin:3px 0;">pezzi completati</div>
+    <div style="background:var(--surf2);border-radius:6px;height:10px;overflow:hidden;margin:8px 0;">
+      <div style="height:100%;background:${color};border-radius:6px;width:${perc}%;transition:width .6s;"></div>
+    </div>`;
+}
+
+function renderGara(tipo) {
+  loadGareData().then(() => {
+    const cfg  = GARE_CONFIG[tipo] || {};
+    const pos  = (GARE_POS[tipo]  || []);
+    const kpiKey = tipo === 'rinnovi' ? 'gara_rinnovi' : tipo === 're_pezzi' ? 'gara_re_pezzi' : tipo === 'rca' ? 'gara_rca' : tipo === 'finanziati' ? 'gara_finanziati' : 'gara_cross';
+    const kpiAbil = PROFILO?.kpi_flags?.[kpiKey] !== false; // default true se non configurato
+    if (!kpiAbil && PROFILO?.ruolo === 'operativo') {
+      ['re_pezzi','rca','finanziati','cross','rinnovi'].forEach(t => {
+        const gp = document.getElementById('gp-'+t); if(gp) gp.innerHTML = '<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;">Sezione non abilitata.</div>';
+      });
+      return;
+    }
+
+    if (tipo === 're_pezzi' || tipo === 'rca' || tipo === 'cross') {
+      const objEl  = document.getElementById('gara-'+tipo.replace('_pezzi','re').replace('cross','cross')+'-obj-val');
+      // safely update text
+      const objIds = { re_pezzi:'gara-re-obj-val', rca:'gara-rca-obj-val', cross:'gara-cross-obj-val' };
+      const objId  = objIds[tipo]; if (objId) { const el=document.getElementById(objId); if(el) el.textContent = cfg.pezzi_min || '—'; }
+      const gaugeIds = { re_pezzi:'gara-re-gauge', rca:'gara-rca-gauge', cross:'gara-cross-gauge' };
+      buildGaraPezziGauge(gaugeIds[tipo], pos.length, cfg.pezzi_min||0);
+      const listIds = { re_pezzi:'gara-re-list', rca:'gara-rca-list', cross:'gara-cross-list' };
+      const listEl = document.getElementById(listIds[tipo]);
+      if (listEl) listEl.innerHTML = pos.length
+        ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
+            <button onclick="delGaraPos('${tipo}','${p.id||i}')" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;">✕</button>
+          </div>`).join('')
+        : '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna posizione</div>';
+    }
+
+    if (tipo === 'finanziati') {
+      const prevN = cfg.anno_prec_n || 0;
+      const currN = pos.length;
+      const prevEl = document.getElementById('fin-prev-count'); if(prevEl) prevEl.textContent = prevN;
+      const currEl = document.getElementById('fin-curr-count'); if(currEl) currEl.textContent = currN;
+      buildGaraPezziGauge('gara-fin-gauge', currN, prevN);
+      const listEl = document.getElementById('gara-fin-list');
+      if (listEl) listEl.innerHTML = pos.length
+        ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
+            <button onclick="delGaraPos('finanziati','${p.id||i}')" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;">✕</button>
+          </div>`).join('')
+        : '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna posizione</div>';
+    }
+
+    if (tipo === 'rinnovi') {
+      const reggEl = document.getElementById('gare-rinn-regolamento');
+      const reggTxt = document.getElementById('rinn-regolamento-text');
+      if (cfg.regolamento && reggEl && reggTxt) { reggTxt.textContent = cfg.regolamento; reggEl.style.display='block'; }
+      const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+      const mesiEl = document.getElementById('gara-rinn-mesi');
+      if (mesiEl) mesiEl.innerHTML = mesi.map((m,i) => {
+        const mPos = pos.filter(p => p.mese === i+1);
+        const prevPerc = mPos.length && mPos[0].perc_prev ? mPos[0].perc_prev : '—';
+        const currPerc = mPos.length && mPos[0].perc_curr ? mPos[0].perc_curr : '—';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
+          <div style="width:32px;font-weight:700;color:var(--txt2);">${m}</div>
+          <div style="flex:1;display:flex;gap:12px;">
+            <span style="color:var(--txt3);">Prec: <b>${prevPerc}%</b></span>
+            <span style="color:#E8500A;">Att: <b>${currPerc}%</b></span>
+          </div>
+          <button onclick="editRinnMese(${i+1})" style="font-size:10px;padding:2px 8px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;font-family:inherit;">✏</button>
+        </div>`;
+      }).join('');
+    }
+  });
+}
+
+function apriPosGara(tipo) {
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="gara-pos-overlay" onclick="if(event.target.id==='gara-pos-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">+ ${GARA_LABELS[tipo]||tipo}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Cliente</label><input type="text" id="gpos-cliente" placeholder="Nome cliente"></div>
+          <div class="fld"><label>Prodotto</label><input type="text" id="gpos-prodotto" placeholder="Prodotto"></div>
+          <div class="fld"><label>Note</label><textarea id="gpos-note" rows="2" placeholder="Note..."></textarea></div>
+        </div>
+        <button onclick="salvaGaraPos('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function salvaGaraPos(tipo) {
+  const cliente  = document.getElementById('gpos-cliente')?.value.trim();
+  const prodotto = document.getElementById('gpos-prodotto')?.value.trim();
+  const note     = document.getElementById('gpos-note')?.value.trim();
+  if (!cliente) { alert('Inserisci il cliente.'); return; }
+  const p = { tipo_gara: tipo, cliente, prodotto, note, utente_id: ME?.id, creato_il: new Date().toISOString() };
+  try {
+    if (db && ME) {
+      await db.from('iam_gare_posizioni').insert(p);
+    } else {
+      if(!GARE_POS[tipo]) GARE_POS[tipo]=[];
+      GARE_POS[tipo].unshift({...p, id: Date.now().toString()});
+      localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+    }
+  } catch(e) {
+    if(!GARE_POS[tipo]) GARE_POS[tipo]=[];
+    GARE_POS[tipo].unshift({...p, id: Date.now().toString()});
+    localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+  }
+  document.getElementById('gara-pos-overlay')?.remove();
+  await loadGareData();
+  renderGara(tipo);
+}
+
+async function delGaraPos(tipo, id) {
+  if (!confirm('Eliminare questa posizione?')) return;
+  try {
+    if (db && !String(id).includes('-')) await db.from('iam_gare_posizioni').delete().eq('id', id);
+    else {
+      if(GARE_POS[tipo]) GARE_POS[tipo] = GARE_POS[tipo].filter(p=>String(p.id)!==String(id));
+      localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+    }
+  } catch(e) {
+    if(GARE_POS[tipo]) GARE_POS[tipo] = GARE_POS[tipo].filter(p=>String(p.id)!==String(id));
+    localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+  }
+  await loadGareData(); renderGara(tipo);
+}
+
+function apriConfigGara(tipo) {
+  if (PROFILO?.ruolo !== 'top_master') return;
+  const cfg = GARE_CONFIG[tipo] || {};
+  const isRinnovi = tipo === 'rinnovi';
+  const isFinanziati = tipo === 'finanziati';
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="gara-cfg-overlay" onclick="if(event.target.id==='gara-cfg-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">⚙ Config ${GARA_LABELS[tipo]||tipo}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${!isRinnovi&&!isFinanziati?`<div class="fld"><label>Obiettivo pezzi minimi</label><input type="number" id="gcfg-pezzi" placeholder="0" value="${cfg.pezzi_min||''}"></div>`:
+            isFinanziati?`<div class="fld"><label>Polizze anno precedente</label><input type="number" id="gcfg-pezzi" placeholder="0" value="${cfg.anno_prec_n||''}"></div>`:''}
+          <div class="fld"><label>Periodo / Scadenza</label><input type="text" id="gcfg-periodo" placeholder="es. 31/12/2026" value="${cfg.periodo||''}"></div>
+          <div class="fld"><label>Regolamento / Note</label><textarea id="gcfg-regolamento" rows="3" placeholder="Regole della gara...">${cfg.regolamento||''}</textarea></div>
+        </div>
+        <button onclick="salvaConfigGara('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva configurazione</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function salvaConfigGara(tipo) {
+  const isFinanziati = tipo === 'finanziati';
+  const pezzi = document.getElementById('gcfg-pezzi')?.value;
+  const periodo = document.getElementById('gcfg-periodo')?.value.trim();
+  const regolamento = document.getElementById('gcfg-regolamento')?.value.trim();
+  const cfg = { tipo, periodo, regolamento, aggiornato_il: new Date().toISOString() };
+  if (isFinanziati) cfg.anno_prec_n = parseInt(pezzi)||0;
+  else if (pezzi !== undefined) cfg.pezzi_min = parseInt(pezzi)||0;
+  try {
+    if (db) {
+      const { data: ex } = await db.from('iam_gare_config').select('id').eq('tipo', tipo).maybeSingle();
+      if (ex?.id) await db.from('iam_gare_config').update(cfg).eq('id', ex.id);
+      else await db.from('iam_gare_config').insert({...cfg, creato_da: ME?.id});
+    }
+    GARE_CONFIG[tipo] = cfg;
+    localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
+  } catch(e) {
+    GARE_CONFIG[tipo] = cfg;
+    localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
+  }
+  document.getElementById('gara-cfg-overlay')?.remove();
+  renderGara(tipo);
+}
+
+function editRinnMese(mese) {
+  const pos = (GARE_POS['rinnovi']||[]).find(p=>p.mese===mese);
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="rinn-mese-overlay" onclick="if(event.target.id==='rinn-mese-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">🔄 Rinnovi — mese ${mese}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>% Rinnovi anno precedente</label><input type="number" id="rinn-prev" step="0.1" value="${pos?.perc_prev||''}"></div>
+          <div class="fld"><label>% Rinnovi anno corrente</label><input type="number" id="rinn-curr" step="0.1" value="${pos?.perc_curr||''}"></div>
+          <div class="fld"><label>Note</label><textarea id="rinn-note" rows="2">${pos?.note||''}</textarea></div>
+        </div>
+        <button onclick="salvaRinnMese(${mese},'${pos?.id||''}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function salvaRinnMese(mese, existId) {
+  const prevP = parseFloat(document.getElementById('rinn-prev')?.value)||0;
+  const currP = parseFloat(document.getElementById('rinn-curr')?.value)||0;
+  const note  = document.getElementById('rinn-note')?.value.trim();
+  const p = { tipo_gara:'rinnovi', mese, perc_prev: prevP, perc_curr: currP, note, utente_id: ME?.id, creato_il: new Date().toISOString() };
+  try {
+    if (db && ME) {
+      if (existId && existId.length < 13) await db.from('iam_gare_posizioni').update(p).eq('id', existId);
+      else await db.from('iam_gare_posizioni').insert(p);
+    } else {
+      if(!GARE_POS['rinnovi']) GARE_POS['rinnovi']=[];
+      const idx = GARE_POS['rinnovi'].findIndex(x=>x.mese===mese);
+      if(idx>=0) GARE_POS['rinnovi'][idx]={...p,id:GARE_POS['rinnovi'][idx].id};
+      else GARE_POS['rinnovi'].push({...p,id:Date.now().toString()});
+      localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+    }
+  } catch(e) {
+    if(!GARE_POS['rinnovi']) GARE_POS['rinnovi']=[];
+    const idx = GARE_POS['rinnovi'].findIndex(x=>x.mese===mese);
+    if(idx>=0) GARE_POS['rinnovi'][idx]=p; else GARE_POS['rinnovi'].push({...p,id:Date.now().toString()});
+    localStorage.setItem('iam_gare_pos', JSON.stringify(GARE_POS));
+  }
+  document.getElementById('rinn-mese-overlay')?.remove();
+  await loadGareData(); renderGara('rinnovi');
+}
+
+// ─── PANNELLO CONTROLLO KPI ───────────────────────────────────────────────────
+const KPI_FLAGS_LABELS = {
+  kpi_re:          'KPI Rami Elementari',
+  kpi_consap:      'KPI CONSAP',
+  gara_re_pezzi:   'Gara RE Pezzi',
+  gara_rca:        'Gara RCA Attack',
+  gara_finanziati: 'Gara Finanziati',
+  gara_cross:      'Gara Cross Selling',
+  gara_rinnovi:    'Gara Rinnovi',
+};
+
+async function renderKpiCtrl() {
+  const sec = document.getElementById('kpi-ctrl-section');
+  if (!sec) return;
+  sec.style.display = PROFILO?.ruolo === 'top_master' ? 'block' : 'none';
+  if (PROFILO?.ruolo !== 'top_master') return;
+  const el = document.getElementById('kpi-ctrl-list');
+  if (!el) return;
+  await caricaUtenti();
+  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+  el.innerHTML = UTENTI_LISTA.map(u => {
+    const uFlags = flags[u.id] || {};
+    return `<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:.5px solid var(--bord);">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome||''} ${u.cognome||''} <span style="font-size:10px;color:var(--txt3);">${u.email}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        ${Object.entries(KPI_FLAGS_LABELS).map(([k,lbl])=>`
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;">
+            <input type="checkbox" ${uFlags[k]!==false?'checked':''} onchange="toggleKpiFlag('${u.id}','${k}',this.checked)" style="width:16px;height:16px;accent-color:#E8500A;cursor:pointer;">
+            ${lbl}
+          </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--txt3);font-size:13px;">Nessun utente.</div>';
+}
+
+async function toggleKpiFlag(userId, flag, val) {
+  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+  if(!flags[userId]) flags[userId]={};
+  flags[userId][flag] = val;
+  localStorage.setItem('iam_kpi_flags', JSON.stringify(flags));
+  try {
+    if (db) {
+      const col = flag; const update = {}; update[col] = val;
+      await db.from('iam_utenti').update(update).eq('id', userId);
+    }
+  } catch(e) { console.warn('toggleKpiFlag DB:', e); }
 }
 
 // ─── CONSAP (Supabase) ────────────────────────────────────────────────────────
@@ -5536,7 +5968,7 @@ async function delREPos(id) {
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
-function openHDIPos() { openPosModal('hdi','Nuova posizione HDI', false, false); }
+function openHDIPos() { /* HDI rimosso — rimpiazzato da Gare Interne */ }
 function openCSPos()  { openPosModal('cs', 'Aggiornamento CONSAP', false, true); }
 function openREPos()  { openREPosModal(); }
 
@@ -5566,7 +5998,6 @@ function savePos() {
   if (!PERF[PERF_CUR]) PERF[PERF_CUR] = [];
   PERF[PERF_CUR].push(p);
   savePerf(); closeModal('modal-pos');
-  if(PERF_CUR==='hdi')    renderHDI();
   if(PERF_CUR==='cs')     renderCONSAP();
   if(PERF_CUR==='re')     renderRE();
 }
@@ -5574,9 +6005,8 @@ function savePos() {
 function delPos(tipo, idx) {
   if (!confirm('Eliminare questa posizione?')) return;
   loadPerf();
-  PERF[tipo].splice(idx,1);
+  if(PERF[tipo]) PERF[tipo].splice(idx,1);
   savePerf();
-  if(tipo==='hdi')  renderHDI();
   if(tipo==='cs')   renderCONSAP();
   if(tipo==='re')   renderRE();
 }

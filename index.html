@@ -4966,7 +4966,7 @@ async function saveREPos() {
 async function editREPos(id) { openREPosModal(id); }
 
 async function delREPos(id) {
-  if (!confirm('Eliminare questa posizione? L'operazione non è reversibile.')) return;
+  if (!confirm('Eliminare questa posizione? Operazione non reversibile.')) return;
   if (!db) return;
   try {
     await db.from('iam_kpi_re_posizioni').delete().eq('id', id);

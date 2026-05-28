@@ -892,7 +892,8 @@ input[type=file]{display:none;}
             <button id="re-obj-0"   onclick="setREObiettivo(0)"
               style="font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;transition:all .15s;">Nessuno</button>
           </div>
-          <div id="re-obj-info" style="font-size:11px;color:var(--txt3);margin-top:6px;"></div>
+          <!-- Grafico obiettivi -->
+          <div id="re-obiettivi-chart" style="margin-top:10px;display:none;"></div>
         </div>
 
         <!-- Gauge principale -->
@@ -4822,33 +4823,82 @@ function toggleREPrevLock() {
 
 function setREObiettivo(perc) {
   RE_OBJ_PERC = perc;
+  const colors = {10:'#ba7517', 15:'#E8500A', 25:'#1a8a5a'};
   // Aggiorna stile bottoni
   [0,10,15,25].forEach(p => {
     const btn = document.getElementById('re-obj-' + p);
     if (!btn) return;
     const active = p === perc;
-    const colors = {10:'#ba7517',15:'#E8500A',25:'#1a8a5a'};
     const col = colors[p] || 'var(--txt2)';
-    btn.style.background = active ? col : 'var(--surf2)';
-    btn.style.color      = active ? '#fff' : 'var(--txt2)';
-    btn.style.borderColor= active ? col : 'var(--bord2)';
+    btn.style.background  = active ? col : 'var(--surf2)';
+    btn.style.color       = active ? '#fff' : 'var(--txt2)';
+    btn.style.borderColor = active ? col : 'var(--bord2)';
   });
   const prev = parseNum(document.getElementById('re-prev')?.value || RE_CONFIG.volume_anno_prec || 0);
-  const infoEl = document.getElementById('re-obj-info');
-  if (perc > 0 && prev > 0) {
-    const target = prev * (1 + perc/100);
-    if (infoEl) infoEl.innerHTML = `Obiettivo <b>+${perc}%</b>: raggiungere <b style="color:var(--acc);">€${fmt(target)}</b> (da €${fmt(prev)})`;
-  } else {
-    if (infoEl) infoEl.textContent = '';
-  }
+  renderREObjChart(prev);
   renderRE();
-  // Salva la preferenza obiettivo nel config
+  // Salva nel DB
   if (db) {
     const anno = getREAnno();
     db.from('iam_kpi_re_config').select('id').eq('anno', anno).maybeSingle().then(({data}) => {
       if (data?.id) db.from('iam_kpi_re_config').update({ obiettivo_perc: perc, aggiornato_il: new Date().toISOString() }).eq('id', data.id);
     });
   }
+}
+
+function renderREObjChart(prev) {
+  const el = document.getElementById('re-obiettivi-chart');
+  if (!el) return;
+  if (!prev || prev <= 0) { el.style.display='none'; return; }
+  el.style.display = 'block';
+
+  const totale = RE_POSIZIONI.reduce((a,p) => a+(p.premio_annuo||0), 0);
+  const steps  = [
+    { perc:10, label:'+10%', color:'#ba7517' },
+    { perc:15, label:'+15%', color:'#E8500A' },
+    { perc:25, label:'+25%', color:'#1a8a5a' },
+  ];
+  // Scala: max è il target più alto + 10%
+  const maxTarget = prev * 1.25 * 1.1;
+
+  el.innerHTML = `
+    <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Progressione verso gli obiettivi</div>
+    ${steps.map(s => {
+      const target  = prev * (1 + s.perc/100);
+      const percBar = Math.min(100, Math.round(totale/target*100));
+      const targetPosPerc = Math.min(100, Math.round(target/maxTarget*100));
+      const attualePerc   = Math.min(100, Math.round(totale/maxTarget*100));
+      const raggiunto = totale >= target;
+      const isActive  = RE_OBJ_PERC === s.perc;
+      return `
+        <div style="margin-bottom:10px;padding:10px 12px;border-radius:var(--rs);background:${isActive?'var(--surf2)':'transparent'};border:${isActive?'1.5px solid '+s.color:'1px solid transparent'};">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:12px;font-weight:700;color:${s.color};">${s.label}</span>
+              ${isActive?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:'+s.color+';color:#fff;">Attivo</span>':''}
+              ${raggiunto?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:#1a8a5a;color:#fff;">✓ Raggiunto</span>':''}
+            </div>
+            <span style="font-size:11px;font-weight:700;color:${s.color};">${percBar}%</span>
+          </div>
+          <div style="background:var(--surf2);border-radius:4px;height:10px;overflow:visible;position:relative;">
+            <!-- Barra attuale -->
+            <div style="position:absolute;top:0;left:0;height:100%;border-radius:4px;
+              background:${raggiunto?'#1a8a5a':s.color};
+              width:${attualePerc}%;transition:width .8s;opacity:.85;"></div>
+            <!-- Linea target -->
+            <div style="position:absolute;top:-3px;bottom:-3px;left:${targetPosPerc}%;
+              width:2px;background:${s.color};border-radius:2px;opacity:.9;">
+              <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+                font-size:9px;color:${s.color};font-weight:700;white-space:nowrap;">€${fmt(target)}</div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--txt3);">
+            <span>Attuale: €${fmt(totale)}</span>
+            <span>Mancano: ${raggiunto?'<span style="color:#1a8a5a;font-weight:700;">✓ Superato</span>':'€'+fmt(target-totale)}</span>
+          </div>
+        </div>`;
+    }).join('')}
+  `;
 }
 
 const FRZ_MAP = {'1':1,'2':2,'3':3,'4':4,'6':6,'12':12};
@@ -4943,6 +4993,9 @@ function renderRE() {
   setEl('re-val-notarget',   '€'+fmt(totNoTarget));
 
   renderREList();
+  // Aggiorna grafico obiettivi
+  const prevVal = parseNum(document.getElementById('re-prev')?.value || RE_CONFIG.volume_anno_prec || 0);
+  renderREObjChart(prevVal);
 }
 
 function buildGaugeRE(elId, attuale, precedente) {

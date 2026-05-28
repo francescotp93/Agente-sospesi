@@ -3355,6 +3355,7 @@ function selPTab(t) {
 }
 
 function renderTratt() {
+  console.log('renderTratt chiamato, PIPE:', PIPE.length);
   loadPipe(); loadTeam();
   const selC = document.getElementById('tr-collab');
   if (selC && db) {
@@ -3474,7 +3475,7 @@ async function saveTratt() {
     await saveTrattDB(t);
     closeModal('modal-tratt');
     await loadTrattDB();
-    renderTratt();
+    renderTratt(); buildDashboard();
   } catch(e) {
     alert('Errore: '+(e.message||e));
   } finally {

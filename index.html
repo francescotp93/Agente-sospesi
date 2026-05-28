@@ -3475,7 +3475,8 @@ async function saveTratt() {
     await saveTrattDB(t);
     closeModal('modal-tratt');
     await loadTrattDB();
-    renderTratt(); buildDashboard();
+    goTab('pipeline');
+    setTimeout(() => renderTratt(), 150);
   } catch(e) {
     alert('Errore: '+(e.message||e));
   } finally {

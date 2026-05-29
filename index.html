@@ -3731,7 +3731,13 @@ function buildCtx() {
   const fondoIeri = APP.fondoIeri || fondo;
   const varFondo = fondo - fondoIeri;
   const saldoCumulativo = APP.saldoCumulativo || 0;
-  const scostamento = saldoCumulativo - fondo;
+  // Scostamento cumulativo = cassa progressiva - fondo cassa attuale
+  const scostamento = APP.saldoCumulativo - fondo;
+
+  // Delta rispetto a ieri
+  const cassaIeri = APP.fondoIeri || fondo;
+  const scostamentoIeri = (APP.saldoCumulativo - (parseNum(document.getElementById('i-cassa')?.value||0) + parseNum(document.getElementById('i-vers')?.value||0) - parseNum(document.getElementById('i-spese')?.value||0))) - cassaIeri;
+  const deltaScost = scostamento - scostamentoIeri;
 
   const ctx = {
     ruolo: PROFILO?.ruolo || 'operativo',

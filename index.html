@@ -319,15 +319,15 @@ input[type=file]{display:none;}
 
 <!-- ═══ LOGIN ═══ -->
 <div class="ls" id="login-screen">
-  <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
-    <svg width="48" height="54" viewBox="0 0 52 58" xmlns="http://www.w3.org/2000/svg">
-      <path d="M26 0 L52 10 L52 34 Q52 50 26 58 Q0 50 0 34 L0 10 Z" fill="#E8500A"/>
-      <path d="M26 6 L46 14 L46 34 Q46 47 26 53 Q6 47 6 34 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-      <text x="26" y="38" font-family="Georgia,serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">i</text>
-    </svg>
-    <div>
-      <div style="font-family:Georgia,serif;font-size:30px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;">IAM</div>
-      <div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2.5px;margin-top:2px;">INSURANCE AGENCY MANAGEMENT</div>
+  <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;">
+    <div style="position:relative;width:110px;height:110px;background:#040912;border-radius:20px;display:flex;align-items:center;justify-content:center;border-top:3px solid #00ccff;border-left:3px solid #00ccff;">
+      <span style="font-family:'Share Tech Mono',monospace;font-size:58px;font-weight:700;background:linear-gradient(180deg,#00ccff,#0044ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">i</span>
+      <div style="position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:#00aaff;opacity:0.5;"></div>
+      <div style="position:absolute;top:10px;right:10px;width:4px;height:4px;border-radius:50%;background:#00ccff;margin:2px;"></div>
+    </div>
+    <div style="margin-top:14px;text-align:center;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;color:#fff;letter-spacing:8px;">IAM</div>
+      <div style="font-size:9px;color:#1a4080;letter-spacing:3px;margin-top:4px;font-family:'Share Tech Mono',monospace;">INSURANCE AGENCY MANAGEMENT</div>
     </div>
   </div>
   <div style="width:40px;height:2px;background:var(--acc);border-radius:1px;margin-bottom:24px;"></div>
@@ -368,13 +368,12 @@ input[type=file]{display:none;}
 <div class="hdr">
   <div class="hdr-in">
     <div class="hdr-logo">
-      <svg width="28" height="32" viewBox="0 0 52 58" xmlns="http://www.w3.org/2000/svg">
-        <path d="M26 0 L52 10 L52 34 Q52 50 26 58 Q0 50 0 34 L0 10 Z" fill="#E8500A"/>
-        <path d="M26 6 L46 14 L46 34 Q46 47 26 53 Q6 47 6 34 L6 14 Z" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-        <text x="26" y="38" font-family="Georgia,serif" font-size="20" font-weight="700" fill="white" text-anchor="middle">i</text>
-      </svg>
+      <div style="position:relative;width:36px;height:36px;background:#040912;border-radius:8px;display:flex;align-items:center;justify-content:center;border-top:2px solid #00ccff;border-left:2px solid #00ccff;flex-shrink:0;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;background:linear-gradient(180deg,#00ccff,#0044ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">i</span>
+        <div style="position:absolute;top:4px;right:4px;width:3px;height:3px;border-radius:50%;background:#00ccff;opacity:0.7;"></div>
+      </div>
       <div>
-        <div class="hdr-title">IAM</div>
+        <div class="hdr-title" style="font-family:'Share Tech Mono',monospace;letter-spacing:4px;">IAM</div>
         <div class="hdr-sub" id="hdr-sub">Insurance Agency Management</div>
       </div>
     </div>

@@ -533,6 +533,7 @@ input[type=file]{display:none;}
       <div class="fld"><label>Note cassa</label><textarea id="i-note" rows="2" placeholder="es. versamento banca, rimborso..."></textarea></div>
     </div>
     <div id="savemsg"></div>
+    <button class="btn sec" onclick="salvaDatiGiornalieri()"><i class="ti ti-device-floppy"></i> Salva dati giornalieri</button>
     <button class="btn" onclick="doAnalisi()"><i class="ti ti-brain"></i> Analizza ora</button>
 
     <div style="height:16px;"></div>
@@ -2519,12 +2520,24 @@ function loadConto(inp, tipo) {
 
 // ─── ANALISI ──────────────────────────────────────────────────────────────────
 async function doAnalisi() {
-  if (!APP.sospesi.length) { alert('Carica prima il file sospesi.'); return; }
   const dataSel = g('i-data');
+  const dati = { data: dataSel, cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), pos_bianco: parseNum(g('i-pos-bianco')), pos_nero: parseNum(g('i-pos-nero')), note: g('i-note') };
+
+  // Se sospesi non caricati → salva solo i dati numerici e avvisa
+  if (!APP.sospesi.length) {
+    const conferma = confirm(`Confermi il salvataggio dei dati per il ${new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT')}?\n\n⚠️ Nessun file sospesi caricato — verranno salvati solo i dati numerici.`);
+    if (!conferma) return;
+    showSavemsg('💾 Salvataggio in corso...');
+    await saveSession([], [], dati);
+    await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
+    showSavemsg('✅ Dati salvati (senza file sospesi)');
+    buildDashboard();
+    return;
+  }
+
   const conferma = confirm(`Confermi il salvataggio dei dati per il ${new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT')}?\n\nQuesta operazione sovrascriverà eventuali dati già presenti per quella data.`);
   if (!conferma) return;
   showSavemsg('💾 Salvataggio in corso...');
-  const dati = { data: g('i-data'), cassa: parseNum(g('i-cassa')), vers: parseNum(g('i-vers')), spese: parseNum(g('i-spese')), fondo: parseNum(g('i-fondo')), pos_bianco: parseNum(g('i-pos-bianco')), pos_nero: parseNum(g('i-pos-nero')), note: g('i-note') };
   APP.prevProg = await loadPrevProg();
   await saveSession(APP.sospesi, APP.incassi, dati);
   try {
@@ -2534,13 +2547,32 @@ async function doAnalisi() {
     }))));
   } catch(e){}
   showSavemsg('✅ Dati salvati');
-  // Audit trail
-  await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, {
-    contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese
-  });
+  await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
   buildDashboard(); buildAnomalie(); buildSospesi(); buildStorico();
   updatePill(); APP.loaded = true;
   goTab('dashboard');
+}
+
+async function salvaDatiGiornalieri() {
+  const dataSel = g('i-data');
+  if (!dataSel) { alert('Seleziona prima una data.'); return; }
+  const dataFmt = new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT');
+  if (!confirm(`Confermi il salvataggio dei dati per il ${dataFmt}?`)) return;
+  showSavemsg('💾 Salvataggio in corso...');
+  const dati = {
+    data:       dataSel,
+    cassa:      parseNum(g('i-cassa')),
+    vers:       parseNum(g('i-vers')),
+    spese:      parseNum(g('i-spese')),
+    fondo:      parseNum(g('i-fondo')),
+    pos_bianco: parseNum(g('i-pos-bianco')),
+    pos_nero:   parseNum(g('i-pos-nero')),
+    note:       g('i-note'),
+  };
+  await saveSession(APP.sospesi.length ? APP.sospesi : [], APP.incassi.length ? APP.incassi : [], dati);
+  await logAudit('SALVA_DATI_GIORNALIERI', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
+  buildDashboard();
+  showSavemsg('✅ Dati giornalieri salvati');
 }
 
 function updatePill() {

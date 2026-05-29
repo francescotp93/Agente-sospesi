@@ -829,8 +829,7 @@ input[type=file]{display:none;}
           </select>
         </div>
         <div class="fld"><label>Condividi con</label>
-          <select id="wd-condividi" multiple style="min-height:80px;">
-          </select>
+          <div id="wd-condividi-list" style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;"></div>
         </div>
       </div>
       <div class="fld"><label>Descrizione / Note</label><textarea id="wd-note" rows="3" placeholder="Dettagli operazione..."></textarea></div>
@@ -4355,8 +4354,11 @@ function saveWD_store() { localStorage.setItem('iam_wd', JSON.stringify(WD)); }
 async function loadWD_DB() {
   if (!db || !ME) { loadWD(); return; }
   try {
-    const { data, error } = await db.from('iam_workdiary')
-      .select('*').order('data', { ascending: false });
+    let q = db.from('iam_workdiary').select('*').order('data', { ascending: false });
+    if (PROFILO?.ruolo === 'operativo') {
+      q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
+    }
+    const { data, error } = await q;
     if (error) throw error;
     if (data) {
       WD = data.map(w => ({
@@ -4572,25 +4574,26 @@ async function openWDModal(id) {
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
 
-  // Popola condividi con utenti IAM da Supabase (escludi se stesso)
-  const sel = document.getElementById('wd-condividi');
-  if (sel) {
-    sel.innerHTML = '<option disabled style="font-size:12px;color:var(--txt3);">Caricamento utenti...</option>';
+  // Popola condividi con checkbox per ogni utente (escludi se stesso)
+  const condividiEl = document.getElementById('wd-condividi-list');
+  if (condividiEl) {
+    condividiEl.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:4px;">Caricamento utenti...</div>';
     try {
       const { data } = await db.from('iam_utenti')
         .select('id,nome,cognome,email').eq('attivo', true);
+      const condivisiAttuali = w?.condivisi || [];
       const altri = (data||[]).filter(u => u.id !== ME?.id);
       if (altri.length) {
-        sel.innerHTML = altri.map(u => {
-          const nome = ((u.nome||'')+' '+(u.cognome||'')).trim() || u.email;
-          const isSelected = (w?.condivisi||[]).includes(u.id) ? 'selected' : '';
-          return `<option value="${u.id}" ${isSelected}>${nome}</option>`;
-        }).join('');
+        condividiEl.innerHTML = altri.map(u => `
+          <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:var(--surf2);cursor:pointer;">
+            <input type="checkbox" value="${u.id}" style="width:16px;height:16px;accent-color:var(--acc);" ${condivisiAttuali.includes(u.id)?'checked':''}>
+            <span style="font-size:13px;">${u.nome||''} ${u.cognome||''}</span>
+          </label>`).join('');
       } else {
-        sel.innerHTML = '<option disabled>Nessun altro utente IAM registrato</option>';
+        condividiEl.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:4px;">Nessun altro utente IAM registrato</div>';
       }
     } catch(e) {
-      sel.innerHTML = '<option disabled>Errore caricamento utenti</option>';
+      condividiEl.innerHTML = '<div style="font-size:12px;color:var(--red);padding:4px;">Errore caricamento utenti</div>';
       console.warn('openWDModal utenti error:', e);
     }
   }
@@ -4614,8 +4617,7 @@ function openWDFile(id) {
 
 function saveWD() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
-  const sel = document.getElementById('wd-condividi');
-  const condivisi = sel ? Array.from(sel.selectedOptions).map(o=>o.value) : [];
+  const condivisi = Array.from(document.querySelectorAll('#wd-condividi-list input[type=checkbox]:checked')).map(c => c.value);
   const existing = WD_ID ? WD.find(x=>x.id===WD_ID) : null;
   const w = {
     id:        WD_ID||Date.now().toString(),

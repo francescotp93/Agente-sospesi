@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#E8500A">
+<meta name="theme-color" content="var(--acc)">
 <meta name="application-name" content="IAM">
 <meta name="apple-mobile-web-app-title" content="IAM">
 <title>IAM · Insurance Agency Management</title>
@@ -61,8 +61,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .lf{display:flex;flex-direction:column;gap:5px;}
 .lf label{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;}
 .lf input{padding:12px 15px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:#fff;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s;}
-.lf input:focus{border-color:#E8500A;background:rgba(232,80,10,.06);}
-.lbtn{padding:14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(232,80,10,.35);}
+.lf input:focus{border-color:var(--acc);background:rgba(var(--acc-rgb),.06);}
+.lbtn{padding:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(var(--acc-rgb),.35);}
 .lbtn:active{transform:scale(.98);opacity:.9;}
 .lbtn:disabled{opacity:.5;cursor:not-allowed;}
 .lerr{font-size:12px;text-align:center;min-height:16px;}
@@ -139,7 +139,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   display:none;align-items:center;gap:6px;z-index:400;
   box-shadow:var(--shd2);transition:opacity .2s;}
 #ptr-spinner{width:14px;height:14px;border:2px solid var(--bord);
-  border-top-color:#E8500A;border-radius:50%;
+  border-top-color:var(--acc);border-radius:50%;
   animation:ptrSpin .7s linear infinite;}
 .mcard:nth-child(1){animation-delay:.05s}.mcard:nth-child(2){animation-delay:.1s}
 .mcard:nth-child(3){animation-delay:.15s}.mcard:nth-child(4){animation-delay:.2s}
@@ -182,7 +182,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .uarea{margin:12px;border:1.5px dashed var(--bord2);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surf2);}
 .ubtn{display:flex;align-items:center;gap:12px;padding:14px;background:var(--surf);border-radius:var(--rs);cursor:pointer;border:none;width:100%;text-align:left;box-shadow:var(--shd);transition:all .15s;}
 .ubtn:hover{box-shadow:var(--shd2);transform:translateY(-1px);}
-.ubtn i{font-size:22px;color:#E8500A;flex-shrink:0;}
+.ubtn i{font-size:22px;color:var(--acc);flex-shrink:0;}
 .ublbl{font-size:13px;font-weight:600;color:var(--txt);}
 .ubsub{font-size:11px;color:var(--txt2);margin-top:2px;}
 .ubok{font-size:11px;color:var(--grn);margin-top:2px;font-weight:600;}
@@ -277,7 +277,7 @@ input[type=file]{display:none;}
 .fsec{margin-top:14px;}
 .fsec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--txt3);margin-bottom:8px;}
 .doc-btn{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surf2);border-radius:var(--rs);cursor:pointer;font-size:12px;color:var(--txt2);border:1.5px dashed var(--bord);margin-bottom:6px;transition:all .15s;}
-.doc-btn:hover{border-color:#E8500A;color:#E8500A;background:rgba(232,80,10,.04);}
+.doc-btn:hover{border-color:var(--acc);color:var(--acc);background:rgba(var(--acc-rgb),.04);}
 .anno-box{background:var(--surf2);border-radius:var(--rs);margin-bottom:6px;overflow:hidden;border:1px solid var(--bord);}
 .anno-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;}
 .anno-name{font-size:13px;font-weight:600;}
@@ -329,7 +329,7 @@ input[type=file]{display:none;}
       <div style="font-size:9px;color:rgba(255,255,255,.45);letter-spacing:2.5px;margin-top:2px;">INSURANCE AGENCY MANAGEMENT</div>
     </div>
   </div>
-  <div style="width:40px;height:2px;background:#E8500A;border-radius:1px;margin-bottom:24px;"></div>
+  <div style="width:40px;height:2px;background:var(--acc);border-radius:1px;margin-bottom:24px;"></div>
   <div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;text-align:center;">Accesso riservato alla tua agenzia</div>
   <div class="lcard">
     <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="la-tua@email.com" autocomplete="email"></div>
@@ -388,7 +388,7 @@ input[type=file]{display:none;}
 <div class="umenu" id="umenu" style="display:none;">
   <div class="umenu-hdr">
     <div style="display:flex;align-items:center;gap:10px;">
-      <div id="um-av2" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">F</div>
+      <div id="um-av2" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">F</div>
       <div>
         <div class="umenu-name" id="um-name">—</div>
         <div class="umenu-email" id="um-email">—</div>
@@ -452,9 +452,9 @@ input[type=file]{display:none;}
 <button id="ai-fab" onclick="toggleAIPanel()" aria-label="Assistente AI"
   style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;
     width:52px;height:52px;border-radius:50%;
-    background:linear-gradient(135deg,#E8500A,#c44008);
+    background:linear-gradient(135deg,var(--acc),var(--acc2));
     color:#fff;border:none;cursor:pointer;z-index:300;
-    box-shadow:0 4px 20px rgba(232,80,10,.45);
+    box-shadow:0 4px 20px rgba(var(--acc-rgb),.45);
     display:none;align-items:center;justify-content:center;
     transition:transform .2s,box-shadow .2s;font-size:22px;">
   <i class="ti ti-message-circle"></i>
@@ -621,7 +621,7 @@ input[type=file]{display:none;}
   <div id="d-content" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;">
       <div class="slbl" style="padding:0;">Riepilogo</div>
-      <button onclick="apriGiacenza()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(232,80,10,.3);">
+      <button onclick="apriGiacenza()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3);">
         <i class="ti ti-wallet" style="font-size:14px;"></i> Giacenza contanti
       </button>
     </div>
@@ -649,7 +649,7 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-team">
   <div style="padding:12px 12px 0;display:flex;gap:8px;align-items:center;">
     <input type="search" id="tm-search" placeholder="Cerca nome, cognome o ramo..." style="flex:1;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTeam()">
-    <button onclick="openCollabModal(null)" style="width:38px;height:38px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:18px;"></i></button>
+    <button onclick="openCollabModal(null)" style="width:38px;height:38px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:18px;"></i></button>
   </div>
   <div class="slbl">Team · <span id="tm-count">0</span> collaboratori</div>
   <div id="tm-empty" class="empty"><i class="ti ti-users"></i><p>Nessun collaboratore.<br>Premi + per aggiungerne uno.</p></div>
@@ -667,7 +667,7 @@ input[type=file]{display:none;}
   <div id="pp-tratt">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
       <input type="search" id="tr-search" placeholder="Cerca cliente, prodotto..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTratt()">
-      <button onclick="openTrattModal(null)" style="width:36px;height:36px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+      <button onclick="openTrattModal(null)" style="width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
     </div>
     <div style="display:flex;gap:8px;padding:0 12px 4px;overflow-x:auto;scrollbar-width:none;">
       <select id="tr-filt" onchange="renderTratt()" style="flex:1;min-width:100px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
@@ -691,7 +691,7 @@ input[type=file]{display:none;}
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 12px 8px;">
       <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;" id="ktr-tot">0</div><div style="font-size:9px;color:var(--txt3);">Totale</div></div>
-      <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:#E8500A;" id="ktr-val">€0</div><div style="font-size:9px;color:var(--txt3);">Pipeline</div></div>
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:13px;font-weight:700;color:var(--acc);" id="ktr-val">€0</div><div style="font-size:9px;color:var(--txt3);">Pipeline</div></div>
       <div style="background:var(--grn-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--grn);" id="ktr-ch">0</div><div style="font-size:9px;color:var(--grn-txt);">Chiuse</div></div>
       <div style="background:var(--red-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--red);" id="ktr-ps">0</div><div style="font-size:9px;color:var(--red-txt);">Perse</div></div>
     </div>
@@ -702,7 +702,7 @@ input[type=file]{display:none;}
   <div id="pp-agenda" style="display:none;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px;">
       <div style="font-size:13px;font-weight:600;">Prossimi appuntamenti</div>
-      <button onclick="openAgendaModal()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo</button>
+      <button onclick="openAgendaModal()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo</button>
     </div>
     <div style="padding:0 12px 8px;font-size:12px;color:var(--amb-txt);background:var(--amb-bg);margin:0 12px;border-radius:var(--rs);padding:10px 12px;">
       <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>
@@ -758,7 +758,7 @@ input[type=file]{display:none;}
   <div id="wd-lista">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
       <input type="search" id="wd-search" placeholder="Cerca operazione..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderWD()">
-      <button onclick="openWDModal(null)" style="width:36px;height:36px;border-radius:50%;background:#E8500A;border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+      <button onclick="openWDModal(null)" style="width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
     </div>
     <div style="display:flex;gap:6px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none;">
       <select id="wd-tipo" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
@@ -861,7 +861,7 @@ input[type=file]{display:none;}
     <div class="slbl">Gare Interne</div>
     <!-- Sub-tabs -->
     <div style="display:flex;overflow-x:auto;gap:4px;padding:0 12px 10px;scrollbar-width:none;">
-      <button id="gt-re_pezzi"   onclick="selGaraTab('re_pezzi')"   style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid #E8500A;background:#E8500A;color:#fff;cursor:pointer;font-family:inherit;">RE Pezzi</button>
+      <button id="gt-re_pezzi"   onclick="selGaraTab('re_pezzi')"   style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;">RE Pezzi</button>
       <button id="gt-rca"        onclick="selGaraTab('rca')"        style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">RCA Attack</button>
       <button id="gt-finanziati" onclick="selGaraTab('finanziati')" style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Finanziati</button>
       <button id="gt-cross"      onclick="selGaraTab('cross')"      style="flex:0 0 auto;padding:6px 14px;font-size:11px;font-weight:600;border-radius:20px;border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Cross Selling</button>
@@ -884,7 +884,7 @@ input[type=file]{display:none;}
         <div id="gara-re-gauge"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
-          <button onclick="apriPosGara('re_pezzi')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="apriPosGara('re_pezzi')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <div id="gara-re-list" style="margin-top:8px;"></div>
       </div>
@@ -906,7 +906,7 @@ input[type=file]{display:none;}
         <div id="gara-rca-gauge"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
-          <button onclick="apriPosGara('rca')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="apriPosGara('rca')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <div id="gara-rca-list" style="margin-top:8px;"></div>
       </div>
@@ -936,7 +936,7 @@ input[type=file]{display:none;}
         <div id="gara-fin-gauge"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
-          <button onclick="apriPosGara('finanziati')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="apriPosGara('finanziati')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <div id="gara-fin-list" style="margin-top:8px;"></div>
       </div>
@@ -958,7 +958,7 @@ input[type=file]{display:none;}
         <div id="gara-cross-gauge"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
-          <button onclick="apriPosGara('cross')" style="padding:4px 12px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="apriPosGara('cross')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <div id="gara-cross-list" style="margin-top:8px;"></div>
       </div>
@@ -1030,7 +1030,7 @@ input[type=file]{display:none;}
         </div>
 
         <!-- Totale -->
-        <div style="background:linear-gradient(135deg,#E8500A,#c44008);border-radius:var(--rs);padding:12px 16px;margin-bottom:14px;display:none;" id="cs-totale-card">
+        <div style="background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:var(--rs);padding:12px 16px;margin-bottom:14px;display:none;" id="cs-totale-card">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div style="color:#fff;font-size:12px;font-weight:600;opacity:.85;">Totale stimato anno</div>
             <div style="color:#fff;font-size:20px;font-weight:800;" id="cs-totale">€0</div>
@@ -1063,7 +1063,7 @@ input[type=file]{display:none;}
       <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="font-size:13px;font-weight:700;">Posizioni registrate</div>
-          <button onclick="openCSPosModal()" style="padding:5px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="openCSPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <div id="cs-pos-list"><div style="color:var(--txt3);font-size:13px;padding:8px 0;">Caricamento...</div></div>
       </div>
@@ -1139,7 +1139,7 @@ input[type=file]{display:none;}
       <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div style="font-size:13px;font-weight:700;">Posizioni registrate</div>
-          <button onclick="openREPosModal()" style="padding:5px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="openREPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <!-- Filtro target -->
         <div style="display:flex;gap:6px;margin-bottom:10px;">
@@ -1328,7 +1328,7 @@ input[type=file]{display:none;}
       <div class="fsec"><div class="fsec-title">Note generali</div>
         <div class="fld"><textarea id="az-note" rows="3" placeholder="Note libere sull'azienda..."></textarea></div>
       </div>
-      <button onclick="salvaAzienda()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 4px 16px rgba(232,80,10,.3);">
+      <button onclick="salvaAzienda()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:var(--r);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px;box-shadow:0 4px 16px rgba(var(--acc-rgb),.3);">
         <i class="ti ti-device-floppy" style="font-size:18px;"></i> Salva dati azienda
       </button>
     </div>
@@ -1376,7 +1376,7 @@ input[type=file]{display:none;}
     </div>
     <div id="giac-diff" style="padding:10px 14px;border-radius:var(--rs);margin-bottom:14px;display:none;"></div>
     <div style="display:flex;gap:8px;">
-      <button onclick="salvaGiacenza()" style="flex:1;padding:14px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Aggiorna giacenza</button>
+      <button onclick="salvaGiacenza()" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">Aggiorna giacenza</button>
       <button onclick="document.getElementById('giacenza-overlay').style.display='none'" style="padding:14px 18px;background:var(--surf2);color:var(--txt);border:1px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
     </div>
   </div>
@@ -1395,7 +1395,7 @@ input[type=file]{display:none;}
     box-shadow:0 1px 0 var(--bord);">
     <div style="display:flex;align-items:center;gap:10px;">
       <div style="width:34px;height:34px;border-radius:50%;
-        background:linear-gradient(135deg,#E8500A,#c44008);
+        background:linear-gradient(135deg,var(--acc),var(--acc2));
         display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <i id="ai-hdr-icon" class="ti ti-robot" style="color:#fff;font-size:17px;"></i>
       </div>
@@ -1407,7 +1407,7 @@ input[type=file]{display:none;}
     <!-- Tab AI / Ticket -->
     <div style="display:flex;align-items:center;gap:4px;background:var(--surf2);border-radius:20px;padding:3px;">
       <button id="ai-tab-chat" onclick="selAITab('chat')"
-        style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:#E8500A;color:#fff;">
+        style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:var(--acc);color:#fff;">
         💬 Chat
       </button>
       <button id="ai-tab-ticket" onclick="selAITab('ticket')"
@@ -1460,10 +1460,10 @@ input[type=file]{display:none;}
       <div style="display:flex;flex-direction:column;gap:8px;">
         <input type="text" id="tk-titolo" placeholder="Descrivi brevemente il problema *"
           style="padding:10px 14px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:13px;color:var(--txt);font-family:inherit;"
-          onfocus="this.style.borderColor='#E8500A'" onblur="this.style.borderColor='var(--bord)'">
+          onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='var(--bord)'">
         <textarea id="tk-descr" placeholder="Dettagli aggiuntivi (opzionale)..." rows="2"
           style="padding:10px 14px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:13px;color:var(--txt);font-family:inherit;resize:none;"
-          onfocus="this.style.borderColor='#E8500A'" onblur="this.style.borderColor='var(--bord)'"></textarea>
+          onfocus="this.style.borderColor='var(--acc)'" onblur="this.style.borderColor='var(--bord)'"></textarea>
         <div style="display:flex;gap:8px;align-items:center;">
           <select id="tk-priorita"
             style="flex:1;padding:8px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:12px;color:var(--txt);font-family:inherit;">
@@ -1473,7 +1473,7 @@ input[type=file]{display:none;}
             <option value="critica">🔴 Critica</option>
           </select>
           <button onclick="inviaTicket()"
-            style="padding:8px 18px;background:linear-gradient(135deg,#E8500A,#c44008);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
+            style="padding:8px 18px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
             Invia
           </button>
         </div>
@@ -1563,7 +1563,7 @@ input[type=file]{display:none;}
       <div class="fsec">
         <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
           Livelli provvigionali
-          <button onclick="aggiungiProvv()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Prodotto</button>
+          <button onclick="aggiungiProvv()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Prodotto</button>
         </div>
         <div id="mc-provv" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
       </div>
@@ -1574,8 +1574,8 @@ input[type=file]{display:none;}
       <!-- Ore formazione -->
       <div class="fsec">
         <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span><i class="ti ti-school" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:#E8500A;"></i>Ore formazione</span>
-          <button onclick="addAnno()" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
+          <span><i class="ti ti-school" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:var(--acc);"></i>Ore formazione</span>
+          <button onclick="addAnno()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
         </div>
         <div id="mc-anni"></div>
       </div>
@@ -2578,7 +2578,7 @@ function buildDashboard() {
   const anzFasce = [
     { lbl:'Oltre 60 giorni', val: sosp.filter(s=>s.gg>60).reduce((a,s)=>a+s.importo,0), color:'var(--red)' },
     { lbl:'30–60 giorni',    val: sosp.filter(s=>s.gg>=30&&s.gg<=60).reduce((a,s)=>a+s.importo,0), color:'var(--amb)' },
-    { lbl:'15–29 giorni',    val: sosp.filter(s=>s.gg>=15&&s.gg<30).reduce((a,s)=>a+s.importo,0), color:'#E8500A' },
+    { lbl:'15–29 giorni',    val: sosp.filter(s=>s.gg>=15&&s.gg<30).reduce((a,s)=>a+s.importo,0), color:'var(--acc)' },
     { lbl:'Meno di 15 gg',   val: sosp.filter(s=>s.gg<15).reduce((a,s)=>a+s.importo,0), color:'var(--grn)' },
   ];
   const maxA = Math.max(...anzFasce.map(a=>a.val), 1);
@@ -2715,7 +2715,7 @@ function scrollToAnomSosp(alertIdx) {
   if (el) {
     el.scrollIntoView({behavior:'smooth', block:'center'});
     el.style.transition = 'background .3s';
-    el.style.background = 'rgba(232,80,10,.15)';
+    el.style.background = 'rgba(var(--acc-rgb),.15)';
     setTimeout(() => { el.style.background = ''; }, 1500);
   }
 }
@@ -2749,8 +2749,8 @@ function buildSospesi() {
   // Chips compagnie
   const comps = [...new Set(sosp.map(s=>s.compagnia))].sort();
   document.getElementById('s-chips').innerHTML =
-    `<div class="chip" onclick="setFC('')" style="${!filtComp?'background:#E8500A;color:#fff;border-color:#E8500A':''}">Tutte</div>` +
-    comps.map(c=>`<div class="chip" onclick="setFC('${c}')" style="${filtComp===c?'background:#E8500A;color:#fff;border-color:#E8500A':''}">${c}</div>`).join('');
+    `<div class="chip" onclick="setFC('')" style="${!filtComp?'background:var(--acc);color:#fff;border-color:var(--acc)':''}">Tutte</div>` +
+    comps.map(c=>`<div class="chip" onclick="setFC('${c}')" style="${filtComp===c?'background:var(--acc);color:#fff;border-color:var(--acc)':''}">${c}</div>`).join('');
 
   renderSospesi();
   document.getElementById('s-empty').style.display = 'none';
@@ -2781,7 +2781,7 @@ function renderSospesi() {
     // Rating ritardo: verde <15gg media, giallo 15-30, rosso >30
     const rating    = mediGg < 15 ? {lbl:'Ottimo',c:'var(--grn)',bg:'var(--grn-bg)',stars:'★★★★★'} :
                       mediGg < 30 ? {lbl:'Buono', c:'var(--amb)',bg:'var(--amb-bg)',stars:'★★★★☆'} :
-                      mediGg < 60 ? {lbl:'Attenzione',c:'#E8500A',bg:'rgba(232,80,10,.1)',stars:'★★★☆☆'} :
+                      mediGg < 60 ? {lbl:'Attenzione',c:'var(--acc)',bg:'rgba(var(--acc-rgb),.1)',stars:'★★★☆☆'} :
                                     {lbl:'Critico',c:'var(--red)',bg:'var(--red-bg)',stars:'★★☆☆☆'};
     // Compagnie del produttore
     const comps = [...new Set(tuttiSosp.map(s=>s.compagnia).filter(Boolean))];
@@ -2819,7 +2819,7 @@ function renderSospesi() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:.5px solid var(--bord);">
           <div style="padding:10px 14px;border-right:.5px solid var(--bord);">
             <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Valore totale</div>
-            <div style="font-size:15px;font-weight:700;color:#E8500A;">€${fmt(valore)}</div>
+            <div style="font-size:15px;font-weight:700;color:var(--acc);">€${fmt(valore)}</div>
           </div>
           <div style="padding:10px 14px;">
             <div style="font-size:10px;color:var(--txt3);margin-bottom:2px;">Ritardo medio</div>
@@ -2846,7 +2846,7 @@ function renderSospesi() {
     const vRec=sosp.filter(s=>s.gg<30).reduce((a,s)=>a+s.importo,0);
     const mx=Math.max(v60,v30,vRec,1);
     document.getElementById("s-chart-title").textContent=prod+" — "+sosp.length+" sospesi · € "+fmt(sosp.reduce((a,s)=>a+s.importo,0));
-    document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"#E8500A"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
+    document.getElementById("s-chart-bars").innerHTML=[{l:"Oltre 60gg",v:v60,c:"var(--red)"},{l:"30–60 gg",v:v30,c:"var(--amb)"},{l:"Recenti",v:vRec,c:"var(--acc)"}].map(b=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><div style="width:68px;color:var(--txt2);flex-shrink:0;">${b.l}</div><div style="flex:1;height:9px;background:var(--surf2);border-radius:5px;overflow:hidden;"><div style="height:100%;background:${b.c};border-radius:5px;width:${b.v?Math.max(4,Math.round(b.v/mx*100)):0}%;"></div></div><div style="width:58px;text-align:right;font-weight:600;">€${fmt(b.v)}</div></div>`).join("");
     chart.style.display="block";
   } else { if(chart) chart.style.display="none"; }
 
@@ -2927,7 +2927,7 @@ function renderConto() {
     <div class="mcard"><div class="mlbl">Movimenti</div><div class="mval">${movs.length}</div></div>
     <div class="mcard"><div class="mlbl">Entrate</div><div class="mval" style="color:var(--grn)">€${fmt(totE)}</div></div>
     <div class="mcard"><div class="mlbl">Uscite</div><div class="mval" style="color:var(--red)">€${fmt(totU)}</div></div>
-    <div class="mcard"><div class="mlbl">Abbinati</div><div class="mval" style="color:#E8500A">${nAbb}/${movs.length}</div></div>`;
+    <div class="mcard"><div class="mlbl">Abbinati</div><div class="mval" style="color:var(--acc)">${nAbb}/${movs.length}</div></div>`;
   const q   = (document.getElementById('co-search')?.value||'').toLowerCase();
   const ft  = document.getElementById('co-filt')?.value||'';
   let lista = movs;
@@ -2937,7 +2937,7 @@ function renderConto() {
   document.getElementById('co-list').innerHTML = lista.map(m=>{
     const abb = c.abb[m.id];
     return `<div class="row" style="${abb?'background:var(--grn-bg)':''}">
-      <input type="checkbox" ${abb?'checked':''} onchange="toggleAbb(${m.id},this.checked)" style="width:18px;height:18px;accent-color:#E8500A;cursor:pointer;flex-shrink:0;margin-top:2px;">
+      <input type="checkbox" ${abb?'checked':''} onchange="toggleAbb(${m.id},this.checked)" style="width:18px;height:18px;accent-color:var(--acc);cursor:pointer;flex-shrink:0;margin-top:2px;">
       <div class="rmain">
         <div class="rname" style="font-size:12px;">${m.desc||'—'}</div>
         <div class="rsub">${m.data}${abb?' · ✓ '+abb:''}</div>
@@ -3095,7 +3095,7 @@ function renderTeam() {
 
       <!-- Header scheda -->
       <div style="background:linear-gradient(135deg,#1E1E1C 0%,#2a2a28 100%);padding:16px;display:flex;align-items:center;gap:12px;">
-        <div style="width:52px;height:52px;border-radius:50%;background:#E8500A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;border:2px solid rgba(255,255,255,.2);">${ini}</div>
+        <div style="width:52px;height:52px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0;border:2px solid rgba(255,255,255,.2);">${ini}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:16px;font-weight:700;color:#fff;">${c.nome||''} ${c.cogn||''}</div>
           <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">${c.tipo||'Subagente'}${c.rui?' · RUI '+c.rui:''}</div>
@@ -3114,7 +3114,7 @@ function renderTeam() {
 
       <!-- Tab interne scheda -->
       <div style="display:flex;border-bottom:.5px solid var(--bord);">
-        <button onclick="selCardTab('${c.id}','dati')" id="ct-${c.id}-dati" style="flex:1;padding:8px 6px;font-size:11px;font-weight:600;border:none;background:none;color:#E8500A;border-bottom:2px solid #E8500A;cursor:pointer;font-family:inherit;">Dati utente</button>
+        <button onclick="selCardTab('${c.id}','dati')" id="ct-${c.id}-dati" style="flex:1;padding:8px 6px;font-size:11px;font-weight:600;border:none;background:none;color:var(--acc);border-bottom:2px solid var(--acc);cursor:pointer;font-family:inherit;">Dati utente</button>
         <button onclick="selCardTab('${c.id}','int')" id="ct-${c.id}-int" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Dati intermediario</button>
         <button onclick="selCardTab('${c.id}','doc')" id="ct-${c.id}-doc" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Documenti</button>
       </div>
@@ -3135,7 +3135,7 @@ function renderTeam() {
       <!-- TAB: Dati intermediario -->
       <div id="cb-${c.id}-int" style="padding:12px 14px;display:none;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;margin-bottom:10px;">
-          ${c.rui?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">N. RUI</div><div style="font-weight:600;color:#E8500A;">${c.rui}</div></div>`:''}
+          ${c.rui?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">N. RUI</div><div style="font-weight:600;color:var(--acc);">${c.rui}</div></div>`:''}
           ${c.port?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Portafoglio</div><div style="font-weight:600;">€ ${fmt(parseNum(c.port))}</div></div>`:''}
           ${c.piva?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">P.IVA / Ragione sociale</div><div style="font-weight:500;">${c.piva}</div></div>`:''}
           ${c.iban1?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">IBAN Provvigioni</div><div style="font-weight:500;font-size:11px;word-break:break-all;">${c.iban1}</div></div>`:''}
@@ -3143,16 +3143,16 @@ function renderTeam() {
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);">Provvigioni</div>
-          <button onclick="openCollabModal('${c.id}');setTimeout(()=>selCollabTab('fat'),100)" style="font-size:11px;padding:3px 10px;background:#E8500A;color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+          <button onclick="openCollabModal('${c.id}');setTimeout(()=>selCollabTab('fat'),100)" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         ${(c.provv||[]).length?`
-          ${c.provv.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:${p.speciale?'rgba(232,80,10,.08)':'var(--surf2)'};border-radius:8px;margin-bottom:4px;border:.5px solid ${p.speciale?'rgba(232,80,10,.3)':'var(--bord)'};">
+          ${c.provv.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:${p.speciale?'rgba(var(--acc-rgb),.08)':'var(--surf2)'};border-radius:8px;margin-bottom:4px;border:.5px solid ${p.speciale?'rgba(var(--acc-rgb),.3)':'var(--bord)'};">
             <div>
               <span style="font-size:12px;font-weight:600;">${p.prodotto}</span>
-              ${p.speciale?'<span style="font-size:10px;color:#E8500A;margin-left:6px;font-weight:700;">★ Speciale</span>':''}
+              ${p.speciale?'<span style="font-size:10px;color:var(--acc);margin-left:6px;font-weight:700;">★ Speciale</span>':''}
               ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${p.note}</div>`:''}
             </div>
-            <span style="font-size:15px;font-weight:800;color:${p.speciale?'#E8500A':'var(--txt)'};">${p.perc}%</span>
+            <span style="font-size:15px;font-weight:800;color:${p.speciale?'var(--acc)':'var(--txt)'};">${p.perc}%</span>
           </div>`).join('')}`
         :`<div style="color:var(--txt3);font-size:12px;padding:8px 0;text-align:center;">Nessuna provvigione inserita</div>`}
       </div>
@@ -3161,7 +3161,7 @@ function renderTeam() {
       <div id="cb-${c.id}-doc" style="padding:12px 14px;display:none;">
         ${(c.anni||[]).length?`
           <div style="margin-bottom:12px;">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;"><i class="ti ti-school" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:#E8500A;"></i>Ore formazione</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;"><i class="ti ti-school" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:var(--acc);"></i>Ore formazione</div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;">${c.anni.map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>
           </div>`:''}
         ${Object.keys(c.docs||{}).length ? `
@@ -3194,8 +3194,8 @@ function selCardTab(collabId, tab) {
     const btn = document.getElementById(`ct-${collabId}-${t}`);
     const body = document.getElementById(`cb-${collabId}-${t}`);
     if (btn) {
-      btn.style.color = t===tab ? '#E8500A' : 'var(--txt3)';
-      btn.style.borderBottomColor = t===tab ? '#E8500A' : 'transparent';
+      btn.style.color = t===tab ? 'var(--acc)' : 'var(--txt3)';
+      btn.style.borderBottomColor = t===tab ? 'var(--acc)' : 'transparent';
       btn.style.fontWeight = t===tab ? '600' : '500';
     }
     if (body) body.style.display = t===tab ? 'block' : 'none';
@@ -3272,7 +3272,7 @@ function renderAnni() {
   document.getElementById('mc-anni').innerHTML = TEAM_ANNI.length ? TEAM_ANNI.map((an,i)=>`
     <div class="anno-box">
       <div class="anno-hdr">
-        <div><div class="anno-name"><i class="ti ti-folder" style="font-size:13px;vertical-align:-2px;margin-right:5px;color:#E8500A;"></i>${an.anno}</div>
+        <div><div class="anno-name"><i class="ti ti-folder" style="font-size:13px;vertical-align:-2px;margin-right:5px;color:var(--acc);"></i>${an.anno}</div>
         <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${an.ore||0} ore · ${(an.files||[]).length} file</div></div>
         <div style="display:flex;gap:6px;align-items:center;">
           <input type="number" value="${an.ore||''}" placeholder="ore" style="width:52px;padding:5px 7px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:12px;color:var(--txt);text-align:center;" onchange="TEAM_ANNI[${i}].ore=this.value">
@@ -3448,7 +3448,7 @@ function renderTratt() {
           </div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:14px;font-weight:700;color:#E8500A;">€${fmt(parseNum(t.importo)||0)}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--acc);">€${fmt(parseNum(t.importo)||0)}</div>
           <div style="font-size:10px;color:var(--txt3);">${t.prob||0}%</div>
           <div class="tact-btns">
             <button class="tact-btn" style="background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);" onclick="openTrattModal('${t.id}')">✏️</button>
@@ -3721,7 +3721,7 @@ function closeModal(id) { document.getElementById(id)?.classList.remove('show');
 let PROFILO = null; // profilo utente corrente con ruolo
 
 const RUOLI = {
-  top_master: { label:'TOP Master', color:'#E8500A', bg:'rgba(232,80,10,.12)' },
+  top_master: { label:'TOP Master', color:'var(--acc)', bg:'rgba(var(--acc-rgb),.12)' },
   master:     { label:'Master',     color:'#2c7abf', bg:'var(--blu-bg)' },
   operativo:  { label:'Operativo',  color:'#1a8a5a', bg:'var(--grn-bg)' }
 };
@@ -3923,7 +3923,7 @@ async function renderUtenti() {
   const btnWrap = document.getElementById('utenti-btn-wrap');
   if (btnWrap) {
     btnWrap.innerHTML = perm.utenti
-      ? `<button onclick="apriNuovoUtente()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:#E8500A;color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo utente</button>`
+      ? `<button onclick="apriNuovoUtente()" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;"><i class="ti ti-plus" style="font-size:13px;"></i> Nuovo utente</button>`
       : '';
   }
 
@@ -3966,7 +3966,7 @@ function apriNuovoUtente() {
           <div class="fld"><label>Password temporanea</label><input type="text" id="nu-pass" placeholder="min. 6 caratteri" value="IAM${Math.random().toString(36).slice(2,8).toUpperCase()}"></div>
           <div id="nu-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
           <div style="display:flex;gap:8px;">
-            <button onclick="creaNuovoUtente()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Crea utente</button>
+            <button onclick="creaNuovoUtente()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Crea utente</button>
             <button onclick="document.getElementById('nu-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
           </div>
         </div>
@@ -4083,7 +4083,7 @@ function apriCambioEmail() {
       <div class="fld" style="margin-bottom:10px;"><label>Nuova email</label><input type="email" id="ce-new" placeholder="nuova@email.com"></div>
       <div id="ce-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;">
-        <button onclick="doCambioEmail()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Conferma</button>
+        <button onclick="doCambioEmail()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Conferma</button>
         <button onclick="document.getElementById('ce-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
       </div>
     </div></div>`;
@@ -4112,7 +4112,7 @@ function apriCambioPassword() {
       <div class="fld" style="margin-bottom:10px;"><label>Conferma nuova password</label><input type="password" id="cp-new2" placeholder="ripeti"></div>
       <div id="cp-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;">
-        <button onclick="doCambioPassword()" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="doCambioPassword()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
         <button onclick="document.getElementById('cp-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
       </div>
     </div></div>`;
@@ -4188,8 +4188,8 @@ function renderProvv() {
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;">
-            <input type="checkbox" ${p.speciale?'checked':''} onchange="TEAM_PROVV[${i}].speciale=this.checked;renderProvv();" style="accent-color:#E8500A;">
-            <span style="color:${p.speciale?'#E8500A':'var(--txt3)'};">Provvigione Speciale</span>
+            <input type="checkbox" ${p.speciale?'checked':''} onchange="TEAM_PROVV[${i}].speciale=this.checked;renderProvv();" style="accent-color:var(--acc);">
+            <span style="color:${p.speciale?'var(--acc)':'var(--txt3)'};">Provvigione Speciale</span>
           </label>
         </div>
         ${p.speciale?`<textarea placeholder="Note provvigione speciale (es. pattuito diversamente il 20/05/2026)..." style="padding:7px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:12px;color:var(--txt);font-family:inherit;resize:none;min-height:52px;" oninput="TEAM_PROVV[${i}].note=this.value">${p.note||''}</textarea>`:''}
@@ -4291,7 +4291,7 @@ async function apriModificaStorico(dataRif) {
         <div class="fld" style="margin-bottom:10px;"><label>Note</label><input type="text" id="ste-note" value="${data.note||''}"></div>
         <div id="ste-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
         <div style="display:flex;gap:8px;">
-          <button onclick="salvaModificaStorico('${dataRif}')" style="flex:1;padding:12px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva modifiche</button>
+          <button onclick="salvaModificaStorico('${dataRif}')" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva modifiche</button>
           <button onclick="document.getElementById('st-edit-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
         </div>
       </div>
@@ -4407,7 +4407,7 @@ const WD_TIPI = {
   riunione:     {lbl:'Riunione',     ic:'ti-users',     c:'var(--blu-txt)', bg:'var(--blu-bg)'},
   reclutamento: {lbl:'Reclutamento', ic:'ti-user-plus',  c:'var(--grn-txt)', bg:'var(--grn-bg)'},
   formazione:   {lbl:'Formazione',   ic:'ti-school',     c:'var(--amb-txt)', bg:'var(--amb-bg)'},
-  obiettivo:    {lbl:'Obiettivo',    ic:'ti-target',     c:'#E8500A',        bg:'rgba(232,80,10,.1)'},
+  obiettivo:    {lbl:'Obiettivo',    ic:'ti-target',     c:'var(--acc)',        bg:'rgba(var(--acc-rgb),.1)'},
   altro:        {lbl:'Altro',        ic:'ti-note',       c:'var(--txt2)',    bg:'var(--surf2)'}
 };
 
@@ -4458,7 +4458,7 @@ function renderWD() {
     }).filter(Boolean);
     const commenti = w.commenti || [];
 
-    return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);${nonLetto?'background:rgba(232,80,10,.05);':''}">
+    return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);${nonLetto?'background:rgba(var(--acc-rgb),.05);':''}">
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <div style="width:34px;height:34px;border-radius:9px;background:${tc.bg};color:${tc.c};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;">
           <i class="ti ${tc.ic}"></i>
@@ -4522,16 +4522,16 @@ function openWDCommenti(id) {
       <div id="wdc-lista" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;">
         ${commenti.length ? commenti.map(c=>`
           <div style="display:flex;gap:8px;align-items:flex-start;${c.autore_id===ME?.id?'flex-direction:row-reverse':''}">
-            <div style="width:28px;height:28px;border-radius:50%;background:#E8500A;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${(c.autore_nome||'?')[0].toUpperCase()}</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${(c.autore_nome||'?')[0].toUpperCase()}</div>
             <div style="max-width:80%;">
               <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;${c.autore_id===ME?.id?'text-align:right':''}">${c.autore_nome||'?'} · ${c.data||''}</div>
-              <div style="background:${c.autore_id===ME?.id?'#E8500A':'var(--surf2)'};color:${c.autore_id===ME?.id?'#fff':'var(--txt)'};padding:8px 12px;border-radius:${c.autore_id===ME?.id?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:13px;line-height:1.5;">${c.testo}</div>
+              <div style="background:${c.autore_id===ME?.id?'var(--acc)':'var(--surf2)'};color:${c.autore_id===ME?.id?'#fff':'var(--txt)'};padding:8px 12px;border-radius:${c.autore_id===ME?.id?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:13px;line-height:1.5;">${c.testo}</div>
             </div>
           </div>`).join('') : '<div style="text-align:center;color:var(--txt3);font-size:13px;padding:20px 0;">Nessun commento ancora. Sii il primo!</div>'}
       </div>
       <div style="padding:10px 12px;border-top:.5px solid var(--bord);display:flex;gap:8px;flex-shrink:0;">
         <input id="wdc-inp" placeholder="Scrivi un commento..." style="flex:1;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" onkeydown="if(event.key==='Enter')inviaWDC('${id}')">
-        <button onclick="inviaWDC('${id}')" style="width:38px;height:38px;background:#E8500A;border:none;border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-send" style="font-size:16px;"></i></button>
+        <button onclick="inviaWDC('${id}')" style="width:38px;height:38px;background:var(--acc);border:none;border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-send" style="font-size:16px;"></i></button>
       </div>
     </div>
   </div>`;
@@ -4667,8 +4667,8 @@ function renderWDCal() {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ev = eventiMese.filter(w=>w.data===ds);
     const oggi = new Date().toISOString().split('T')[0]===ds;
-    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:5px 2px;border-radius:8px;cursor:pointer;background:${oggi?'#E8500A':ev.length?'rgba(232,80,10,.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};font-size:13px;">
-      ${d}${ev.length?`<div style="width:5px;height:5px;border-radius:50%;background:${oggi?'#fff':'#E8500A'};margin:1px auto 0;"></div>`:''}
+    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:5px 2px;border-radius:8px;cursor:pointer;background:${oggi?'var(--acc)':ev.length?'rgba(var(--acc-rgb),.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};font-size:13px;">
+      ${d}${ev.length?`<div style="width:5px;height:5px;border-radius:50%;background:${oggi?'#fff':'var(--acc)'};margin:1px auto 0;"></div>`:''}
     </div>`;
   }
   document.getElementById('wd-cal-grid').innerHTML = html;
@@ -4744,7 +4744,7 @@ async function renderAuditLog(el, filtro) {
           <input type="date" id="audit-dal" value="${f==='custom'?(document.getElementById('audit-dal')?.value||''):''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);">
           <span style="font-size:12px;color:var(--txt3);">→</span>
           <input type="date" id="audit-al" value="${f==='custom'?(document.getElementById('audit-al')?.value||''):''}" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);">
-          <button onclick="auditCambiaFiltro()" style="font-size:12px;padding:4px 10px;background:#E8500A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">Applica</button>
+          <button onclick="auditCambiaFiltro()" style="font-size:12px;padding:4px 10px;background:var(--acc);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">Applica</button>
         </div>
         <span style="font-size:11px;color:var(--txt3);margin-left:auto;">${data?.length||0} modifiche</span>
       </div>
@@ -4841,7 +4841,7 @@ async function renderGestioneObiettivi(elId) {
           <span style="font-weight:700;">€${fmt(o.obiettivo)}</span>
           <button onclick="eliminaObiettivo(${o.id})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
         </div>`).join('')}
-        <button onclick="aggiungiObiettivo('${u.id}','${u.nome} ${u.cognome||''}')" style="font-size:11px;padding:5px 12px;background:rgba(232,80,10,.1);color:#E8500A;border:none;border-radius:6px;cursor:pointer;font-family:inherit;margin-top:4px;">+ Aggiungi obiettivo</button>
+        <button onclick="aggiungiObiettivo('${u.id}','${u.nome} ${u.cognome||''}')" style="font-size:11px;padding:5px 12px;background:rgba(var(--acc-rgb),.1);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;margin-top:4px;">+ Aggiungi obiettivo</button>
       </div>`;
     }).join('')||'<div style="color:var(--txt3);font-size:13px;">Nessun operativo registrato</div>'}`;
 }
@@ -5017,9 +5017,9 @@ function renderSezioniAz() {
     <div style="background:var(--surf);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--shd);overflow:hidden;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:.5px solid var(--bord);">
         <div style="font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px;">
-          <i class="ti ti-folder" style="font-size:16px;color:#E8500A;"></i> ${sez}
+          <i class="ti ti-folder" style="font-size:16px;color:var(--acc);"></i> ${sez}
         </div>
-        <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(232,80,10,.08);color:#E8500A;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;">
+        <label style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(var(--acc-rgb),.08);color:var(--acc);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;">
           <i class="ti ti-upload" style="font-size:13px;"></i> Carica
           <input type="file" style="display:none;" multiple accept=".pdf,.jpg,.png,.xlsx,.docx" onchange="caricaDocAz('${sez}',this)">
         </label>
@@ -5031,7 +5031,7 @@ function renderSezioniAz() {
             <div style="flex:1;min-width:0;">
               <input type="text" value="${f.rinomina||f.nome}" onchange="rinominaDocAz('${sez}',${i},this.value)"
                 style="width:100%;background:transparent;border:none;font-size:13px;color:var(--txt);font-family:inherit;outline:none;border-bottom:1px dashed transparent;transition:border-color .15s;"
-                onfocus="this.style.borderBottomColor='#E8500A'" onblur="this.style.borderBottomColor='transparent'">
+                onfocus="this.style.borderBottomColor='var(--acc)'" onblur="this.style.borderBottomColor='transparent'">
               <div style="font-size:10px;color:var(--txt3);margin-top:1px;">${f.nome}</div>
             </div>
             <div style="display:flex;gap:4px;flex-shrink:0;">
@@ -5115,7 +5115,7 @@ function selGaraTab(g) {
     const el = document.getElementById('gp-'+x); if(el) el.style.display = x===g?'block':'none';
     const btn = document.getElementById('gt-'+x);
     if(btn) {
-      if(x===g) { btn.style.background='#E8500A'; btn.style.color='#fff'; btn.style.borderColor='#E8500A'; }
+      if(x===g) { btn.style.background='var(--acc)'; btn.style.color='#fff'; btn.style.borderColor='var(--acc)'; }
       else       { btn.style.background='var(--surf2)'; btn.style.color='var(--txt2)'; btn.style.borderColor='var(--bord2)'; }
     }
   });
@@ -5243,7 +5243,7 @@ function renderGara(tipo) {
           <div style="width:32px;font-weight:700;color:var(--txt2);">${m}</div>
           <div style="flex:1;display:flex;gap:12px;">
             <span style="color:var(--txt3);">Prec: <b>${prevPerc}%</b></span>
-            <span style="color:#E8500A;">Att: <b>${currPerc}%</b></span>
+            <span style="color:var(--acc);">Att: <b>${currPerc}%</b></span>
           </div>
           <button onclick="editRinnMese(${i+1})" style="font-size:10px;padding:2px 8px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;font-family:inherit;">✏</button>
         </div>`;
@@ -5262,7 +5262,7 @@ function apriPosGara(tipo) {
           <div class="fld"><label>Prodotto</label><input type="text" id="gpos-prodotto" placeholder="Prodotto"></div>
           <div class="fld"><label>Note</label><textarea id="gpos-note" rows="2" placeholder="Note..."></textarea></div>
         </div>
-        <button onclick="salvaGaraPos('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="salvaGaraPos('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
       </div>
     </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
@@ -5325,7 +5325,7 @@ function apriConfigGara(tipo) {
           <div class="fld"><label>Periodo / Scadenza</label><input type="text" id="gcfg-periodo" placeholder="es. 31/12/2026" value="${cfg.periodo||''}"></div>
           <div class="fld"><label>Regolamento / Note</label><textarea id="gcfg-regolamento" rows="3" placeholder="Regole della gara...">${cfg.regolamento||''}</textarea></div>
         </div>
-        <button onclick="salvaConfigGara('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva configurazione</button>
+        <button onclick="salvaConfigGara('${tipo}')" style="margin-top:14px;width:100%;padding:13px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva configurazione</button>
       </div>
     </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
@@ -5369,7 +5369,7 @@ function editRinnMese(mese) {
           <div class="fld"><label>% Rinnovi anno corrente</label><input type="number" id="rinn-curr" step="0.1" value="${pos?.perc_curr||''}"></div>
           <div class="fld"><label>Note</label><textarea id="rinn-note" rows="2">${pos?.note||''}</textarea></div>
         </div>
-        <button onclick="salvaRinnMese(${mese},'${pos?.id||''}')" style="margin-top:14px;width:100%;padding:13px;background:#E8500A;color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="salvaRinnMese(${mese},'${pos?.id||''}')" style="margin-top:14px;width:100%;padding:13px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
       </div>
     </div>`;
   document.body.insertAdjacentHTML('beforeend', html);
@@ -5428,7 +5428,7 @@ async function renderKpiCtrl() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
         ${Object.entries(KPI_FLAGS_LABELS).map(([k,lbl])=>`
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;">
-            <input type="checkbox" ${uFlags[k]!==false?'checked':''} onchange="toggleKpiFlag('${u.id}','${k}',this.checked)" style="width:16px;height:16px;accent-color:#E8500A;cursor:pointer;">
+            <input type="checkbox" ${uFlags[k]!==false?'checked':''} onchange="toggleKpiFlag('${u.id}','${k}',this.checked)" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;">
             ${lbl}
           </label>`).join('')}
       </div>
@@ -5578,7 +5578,7 @@ function renderCSChart(n, nPrec) {
   const el = document.getElementById('cs-chart'); if(!el) return;
   const steps = [
     { min:3,  max:5,  comp:200, bonus:0,    label:'3-5 pezzi',  color:'#ba7517' },
-    { min:6,  max:9,  comp:250, bonus:2000, label:'6-9 pezzi',  color:'#E8500A' },
+    { min:6,  max:9,  comp:250, bonus:2000, label:'6-9 pezzi',  color:'var(--acc)' },
     { min:10, max:99, comp:300, bonus:5000, label:'10+ pezzi',  color:'#1a8a5a' },
   ];
   const maxN = Math.max(n, 10) + 2;
@@ -5721,7 +5721,7 @@ function toggleREPrevLock() {
 
 function setREObiettivo(perc) {
   RE_OBJ_PERC = perc;
-  const colors = {10:'#ba7517', 15:'#E8500A', 25:'#1a8a5a'};
+  const colors = {10:'#ba7517', 15:'var(--acc)', 25:'#1a8a5a'};
   // Aggiorna stile bottoni
   [0,10,15,25].forEach(p => {
     const btn = document.getElementById('re-obj-' + p);
@@ -5753,7 +5753,7 @@ function renderREObjChart(prev) {
   const totale = RE_POSIZIONI.reduce((a,p) => a+(p.premio_annuo||0), 0);
   const steps  = [
     { perc:10, label:'+10%', color:'#ba7517' },
-    { perc:15, label:'+15%', color:'#E8500A' },
+    { perc:15, label:'+15%', color:'var(--acc)' },
     { perc:25, label:'+25%', color:'#1a8a5a' },
   ];
   // Scala: max è il target più alto + 10%
@@ -6118,9 +6118,9 @@ function selAITab(tab) {
   // Bottoni tab
   const btnChat   = document.getElementById('ai-tab-chat');
   const btnTicket = document.getElementById('ai-tab-ticket');
-  btnChat.style.background   = isChat   ? '#E8500A'         : 'transparent';
+  btnChat.style.background   = isChat   ? 'var(--acc)'         : 'transparent';
   btnChat.style.color        = isChat   ? '#fff'            : 'var(--txt2)';
-  btnTicket.style.background = isTicket ? '#E8500A'         : 'transparent';
+  btnTicket.style.background = isTicket ? 'var(--acc)'         : 'transparent';
   btnTicket.style.color      = isTicket ? '#fff'            : 'var(--txt2)';
   // Pannelli
   const chatBody  = document.getElementById('c-body');
@@ -6233,7 +6233,7 @@ async function inviaTicket() {
     document.getElementById('tk-descr').value  = '';
     // Feedback visivo
     const btn = document.querySelector('[onclick="inviaTicket()"]');
-    if (btn) { btn.textContent='✓ Inviato!'; btn.style.background='#1a8a5a'; setTimeout(()=>{btn.textContent='Invia';btn.style.background='linear-gradient(135deg,#E8500A,#c44008)';},2000); }
+    if (btn) { btn.textContent='✓ Inviato!'; btn.style.background='#1a8a5a'; setTimeout(()=>{btn.textContent='Invia';btn.style.background='linear-gradient(135deg,var(--acc),var(--acc2))';},2000); }
     await loadTickets();
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }

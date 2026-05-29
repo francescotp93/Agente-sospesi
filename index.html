@@ -2583,6 +2583,8 @@ function buildDashboard() {
   // Scostamento: (contanti oggi + fondo cassa) vs (versamenti + spese)
   // Misura se la cassa fisica quadra con i movimenti dichiarati
   const scostamento = (cassa + fondo) - (vers + spese);
+  const scostamentoIeri = (saldoCumulativo - (cassa + vers - spese)) - fondoIeri;
+  const deltaScost = scostamento - scostamentoIeri;
   const scostEl = document.getElementById('i-scostamento');
   const scostBadge = document.getElementById('i-scostamento-badge');
   if (scostEl) {
@@ -2612,7 +2614,7 @@ function buildDashboard() {
     const varColor = varFondo > 0 ? 'var(--amb)' : varFondo < 0 ? 'var(--red)' : 'var(--blu)';
     metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub: varSub, color: varColor, onclick:"goTab('carica');selContabTab('carica')"});
   }
-  if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'contanti + fondo coprono i movimenti':'⚠️ ammanco non giustificato', color: scostamento>=0?'var(--grn)':'var(--red)', onclick:"goTab('carica');selContabTab('carica')"});
+  if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: `${scostamento>=0?'surplus':'ammanco'} · ieri: ${deltaScost>=0?'+':''}€${fmt(Math.abs(deltaScost))}`, color: scostamento>=0?'var(--grn)':'var(--red)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.pos_bianco)   metrics.push({lbl:'POS Bianco', val:'€'+fmt(posBianco), sub:'pagamenti elettronici', color:'var(--blu)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.pos_nero)     metrics.push({lbl:'POS Nero', val:'€'+fmt(posNero), sub:'pagamenti contanti POS', color:'var(--txt)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.incassato)    metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)', onclick:"goTab('sospesi')"});

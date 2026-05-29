@@ -1751,6 +1751,7 @@ function onLogin(user) {
     if (PROFILO) {
       applicaPermessi(PROFILO.ruolo);
       mostraBadgeRuolo();
+      await syncThemeFromDB();
     }
     // Controlla se ci sono profili pendenti da inserire
     try {
@@ -6264,16 +6265,18 @@ async function delTicket(id) {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // ─── TEMA & ACCENT ───────────────────────────────────────────────────────────
 function setTheme(mode) {
-  document.body.className = document.body.className.replace(/theme-\S+/g, '').trim();
+  document.body.className = document.body.className.replace(/theme-\S+/g,'').trim();
   document.body.classList.add('theme-'+mode);
   localStorage.setItem('iam-theme', mode);
   updateThemeButtons();
+  saveThemeToDB(mode, localStorage.getItem('iam-accent')||'orange');
 }
 function setAccent(color) {
-  document.body.className = document.body.className.replace(/accent-\S+/g, '').trim();
+  document.body.className = document.body.className.replace(/accent-\S+/g,'').trim();
   document.body.classList.add('accent-'+color);
   localStorage.setItem('iam-accent', color);
   updateAccentButtons();
+  saveThemeToDB(localStorage.getItem('iam-theme')||'dark', color);
 }
 function updateThemeButtons() {
   const cur = localStorage.getItem('iam-theme')||'dark';
@@ -6289,11 +6292,27 @@ function updateAccentButtons() {
     if (btn) btn.style.border = cur===c ? '2px solid var(--txt)' : '2px solid transparent';
   });
 }
-function applyStoredTheme() {
+async function applyStoredTheme() {
   const theme  = localStorage.getItem('iam-theme')  || 'dark';
   const accent = localStorage.getItem('iam-accent') || 'orange';
   document.body.classList.add('theme-'+theme);
   document.body.classList.add('accent-'+accent);
+}
+
+async function syncThemeFromDB() {
+  if (!db || !ME) return;
+  try {
+    const { data } = await db.from('iam_utenti').select('tema,accent').eq('id', ME.id).single();
+    if (data?.tema)   { localStorage.setItem('iam-theme', data.tema);   setTheme(data.tema); }
+    if (data?.accent) { localStorage.setItem('iam-accent', data.accent); setAccent(data.accent); }
+  } catch(e) {}
+}
+
+async function saveThemeToDB(tema, accent) {
+  if (!db || !ME) return;
+  try {
+    await db.from('iam_utenti').update({ tema, accent, aggiornato_il: new Date().toISOString() }).eq('id', ME.id);
+  } catch(e) {}
 }
 
 document.addEventListener('DOMContentLoaded', () => {

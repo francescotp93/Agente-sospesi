@@ -2170,7 +2170,6 @@ async function loadLastSession() {
     // Mostra FAB AI
     const fab = document.getElementById('ai-fab');
     if (fab) fab.style.display = 'flex';
-    setTimeout(() => makeFABDraggable(), 500);
     if (!lastTab) {
       goTab('dashboard');
     } else {
@@ -6601,63 +6600,6 @@ async function confermaModificaTicket() {
 }
 
 // ─── FAB TRASCINABILE ─────────────────────────────────────────────────────────
-function makeFABDraggable() {
-  const fab = document.getElementById('ai-fab');
-  if (!fab) return;
-
-  // Su mobile usa semplicemente onclick — il drag lo gestiamo solo su desktop
-  if ('ontouchstart' in window) {
-    fab.removeAttribute('onclick');
-    fab.addEventListener('touchend', function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleAIPanel();
-    }, { passive: false });
-    return; // su mobile niente drag, solo tap
-  }
-
-  // Solo desktop: drag con mouse
-  let startX, startY, startLeft, startBottom, moved = false;
-  fab.removeAttribute('onclick');
-
-  fab.addEventListener('mousedown', e => {
-    startX = e.clientX; startY = e.clientY;
-    const rect = fab.getBoundingClientRect();
-    startLeft   = rect.left;
-    startBottom = window.innerHeight - rect.bottom;
-    moved = false;
-    fab.style.transition = 'none';
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-
-  function onMove(e) {
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-      moved = true;
-      fab.style.left   = Math.max(10, Math.min(window.innerWidth  - 62, startLeft   + dx)) + 'px';
-      fab.style.right  = 'auto';
-      fab.style.bottom = Math.max(10, Math.min(window.innerHeight - 62, startBottom - dy)) + 'px';
-    }
-  }
-
-  function onUp() {
-    fab.style.transition = '';
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-    if (!moved) toggleAIPanel();
-    else localStorage.setItem('iam_fab_pos', JSON.stringify({
-      left:   parseInt(fab.style.left),
-      bottom: parseInt(fab.style.bottom)
-    }));
-  }
-
-  try {
-    const pos = JSON.parse(localStorage.getItem('iam_fab_pos') || 'null');
-    if (pos) { fab.style.left = pos.left + 'px'; fab.style.right = 'auto'; fab.style.bottom = pos.bottom + 'px'; }
-  } catch(e) {}
-}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // ─── TEMA & ACCENT ───────────────────────────────────────────────────────────

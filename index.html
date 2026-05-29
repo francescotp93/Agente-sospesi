@@ -6621,7 +6621,7 @@ function makeFABDraggable() {
     const touch = e.touches ? e.touches[0] : e;
     const dx = touch.clientX - startX;
     const dy = touch.clientY - startY;
-    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) hasMoved = true;
     const newLeft   = Math.max(10, Math.min(window.innerWidth  - 62, startLeft   + dx));
     const newBottom = Math.max(10, Math.min(window.innerHeight - 62, startBottom - dy));
     fab.style.left   = newLeft   + 'px';

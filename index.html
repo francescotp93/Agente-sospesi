@@ -6630,14 +6630,17 @@ function makeFABDraggable() {
     localStorage.setItem('iam_fab_pos', JSON.stringify({ left: newLeft, bottom: newBottom }));
   }
 
-  function onEnd() {
+  function onEnd(e) {
     isDragging = false;
     fab.style.transition = '';
     document.removeEventListener('mousemove', onMove);
     document.removeEventListener('touchmove', onMove);
     document.removeEventListener('mouseup',   onEnd);
     document.removeEventListener('touchend',  onEnd);
-    if (!hasMoved) toggleAIPanel();
+    // Apri chat solo se NON si è mosso (soglia 8px)
+    if (!hasMoved) {
+      setTimeout(() => toggleAIPanel(), 50);
+    }
   }
 
   fab.removeAttribute('onclick');

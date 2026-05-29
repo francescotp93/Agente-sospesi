@@ -855,6 +855,7 @@ input[type=file]{display:none;}
     <button class="ptab act" id="pt-gare" onclick="selPerfTab('gare')">Gare Interne</button>
     <button class="ptab" id="pt-consap" onclick="selPerfTab('consap')">CONSAP</button>
     <button class="ptab" id="pt-re" onclick="selPerfTab('re')">RE</button>
+    <button class="ptab" id="pt-tcm" onclick="selPerfTab('tcm')">TCM</button>
   </div>
 
   <!-- GARE INTERNE -->
@@ -1499,8 +1500,68 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- TCM -->
+<div id="pp-tcm" style="display:none;">
+  <div style="padding:0 12px 12px;">
+    <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;">🛡️ TCM — Nuova Produzione 2026</div>
+        <select id="tcm-anno" onchange="loadTCMFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+        </select>
+      </div>
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Fasce Rappel New Business</div>
+        <div id="tcm-fasce"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div style="background:var(--blu-bg);border-radius:var(--rs);padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:var(--blu-txt);text-transform:uppercase;margin-bottom:4px;">Produzione</div>
+          <div style="font-size:22px;font-weight:800;color:var(--blu-txt);" id="tcm-tot-prod">€0</div>
+        </div>
+        <div style="background:var(--grn-bg);border-radius:var(--rs);padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:var(--grn-txt);text-transform:uppercase;margin-bottom:4px;">Rappel maturato</div>
+          <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="tcm-rappel">€0</div>
+        </div>
+      </div>
+      <div id="tcm-gauge"></div>
+    </div>
+    <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;">Pratiche registrate</div>
+        <button onclick="openTCMPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+      </div>
+      <div id="tcm-pos-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /panels -->
 </div><!-- /app -->
+
+<!-- MODAL TCM -->
+<div class="modal" id="modal-tcm-pos">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="tcm-pos-title">Nuova pratica TCM</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="saveTCMPos()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-tcm-pos')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Cliente *</label><input type="text" id="tcm-p-cliente" placeholder="Nome cliente"></div>
+        <div class="fld"><label>Produttore</label><select id="tcm-p-prod"><option value="">— nessuno —</option></select></div>
+        <div class="fld"><label>Premio annuo (€)</label><input type="number" id="tcm-p-premio" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+        <div class="fld"><label>Data stipula</label><input type="date" id="tcm-p-data"></div>
+        <div class="fld ffull"><label>Prodotto TCM</label><input type="text" id="tcm-p-prodotto" placeholder="es. Vita Intera, Temporanea caso morte..."></div>
+      </div>
+      <div class="fld"><label>Note</label><textarea id="tcm-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL COLLABORATORE -->
 <div class="modal" id="modal-collab">
@@ -2108,6 +2169,7 @@ async function loadLastSession() {
     // Mostra FAB AI
     const fab = document.getElementById('ai-fab');
     if (fab) fab.style.display = 'flex';
+    setTimeout(() => makeFABDraggable(), 500);
     if (!lastTab) {
       goTab('dashboard');
     } else {
@@ -2517,8 +2579,9 @@ function buildDashboard() {
   const saldoOggi = cassa - vers - spese;
   const saldoCumulativo = APP.saldoCumulativo !== undefined ? APP.saldoCumulativo : saldoOggi;
 
-  // Calcola scostamento rispetto al fondo cassa
-  const scostamento = saldoCumulativo - fondo;
+  // Scostamento: (contanti oggi + fondo cassa) vs (versamenti + spese)
+  // Misura se la cassa fisica quadra con i movimenti dichiarati
+  const scostamento = (cassa + fondo) - (vers + spese);
   const scostEl = document.getElementById('i-scostamento');
   const scostBadge = document.getElementById('i-scostamento-badge');
   if (scostEl) {
@@ -2548,7 +2611,7 @@ function buildDashboard() {
     const varColor = varFondo > 0 ? 'var(--amb)' : varFondo < 0 ? 'var(--red)' : 'var(--blu)';
     metrics.push({lbl:'Fondo cassa', val:'€'+fmt(fondo), sub: varSub, color: varColor, onclick:"goTab('carica');selContabTab('carica')"});
   }
-  if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'cassa sopra soglia':'⚠️ sotto il fondo cassa', color: scostamento>=0?'var(--grn)':'var(--red)', onclick:"goTab('carica');selContabTab('carica')"});
+  if (W.scostamento)  metrics.push({lbl:'Scostamento', val:(scostamento>=0?'+':'')+'€'+fmt(scostamento), sub: scostamento>=0?'contanti + fondo coprono i movimenti':'⚠️ ammanco non giustificato', color: scostamento>=0?'var(--grn)':'var(--red)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.pos_bianco)   metrics.push({lbl:'POS Bianco', val:'€'+fmt(posBianco), sub:'pagamenti elettronici', color:'var(--blu)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.pos_nero)     metrics.push({lbl:'POS Nero', val:'€'+fmt(posNero), sub:'pagamenti contanti POS', color:'var(--txt)', onclick:"goTab('carica');selContabTab('carica')"});
   if (W.incassato)    metrics.push({lbl:'Incassato oggi', val:'€'+fmt(valInc), sub:APP.incassi.length+' polizze', color:'var(--grn)', onclick:"goTab('sospesi')"});
@@ -2683,6 +2746,42 @@ function buildAnomalie() {
   // Negativi
   const neg = APP.sospesi.filter(s=>s.importo<0);
   if (neg.length) APP.anomalie.push({tipo:'warn',icon:'ti-minus-circle',titolo:`${neg.length} sospesi con importo negativo`,desc:'Possibili storni o errori contabili.',sospesi:neg});
+
+  // Alert: variazione contanti non giustificata
+  if (db) {
+    db.from('sessioni_giornaliere')
+      .select('data_riferimento,contanti,versamenti,spese')
+      .order('data_riferimento', { ascending: false }).limit(2)
+      .then(({ data: storico }) => {
+        if (storico && storico.length >= 2) {
+          const oggi = storico[0];
+          const ieri = storico[1];
+          const cassaOggi = parseNum(oggi.contanti);
+          const cassaIeri = parseNum(ieri.contanti);
+          const deltaContanti = cassaOggi - cassaIeri;
+          const movimentiDichiarati = parseNum(oggi.versamenti) + parseNum(oggi.spese);
+          if (deltaContanti < 0 && Math.abs(deltaContanti) > movimentiDichiarati + 0.50) {
+            const nonGiustificato = Math.abs(deltaContanti) - movimentiDichiarati;
+            APP.anomalie.push({
+              tipo: 'crit', icon: 'ti-alert-triangle',
+              titolo: `⚠️ Variazione contanti non giustificata: -€${fmt(nonGiustificato)}`,
+              desc: `Cassa ieri €${fmt(cassaIeri)} → oggi €${fmt(cassaOggi)}. Movimenti dichiarati: €${fmt(movimentiDichiarati)}. Differenza non spiegata: €${fmt(nonGiustificato)}. Verificare immediatamente.`,
+              sospesi: []
+            });
+            updatePill();
+            document.getElementById('a-empty').style.display = 'none';
+            document.getElementById('a-content').style.display = 'block';
+            document.getElementById('a-alerts').innerHTML += `
+              <div class="alert crit"><i class="ti ti-alert-triangle"></i>
+                <div style="flex:1;">
+                  <div class="at">⚠️ Variazione contanti non giustificata: -€${fmt(nonGiustificato)}</div>
+                  <div class="ad">Cassa ieri €${fmt(cassaIeri)} → oggi €${fmt(cassaOggi)}. Movimenti dichiarati: €${fmt(movimentiDichiarati)}. Verificare immediatamente.</div>
+                </div>
+              </div>`;
+          }
+        }
+      }).catch(e => console.warn('alert contanti:', e));
+  }
 
   const crit = APP.anomalie.filter(a=>a.tipo==='crit').length;
   document.getElementById('a-empty').style.display = APP.anomalie.length ? 'none' : 'block';
@@ -5093,7 +5192,7 @@ function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||
 function savePerf() { localStorage.setItem('iam_perf', JSON.stringify(PERF)); }
 
 function selPerfTab(t) {
-  ['gare','consap','re'].forEach(x => {
+  ['gare','consap','re','tcm'].forEach(x => {
     const el = document.getElementById('pp-'+x); if(el) el.style.display = x===t?'block':'none';
     const btn = document.getElementById('pt-'+x); if(btn) btn.classList.toggle('act', x===t);
   });
@@ -5101,6 +5200,7 @@ function selPerfTab(t) {
   if(t==='gare')   { renderGaraTabs(); selGaraTab(GARA_CUR); }
   if(t==='consap') loadCSFromDB();
   if(t==='re')     loadREFromDB();
+  if(t==='tcm')    loadTCMFromDB();
 }
 
 function selGaraTab(g) {
@@ -6197,14 +6297,18 @@ function renderTickets() {
           <div style="font-size:10px;color:var(--txt3);">👤 ${t.segnalato_nome||'—'} · ${dt}</div>
           ${t.stato==='risolto'&&t.risolto_nome?`<div style="font-size:10px;color:var(--grn-txt);margin-top:2px;">✓ Risolto da ${t.risolto_nome}</div>`:''}
         </div>
-        ${isAdmin && t.stato !== 'risolto' ? `<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          ${(t.segnalato_da === ME?.id || isAdmin) && t.stato !== 'risolto' ?
+            `<button onclick="openEditTicket(${t.id})"
+              style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">✏️ Modifica</button>` : ''}
+          ${isAdmin && t.stato !== 'risolto' ? `
           ${t.stato==='aperto'?`<button onclick="setTKStato(${t.id},'in_lavorazione')"
             style="font-size:10px;padding:3px 8px;background:var(--amb-bg);color:var(--amb-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">🔧 Prendi in carico</button>`:''}
           <button onclick="setTKStato(${t.id},'risolto')"
             style="font-size:10px;padding:3px 8px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">✓ Segna risolto</button>
           <button onclick="delTicket(${t.id})"
-            style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:6px;cursor:pointer;">✕</button>
-        </div>` : ''}
+            style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:6px;cursor:pointer;">✕</button>` : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -6254,6 +6358,228 @@ async function delTicket(id) {
     await db.from('iam_ticket').delete().eq('id', id);
     await loadTickets();
   } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+// ─── TCM ─────────────────────────────────────────────────────────────────────
+const TCM_FASCE = [
+  { min: 0,       max: 49999,  rappel: 0,    label: '< €50.000',          color: 'var(--txt3)' },
+  { min: 50000,   max: 99999,  rappel: 0.02, label: '€50.000 – €99.999',  color: 'var(--amb-txt)' },
+  { min: 100000,  max: 149999, rappel: 0.03, label: '€100.000 – €149.999',color: 'var(--blu-txt)' },
+  { min: 150000,  max: 199999, rappel: 0.04, label: '€150.000 – €199.999',color: 'var(--grn-txt)' },
+  { min: 200000,  max: Infinity,rappel: 0.05, label: '≥ €200.000',         color: 'var(--acc)' },
+];
+
+function calcolaRappelTCM(produzione) {
+  const fascia = TCM_FASCE.slice().reverse().find(f => produzione >= f.min) || TCM_FASCE[0];
+  return { rappel: produzione * fascia.rappel, perc: fascia.rappel, fascia };
+}
+
+let TCM_POSIZIONI = [];
+let TCM_EDIT_ID   = null;
+
+function getTCMAnno() { return parseInt(document.getElementById('tcm-anno')?.value || new Date().getFullYear()); }
+
+async function loadTCMFromDB() {
+  if (!db) return;
+  const anno = getTCMAnno();
+  try {
+    const { data } = await db.from('iam_tcm_posizioni').select('*').eq('anno', anno).order('creato_il', { ascending: false });
+    TCM_POSIZIONI = data || [];
+    renderTCM();
+  } catch(e) { console.warn('loadTCMFromDB:', e); renderTCM(); }
+}
+
+function renderTCM() {
+  const produzione = TCM_POSIZIONI.reduce((a, p) => a + (parseNum(p.premio) || 0), 0);
+  const { rappel, perc, fascia } = calcolaRappelTCM(produzione);
+  const el_prod   = document.getElementById('tcm-tot-prod');
+  const el_rappel = document.getElementById('tcm-rappel');
+  const el_gauge  = document.getElementById('tcm-gauge');
+  const el_fasce  = document.getElementById('tcm-fasce');
+  if (el_prod)   el_prod.textContent   = '€' + fmt(produzione);
+  if (el_rappel) el_rappel.textContent = '€' + fmt(rappel);
+  if (el_fasce) el_fasce.innerHTML = TCM_FASCE.map(f => {
+    const attiva = produzione >= f.min && produzione <= f.max;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-top:.5px solid var(--bord);font-size:12px;${attiva?'font-weight:700;':''}">
+      <span style="color:${attiva?f.color:'var(--txt3)'};">${attiva?'▶ ':''}${f.label}</span>
+      <span style="color:${attiva?f.color:'var(--txt3)'};">${f.rappel>0?(f.rappel*100)+'% rappel':'—'}</span>
+    </div>`;
+  }).join('');
+  if (el_gauge) {
+    const nextFascia = TCM_FASCE.find(f => f.min > produzione);
+    const mancano = nextFascia ? nextFascia.min - produzione : 0;
+    const percBar  = fascia.max < Infinity ? Math.min(100, Math.round((produzione - fascia.min) / (fascia.max - fascia.min + 1) * 100)) : 100;
+    const color = fascia.rappel === 0 ? 'var(--txt3)' : fascia.color;
+    el_gauge.innerHTML = `
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Fascia attuale: <b style="color:${color};">${fascia.label} · ${(fascia.rappel*100)}% rappel</b></div>
+      <div style="background:var(--surf2);border-radius:6px;height:10px;overflow:hidden;">
+        <div style="height:100%;background:${color};border-radius:6px;width:${percBar}%;transition:width .6s;"></div>
+      </div>
+      ${mancano > 0 ? `<div style="font-size:11px;color:var(--txt3);margin-top:4px;">Mancano €${fmt(mancano)} alla fascia successiva</div>` : ''}`;
+  }
+  const el_list = document.getElementById('tcm-pos-list');
+  if (el_list) el_list.innerHTML = TCM_POSIZIONI.length
+    ? TCM_POSIZIONI.map(p => `
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:10px 0;border-top:.5px solid var(--bord);font-size:12px;">
+          <div style="flex:1;">
+            <div style="font-weight:600;">${p.cliente||'—'}</div>
+            <div style="color:var(--txt2);">${p.prodotto||'—'}${p.produttore?' · '+p.produttore:''}</div>
+            <div style="color:var(--grn-txt);font-weight:700;">€${fmt(parseNum(p.premio))}</div>
+            ${p.note?`<div style="color:var(--txt3);">${p.note}</div>`:''}
+          </div>
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            <button onclick="editTCMPos('${p.id}')" style="font-size:10px;padding:2px 7px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️</button>
+            <button onclick="delTCMPos('${p.id}')" style="font-size:10px;padding:2px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+          </div>
+        </div>`).join('')
+    : '<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna pratica registrata</div>';
+}
+
+function openTCMPosModal(id) {
+  TCM_EDIT_ID = id || null;
+  const p = id ? TCM_POSIZIONI.find(x => String(x.id) === String(id)) : null;
+  document.getElementById('tcm-pos-title').textContent = p ? 'Modifica pratica TCM' : 'Nuova pratica TCM';
+  const sv = (fid, val) => { const el = document.getElementById(fid); if (el) el.value = val || ''; };
+  sv('tcm-p-cliente',  p?.cliente);
+  sv('tcm-p-premio',   p?.premio);
+  sv('tcm-p-prodotto', p?.prodotto);
+  sv('tcm-p-data',     p?.data_stipula || new Date().toISOString().split('T')[0]);
+  sv('tcm-p-note',     p?.note);
+  loadTeam();
+  const sel = document.getElementById('tcm-p-prod');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c => `<option value="${c.nome} ${c.cogn}" ${p?.produttore===c.nome+' '+c.cogn?'selected':''}>${c.nome} ${c.cogn}</option>`).join('');
+  document.getElementById('modal-tcm-pos').classList.add('show');
+}
+
+function editTCMPos(id) { openTCMPosModal(id); }
+
+async function saveTCMPos() {
+  const gv = id => (document.getElementById(id)?.value || '').trim();
+  const cliente = gv('tcm-p-cliente');
+  if (!cliente) { alert('Inserisci il nome del cliente.'); return; }
+  const payload = {
+    anno:        getTCMAnno(),
+    cliente,
+    prodotto:    gv('tcm-p-prodotto') || null,
+    produttore:  gv('tcm-p-prod')     || null,
+    premio:      parseNum(gv('tcm-p-premio')) || 0,
+    data_stipula:gv('tcm-p-data')     || null,
+    note:        gv('tcm-p-note')     || null,
+    utente_id:   ME?.id,
+    aggiornato_il: new Date().toISOString(),
+  };
+  try {
+    if (TCM_EDIT_ID) {
+      const { error } = await db.from('iam_tcm_posizioni').update(payload).eq('id', TCM_EDIT_ID);
+      if (error) throw error;
+    } else {
+      const { error } = await db.from('iam_tcm_posizioni').insert(payload);
+      if (error) throw error;
+    }
+    closeModal('modal-tcm-pos');
+    await loadTCMFromDB();
+  } catch(e) { alert('Errore salvataggio: ' + (e.message || e)); }
+}
+
+async function delTCMPos(id) {
+  if (!confirm('Eliminare questa pratica?')) return;
+  try {
+    await db.from('iam_tcm_posizioni').delete().eq('id', id);
+    await loadTCMFromDB();
+  } catch(e) { alert('Errore: ' + (e.message || e)); }
+}
+
+// ─── TICKET EDIT ──────────────────────────────────────────────────────────────
+function openEditTicket(id) {
+  const t = TK_LIST.find(x => x.id === id);
+  if (!t) return;
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:600;display:flex;align-items:flex-end;" id="tk-edit-overlay" onclick="if(event.target.id==='tk-edit-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">✏️ Modifica ticket</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Titolo</label><input type="text" id="tk-edit-titolo" value="${(t.titolo||'').replace(/"/g,'&quot;')}"></div>
+          <div class="fld"><label>Descrizione</label><textarea id="tk-edit-descr" rows="3">${t.descrizione||''}</textarea></div>
+          <div class="fld"><label>Priorità</label>
+            <select id="tk-edit-prio">
+              <option value="bassa" ${t.priorita==='bassa'?'selected':''}>🟢 Bassa</option>
+              <option value="normale" ${t.priorita==='normale'?'selected':''}>🟡 Normale</option>
+              <option value="alta" ${t.priorita==='alta'?'selected':''}>🟠 Alta</option>
+              <option value="critica" ${t.priorita==='critica'?'selected':''}>🔴 Critica</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="confermaModificaTicket(${id})" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva modifiche</button>
+          <button onclick="document.getElementById('tk-edit-overlay').remove()" style="padding:12px 16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function confermaModificaTicket(id) {
+  const titolo = document.getElementById('tk-edit-titolo')?.value.trim();
+  const descr  = document.getElementById('tk-edit-descr')?.value.trim() || null;
+  const prio   = document.getElementById('tk-edit-prio')?.value || 'normale';
+  if (!titolo) { alert('Il titolo è obbligatorio.'); return; }
+  if (!confirm('Confermi le modifiche al ticket?')) return;
+  try {
+    const { error } = await db.from('iam_ticket').update({
+      titolo, descrizione: descr, priorita: prio,
+      aggiornato_il: new Date().toISOString()
+    }).eq('id', id);
+    if (error) throw error;
+    document.getElementById('tk-edit-overlay')?.remove();
+    await loadTickets();
+  } catch(e) { alert('Errore: ' + (e.message || e)); }
+}
+
+// ─── FAB TRASCINABILE ─────────────────────────────────────────────────────────
+function makeFABDraggable() {
+  const fab = document.getElementById('ai-fab');
+  if (!fab) return;
+  // Ripristina posizione salvata
+  const saved = JSON.parse(localStorage.getItem('iam-fab-pos') || 'null');
+  if (saved) { fab.style.bottom = saved.bottom; fab.style.right = saved.right; fab.style.top = 'auto'; fab.style.left = 'auto'; }
+
+  let startX, startY, startRight, startBottom, dragging = false;
+
+  const onStart = (clientX, clientY) => {
+    dragging = false;
+    const rect = fab.getBoundingClientRect();
+    startX = clientX; startY = clientY;
+    startRight  = window.innerWidth  - rect.right;
+    startBottom = window.innerHeight - rect.bottom;
+    fab.style.transition = 'none';
+  };
+
+  const onMove = (clientX, clientY) => {
+    const dx = Math.abs(clientX - startX);
+    const dy = Math.abs(clientY - startY);
+    if (dx > 5 || dy > 5) dragging = true;
+    if (!dragging) return;
+    const newRight  = Math.max(8, Math.min(window.innerWidth  - 60, startRight  - (clientX - startX)));
+    const newBottom = Math.max(8, Math.min(window.innerHeight - 60, startBottom + (clientY - startY)));
+    fab.style.right  = newRight  + 'px';
+    fab.style.bottom = newBottom + 'px';
+    fab.style.top    = 'auto';
+    fab.style.left   = 'auto';
+  };
+
+  const onEnd = () => {
+    fab.style.transition = '';
+    if (dragging) localStorage.setItem('iam-fab-pos', JSON.stringify({ right: fab.style.right, bottom: fab.style.bottom }));
+  };
+
+  fab.addEventListener('mousedown',  e => { onStart(e.clientX, e.clientY); });
+  fab.addEventListener('touchstart', e => { onStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  document.addEventListener('mousemove',  e => { if (startX !== undefined) onMove(e.clientX, e.clientY); });
+  document.addEventListener('touchmove',  e => { if (startX !== undefined) onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  document.addEventListener('mouseup',  () => { if (startX !== undefined) { onEnd(); startX = undefined; } });
+  document.addEventListener('touchend', () => { if (startX !== undefined) { onEnd(); startX = undefined; } });
+
+  fab.addEventListener('click', e => { if (dragging) { e.stopImmediatePropagation(); dragging = false; } });
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────

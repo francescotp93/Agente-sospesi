@@ -6604,58 +6604,97 @@ async function confermaModificaTicket() {
 function makeFABDraggable() {
   const fab = document.getElementById('ai-fab');
   if (!fab) return;
-  let isDragging = false, startX, startY, startLeft, startBottom, hasMoved = false;
 
-  fab.addEventListener('mousedown', onStart);
-  fab.addEventListener('touchstart', onStart, { passive: true });
+  let isDragging = false;
+  let startX, startY, startLeft, startBottom;
+  let moveCount = 0;
+  const DRAG_THRESHOLD = 10;
 
-  function onStart(e) {
-    isDragging = true; hasMoved = false;
-    const touch = e.touches ? e.touches[0] : e;
-    startX = touch.clientX; startY = touch.clientY;
+  function getCoords(e) {
+    return e.touches ? e.touches[0] : e;
+  }
+
+  fab.addEventListener('touchstart', e => {
+    const t = getCoords(e);
+    startX = t.clientX; startY = t.clientY;
     const rect = fab.getBoundingClientRect();
     startLeft   = rect.left;
     startBottom = window.innerHeight - rect.bottom;
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('mouseup',   onEnd);
-    document.addEventListener('touchend',  onEnd);
+    isDragging  = true;
+    moveCount   = 0;
     fab.style.transition = 'none';
-  }
+  }, { passive: true });
 
-  function onMove(e) {
+  fab.addEventListener('touchmove', e => {
     if (!isDragging) return;
-    if (e.cancelable) e.preventDefault();
-    const touch = e.touches ? e.touches[0] : e;
-    const dx = touch.clientX - startX;
-    const dy = touch.clientY - startY;
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) hasMoved = true;
-    const newLeft   = Math.max(10, Math.min(window.innerWidth  - 62, startLeft   + dx));
-    const newBottom = Math.max(10, Math.min(window.innerHeight - 62, startBottom - dy));
-    fab.style.left   = newLeft   + 'px';
-    fab.style.right  = 'auto';
-    fab.style.bottom = newBottom + 'px';
-    localStorage.setItem('iam_fab_pos', JSON.stringify({ left: newLeft, bottom: newBottom }));
-  }
+    const t = getCoords(e);
+    const dx = t.clientX - startX;
+    const dy = t.clientY - startY;
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      moveCount++;
+      if (e.cancelable) e.preventDefault();
+      const newLeft   = Math.max(10, Math.min(window.innerWidth  - 62, startLeft   + dx));
+      const newBottom = Math.max(10, Math.min(window.innerHeight - 62, startBottom - dy));
+      fab.style.left   = newLeft   + 'px';
+      fab.style.right  = 'auto';
+      fab.style.bottom = newBottom + 'px';
+      localStorage.setItem('iam_fab_pos', JSON.stringify({ left: newLeft, bottom: newBottom }));
+    }
+  }, { passive: false });
 
-  function onEnd(e) {
+  fab.addEventListener('touchend', e => {
     isDragging = false;
     fab.style.transition = '';
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('touchmove', onMove);
-    document.removeEventListener('mouseup',   onEnd);
-    document.removeEventListener('touchend',  onEnd);
-    // Apri chat solo se NON si è mosso (soglia 8px)
-    if (!hasMoved) {
-      setTimeout(() => toggleAIPanel(), 50);
+    if (moveCount === 0) {
+      e.preventDefault();
+      setTimeout(() => toggleAIPanel(), 10);
     }
+  });
+
+  // Mouse (desktop)
+  fab.addEventListener('mousedown', e => {
+    startX = e.clientX; startY = e.clientY;
+    const rect = fab.getBoundingClientRect();
+    startLeft   = rect.left;
+    startBottom = window.innerHeight - rect.bottom;
+    isDragging  = true; moveCount = 0;
+    fab.style.transition = 'none';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+
+  function onMouseMove(e) {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      moveCount++;
+      const newLeft   = Math.max(10, Math.min(window.innerWidth  - 62, startLeft   + dx));
+      const newBottom = Math.max(10, Math.min(window.innerHeight - 62, startBottom - dy));
+      fab.style.left   = newLeft   + 'px';
+      fab.style.right  = 'auto';
+      fab.style.bottom = newBottom + 'px';
+      localStorage.setItem('iam_fab_pos', JSON.stringify({ left: newLeft, bottom: newBottom }));
+    }
+  }
+
+  function onMouseUp() {
+    isDragging = false;
+    fab.style.transition = '';
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    if (moveCount === 0) toggleAIPanel();
   }
 
   fab.removeAttribute('onclick');
 
   try {
     const pos = JSON.parse(localStorage.getItem('iam_fab_pos') || 'null');
-    if (pos) { fab.style.left = pos.left + 'px'; fab.style.right = 'auto'; fab.style.bottom = pos.bottom + 'px'; }
+    if (pos) {
+      fab.style.left   = pos.left   + 'px';
+      fab.style.right  = 'auto';
+      fab.style.bottom = pos.bottom + 'px';
+    }
   } catch(e) {}
 }
 

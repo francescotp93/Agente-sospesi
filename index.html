@@ -109,6 +109,28 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .nbtn:hover{background:var(--surf2);color:var(--txt2);}
 .nbtn.act{color:#fff;background:var(--acc);font-weight:700;box-shadow:0 4px 12px rgba(var(--acc-rgb),.4);}
 .nbtn.act::after{display:none;}
+/* ── LAB OVERLAY ──────────────────────────────────────────────────────── */
+#lab-overlay{position:fixed;inset:0;background:#04080F;z-index:9999;display:none;overflow:hidden;}
+#lab-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#lab-flask{position:absolute;}
+#lab-flash{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,.85) 0%,rgba(26,122,232,.3) 45%,transparent 70%);transform:scale(0);pointer-events:none;}
+#lab-shards{position:absolute;width:0;height:0;}
+.lab-shard{position:absolute;width:20px;height:20px;background:linear-gradient(135deg,#00D4FF,rgba(26,122,232,.7));opacity:0;transform-origin:center;}
+#lab-logo{position:absolute;opacity:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
+#lab-logo-title{font-size:20px;font-weight:800;background:linear-gradient(135deg,#00D4FF,#1A7AE8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.2em;}
+#lab-logo-sub{font-size:9px;color:rgba(0,212,255,.55);letter-spacing:.25em;font-family:monospace;}
+#lab-iframe{display:none;position:absolute;inset:0;width:100%;height:100%;border:none;z-index:10;}
+#btn-back-iam{display:none;position:fixed;bottom:24px;left:24px;z-index:10001;padding:9px 16px;background:rgba(4,8,15,.92);border:1px solid rgba(0,212,255,.35);border-radius:20px;color:#00D4FF;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;backdrop-filter:blur(10px);align-items:center;gap:6px;}
+#btn-back-iam:hover{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.6);}
+@keyframes flask-drop{0%{transform:translateY(-110vh) rotate(-8deg);opacity:0}70%{transform:translateY(0) rotate(0);opacity:1}82%{transform:translateY(-20px) rotate(2deg)}93%{transform:translateY(4px) rotate(-1deg)}100%{transform:translateY(0) rotate(0)}}
+@keyframes flask-shatter{0%{opacity:1;transform:scale(1)}30%{opacity:1;transform:scale(1.3);filter:brightness(5) drop-shadow(0 0 18px #00D4FF)}100%{opacity:0;transform:scale(0.05)}}
+@keyframes flash-pop{0%{opacity:.95;transform:scale(0)}40%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(3.5)}}
+@keyframes shard-go{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:var(--se) scale(.15)}}
+@keyframes logo-up{0%{opacity:0;transform:scale(.12);filter:blur(14px)}55%{transform:scale(1.09);filter:blur(0)}80%{transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
+@keyframes logo-txt{0%{opacity:0;letter-spacing:.5em}100%{opacity:1;letter-spacing:.2em}}
+@keyframes iframe-in{0%{opacity:0}100%{opacity:1}}
+@keyframes overlay-out{0%{opacity:1}100%{opacity:0}}
+@keyframes back-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:translateX(0)}}
 .nbadge{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;border:1.5px solid var(--surf);}
 
 /* ── PANELS ── */
@@ -4212,11 +4234,85 @@ async function toggleLabAbilitato(userId, abilitato) {
 }
 
 async function openLab() {
+  const ov    = document.getElementById('lab-overlay');
+  const stage = document.getElementById('lab-stage');
+  const flask = document.getElementById('lab-flask');
+  const flash = document.getElementById('lab-flash');
+  const shards= document.getElementById('lab-shards');
+  const logo  = document.getElementById('lab-logo');
+  const title = document.getElementById('lab-logo-title');
+  const iframe= document.getElementById('lab-iframe');
+  const back  = document.getElementById('btn-back-iam');
+
+  // reset state
+  ov.style.opacity = '1'; ov.style.animation = ''; ov.style.display = 'block';
+  stage.style.opacity = '1'; stage.style.display = 'flex';
+  flask.style.animation = ''; flash.style.animation = '';
+  logo.style.opacity = '0'; logo.style.animation = '';
+  title.style.animation = '';
+  iframe.style.display = 'none'; iframe.src = '';
+  back.style.display = 'none';
+  shards.querySelectorAll('.lab-shard').forEach(s => { s.style.animation = ''; s.style.opacity = '0'; });
+
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  // Fase 1 — ampolla cade (900ms)
+  flask.style.animation = 'flask-drop .9s cubic-bezier(.22,.61,.36,1) forwards';
+  await wait(960);
+
+  // Fase 2 — si frantuma (550ms)
+  flask.style.animation = 'flask-shatter .35s ease-in forwards';
+  flash.style.animation = 'flash-pop .5s ease-out forwards';
+  shards.querySelectorAll('.lab-shard').forEach((s, i) => {
+    s.style.animation = `shard-go .55s ease-out ${i * 25}ms forwards`;
+  });
+  await wait(550);
+
+  // Fase 3 — logo emerge (950ms)
+  logo.style.animation = 'logo-up .85s cubic-bezier(.34,1.56,.64,1) forwards';
+  title.style.animation = 'logo-txt .6s ease-out .35s both';
+  await wait(950);
+
+  // Fase 4 — carica iframe con SSO
   const { data } = await db.auth.getSession();
   const token = data?.session?.access_token || '';
   const email = encodeURIComponent(ME?.email || '');
-  const nome = encodeURIComponent(((PROFILO?.nome || '') + ' ' + (PROFILO?.cognome || '')).trim());
-  window.open('https://lab-insurance-marketing.vercel.app?sso=true&user=' + email + '&nome=' + nome + '&token=' + token, '_blank');
+  const nome  = encodeURIComponent(((PROFILO?.nome || '') + ' ' + (PROFILO?.cognome || '')).trim());
+
+  iframe.style.opacity = '0';
+  iframe.style.display = 'block';
+  iframe.style.animation = 'iframe-in .45s ease-out forwards';
+  iframe.src = `https://lab-insurance-marketing.vercel.app?sso=true&user=${email}&nome=${nome}&token=${token}`;
+
+  iframe.addEventListener('load', () => {
+    iframe.contentWindow?.postMessage({
+      tipo: 'sso',
+      email: ME?.email || '',
+      nome: decodeURIComponent(nome),
+      ruolo: PROFILO?.ruolo || '',
+      token
+    }, 'https://lab-insurance-marketing.vercel.app');
+  }, { once: true });
+
+  stage.style.transition = 'opacity .3s';
+  stage.style.opacity = '0';
+  setTimeout(() => { stage.style.display = 'none'; }, 300);
+
+  back.style.display = 'flex';
+  back.style.animation = 'back-in .4s ease-out .15s both';
+}
+
+async function chiudiLab() {
+  const ov   = document.getElementById('lab-overlay');
+  const iframe = document.getElementById('lab-iframe');
+  const back = document.getElementById('btn-back-iam');
+  back.style.display = 'none';
+  ov.style.animation = 'overlay-out .3s ease-in forwards';
+  await new Promise(r => setTimeout(r, 320));
+  ov.style.display = 'none'; ov.style.animation = '';
+  iframe.style.display = 'none'; iframe.src = '';
+  const stage = document.getElementById('lab-stage');
+  stage.style.display = 'flex'; stage.style.opacity = '1'; stage.style.transition = '';
 }
 
 // ─── PANNELLO PERSONALE ───────────────────────────────────────────────────────
@@ -6828,5 +6924,51 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+
+<!-- ── LAB OVERLAY ───────────────────────────────────────────────────── -->
+<div id="lab-overlay">
+  <div id="lab-stage">
+    <!-- Flask che cade -->
+    <div id="lab-flask">
+      <svg width="58" height="84" viewBox="0 0 58 84" fill="none">
+        <rect x="19" y="0" width="20" height="5" rx="2" fill="rgba(0,212,255,.3)" stroke="#00D4FF" stroke-width="1.5"/>
+        <rect x="21" y="4" width="16" height="24" rx="1" fill="rgba(0,212,255,.1)" stroke="#00D4FF" stroke-width="1.5"/>
+        <path d="M21 28L5 60a18 18 0 0 0 16.4 24h15.2A18 18 0 0 0 53 60L37 28z" fill="rgba(0,212,255,.08)" stroke="#00D4FF" stroke-width="1.8"/>
+        <path d="M10 58a18 18 0 0 0 16.4 24h15.2A18 18 0 0 0 53 58z" fill="rgba(0,212,255,.2)"/>
+        <path d="M12 62q10-5 18-2q8 3 18-1" stroke="rgba(0,212,255,.4)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <circle cx="22" cy="66" r="2.2" fill="rgba(0,212,255,.55)"/>
+        <circle cx="35" cy="70" r="1.6" fill="rgba(26,122,232,.65)"/>
+        <circle cx="18" cy="72" r="1.4" fill="rgba(0,212,255,.35)"/>
+      </svg>
+    </div>
+    <!-- Flash d'impatto -->
+    <div id="lab-flash"></div>
+    <!-- Frammenti -->
+    <div id="lab-shards">
+      <div class="lab-shard" style="--se:translate(-140px,-70px) rotate(-55deg);clip-path:polygon(0 100%,45% 0,100% 75%)"></div>
+      <div class="lab-shard" style="--se:translate(145px,-65px) rotate(50deg);clip-path:polygon(0 75%,55% 0,100% 100%)"></div>
+      <div class="lab-shard" style="--se:translate(-95px,115px) rotate(-40deg);clip-path:polygon(0 0,100% 25%,55% 100%)"></div>
+      <div class="lab-shard" style="--se:translate(105px,125px) rotate(65deg);clip-path:polygon(45% 0,100% 65%,0 100%)"></div>
+      <div class="lab-shard" style="--se:translate(-165px,25px) rotate(-70deg);clip-path:polygon(0 50%,65% 0,100% 100%)"></div>
+      <div class="lab-shard" style="--se:translate(175px,35px) rotate(45deg);clip-path:polygon(35% 0,100% 55%,0 100%)"></div>
+      <div class="lab-shard" style="--se:translate(-35px,155px) rotate(-20deg);clip-path:polygon(0 0,100% 0,50% 100%)"></div>
+      <div class="lab-shard" style="--se:translate(45px,-150px) rotate(30deg);clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
+    </div>
+    <!-- Logo Lab -->
+    <div id="lab-logo">
+      <svg width="72" height="72" viewBox="0 0 120 120"><defs><radialGradient id="lo-a" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#1A3A7A"/><stop offset="100%" stop-color="#050E28"/></radialGradient><radialGradient id="lo-b" cx="30%" cy="40%" r="70%"><stop offset="0%" stop-color="#00EEFF" stop-opacity=".9"/><stop offset="100%" stop-color="#6633CC" stop-opacity=".5"/></radialGradient><linearGradient id="lo-wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00DDFF"/><stop offset="50%" stop-color="#AA44FF"/><stop offset="100%" stop-color="#00DDFF"/></linearGradient><clipPath id="lo-fc"><path d="M46 38Q28 50 18 72Q10 90 12 100Q15 112 60 112Q105 112 108 100Q110 90 102 72Q92 50 74 38Z"/></clipPath></defs><path d="M46 38Q28 50 18 72Q10 90 12 100Q15 112 60 112Q105 112 108 100Q110 90 102 72Q92 50 74 38Z" fill="url(#lo-a)" stroke="#1A4A9A" stroke-width="1.5"/><path d="M22 82Q20 94 22 102Q25 112 60 112Q95 112 98 102Q100 94 98 82Q80 88 60 88Q40 88 22 82Z" fill="url(#lo-b)" opacity=".6" clip-path="url(#lo-fc)"/><path d="M18 74Q35 64 60 68Q85 72 102 64" fill="none" stroke="url(#lo-wg)" stroke-width="2" stroke-linecap="round" clip-path="url(#lo-fc)"/><rect x="44" y="15" width="32" height="24" rx="3" fill="#1A4A9A" stroke="#2A5ABA" stroke-width="1"/><rect x="42" y="10" width="36" height="8" rx="3" fill="#3A7AEA" opacity=".8"/></svg>
+      <div id="lab-logo-title">LAB INSURANCE</div>
+      <div id="lab-logo-sub">MARKETING · β1.0</div>
+    </div>
+  </div>
+  <!-- Iframe Lab -->
+  <iframe id="lab-iframe" allow="clipboard-read; clipboard-write"></iframe>
+  <!-- Torna a IAM -->
+  <button id="btn-back-iam" onclick="chiudiLab()">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 3L5 8l5 5"/></svg>
+    IAM
+  </button>
+</div>
+
 </body>
 </html>

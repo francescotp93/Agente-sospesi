@@ -6532,29 +6532,36 @@ async function saveTCMPos() {
   const cliente = gv('tcm-p-cliente');
   if (!cliente) { alert('Inserisci il nome del cliente.'); return; }
   const payload = {
-    tipo:        'tcm',
-    anno:        getTCMAnno(),
+    tipo:          'tcm',
+    anno:          getTCMAnno(),
     cliente,
-    produttore:  gv('tcm-p-prod')     || null,
-    prodotto:    gv('tcm-p-prodotto') || null,
-    importo:     parseNum(gv('tcm-p-premio')),
-    note:        gv('tcm-p-note')     || null,
-    pezzi:       1,
-    utente_id:   ME?.id,
-    utente_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email,
+    produttore:    gv('tcm-p-prod')     || null,
+    prodotto:      gv('tcm-p-prodotto') || null,
+    importo:       parseNum(gv('tcm-p-premio')) || 0,
+    note:          gv('tcm-p-note')     || null,
+    pezzi:         1,
+    utente_id:     ME?.id || null,
+    utente_nome:   PROFILO ? (PROFILO.nome+' '+(PROFILO.cognome||'')).trim() : (ME?.email || null),
+    creato_il:     new Date().toISOString(),
     aggiornato_il: new Date().toISOString(),
   };
+  console.log('saveTCMPos payload:', payload);
+  if (!db) { alert('DB non disponibile'); return; }
   try {
-    if (!db) { alert('DB non disponibile'); return; }
     if (TCM_EDIT_ID) {
-      await db.from('iam_gare_posizioni').update(payload).eq('id', TCM_EDIT_ID);
+      const { error } = await db.from('iam_gare_posizioni').update(payload).eq('id', TCM_EDIT_ID);
+      if (error) throw error;
     } else {
-      payload.creato_il = new Date().toISOString();
-      await db.from('iam_gare_posizioni').insert(payload);
+      const { data, error } = await db.from('iam_gare_posizioni').insert(payload).select();
+      if (error) throw error;
+      console.log('TCM inserito:', data);
     }
     closeModal('modal-tcm-pos');
     await loadTCMFromDB();
-  } catch(e) { alert('Errore: '+(e.message||e)); }
+  } catch(e) {
+    console.error('saveTCMPos error:', e);
+    alert('Errore: ' + (e.message || JSON.stringify(e)));
+  }
 }
 
 async function delTCMPos(id) {

@@ -5229,6 +5229,18 @@ function selPerfTab(t) {
     const btn = document.getElementById('pt-'+x); if(btn) btn.classList.toggle('act', x===t);
   });
   PERF_CUR = t;
+
+  // Controllo permessi per operativi
+  if (PROFILO?.ruolo === 'operativo') {
+    const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+    const mieFlags = flags[ME?.id] || {};
+    const LOCKED_MSG = '<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;"><i class="ti ti-lock" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>Sezione non abilitata.<br>Contatta il tuo responsabile.</div>';
+
+    if (t === 'tcm'    && mieFlags['kpi_tcm']    === false) { document.getElementById('pp-tcm').innerHTML    = LOCKED_MSG; return; }
+    if (t === 're'     && mieFlags['kpi_re']     === false) { document.getElementById('pp-re').innerHTML     = LOCKED_MSG; return; }
+    if (t === 'consap' && mieFlags['kpi_consap'] === false) { document.getElementById('pp-consap').innerHTML = LOCKED_MSG; return; }
+  }
+
   if(t==='gare')   { renderGaraTabs(); selGaraTab(GARA_CUR); }
   if(t==='consap') loadCSFromDB();
   if(t==='re')     loadREFromDB();
@@ -5246,6 +5258,19 @@ function selGaraTab(g) {
       else       { btn.style.background='var(--surf2)'; btn.style.color='var(--txt2)'; btn.style.borderColor='var(--bord2)'; }
     }
   });
+
+  // Controllo permessi gare per operativi
+  if (PROFILO?.ruolo === 'operativo') {
+    const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+    const mieFlags = flags[ME?.id] || {};
+    const flagKey = { re_pezzi:'gara_re_pezzi', rca:'gara_rca', finanziati:'gara_finanziati', cross:'gara_cross', rinnovi:'gara_rinnovi' }[g];
+    if (flagKey && mieFlags[flagKey] === false) {
+      const el = document.getElementById('gp-'+g);
+      if (el) el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;"><i class="ti ti-lock" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>Sezione non abilitata.<br>Contatta il tuo responsabile.</div>';
+      return;
+    }
+  }
+
   renderGara(g);
 }
 
@@ -5532,6 +5557,7 @@ async function salvaRinnMese(mese, existId) {
 const KPI_FLAGS_LABELS = {
   kpi_re:          'KPI Rami Elementari',
   kpi_consap:      'KPI CONSAP',
+  kpi_tcm:         'KPI TCM (Vita)',
   gara_re_pezzi:   'Gara RE Pezzi',
   gara_rca:        'Gara RCA Attack',
   gara_finanziati: 'Gara Finanziati',

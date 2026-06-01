@@ -1744,7 +1744,7 @@ input[type=file]{display:none;}
 </div>
 
 <!-- MODAL TCM -->
-<div class="modal" id="modal-tcm-pos" style="display:none;">
+<div class="modal" id="modal-tcm-pos">
   <div class="modal-box">
     <div class="modal-hdr">
       <div class="modal-title" id="tcm-pos-title">Nuova pratica TCM</div>
@@ -3857,11 +3857,6 @@ function loadDemo() {
 
 // ─── MODAL HELPER ─────────────────────────────────────────────────────────────
 function closeModal(id) {
-  if (id === 'modal-tcm-pos') {
-    const m = document.getElementById('modal-tcm-pos');
-    if(m) { m.style.cssText = 'display:none !important;'; m.classList.remove('show'); }
-    return;
-  }
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('show');
@@ -6622,14 +6617,7 @@ function openTCMPosModal(editId) {
 
   // Apri il modal standard
   const m = document.getElementById('modal-tcm-pos');
-  if(m) {
-    m.style.display = 'block';
-    m.style.position = 'fixed';
-    m.style.inset = '0';
-    m.style.zIndex = '99999';
-    m.style.background = 'rgba(0,0,0,.5)';
-    m.style.overflowY = 'auto';
-  }
+  if(m) m.classList.add('show');
 }
 
 async function editTCMPos(id) { openTCMPosModal(id); }

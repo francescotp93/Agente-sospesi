@@ -9,7 +9,7 @@
 <meta name="application-name" content="IAM">
 <meta name="apple-mobile-web-app-title" content="IAM">
 <title>IAM · Insurance Agency Management</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 2 L62 14 L62 38 Q62 56 32 64 Q2 56 2 38 L2 14 Z' fill='%23E8500A'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='24' font-weight='700' fill='white' text-anchor='middle'%3Ei%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23020B22'/%3E%3Cpath d='M50 5 L90 18 L90 55 Q90 82 50 95 Q10 82 10 55 L10 18 Z' fill='%23030C1F' stroke='%2318DDFF' stroke-width='2'/%3E%3Ctext x='50' y='62' font-family='Arial Narrow,Arial,sans-serif' font-size='38' font-weight='700' text-anchor='middle' fill='%2308AAFF'%3EIAM%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -320,15 +320,20 @@ input[type=file]{display:none;}
 <!-- ═══ LOGIN ═══ -->
 <div class="ls" id="login-screen">
   <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;">
-    <div style="position:relative;width:110px;height:110px;background:#040912;border-radius:20px;display:flex;align-items:center;justify-content:center;border-top:3px solid #00ccff;border-left:3px solid #00ccff;">
-      <span style="font-family:'Share Tech Mono',monospace;font-size:58px;font-weight:700;background:linear-gradient(180deg,#00ccff,#0044ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">i</span>
-      <div style="position:absolute;top:10px;right:10px;width:8px;height:8px;border-radius:50%;background:#00aaff;opacity:0.5;"></div>
-      <div style="position:absolute;top:10px;right:10px;width:4px;height:4px;border-radius:50%;background:#00ccff;margin:2px;"></div>
-    </div>
-    <div style="margin-top:14px;text-align:center;">
-      <div style="font-family:'Share Tech Mono',monospace;font-size:32px;font-weight:700;color:#fff;letter-spacing:8px;">IAM</div>
-      <div style="font-size:9px;color:#1a4080;letter-spacing:3px;margin-top:4px;font-family:'Share Tech Mono',monospace;">INSURANCE AGENCY MANAGEMENT</div>
-    </div>
+<svg width="200" height="200" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="gLl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#20EEE8"/><stop offset="45%" stop-color="#08AAFF"/><stop offset="100%" stop-color="#1450FF"/></linearGradient><linearGradient id="gSl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#18DDFF"/><stop offset="100%" stop-color="#1040EE"/></linearGradient><linearGradient id="gS2l" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#18DDFF"/><stop offset="100%" stop-color="#1040EE"/></linearGradient></defs>
+<rect width="680" height="680" fill="#020B22"/><circle cx="340" cy="340" r="265" fill="#060F2E" opacity="0.35"/>
+<path d="M340 58 L540 134 L540 338 Q540 498 340 578 Q140 498 140 338 L140 134 Z" fill="none" stroke="#18DDFF" stroke-width="2" opacity="0.18"/>
+<path d="M340 74 L524 148 L524 338 Q524 482 340 558 Q156 482 156 338 L156 148 Z" fill="#030C1F" stroke="url(#gSl)" stroke-width="8.5"/>
+<path d="M340 94 L504 164 L504 338 Q504 466 340 536 Q176 466 176 338 L176 164 Z" fill="none" stroke="url(#gS2l)" stroke-width="1.8" opacity="0.55"/>
+<line x1="238" y1="188" x2="284" y2="163" stroke="#18DDFF" stroke-width="2" opacity="0.7"/><line x1="284" y1="163" x2="340" y2="146" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><line x1="340" y1="146" x2="396" y2="163" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><line x1="396" y1="163" x2="442" y2="188" stroke="#18DDFF" stroke-width="2" opacity="0.7"/>
+<circle cx="340" cy="146" r="11" fill="#040D20" stroke="#20EEE8" stroke-width="3"/><circle cx="340" cy="146" r="4" fill="#20EEE8"/><circle cx="284" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="238" cy="188" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.7"/><circle cx="442" cy="188" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.7"/>
+<line x1="238" y1="480" x2="284" y2="502" stroke="#18DDFF" stroke-width="2" opacity="0.6"/><line x1="284" y1="502" x2="340" y2="518" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><line x1="340" y1="518" x2="396" y2="502" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><line x1="396" y1="502" x2="442" y2="480" stroke="#18DDFF" stroke-width="2" opacity="0.6"/>
+<circle cx="340" cy="518" r="12" fill="#040D20" stroke="#40F060" stroke-width="3.5"/><circle cx="340" cy="518" r="4.5" fill="#40F060"/><line x1="340" y1="530" x2="340" y2="550" stroke="#20BB50" stroke-width="2.5" opacity="0.35"/><circle cx="284" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="238" cy="480" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.6"/><circle cx="442" cy="480" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.6"/>
+<text x="340" y="400" font-family="Arial Narrow,Arial,sans-serif" font-size="148" font-weight="700" text-anchor="middle" fill="url(#gLl)" letter-spacing="8">IAM</text>
+<text x="340" y="444" font-family="Arial,sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#020B22" letter-spacing="4" stroke="#020B22" stroke-width="6" stroke-linejoin="round">INSURANCE AGENCY MANAGEMENT</text>
+<text x="340" y="444" font-family="Arial,sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#ffffff" letter-spacing="4">INSURANCE AGENCY MANAGEMENT</text>
+</svg>
   </div>
   <div style="width:40px;height:2px;background:var(--acc);border-radius:1px;margin-bottom:24px;"></div>
   <div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;text-align:center;">Accesso riservato alla tua agenzia</div>
@@ -368,14 +373,12 @@ input[type=file]{display:none;}
 <div class="hdr">
   <div class="hdr-in">
     <div class="hdr-logo">
-      <div style="position:relative;width:36px;height:36px;background:#040912;border-radius:8px;display:flex;align-items:center;justify-content:center;border-top:2px solid #00ccff;border-left:2px solid #00ccff;flex-shrink:0;">
-        <span style="font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;background:linear-gradient(180deg,#00ccff,#0044ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">i</span>
-        <div style="position:absolute;top:4px;right:4px;width:3px;height:3px;border-radius:50%;background:#00ccff;opacity:0.7;"></div>
-      </div>
-      <div>
-        <div class="hdr-title" style="font-family:'Share Tech Mono',monospace;letter-spacing:4px;">IAM</div>
-        <div class="hdr-sub" id="hdr-sub">Insurance Agency Management</div>
-      </div>
+<svg width="36" height="36" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gLh" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#20EEE8"/><stop offset="45%" stop-color="#08AAFF"/><stop offset="100%" stop-color="#1450FF"/></linearGradient><linearGradient id="gSh" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#18DDFF"/><stop offset="100%" stop-color="#1040EE"/></linearGradient></defs><path d="M340 74 L524 148 L524 338 Q524 482 340 558 Q156 482 156 338 L156 148 Z" fill="#030C1F" stroke="url(#gSh)" stroke-width="8.5"/><line x1="284" y1="163" x2="340" y2="146" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><line x1="340" y1="146" x2="396" y2="163" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><circle cx="340" cy="146" r="11" fill="#040D20" stroke="#20EEE8" stroke-width="3"/><circle cx="340" cy="146" r="4" fill="#20EEE8"/><circle cx="284" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><line x1="284" y1="502" x2="340" y2="518" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><line x1="340" y1="518" x2="396" y2="502" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><circle cx="340" cy="518" r="12" fill="#040D20" stroke="#40F060" stroke-width="3.5"/><circle cx="340" cy="518" r="4.5" fill="#40F060"/><circle cx="284" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><text x="340" y="400" font-family="Arial Narrow,Arial,sans-serif" font-size="148" font-weight="700" text-anchor="middle" fill="url(#gLh)" letter-spacing="8">IAM</text></svg>
+<div style="width:1px;height:28px;background:#0a1e3c;margin:0 10px;"></div>
+<div>
+<div style="font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;color:var(--txt);letter-spacing:2px;">IAM</div>
+<div class="hdr-sub" id="hdr-sub" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:2px;">INSURANCE AGENCY MANAGEMENT</div>
+</div>
     </div>
     <div class="hdr-right">
       <div class="spill" id="s-pill">In attesa</div>

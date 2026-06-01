@@ -3856,10 +3856,14 @@ function loadDemo() {
 
 // ─── MODAL HELPER ─────────────────────────────────────────────────────────────
 function closeModal(id) {
+  if (id === 'modal-tcm-pos') {
+    const m = document.getElementById('modal-tcm-pos');
+    if(m) { m.style.cssText = 'display:none !important;'; m.classList.remove('show'); }
+    return;
+  }
   const el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('show');
-  if (id === 'modal-tcm-pos') el.style.display = 'none';
 }
 
 // ─── MULTI-UTENZA ─────────────────────────────────────────────────────────────
@@ -6588,7 +6592,6 @@ function renderTCM() {
 
 function openTCMPosModal(editId) {
   TCM_EDIT_ID = editId || null;
-  document.getElementById('tcm-pos-title').textContent = editId ? 'Modifica pratica TCM' : 'Nuova pratica TCM';
   loadTeam();
   const sel = document.getElementById('tcm-p-prod');
   if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
@@ -6605,14 +6608,13 @@ function openTCMPosModal(editId) {
     ['tcm-p-cliente','tcm-p-premio','tcm-p-prodotto','tcm-p-note'].forEach(id => {
       const e = document.getElementById(id); if(e) e.value = '';
     });
-    document.getElementById('tcm-p-data').value = new Date().toISOString().split('T')[0];
+    const d = document.getElementById('tcm-p-data');
+    if(d) d.value = new Date().toISOString().split('T')[0];
   }
-  const mTcm = document.getElementById('modal-tcm-pos');
-  mTcm.style.display = 'block';
-  mTcm.style.position = 'fixed';
-  mTcm.style.inset = '0';
-  mTcm.style.zIndex = '9999';
-  mTcm.classList.add('show');
+  // Apertura forzata
+  const m = document.getElementById('modal-tcm-pos');
+  if (!m) { alert('Errore: modal non trovato'); return; }
+  m.style.cssText = 'display:block !important; position:fixed !important; inset:0 !important; z-index:99999 !important; background:rgba(0,0,0,.5) !important; overflow-y:auto !important;';
 }
 
 async function editTCMPos(id) { openTCMPosModal(id); }

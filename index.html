@@ -6593,9 +6593,8 @@ function renderTCM() {
 
 function openTCMPosModal(editId) {
   TCM_EDIT_ID = editId || null;
-  // Rimuovi overlay esistente se c'è
-  const existing = document.getElementById('tcm-overlay-dyn');
-  if (existing) existing.remove();
+  const ex = document.getElementById('tcm-overlay-dyn');
+  if(ex) ex.remove();
 
   loadTeam();
   const prodOptions = '<option value="">— nessuno —</option>' +

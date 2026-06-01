@@ -1743,7 +1743,7 @@ input[type=file]{display:none;}
 </div>
 
 <!-- MODAL TCM -->
-<div class="modal" id="modal-tcm-pos">
+<div class="modal" id="modal-tcm-pos" style="display:none;">
   <div class="modal-box">
     <div class="modal-hdr">
       <div class="modal-title" id="tcm-pos-title">Nuova pratica TCM</div>
@@ -3855,7 +3855,12 @@ function loadDemo() {
 }
 
 // ─── MODAL HELPER ─────────────────────────────────────────────────────────────
-function closeModal(id) { document.getElementById(id)?.classList.remove('show'); }
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('show');
+  if (id === 'modal-tcm-pos') el.style.display = 'none';
+}
 
 // ─── MULTI-UTENZA ─────────────────────────────────────────────────────────────
 let PROFILO = null; // profilo utente corrente con ruolo
@@ -6602,9 +6607,12 @@ function openTCMPosModal(editId) {
     });
     document.getElementById('tcm-p-data').value = new Date().toISOString().split('T')[0];
   }
-  const _mTcm = document.getElementById('modal-tcm-pos');
-  _mTcm.style.zIndex = '9999';
-  _mTcm.classList.add('show');
+  const mTcm = document.getElementById('modal-tcm-pos');
+  mTcm.style.display = 'block';
+  mTcm.style.position = 'fixed';
+  mTcm.style.inset = '0';
+  mTcm.style.zIndex = '9999';
+  mTcm.classList.add('show');
 }
 
 async function editTCMPos(id) { openTCMPosModal(id); }

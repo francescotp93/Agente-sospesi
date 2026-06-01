@@ -1162,6 +1162,43 @@ input[type=file]{display:none;}
 
     </div>
   </div>
+
+  <!-- TCM -->
+  <div id="pp-tcm" style="display:none;">
+    <div style="padding:0 12px 12px;">
+      <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:700;">🛡️ TCM — Nuova Produzione 2026</div>
+          <select id="tcm-anno" onchange="loadTCMFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+          </select>
+        </div>
+        <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Fasce Rappel New Business</div>
+          <div id="tcm-fasce"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="background:var(--blu-bg);border-radius:var(--rs);padding:12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--blu-txt);text-transform:uppercase;margin-bottom:4px;">Produzione</div>
+            <div style="font-size:22px;font-weight:800;color:var(--blu-txt);" id="tcm-tot-prod">€0</div>
+          </div>
+          <div style="background:var(--grn-bg);border-radius:var(--rs);padding:12px;text-align:center;">
+            <div style="font-size:10px;font-weight:700;color:var(--grn-txt);text-transform:uppercase;margin-bottom:4px;">Rappel maturato</div>
+            <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="tcm-rappel">€0</div>
+          </div>
+        </div>
+        <div id="tcm-gauge"></div>
+      </div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:700;">Pratiche registrate</div>
+          <button onclick="openTCMPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+        </div>
+        <div id="tcm-pos-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL POSIZIONE HDI/CONSAP/RE -->
@@ -1505,43 +1542,6 @@ input[type=file]{display:none;}
     </div>
 
     <div style="height:calc(env(safe-area-inset-bottom,0px) + 8px);flex-shrink:0;"></div>
-  </div>
-</div>
-
-<!-- TCM -->
-<div id="pp-tcm" style="display:none;">
-  <div style="padding:0 12px 12px;">
-    <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:700;">🛡️ TCM — Nuova Produzione 2026</div>
-        <select id="tcm-anno" onchange="loadTCMFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
-        </select>
-      </div>
-      <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:14px;">
-        <div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Fasce Rappel New Business</div>
-        <div id="tcm-fasce"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <div style="background:var(--blu-bg);border-radius:var(--rs);padding:12px;text-align:center;">
-          <div style="font-size:10px;font-weight:700;color:var(--blu-txt);text-transform:uppercase;margin-bottom:4px;">Produzione</div>
-          <div style="font-size:22px;font-weight:800;color:var(--blu-txt);" id="tcm-tot-prod">€0</div>
-        </div>
-        <div style="background:var(--grn-bg);border-radius:var(--rs);padding:12px;text-align:center;">
-          <div style="font-size:10px;font-weight:700;color:var(--grn-txt);text-transform:uppercase;margin-bottom:4px;">Rappel maturato</div>
-          <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="tcm-rappel">€0</div>
-        </div>
-      </div>
-      <div id="tcm-gauge"></div>
-    </div>
-    <div style="background:var(--surf);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shd);">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div style="font-size:13px;font-weight:700;">Pratiche registrate</div>
-        <button onclick="openTCMPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
-      </div>
-      <div id="tcm-pos-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div>
-    </div>
   </div>
 </div>
 

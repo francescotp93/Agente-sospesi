@@ -6593,42 +6593,38 @@ function renderTCM() {
 
 function openTCMPosModal(editId) {
   TCM_EDIT_ID = editId || null;
+
+  // Rimuovi qualsiasi overlay dinamico rimasto
   const ex = document.getElementById('tcm-overlay-dyn');
   if(ex) ex.remove();
 
   loadTeam();
-  const prodOptions = '<option value="">— nessuno —</option>' +
+  const sel = document.getElementById('tcm-p-prod');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' +
     TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
 
   const p = editId ? TCM_POSIZIONI.find(x=>x.id===editId) : null;
 
-  const overlay = document.createElement('div');
-  overlay.id = 'tcm-overlay-dyn';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;';
-  overlay.innerHTML = `
-    <div style="background:var(--surf);border-radius:var(--r);width:100%;max-width:480px;margin-top:20px;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:.5px solid var(--bord);">
-        <div style="font-size:16px;font-weight:700;">${editId ? 'Modifica pratica TCM' : 'Nuova pratica TCM'}</div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="saveTCMPos()" style="padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;">Salva</button>
-          <button onclick="document.getElementById('tcm-overlay-dyn').remove()" style="padding:8px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">✕</button>
-        </div>
-      </div>
-      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <div class="fld"><label>Cliente *</label><input type="text" id="tcm-p-cliente" placeholder="Nome cliente" value="${p?.cliente||''}"></div>
-        <div class="fld"><label>Produttore</label><select id="tcm-p-prod">${prodOptions}</select></div>
-        <div class="fld"><label>Premio annuo (€)</label><input type="number" id="tcm-p-premio" placeholder="0.00" step="0.01" value="${p?.importo||''}"></div>
-        <div class="fld"><label>Data stipula</label><input type="date" id="tcm-p-data" value="${new Date().toISOString().split('T')[0]}"></div>
-        <div class="fld"><label>Prodotto TCM</label><input type="text" id="tcm-p-prodotto" placeholder="es. Vita Intera, Temporanea..." value="${p?.prodotto||''}"></div>
-        <div class="fld"><label>Note</label><textarea id="tcm-p-note" rows="2" placeholder="Note opzionali...">${p?.note||''}</textarea></div>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
+  if (p) {
+    document.getElementById('tcm-p-cliente').value  = p.cliente  || '';
+    document.getElementById('tcm-p-premio').value   = p.importo  || '';
+    document.getElementById('tcm-p-prodotto').value = p.prodotto || '';
+    document.getElementById('tcm-p-note').value     = p.note     || '';
+    document.getElementById('tcm-p-data').value     = new Date().toISOString().split('T')[0];
+    if (sel && p.produttore) sel.value = p.produttore;
+  } else {
+    ['tcm-p-cliente','tcm-p-premio','tcm-p-prodotto','tcm-p-note'].forEach(id => {
+      const e = document.getElementById(id); if(e) e.value = '';
+    });
+    const d = document.getElementById('tcm-p-data');
+    if(d) d.value = new Date().toISOString().split('T')[0];
+  }
 
-  // Imposta produttore se in modifica
-  if (p?.produttore) {
-    const sel = document.getElementById('tcm-p-prod');
-    if (sel) sel.value = p.produttore;
+  // Apri il modal standard
+  const m = document.getElementById('modal-tcm-pos');
+  if(m) {
+    m.style.cssText = '';
+    m.classList.add('show');
   }
 }
 

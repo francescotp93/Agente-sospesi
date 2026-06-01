@@ -6623,8 +6623,12 @@ function openTCMPosModal(editId) {
   // Apri il modal standard
   const m = document.getElementById('modal-tcm-pos');
   if(m) {
-    m.style.cssText = '';
-    m.classList.add('show');
+    m.style.display = 'block';
+    m.style.position = 'fixed';
+    m.style.inset = '0';
+    m.style.zIndex = '99999';
+    m.style.background = 'rgba(0,0,0,.5)';
+    m.style.overflowY = 'auto';
   }
 }
 

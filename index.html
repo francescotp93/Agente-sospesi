@@ -4201,9 +4201,14 @@ async function cambiaRuolo(userId, ruoloAttuale) {
 
 async function toggleLabAbilitato(userId, abilitato) {
   try {
-    await db.from('iam_utenti').update({ lab_abilitato: !abilitato }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ lab_abilitato: !abilitato }).eq('id', userId);
+    if (error) throw error;
+    if (userId === ME?.id && PROFILO) {
+      PROFILO.lab_abilitato = !abilitato;
+      applicaPermessi(PROFILO.ruolo);
+    }
     await renderUtenti();
-  } catch(e) { alert('Errore: '+e.message); }
+  } catch(e) { alert('Errore Lab toggle: ' + e.message); }
 }
 
 async function openLab() {

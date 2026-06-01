@@ -6601,7 +6601,9 @@ function openTCMPosModal(editId) {
     });
     document.getElementById('tcm-p-data').value = new Date().toISOString().split('T')[0];
   }
-  document.getElementById('modal-tcm-pos').classList.add('show');
+  const _mTcm = document.getElementById('modal-tcm-pos');
+  _mTcm.style.zIndex = '9999';
+  _mTcm.classList.add('show');
 }
 
 async function editTCMPos(id) { openTCMPosModal(id); }

@@ -707,7 +707,7 @@ input[type=file]{display:none;}
     </div>
     <div style="padding:0 12px 8px;font-size:12px;color:var(--amb-txt);background:var(--amb-bg);margin:0 12px;border-radius:var(--rs);padding:10px 12px;">
       <i class="ti ti-info-circle" style="font-size:13px;vertical-align:-2px;margin-right:4px;"></i>
-      Cliccando <i class="ti ti-calendar-event"></i> su un appuntamento lo esporti in iCal / Google Calendar.
+      Cliccando 📅 su un appuntamento lo esporti in iCal / Google Calendar.
     </div>
     <div class="card" style="margin-top:10px;"><div id="ag-list"></div></div>
     <div style="height:16px;"></div>
@@ -2299,7 +2299,7 @@ async function caricaDatiPerData(dataSelezionata) {
       setVal('i-cassa',0); setVal('i-vers',0); setVal('i-spese',0);
       setVal('i-fondo',0); setVal('i-pos-bianco',0); setVal('i-pos-nero',0); setVal('i-note','');
       APP.sospesi=[]; APP.incassi=[];
-      showSavemsg('<i class="ti ti-calendar-event"></i> Nuova giornata — nessun dato precedente');
+      showSavemsg('📅 Nuova giornata — nessun dato precedente');
     }
   } catch(e) { console.warn('caricaDatiPerData:', e); }
 }
@@ -3024,8 +3024,8 @@ async function buildStorico() {
         <div class="ramt">€ ${fmt(r.valore_totale)}</div>
         <div class="rbadge bblu">vers. € ${fmt(r.versamenti)}</div>
         <div style="display:flex;gap:4px;margin-top:2px;">
-          <button onclick="apriVisualizzaStorico('${r.data_riferimento}')" style="font-size:10px;padding:2px 8px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--blu);border-radius:4px;cursor:pointer;"><i class="ti ti-eye"></i> Vedi</button>
-          <button onclick="apriModificaStorico('${r.data_riferimento}')" style="font-size:10px;padding:2px 8px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i> Modifica</button>
+          <button onclick="apriVisualizzaStorico('${r.data_riferimento}')" style="font-size:10px;padding:2px 8px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--blu);border-radius:4px;cursor:pointer;">👁 Vedi</button>
+          <button onclick="apriModificaStorico('${r.data_riferimento}')" style="font-size:10px;padding:2px 8px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️ Modifica</button>
         </div>
       </div>
     </div>`).join('');
@@ -3233,7 +3233,7 @@ function renderTeam() {
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           <span class="pbadge ${pcls}">${plbl} ${perf}%</span>
-          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
+          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;">✏️ Modifica</button>
         </div>
       </div>
 
@@ -3451,8 +3451,8 @@ function setDocLabel(tipo, nome, hasData) {
   const el = document.getElementById('docn-'+tipo);
   if (!el) return;
   el.innerHTML = `<span style="color:var(--grn);font-size:11px;">✓ ${nome}</span>
-    <button onclick="prevDoc('${tipo}')" style="margin-left:4px;font-size:10px;padding:2px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-eye"></i> Vedi</button>
-    <button onclick="delDoc('${tipo}')" style="margin-left:2px;font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-trash"></i></button>`;
+    <button onclick="prevDoc('${tipo}')" style="margin-left:4px;font-size:10px;padding:2px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">👁 Vedi</button>
+    <button onclick="delDoc('${tipo}')" style="margin-left:2px;font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">🗑</button>`;
 }
 
 function prevDoc(tipo) {
@@ -3573,15 +3573,15 @@ function renderTratt() {
             ${t.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':t.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
           </div>
           <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · 👤 '+t.collab:''}</div>
-          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'<i class="ti ti-calendar-event"></i>'} Recalling: ${t.recall}
-            <button onclick="openGCal('Recalling: ${encodeForAttr(t.cliente)} - ${encodeForAttr(t.prodotto)}','${t.recall}')" style="margin-left:5px;font-size:10px;padding:1px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
+          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'📅'} Recalling: ${t.recall}
+            <button onclick="openGCal('Recalling: ${encodeForAttr(t.cliente)} - ${encodeForAttr(t.prodotto)}','${t.recall}')" style="margin-left:5px;font-size:10px;padding:1px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅 Cal.</button>
           </div>`:''}
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-size:14px;font-weight:700;color:var(--acc);">€${fmt(parseNum(t.importo)||0)}</div>
           <div style="font-size:10px;color:var(--txt3);">${t.prob||0}%</div>
           <div class="tact-btns">
-            <button class="tact-btn" style="background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);" onclick="openTrattModal('${t.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="tact-btn" style="background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);" onclick="openTrattModal('${t.id}')">✏️</button>
             <button class="tact-btn" style="background:var(--red-bg);color:var(--red-txt);border:.5px solid var(--red);" onclick="delTratt('${t.id}')">✕</button>
           </div>
         </div>
@@ -3684,7 +3684,7 @@ function renderAgenda() {
       <div class="rico ${a.data===oggi?'red':'blu'}"><i class="ti ti-calendar-event"></i></div>
       <div class="rmain"><div class="rname">${a.titolo}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${a.note}</div>`:''}</div>
       <div class="rright" style="display:flex;flex-direction:column;gap:4px;">
-        <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
+        <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅 Cal.</button>
         <button onclick="delAgenda('${a.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('') : '';
@@ -4370,7 +4370,7 @@ async function apriVisualizzaStorico(dataRif) {
     const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="st-view-overlay" onclick="if(event.target.id==='st-view-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;max-height:80vh;overflow-y:auto;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div style="font-size:15px;font-weight:700;"><i class="ti ti-calendar-event"></i> ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div>
+          <div style="font-size:15px;font-weight:700;">📅 ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})}</div>
           <button onclick="document.getElementById('st-view-overlay').remove()" style="padding:6px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-size:13px;">✕</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
@@ -4400,7 +4400,7 @@ async function apriVisualizzaStorico(dataRif) {
           <div style="font-size:10px;color:var(--amb-txt);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Note</div>
           <div style="font-size:13px;">${data.note}</div>
         </div>`:''}
-        <button onclick="document.getElementById('st-view-overlay').remove();apriModificaStorico('${dataRif}')" style="width:100%;padding:12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;"><i class="ti ti-pencil"></i> Passa alla modifica</button>
+        <button onclick="document.getElementById('st-view-overlay').remove();apriModificaStorico('${dataRif}')" style="width:100%;padding:12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">✏️ Passa alla modifica</button>
       </div>
     </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
@@ -4617,8 +4617,8 @@ function renderWD() {
           ${commenti.length?`<div style="font-size:11px;color:var(--txt3);margin-top:4px;"><i class="ti ti-message-circle" style="font-size:12px;vertical-align:-1px;"></i> ${commenti.length} commento${commenti.length>1?'i':''}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-          <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i></button>
-          ${canEdit?`<button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>`:''}
+          <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">📅</button>
+          ${canEdit?`<button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;">✏️</button>`:''}
           <button onclick="openWDCommenti('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:4px;cursor:pointer;">💬</button>
           ${isMine||PROFILO?.ruolo==='top_master'?`<button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>`:''}
         </div>
@@ -5164,8 +5164,8 @@ function renderSezioniAz() {
               <div style="font-size:10px;color:var(--txt3);margin-top:1px;">${f.nome}</div>
             </div>
             <div style="display:flex;gap:4px;flex-shrink:0;">
-              ${f.data?`<button onclick="anteprimaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-eye"></i></button>`:''}
-              <button onclick="eliminaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-trash"></i></button>
+              ${f.data?`<button onclick="anteprimaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">👁</button>`:''}
+              <button onclick="eliminaDocAz('${sez}',${i})" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">🗑</button>
             </div>
           </div>`).join('')
         : '<div style="color:var(--txt3);font-size:12px;padding:6px 0;">Nessun documento caricato</div>'}
@@ -5723,7 +5723,7 @@ function renderCONSAP() {
         ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-        <button onclick="editCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
+        <button onclick="editCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">✏️</button>
         <button onclick="delCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`;
@@ -6166,7 +6166,7 @@ function renderREList() {
         ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-        <button onclick="editREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
+        <button onclick="editREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">✏️</button>
         <button onclick="delREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`;
@@ -6408,7 +6408,7 @@ function renderTickets() {
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
           ${(t.segnalato_da === ME?.id || isAdmin) && t.stato !== 'risolto' ?
             `<button onclick="openEditTicket(${t.id})"
-              style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;"><i class="ti ti-pencil"></i> Modifica</button>` : ''}
+              style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">✏️ Modifica</button>` : ''}
           ${isAdmin && t.stato !== 'risolto' ? `
           ${t.stato==='aperto'?`<button onclick="setTKStato(${t.id},'in_lavorazione')"
             style="font-size:10px;padding:3px 8px;background:var(--amb-bg);color:var(--amb-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">🔧 Prendi in carico</button>`:''}
@@ -6571,7 +6571,7 @@ function renderTCM() {
         ${p.note?`<div style="font-size:11px;color:var(--txt3);">📝 ${p.note}</div>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button onclick="editTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
+        <button onclick="editTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">✏️</button>
         <button onclick="delTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('');
@@ -6658,7 +6658,7 @@ function openEditTicket(id) {
   const html = `
     <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:600;display:flex;align-items:flex-end;" id="tk-edit-overlay" onclick="if(event.target.id==='tk-edit-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:14px;"><i class="ti ti-pencil"></i> Modifica ticket #${id}</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">✏️ Modifica ticket #${id}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div class="fld"><label>Titolo</label><input type="text" id="tke-titolo" value="${(t.titolo||'').replace(/"/g,'&quot;')}"></div>
           <div class="fld"><label>Descrizione</label><textarea id="tke-descr" rows="2">${t.descrizione||''}</textarea></div>

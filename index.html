@@ -1608,6 +1608,22 @@ input[type=file]{display:none;}
           <div class="fld"><label>Tipo collaborazione</label>
             <select id="mc-tipo"><option>Subagente</option><option>Produttore</option><option>Dipendente</option><option>Altro</option></select>
           </div>
+          <div class="fld ffull">
+            <label>Compagnie operative</label>
+            <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-hdi" style="accent-color:var(--acc);"> HDI</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-allianz" style="accent-color:var(--acc);"> Allianz</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-groupama" style="accent-color:var(--acc);"> Groupama</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-prima" style="accent-color:var(--acc);"> Prima</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-generali" style="accent-color:var(--acc);"> Generali</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-sara" style="accent-color:var(--acc);"> Sara</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-vittoria" style="accent-color:var(--acc);"> Vittoria</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-unipolsai" style="accent-color:var(--acc);"> UnipolSai</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-altre" style="accent-color:var(--acc);"> Altre</label>
+              </div>
+            </div>
+          </div>
           <div class="fld"><label>Valore portafoglio (€)</label><input type="number" id="mc-port" step="0.01" inputmode="decimal"></div>
           <div class="fld"><label>Data inizio</label><input type="date" id="mc-dinizio"></div>
         </div>
@@ -3263,6 +3279,8 @@ function renderTeam() {
     if(c.rami?.re)   rami.push('<span class="rc rc-re">Rami El.</span>');
     if(c.rami?.cau)  rami.push('<span class="rc rc-cau">Cauzioni</span>');
     if(c.rami?.inf)  rami.push('<span class="rc rc-re">Infortuni</span>');
+    const compLabels = {hdi:'HDI',allianz:'Allianz',groupama:'Groupama',prima:'Prima',generali:'Generali',sara:'Sara',vittoria:'Vittoria',unipolsai:'UnipolSai',altre:'Altre'};
+    const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${compLabels[k]||k}</span>`).join('');
 
     return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;">
 
@@ -3273,6 +3291,7 @@ function renderTeam() {
           <div style="font-size:16px;font-weight:700;color:#fff;">${c.nome||''} ${c.cogn||''}</div>
           <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">${c.tipo||'Subagente'}${c.rui?' · RUI '+c.rui:''}</div>
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${rami.join('')}</div>
+          ${compBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${compBadges}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
           <span class="pbadge ${pcls}">${plbl} ${perf}%</span>
@@ -3388,6 +3407,9 @@ function openCollabModal(id) {
     sv('mc-note',c.note); sv('mc-dinizio',c.dinizio);
     if(document.getElementById('mc-tipo')) document.getElementById('mc-tipo').value=c.tipo||'Subagente';
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=!!(c.rami?.[r]); });
+    const comps = c?.compagnie || [];
+    ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
+      .forEach(k => { const el=document.getElementById('mc-comp-'+k); if(el) el.checked=comps.includes(k); });
     TEAM_ANNI = (c.anni||[]).map(a=>({...a,files:[...(a.files||[])]}));
     // Ripristina doc labels — tutti i tipi inclusi i nuovi
     ['id','ts','vis','priv','altri','dip','cas','cs','mand','tabp'].forEach(k=>{
@@ -3397,6 +3419,8 @@ function openCollabModal(id) {
   } else {
     ['mc-nome','mc-cogn','mc-email','mc-tel','mc-ind','mc-cf','mc-ddn','mc-rui','mc-piva','mc-iban1','mc-iban2','mc-port','mc-note','mc-dinizio'].forEach(id=>sv(id,''));
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=false; });
+    ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
+      .forEach(k => { const el=document.getElementById('mc-comp-'+k); if(el) el.checked=false; });
     ['id','ts','vis','priv','altri'].forEach(k=>{ const el=document.getElementById('docn-'+k); if(el) el.innerHTML=''; });
   }
   TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
@@ -3420,6 +3444,8 @@ function saveCollab() {
     iban2: gv('mc-iban2'), port: parseNum(gv('mc-port'))||null, note: gv('mc-note'),
     dinizio: gv('mc-dinizio')||null,
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
+    compagnie: ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
+      .filter(k => document.getElementById('mc-comp-'+k)?.checked),
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
     provv: TEAM_PROVV.map(p=>({...p})),
     docs: {}

@@ -4588,12 +4588,17 @@ function applicaPermessi(ruolo) {
   });
   const labBtn = document.getElementById('nb-lab');
   if (labBtn) labBtn.style.display = PROFILO?.lab_abilitato ? 'flex' : 'none';
-  const btnQuoto = document.getElementById('nb-quoto');
-  if (btnQuoto) {
+  if (db && ME) {
+    db.from('iam_utenti').select('quoto').eq('id', ME.id).single()
+      .then(({ data }) => {
+        const btnQuoto = document.getElementById('nb-quoto');
+        if (btnQuoto) btnQuoto.style.display = data?.quoto === true ? 'flex' : 'none';
+      });
+  } else {
     const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-    const mieFlags = flags[ME?.id] || {};
-    const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
-    btnQuoto.style.display = (isAdmin || mieFlags['quoto'] === true) ? 'flex' : 'none';
+    const quotoOn = flags[ME?.id]?.['quoto'] === true;
+    const btnQuoto = document.getElementById('nb-quoto');
+    if (btnQuoto) btnQuoto.style.display = quotoOn ? 'flex' : 'none';
   }
 }
 

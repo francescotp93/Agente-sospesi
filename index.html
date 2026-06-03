@@ -4760,6 +4760,8 @@ async function renderUtenti() {
     const r = RUOLI[u.ruolo] || RUOLI.operativo;
     const isSelf = u.id === ME?.id;
     const canEdit = PROFILO?.ruolo === 'top_master' || (PROFILO?.ruolo === 'master' && u.ruolo === 'operativo');
+    const _kpiFlags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+    const quotoOn = _kpiFlags[u.id]?.['quoto'] === true;
     return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
       <div style="width:40px;height:40px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${(u.nome||u.email||'?')[0].toUpperCase()}</div>
       <div style="flex:1;min-width:0;">
@@ -4776,6 +4778,7 @@ async function renderUtenti() {
         ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
         ` : ''}
         ${canEdit ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
+        ${canEdit ? `<button onclick="toggleQuotoAccess('${u.id}',${quotoOn})" style="font-size:11px;padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:${quotoOn?'linear-gradient(135deg,var(--acc),var(--acc2))':'var(--surf3)'};color:${quotoOn?'#fff':'var(--txt3)'};">Quoto ${quotoOn?'ON':'OFF'}</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -4885,6 +4888,20 @@ async function toggleLabAbilitato(userId, abilitato) {
     }
     await renderUtenti();
   } catch(e) { alert('Errore Lab toggle: ' + e.message); }
+}
+
+function toggleQuotoAccess(userId, attuale) {
+  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+  if (!flags[userId]) flags[userId] = {};
+  flags[userId]['quoto'] = !attuale;
+  localStorage.setItem('iam_kpi_flags', JSON.stringify(flags));
+  if (userId === ME?.id && PROFILO) applicaPermessi(PROFILO.ruolo);
+  if (db) {
+    db.from('iam_utenti').update({ quoto: !attuale }).eq('id', userId)
+      .then(() => renderUtenti());
+  } else {
+    renderUtenti();
+  }
 }
 
 async function openLab() {

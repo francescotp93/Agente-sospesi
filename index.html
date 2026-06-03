@@ -3381,9 +3381,6 @@ function renderTeam() {
   document.getElementById('tm-count').textContent = TEAM.length;
   document.getElementById('tm-empty').style.display = lista.length?'none':'block';
   document.getElementById('tm-list').innerHTML = lista.map(c => {
-    const perf = calcPerf(c);
-    const plbl = perf>=70?'Alto':perf>=40?'Medio':'Base';
-    const pcls = perf>=70?'palt':perf>=40?'pmed':'pbas';
     const ini  = ((c.nome||'?')[0]+(c.cogn||'?')[0]).toUpperCase();
     const rami = [];
     if(c.rami?.auto) rami.push('<span class="rc rc-auto">Auto</span>');
@@ -3406,15 +3403,7 @@ function renderTeam() {
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${rami.join('')}</div>
           ${compBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${compBadges}</div>`:''}
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <span class="pbadge ${pcls}">${plbl} ${perf}%</span>
-          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
-        </div>
-      </div>
-
-      <!-- Barra performance -->
-      <div style="height:4px;background:rgba(0,0,0,.1);">
-        <div style="height:100%;background:${perf>=70?'var(--grn)':perf>=40?'var(--amb)':'var(--red)'};width:${perf}%;transition:width .6s;"></div>
+        <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
       </div>
 
       <!-- Tab interne scheda -->

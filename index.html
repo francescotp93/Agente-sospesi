@@ -5587,11 +5587,11 @@ async function renderObiettiviOperatore() {
         <div style="height:100%;background:${c};border-radius:4px;width:${perc}%;transition:width .6s;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--txt3);">
-        <span>Raggiunto: €${fmt(tot)}</span><span>Obiettivo: €${fmt(o.obiettivo)}</span>
+        ${(()=>{ const sim = o.misura === 'euro' ? '€' : ' pz'; return `<span>Raggiunto: ${o.misura==='euro'?'€'+fmt(tot):fmt(tot)+' pz'}</span><span>Obiettivo: ${o.misura==='euro'?'€'+fmt(o.obiettivo):fmt(o.obiettivo)+' pz'}</span>`; })()}
       </div>
       ${perc>=100
         ? '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:6px;">🎉 OBIETTIVO RAGGIUNTO!</div>'
-        : `<div style="font-size:11px;color:var(--txt2);margin-top:4px;">Mancano: €${fmt(Math.max(0,o.obiettivo-tot))}</div>`}
+        : `<div style="font-size:11px;color:var(--txt2);margin-top:4px;">Mancano: ${o.misura==='euro'?'€'+fmt(Math.max(0,o.obiettivo-tot)):fmt(Math.max(0,o.obiettivo-tot))+' pz'}</div>`}
     </div>`;
   }));
   el.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:8px;">I miei obiettivi '+anno+'</div>' + html.join('');
@@ -5610,12 +5610,27 @@ async function renderGestioneObiettivi(elId) {
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome} ${u.cognome||''}</div>
         ${objU.map(o=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">
           <span style="flex:1;color:var(--txt2);">${o.label||o.tipo}</span>
-          <span style="font-weight:700;">€${fmt(o.obiettivo)}</span>
+          <span style="font-weight:700;">${o.misura==='euro'?'€'+fmt(o.obiettivo):fmt(o.obiettivo)+' pz'}</span>
           <button onclick="eliminaObiettivo(${o.id})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
         </div>`).join('')}
         <button onclick="aggiungiObiettivo('${u.id}','${u.nome} ${u.cognome||''}')" style="font-size:11px;padding:5px 12px;background:rgba(var(--acc-rgb),.1);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;margin-top:4px;">+ Aggiungi obiettivo</button>
       </div>`;
     }).join('')||'<div style="color:var(--txt3);font-size:13px;">Nessun operativo registrato</div>'}`;
+}
+
+function setObjMisura(misura) {
+  document.getElementById('obj-misura').value = misura;
+  const isEuro = misura === 'euro';
+  const btnP = document.getElementById('obj-m-pezzi');
+  const btnE = document.getElementById('obj-m-euro');
+  if (btnP) { btnP.style.background = isEuro ? 'var(--surf2)' : 'var(--acc)'; btnP.style.color = isEuro ? 'var(--txt2)' : '#fff'; btnP.style.borderColor = isEuro ? 'var(--bord2)' : 'var(--acc)'; }
+  if (btnE) { btnE.style.background = isEuro ? 'var(--acc)' : 'var(--surf2)'; btnE.style.color = isEuro ? '#fff' : 'var(--txt2)'; btnE.style.borderColor = isEuro ? 'var(--acc)' : 'var(--bord2)'; }
+  const lbl = document.getElementById('obj-target-label');
+  const sym = document.getElementById('obj-euro-symbol');
+  const inp = document.getElementById('obj-importo');
+  if (lbl) lbl.textContent = isEuro ? 'Target (€)' : 'Target (pezzi)';
+  if (sym) sym.style.display = isEuro ? 'block' : 'none';
+  if (inp) { inp.style.paddingLeft = isEuro ? '28px' : '12px'; inp.step = isEuro ? '100' : '1'; inp.placeholder = isEuro ? '0.00' : '0'; }
 }
 
 async function aggiungiObiettivo(userId, nomeUtente) {
@@ -5646,8 +5661,25 @@ async function aggiungiObiettivo(userId, nomeUtente) {
           <div class="fld"><label>Label personalizzata (opzionale)</label>
             <input type="text" id="obj-label" placeholder="Es. Obiettivo Q2 RE">
           </div>
-          <div class="fld"><label>Target annuo (€ o pezzi)</label>
-            <input type="number" id="obj-importo" placeholder="0" step="100" min="0">
+          <div class="fld">
+            <label>Tipo misura</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
+              <button onclick="setObjMisura('pezzi')" id="obj-m-pezzi"
+                style="padding:10px;border-radius:var(--rs);border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">
+                🔢 Pezzi</button>
+              <button onclick="setObjMisura('euro')" id="obj-m-euro"
+                style="padding:10px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">
+                € Volume</button>
+            </div>
+            <input type="hidden" id="obj-misura" value="pezzi">
+          </div>
+          <div class="fld">
+            <label id="obj-target-label">Target (pezzi)</label>
+            <div style="position:relative;">
+              <span id="obj-euro-symbol" style="display:none;position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--txt2);font-weight:600;">€</span>
+              <input type="number" id="obj-importo" placeholder="0" step="1" min="0"
+                style="width:100%;padding:10px 12px;">
+            </div>
           </div>
           <div id="obj-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
         </div>
@@ -5683,6 +5715,7 @@ async function salvaObiettivo(userId) {
       tipo:       tipo.toLowerCase(),
       label,
       obiettivo:  importo,
+      misura:     document.getElementById('obj-misura')?.value || 'pezzi',
       anno:       new Date().getFullYear(),
       creato_da:  ME?.id
     });

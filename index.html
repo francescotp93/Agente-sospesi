@@ -4478,31 +4478,36 @@ function mostraBadgeRuolo() {
 async function loadTrattDB() {
   if (!db || !ME) { loadPipe(); return; }
   try {
+    const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
     let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
-    if (PROFILO?.ruolo === 'operativo') q = q.eq('utente_id', ME.id);
-    const { data, error } = await q;
-    if (error) { console.warn("loadTrattDB:", error.message); loadPipe(); return; }
-    if (data && data.length) {
-      PIPE = data.map(t => ({
-        id:       String(t.id),
-        cliente:  t.cliente  || '',
-        prodotto: t.prodotto || '',
-        importo:  t.importo  || 0,
-        status:   t.status   || 'prospect',
-        recall:   t.recall   || '',
-        prob:     t.prob     || 30,
-        prior:    t.prior    || 'normale',
-        collab:   t.collab   || '',
-        note:     t.note     || '',
-        data_ins: t.data_ins || '',
-        utente_id:t.utente_id|| '',
-      }));
-    } else {
-      PIPE = [];
+
+    // Operativi vedono solo le proprie — la RLS fa già il filtro
+    // ma aggiungiamo anche lato JS per sicurezza
+    if (!isAdmin) {
+      q = q.eq('utente_id', ME.id);
     }
+
+    const { data, error } = await q;
+    if (error) { console.warn('loadTrattDB:', error.message); loadPipe(); return; }
+
+    PIPE = (data || []).map(t => ({
+      id:        String(t.id),
+      cliente:   t.cliente  || '',
+      prodotto:  t.prodotto || '',
+      importo:   t.importo  || 0,
+      status:    t.status   || 'prospect',
+      recall:    t.recall   || '',
+      prob:      t.prob     || 30,
+      prior:     t.prior    || 'normale',
+      collab:    t.collab   || '',
+      note:      t.note     || '',
+      data_ins:  t.data_ins || '',
+      utente_id: t.utente_id|| '',
+    }));
+    savePipe();
   } catch(e) {
     console.warn('loadTrattDB error:', e);
-    loadPipe(); // fallback
+    loadPipe();
   }
 }
 

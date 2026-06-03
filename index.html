@@ -5619,20 +5619,79 @@ async function renderGestioneObiettivi(elId) {
 }
 
 async function aggiungiObiettivo(userId, nomeUtente) {
-  const tipi = ['CONSAP','Finanziamenti','Rami Elementari','Vita','Sinistri','Altro'];
-  const scelta = prompt(`Tipo obiettivo per ${nomeUtente}:\n${tipi.map((t,i)=>`${i+1}. ${t}`).join('\n')}`);
-  if (!scelta) return;
-  const label = tipi[(parseInt(scelta)||1)-1]||'Obiettivo';
-  const importo = parseNum(prompt(`Obiettivo annuo (€) per "${label}":`)||'0');
-  if (!importo) return;
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="obj-overlay"
+      onclick="if(event.target.id==='obj-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px;">
+          + Obiettivo per ${nomeUtente}
+        </div>
+        <div style="font-size:12px;color:var(--txt3);margin-bottom:14px;">
+          L'obiettivo sarà visibile all'operatore nella sezione profilo
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Tipo obiettivo</label>
+            <select id="obj-tipo" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
+              <option value="CONSAP">CONSAP</option>
+              <option value="Finanziamenti">Finanziamenti</option>
+              <option value="Rami Elementari">Rami Elementari</option>
+              <option value="Vita/TCM">Vita / TCM</option>
+              <option value="Sinistri">Sinistri</option>
+              <option value="Rinnovi">Rinnovi</option>
+              <option value="Altro">Altro</option>
+            </select>
+          </div>
+          <div class="fld"><label>Label personalizzata (opzionale)</label>
+            <input type="text" id="obj-label" placeholder="Es. Obiettivo Q2 RE">
+          </div>
+          <div class="fld"><label>Target annuo (€ o pezzi)</label>
+            <input type="number" id="obj-importo" placeholder="0" step="100" min="0">
+          </div>
+          <div id="obj-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaObiettivo('${userId}')"
+            style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;
+              border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Aggiungi obiettivo
+          </button>
+          <button onclick="document.getElementById('obj-overlay').remove()"
+            style="padding:12px 16px;background:var(--surf2);color:var(--txt);
+              border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">
+            Annulla
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function salvaObiettivo(userId) {
+  const tipo    = document.getElementById('obj-tipo')?.value;
+  const label   = document.getElementById('obj-label')?.value.trim() || tipo;
+  const importo = parseNum(document.getElementById('obj-importo')?.value || '0');
+  const err     = document.getElementById('obj-err');
+  if (!importo || importo <= 0) {
+    if (err) err.textContent = 'Inserisci un valore maggiore di zero.';
+    return;
+  }
   try {
     await db.from('iam_obiettivi').insert({
-      utente_id: userId, tipo: label.toLowerCase(), label,
-      obiettivo: importo, anno: new Date().getFullYear(), creato_da: ME?.id
+      utente_id:  userId,
+      tipo:       tipo.toLowerCase(),
+      label,
+      obiettivo:  importo,
+      anno:       new Date().getFullYear(),
+      creato_da:  ME?.id
     });
-    await logAudit('CREA_OBIETTIVO', 'iam_obiettivi', userId, {label, importo});
+    await logAudit('CREA_OBIETTIVO', 'iam_obiettivi', userId, { label, importo });
+    document.getElementById('obj-overlay')?.remove();
     renderGestioneObiettivi('obiettivi-admin-list');
-  } catch(e) { alert('Errore: '+e.message); }
+  } catch(e) {
+    if (err) err.textContent = 'Errore: ' + (e.message || e);
+  }
 }
 
 async function eliminaObiettivo(id) {

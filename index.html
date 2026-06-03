@@ -1614,24 +1614,22 @@ input[type=file]{display:none;}
           </div>
           <div class="fld ffull">
             <label>Compagnie operative</label>
-            <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;" id="mc-compagnie-grid">
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-hdi" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> HDI</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-allianz" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Allianz</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-groupama" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Groupama</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-prima" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Prima</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-generali" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Generali</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-sara" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Sara</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-vittoria" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Vittoria</label>
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-unipolsai" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> UnipolSai</label>
-              </div>
-              <div id="mc-comp-custom-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
-              <div style="display:flex;gap:6px;">
-                <input type="text" id="mc-comp-nuova" placeholder="Aggiungi compagnia..."
-                  style="flex:1;padding:7px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt);font-family:inherit;"
+            <div style="background:var(--surf2);border-radius:var(--rs);padding:2px 12px;">
+              <div class="sw-row"><span class="sw-lbl">HDI</span><label class="sw"><input type="checkbox" id="mc-comp-hdi"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Allianz</span><label class="sw"><input type="checkbox" id="mc-comp-allianz"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Groupama</span><label class="sw"><input type="checkbox" id="mc-comp-groupama"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Prima</span><label class="sw"><input type="checkbox" id="mc-comp-prima"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Generali</span><label class="sw"><input type="checkbox" id="mc-comp-generali"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Sara</span><label class="sw"><input type="checkbox" id="mc-comp-sara"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">Vittoria</span><label class="sw"><input type="checkbox" id="mc-comp-vittoria"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div class="sw-row"><span class="sw-lbl">UnipolSai</span><label class="sw"><input type="checkbox" id="mc-comp-unipolsai"><span class="sw-track"></span><span class="sw-thumb"></span></label></div>
+              <div id="mc-comp-custom-rows"></div>
+              <div class="sw-row" style="border-top:.5px solid var(--bord);margin-top:4px;padding-top:4px;">
+                <input type="text" id="mc-comp-nuova" placeholder="Altra compagnia..."
+                  style="flex:1;padding:6px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt);font-family:inherit;"
                   onkeydown="if(event.key==='Enter'){aggiungiCompagniaCustom();event.preventDefault();}">
                 <button onclick="aggiungiCompagniaCustom()"
-                  style="padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:12px;cursor:pointer;font-family:inherit;">+</button>
+                  style="margin-left:8px;padding:6px 12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:12px;cursor:pointer;font-family:inherit;">+</button>
               </div>
             </div>
           </div>
@@ -3691,18 +3689,21 @@ function getCompagnieCustom() {
 
 function renderCompagnieCustom(selezionate) {
   const custom = getCompagnieCustom();
-  const el = document.getElementById('mc-comp-custom-list');
+  const el = document.getElementById('mc-comp-custom-rows');
   if (!el) return;
   el.innerHTML = custom.map(c => `
-    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
-      background:var(--surf);border-radius:20px;padding:4px 10px;border:.5px solid var(--bord2);">
-      <input type="checkbox" id="mc-comp-${c.key}"
-        style="width:14px;height:14px;accent-color:var(--acc);cursor:pointer;"
-        ${(selezionate||[]).includes(c.key)?'checked':''}>
-      ${c.label}
-      <span onclick="event.preventDefault();rimuoviCompagniaCustom('${c.key}')"
-        style="color:var(--red);cursor:pointer;margin-left:2px;font-size:11px;">✕</span>
-    </label>`).join('');
+    <div class="sw-row">
+      <span class="sw-lbl">${c.label}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label class="sw">
+          <input type="checkbox" id="mc-comp-${c.key}" ${(selezionate||[]).includes(c.key)?'checked':''}>
+          <span class="sw-track"></span>
+          <span class="sw-thumb"></span>
+        </label>
+        <span onclick="rimuoviCompagniaCustom('${c.key}')"
+          style="color:var(--red);cursor:pointer;font-size:14px;line-height:1;">✕</span>
+      </div>
+    </div>`).join('');
 }
 
 function aggiungiCompagniaCustom() {

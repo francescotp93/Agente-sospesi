@@ -5861,9 +5861,12 @@ function renderGara(tipo) {
     }
 
     if (tipo === 'rinnovi') {
-      const reggEl = document.getElementById('gare-rinn-regolamento');
+      const reggEl = document.getElementById('gara-rinn-regolamento');
       const reggTxt = document.getElementById('rinn-regolamento-text');
-      if (cfg.regolamento && reggEl && reggTxt) { reggTxt.textContent = cfg.regolamento; reggEl.style.display='block'; }
+      if (reggEl && reggTxt) {
+        if (cfg.regolamento) { reggTxt.textContent = cfg.regolamento; reggEl.style.display='block'; }
+        else { reggEl.style.display='none'; }
+      }
       const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
       const mesiEl = document.getElementById('gara-rinn-mesi');
       if (mesiEl) mesiEl.innerHTML = mesi.map((m,i) => {
@@ -6007,6 +6010,7 @@ async function salvaConfigGara(tipo) {
     localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
     document.getElementById('gara-cfg-overlay')?.remove();
     showSavemsg('✅ Configurazione salvata');
+    await loadGareData();
     renderGara(tipo);
   } catch(e) {
     console.error('salvaConfigGara error:', e);

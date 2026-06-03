@@ -1591,6 +1591,9 @@ input[type=file]{display:none;}
       <button class="ptab act" id="mct-ana" onclick="selCollabTab('ana')" style="flex:1;font-size:11px;">Anagrafica</button>
       <button class="ptab" id="mct-fat" onclick="selCollabTab('fat')" style="flex:1;font-size:11px;">Fatturazione</button>
       <button class="ptab" id="mct-doc" onclick="selCollabTab('doc')" style="flex:1;font-size:11px;">Documenti</button>
+      <button class="ptab" id="mct-report" onclick="selCollabTab('report')" style="flex:1;font-size:11px;">Report</button>
+      <button class="ptab" id="mct-gare" onclick="selCollabTab('gare')" style="flex:1;font-size:11px;">Gare</button>
+      <button class="ptab" id="mct-storico" onclick="selCollabTab('storico')" style="flex:1;font-size:11px;">Storico</button>
     </div>
 
     <!-- TAB 1: ANAGRAFICA -->
@@ -1731,6 +1734,48 @@ input[type=file]{display:none;}
           <i class="ti ti-mail" style="font-size:16px;"></i> Invia email documenti (NEWNEW)
         </button>
         <div style="font-size:11px;color:var(--txt3);text-align:center;margin-top:4px;">Invia email al collaboratore con la lista documenti necessari</div>
+      </div>
+    </div>
+
+    <!-- TAB REPORT -->
+    <div id="mcp-report" class="modal-body" style="display:none;">
+      <div class="fsec">
+        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
+          Volume Portafoglio
+          <button onclick="aggiungiVolumeAnno()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
+        </div>
+        <div id="mc-report-volumi" style="margin-top:8px;"></div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Portafoglio attuale (€)</div>
+        <div class="fld"><input type="number" id="mc-port-attuale" placeholder="0.00" step="0.01"></div>
+      </div>
+      <div class="fsec">
+        <div class="fsec-title">Retention (%)</div>
+        <div class="fld"><input type="number" id="mc-retention" placeholder="0.00" step="0.1" min="0" max="100"></div>
+      </div>
+      <div id="mc-report-grafico" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- TAB GARE/OBIETTIVI -->
+    <div id="mcp-gare" class="modal-body" style="display:none;">
+      <div class="fsec">
+        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
+          Gare e Obiettivi
+          <button onclick="apriNuovaGaraCollab()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Nuova gara</button>
+        </div>
+        <div id="mc-gare-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB STORICO -->
+    <div id="mcp-storico" class="modal-body" style="display:none;">
+      <div class="fsec">
+        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
+          Storico Chiamate e Riunioni
+          <button onclick="apriNuovaNotaCollab()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Nota</button>
+        </div>
+        <div id="mc-storico-list" style="margin-top:8px;"></div>
       </div>
     </div>
 
@@ -3407,7 +3452,6 @@ function openCollabModal(id) {
     sv('mc-note',c.note); sv('mc-dinizio',c.dinizio);
     if(document.getElementById('mc-tipo')) document.getElementById('mc-tipo').value=c.tipo||'Subagente';
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=!!(c.rami?.[r]); });
-    renderCompagnieModal(c?.compagnie || []);
     TEAM_ANNI = (c.anni||[]).map(a=>({...a,files:[...(a.files||[])]}));
     // Ripristina doc labels — tutti i tipi inclusi i nuovi
     ['id','ts','vis','priv','altri','dip','cas','cs','mand','tabp'].forEach(k=>{
@@ -3417,18 +3461,193 @@ function openCollabModal(id) {
   } else {
     ['mc-nome','mc-cogn','mc-email','mc-tel','mc-ind','mc-cf','mc-ddn','mc-rui','mc-piva','mc-iban1','mc-iban2','mc-port','mc-note','mc-dinizio'].forEach(id=>sv(id,''));
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=false; });
-    renderCompagnieModal([]);
     ['id','ts','vis','priv','altri'].forEach(k=>{ const el=document.getElementById('docn-'+k); if(el) el.innerHTML=''; });
   }
+  COLLAB_VOLUMI = c?.report_volumi ? c.report_volumi.map(v=>({...v,mesi:[...v.mesi]})) : [];
+  COLLAB_GARE   = c?.gare_collab   ? c.gare_collab.map(g=>({...g,posizioni:[...(g.posizioni||[])]})) : [];
+  COLLAB_STORICO = c?.storico_collab ? [...c.storico_collab] : [];
+  const svNum = (fid, val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
+  svNum('mc-port-attuale', c?.port_attuale||'');
+  svNum('mc-retention',    c?.retention||'');
   TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
   renderAnni(); renderProvv(); renderCollabDocs();
   selCollabTab('ana');
   document.getElementById('modal-collab').classList.add('show');
+  setTimeout(() => {
+    renderCompagnieModal(c?.compagnie || []);
+    renderVolumiReport(); renderGareCollab(); renderStoricoCollab();
+  }, 50);
 }
 
 function closeCollabModal() {
   document.getElementById('modal-collab').classList.remove('show');
   TEAM_DOCS = {};
+}
+
+// ── VARIABILI TAB REPORT / GARE / STORICO ──
+let COLLAB_VOLUMI = [];
+let COLLAB_GARE = [];
+let COLLAB_STORICO = [];
+
+function aggiungiVolumeAnno() {
+  const anno = prompt('Anno:', new Date().getFullYear());
+  if (!anno) return;
+  COLLAB_VOLUMI.push({ anno, mesi: Array(12).fill(0) });
+  renderVolumiReport();
+}
+
+function renderVolumiReport() {
+  const el = document.getElementById('mc-report-volumi');
+  if (!el) return;
+  const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  el.innerHTML = COLLAB_VOLUMI.map((v, vi) => `
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:13px;font-weight:700;">${v.anno}</span>
+        <button onclick="COLLAB_VOLUMI.splice(${vi},1);renderVolumiReport()"
+          style="font-size:10px;padding:2px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+        ${mesi.map((m,mi) => `
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--txt3);margin-bottom:2px;">${m}</div>
+            <input type="number" value="${v.mesi[mi]||0}" step="100"
+              style="width:100%;padding:4px;background:var(--surf);border:.5px solid var(--bord2);border-radius:4px;font-size:11px;text-align:center;"
+              onchange="COLLAB_VOLUMI[${vi}].mesi[${mi}]=parseNum(this.value);renderGraficoReport()">
+          </div>`).join('')}
+      </div>
+    </div>`).join('') || '<div style="color:var(--txt3);font-size:12px;">Nessun anno aggiunto</div>';
+  renderGraficoReport();
+}
+
+function renderGraficoReport() {
+  const el = document.getElementById('mc-report-grafico');
+  if (!el || !COLLAB_VOLUMI.length) { if(el) el.innerHTML=''; return; }
+  const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  const colors = ['var(--acc)','var(--blu)','var(--grn)','var(--amb)'];
+  const allVals = COLLAB_VOLUMI.flatMap(v => v.mesi);
+  const maxVal = Math.max(...allVals, 1);
+  el.innerHTML = `
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;">
+      <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;margin-bottom:10px;">Andamento volume</div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:80px;">
+        ${mesi.map((m,mi) => `
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+            ${COLLAB_VOLUMI.map((v,vi) => `
+              <div style="width:100%;background:${colors[vi%colors.length]};border-radius:2px 2px 0 0;
+                height:${Math.round((v.mesi[mi]||0)/maxVal*70)}px;min-height:${v.mesi[mi]?2:0}px;
+                opacity:0.85;" title="${v.anno}: €${fmt(v.mesi[mi]||0)}"></div>`).join('')}
+            <div style="font-size:8px;color:var(--txt3);">${m}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+        ${COLLAB_VOLUMI.map((v,vi) => `
+          <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
+            <div style="width:10px;height:10px;border-radius:2px;background:${colors[vi%colors.length]};"></div>
+            ${v.anno}
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function apriNuovaGaraCollab() {
+  const tipo = prompt('Tipo obiettivo:\n1. Pezzi\n2. Volume (€)\n3. Percentuale (%)');
+  if (!tipo) return;
+  const tipoMap = {'1':'pezzi','2':'volume','3':'percentuale'};
+  const tipoSel = tipoMap[tipo] || 'pezzi';
+  const label = prompt('Nome gara/obiettivo:');
+  if (!label) return;
+  const target = parseNum(prompt('Target ('+tipoSel+'):')||'0');
+  const dataInizio = prompt('Data inizio (YYYY-MM-DD):') || new Date().toISOString().split('T')[0];
+  const dataFine = prompt('Data fine (YYYY-MM-DD):') || '';
+  COLLAB_GARE.push({ id: Date.now(), label, tipo: tipoSel, target, dataInizio, dataFine, posizioni: [] });
+  renderGareCollab();
+}
+
+function renderGareCollab() {
+  const el = document.getElementById('mc-gare-list');
+  if (!el) return;
+  el.innerHTML = COLLAB_GARE.map((g,gi) => {
+    const totale = g.posizioni.reduce((a,p) => a + (parseNum(p.valore)||0), 0);
+    const perc = g.target > 0 ? Math.min(100, Math.round(totale/g.target*100)) : 0;
+    const color = perc>=80?'var(--grn)':perc>=50?'var(--amb)':'var(--red)';
+    return `
+      <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div>
+            <span style="font-size:13px;font-weight:700;">${g.label}</span>
+            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);margin-left:6px;">${g.tipo}</span>
+          </div>
+          <button onclick="COLLAB_GARE.splice(${gi},1);renderGareCollab()"
+            style="font-size:10px;padding:2px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">${g.dataInizio} → ${g.dataFine||'—'}</div>
+        <div style="background:var(--surf);border-radius:4px;height:8px;overflow:hidden;margin-bottom:4px;">
+          <div style="height:100%;background:${color};border-radius:4px;width:${perc}%;transition:width .6s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:${color};font-weight:700;">${perc}%</span>
+          <span style="color:var(--txt3);">${totale} / ${g.target} ${g.tipo}</span>
+        </div>
+        <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11px;color:var(--txt3);">${g.posizioni.length} posizioni</span>
+          <button onclick="aggiungiPosizioneGaraCollab(${gi})"
+            style="font-size:10px;padding:3px 9px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;">+ Posizione</button>
+        </div>
+        ${g.posizioni.map((p,pi) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-top:.5px solid var(--bord);font-size:12px;margin-top:4px;">
+            <span>${p.nome||'—'}</span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-weight:600;color:var(--acc);">${p.valore} ${g.tipo}</span>
+              <button onclick="COLLAB_GARE[${gi}].posizioni.splice(${pi},1);renderGareCollab()"
+                style="font-size:10px;padding:1px 5px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+            </div>
+          </div>`).join('')}
+      </div>`;
+  }).join('') || '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna gara. Premi + Nuova gara.</div>';
+}
+
+function aggiungiPosizioneGaraCollab(garaIdx) {
+  const nome = prompt('Nome cliente/pratica:');
+  if (!nome) return;
+  const valore = parseNum(prompt('Valore:')||'1');
+  COLLAB_GARE[garaIdx].posizioni.push({ nome, valore, data: new Date().toISOString().split('T')[0] });
+  renderGareCollab();
+}
+
+function apriNuovaNotaCollab() {
+  const tipo = prompt('Tipo:\n1. Riunione\n2. Chiamata\n3. Altro') || '3';
+  const tipoMap = {'1':'Riunione','2':'Chiamata','3':'Altro'};
+  const tipoSel = tipoMap[tipo] || 'Altro';
+  const titolo = prompt('Titolo:');
+  if (!titolo) return;
+  const note = prompt('Note:') || '';
+  COLLAB_STORICO.push({
+    id: Date.now(), tipo: tipoSel, titolo, note,
+    data: new Date().toLocaleDateString('it-IT')
+  });
+  renderStoricoCollab();
+}
+
+function renderStoricoCollab() {
+  const el = document.getElementById('mc-storico-list');
+  if (!el) return;
+  const icone = { Riunione:'ti-users', Chiamata:'ti-phone', Altro:'ti-note' };
+  el.innerHTML = COLLAB_STORICO.slice().reverse().map((s,i) => `
+    <div style="display:flex;gap:10px;padding:10px 0;border-top:.5px solid var(--bord);">
+      <div style="width:32px;height:32px;border-radius:8px;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="ti ${icone[s.tipo]||'ti-note'}" style="font-size:14px;"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;font-weight:600;">${s.titolo}</span>
+          <button onclick="COLLAB_STORICO.splice(COLLAB_STORICO.length-1-${i},1);renderStoricoCollab()"
+            style="font-size:10px;padding:1px 5px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);">${s.tipo} · ${s.data}</div>
+        ${s.note?`<div style="font-size:12px;color:var(--txt2);margin-top:2px;">${s.note}</div>`:''}
+      </div>
+    </div>`).join('') || '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna nota storico.</div>';
 }
 
 // ── COMPAGNIE OPERATIVE ──
@@ -3502,6 +3721,11 @@ function saveCollab() {
     compagnie: Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key),
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
     provv: TEAM_PROVV.map(p=>({...p})),
+    report_volumi: COLLAB_VOLUMI.map(v=>({...v,mesi:[...v.mesi]})),
+    port_attuale: parseNum(document.getElementById('mc-port-attuale')?.value||0),
+    retention: parseNum(document.getElementById('mc-retention')?.value||0),
+    gare_collab: COLLAB_GARE.map(g=>({...g,posizioni:[...(g.posizioni||[])]})),
+    storico_collab: [...COLLAB_STORICO],
     docs: {}
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
@@ -4525,7 +4749,7 @@ function openGCal(titolo, data, ora, note) {
 let TEAM_PROVV = [];
 
 function selCollabTab(t) {
-  ['ana','fat','doc'].forEach(x => {
+  ['ana','fat','doc','report','gare','storico'].forEach(x => {
     document.getElementById('mcp-'+x).style.display = x===t?'block':'none';
     document.getElementById('mct-'+x).classList.toggle('act', x===t);
   });

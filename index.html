@@ -916,6 +916,7 @@ input[type=file]{display:none;}
           <div style="font-size:24px;font-weight:800;color:var(--amb-txt);" id="gara-re-obj-val">—</div>
         </div>
         <div id="gara-re-gauge"></div>
+        <div id="gara-re-info"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
           <button onclick="apriPosGara('re_pezzi')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
@@ -938,6 +939,7 @@ input[type=file]{display:none;}
           <div style="font-size:24px;font-weight:800;color:var(--blu-txt);" id="gara-rca-obj-val">—</div>
         </div>
         <div id="gara-rca-gauge"></div>
+        <div id="gara-rca-info"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
           <button onclick="apriPosGara('rca')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
@@ -968,6 +970,7 @@ input[type=file]{display:none;}
           </div>
         </div>
         <div id="gara-fin-gauge"></div>
+        <div id="gara-fin-info"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
           <button onclick="apriPosGara('finanziati')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
@@ -990,6 +993,7 @@ input[type=file]{display:none;}
           <div style="font-size:24px;font-weight:800;color:var(--grn-txt);" id="gara-cross-obj-val">—</div>
         </div>
         <div id="gara-cross-gauge"></div>
+        <div id="gara-cross-info"></div>
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);">Le mie posizioni</div>
           <button onclick="apriPosGara('cross')" style="padding:4px 12px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
@@ -5828,14 +5832,19 @@ function renderGara(tipo) {
       return;
     }
 
+    // Helper condiviso: blocco info periodo + note/regolamento
+    const buildInfoHtml = (c) =>
+      (c.periodo_dal ? `<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surf2);border-radius:var(--rs);margin-top:10px;margin-bottom:0;font-size:12px;"><i class="ti ti-calendar-event" style="color:var(--acc);font-size:14px;flex-shrink:0;"></i><span style="color:var(--txt2);">Scadenza:</span><span style="font-weight:600;">${c.periodo_dal}</span></div>` : '') +
+      (c.regolamento ? `<div style="padding:10px 12px;background:var(--surf2);border-radius:var(--rs);margin-top:8px;font-size:12px;line-height:1.5;"><div style="font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;"><i class="ti ti-notes" style="font-size:12px;vertical-align:-1px;"></i> Note / Regolamento</div><div style="color:var(--txt2);">${c.regolamento}</div></div>` : '');
+
     if (tipo === 're_pezzi' || tipo === 'rca' || tipo === 'cross') {
-      const objEl  = document.getElementById('gara-'+tipo.replace('_pezzi','re').replace('cross','cross')+'-obj-val');
-      // safely update text
-      const objIds = { re_pezzi:'gara-re-obj-val', rca:'gara-rca-obj-val', cross:'gara-cross-obj-val' };
-      const objId  = objIds[tipo]; if (objId) { const el=document.getElementById(objId); if(el) el.textContent = cfg.pezzi_min || '—'; }
-      const gaugeIds = { re_pezzi:'gara-re-gauge', rca:'gara-rca-gauge', cross:'gara-cross-gauge' };
+      const objIds  = { re_pezzi:'gara-re-obj-val',  rca:'gara-rca-obj-val',  cross:'gara-cross-obj-val'  };
+      const gaugeIds = { re_pezzi:'gara-re-gauge',    rca:'gara-rca-gauge',    cross:'gara-cross-gauge'    };
+      const listIds  = { re_pezzi:'gara-re-list',     rca:'gara-rca-list',     cross:'gara-cross-list'     };
+      const infoIds  = { re_pezzi:'gara-re-info',     rca:'gara-rca-info',     cross:'gara-cross-info'     };
+      const objId = objIds[tipo]; if (objId) { const el=document.getElementById(objId); if(el) el.textContent = cfg.pezzi_min || '—'; }
       buildGaraPezziGauge(gaugeIds[tipo], pos.length, cfg.pezzi_min||0);
-      const listIds = { re_pezzi:'gara-re-list', rca:'gara-rca-list', cross:'gara-cross-list' };
+      const infoEl = document.getElementById(infoIds[tipo]); if(infoEl) infoEl.innerHTML = buildInfoHtml(cfg);
       const listEl = document.getElementById(listIds[tipo]);
       if (listEl) listEl.innerHTML = pos.length
         ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
@@ -5851,6 +5860,7 @@ function renderGara(tipo) {
       const prevEl = document.getElementById('fin-prev-count'); if(prevEl) prevEl.textContent = prevN;
       const currEl = document.getElementById('fin-curr-count'); if(currEl) currEl.textContent = currN;
       buildGaraPezziGauge('gara-fin-gauge', currN, prevN);
+      const finInfoEl = document.getElementById('gara-fin-info'); if(finInfoEl) finInfoEl.innerHTML = buildInfoHtml(cfg);
       const listEl = document.getElementById('gara-fin-list');
       if (listEl) listEl.innerHTML = pos.length
         ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">

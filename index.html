@@ -323,6 +323,10 @@ input[type=file]{display:none;}
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+@keyframes quotoGlow {
+  from { opacity:.5; transform:translate(-50%,-50%) scale(1); }
+  to   { opacity:1;  transform:translate(-50%,-50%) scale(1.3); }
+}
 @keyframes quotoFadeIn {
   from { opacity:0; transform:translateY(8px); }
   to   { opacity:1; transform:translateY(0); }
@@ -1420,51 +1424,53 @@ input[type=file]{display:none;}
 
 <!-- QUOTO -->
 <div class="panel" id="panel-quoto">
-  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 24px;text-align:center;background:var(--bg);">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:40px 24px;text-align:center;background:var(--bg);position:relative;overflow:hidden;">
 
-    <!-- Logo animato -->
-    <div style="position:relative;margin-bottom:32px;">
-      <div style="position:absolute;inset:-20px;border-radius:50%;border:2px solid rgba(var(--acc-rgb),.2);animation:quotoRing 3s linear infinite;"></div>
-      <div style="position:absolute;inset:-36px;border-radius:50%;border:1px solid rgba(var(--acc-rgb),.1);animation:quotoRing 4s linear infinite reverse;"></div>
-      <div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(var(--acc-rgb),.4);position:relative;z-index:1;">
-        <i class="ti ti-bolt" style="font-size:40px;color:#fff;"></i>
+    <!-- Sfondo animato -->
+    <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+      <div style="position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(var(--acc-rgb),.15),transparent);top:50%;left:50%;transform:translate(-50%,-50%);animation:quotoGlow 3s ease infinite alternate;"></div>
+      <div style="position:absolute;width:500px;height:500px;border-radius:50%;border:1px solid rgba(var(--acc-rgb),.08);top:50%;left:50%;transform:translate(-50%,-50%);animation:quotoRing 8s linear infinite;"></div>
+      <div style="position:absolute;width:700px;height:700px;border-radius:50%;border:1px dashed rgba(var(--acc-rgb),.05);top:50%;left:50%;transform:translate(-50%,-50%);animation:quotoRing 12s linear infinite reverse;"></div>
+    </div>
+
+    <!-- Contenuto -->
+    <div style="position:relative;z-index:1;">
+
+      <!-- Logo -->
+      <div style="position:relative;margin-bottom:28px;display:inline-block;">
+        <div style="position:absolute;inset:-16px;border-radius:50%;border:2px solid rgba(var(--acc-rgb),.3);animation:quotoRing 3s linear infinite;"></div>
+        <div style="position:absolute;inset:-28px;border-radius:50%;border:1px solid rgba(var(--acc-rgb),.15);animation:quotoRing 5s linear infinite reverse;"></div>
+        <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(var(--acc-rgb),.5);position:relative;z-index:1;animation:quotoPulse 2s ease infinite;">
+          <i class="ti ti-bolt" style="font-size:36px;color:#fff;"></i>
+        </div>
       </div>
-    </div>
 
-    <!-- Titolo -->
-    <div style="font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:6px;"><span style="color:var(--acc);">QUOTO</span></div>
-    <div style="font-size:13px;color:var(--txt3);letter-spacing:2px;margin-bottom:24px;text-transform:uppercase;">Quotatore Multi Compagnia</div>
+      <div style="font-size:36px;font-weight:900;letter-spacing:-1px;margin-bottom:4px;">
+        <span style="background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">QUOTO</span>
+      </div>
+      <div style="font-size:11px;color:var(--txt3);letter-spacing:3px;margin-bottom:28px;text-transform:uppercase;">Quotatore Multi Compagnia · Multi Prodotto</div>
 
-    <!-- Prodotti -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:380px;margin-bottom:32px;">
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease 0s both;"><i class="ti ti-car" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">RCA</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .1s both;"><i class="ti ti-home" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Casa</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .2s both;"><i class="ti ti-heart-rate-monitor" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">TCM</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .3s both;"><i class="ti ti-shield-heart" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Infortuni</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .4s both;"><i class="ti ti-building-store" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Impresa</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .5s both;"><i class="ti ti-briefcase" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Profess.</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .6s both;"><i class="ti ti-building-factory" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Fabbric.</div></div>
-      <div style="background:var(--surf);border-radius:var(--r);padding:12px 8px;border:1px solid var(--bord);animation:quotoFadeIn .5s ease .7s both;"><i class="ti ti-heartbeat" style="font-size:22px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Salute</div></div>
-    </div>
+      <!-- Griglia prodotti -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:0 auto 28px;">
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .0s both;"><i class="ti ti-car" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">RCA</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .1s both;"><i class="ti ti-home" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Casa</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .2s both;"><i class="ti ti-heart-rate-monitor" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">TCM</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .3s both;"><i class="ti ti-shield-heart" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Infortuni</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .4s both;"><i class="ti ti-building-store" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Impresa</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .5s both;"><i class="ti ti-briefcase" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Profess.</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .6s both;"><i class="ti ti-building-factory" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Fabbric.</div></div>
+        <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .7s both;"><i class="ti ti-heartbeat" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Salute</div></div>
+      </div>
 
-    <!-- Badge in sviluppo -->
-    <div style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:30px;margin-bottom:16px;box-shadow:0 4px 20px rgba(var(--acc-rgb),.35);">
-      <div style="width:8px;height:8px;border-radius:50%;background:#fff;animation:quotoPulse 1s ease infinite;"></div>
-      <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:1px;">IN SVILUPPO</span>
-    </div>
+      <div style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:30px;margin-bottom:12px;box-shadow:0 4px 20px rgba(var(--acc-rgb),.4);">
+        <div style="width:7px;height:7px;border-radius:50%;background:#fff;animation:quotoPulse 1s ease infinite;"></div>
+        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:1px;">COMING SOON</span>
+      </div>
 
-    <div style="font-size:13px;color:var(--txt3);max-width:280px;line-height:1.6;">
-      Il modulo quotatore multi-compagnia sarà disponibile presto.<br>
-      Confronta, scegli e offri sempre la soluzione migliore.
-    </div>
-
-    <!-- Categorie -->
-    <div style="display:flex;gap:8px;margin-top:24px;flex-wrap:wrap;justify-content:center;">
-      <span style="padding:4px 12px;border-radius:20px;background:var(--surf);border:1px solid var(--bord);font-size:11px;color:var(--txt3);">RCA</span>
-      <span style="padding:4px 12px;border-radius:20px;background:var(--surf);border:1px solid var(--bord);font-size:11px;color:var(--txt3);">Casa</span>
-      <span style="padding:4px 12px;border-radius:20px;background:var(--surf);border:1px solid var(--bord);font-size:11px;color:var(--txt3);">Vita</span>
-      <span style="padding:4px 12px;border-radius:20px;background:var(--surf);border:1px solid var(--bord);font-size:11px;color:var(--txt3);">RE</span>
-      <span style="padding:4px 12px;border-radius:20px;background:var(--surf);border:1px solid var(--bord);font-size:11px;color:var(--txt3);">Infortuni</span>
+      <div style="font-size:12px;color:var(--txt3);max-width:260px;margin:8px auto 0;line-height:1.6;">
+        Confronta, scegli e offri sempre la soluzione migliore.<br>
+        <span style="color:var(--acc);font-weight:600;">withus ecosystem</span>
+      </div>
     </div>
   </div>
 </div>
@@ -2569,10 +2575,32 @@ function goTab(t) {
   if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'quoto') {
-    document.querySelectorAll('#panel-quoto [style*="animation"]').forEach(el => {
-      el.style.animation = 'none';
-      setTimeout(() => el.style.animation = '', 10);
-    });
+    const app = document.getElementById('app');
+    if (app) {
+      app.style.transition = 'all .3s ease';
+      app.style.filter = 'brightness(2) saturate(3)';
+      app.style.transform = 'scale(1.02)';
+      setTimeout(() => {
+        app.style.filter = 'invert(1) hue-rotate(180deg)';
+        app.style.transform = 'scale(.98)';
+      }, 150);
+      setTimeout(() => {
+        app.style.filter = '';
+        app.style.transform = '';
+        document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
+        document.getElementById('nb-quoto')?.classList.add('act');
+        document.getElementById('panel-quoto')?.classList.add('act');
+        sessionStorage.setItem('iam_last_tab', 'quoto');
+      }, 400);
+    } else {
+      document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
+      document.getElementById('nb-quoto')?.classList.add('act');
+      document.getElementById('panel-quoto')?.classList.add('act');
+      sessionStorage.setItem('iam_last_tab', 'quoto');
+    }
+    return;
   }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {

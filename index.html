@@ -1327,7 +1327,10 @@ input[type=file]{display:none;}
           <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Attiva se questa posizione rientra negli obiettivi target dell'agenzia</div>
         </div>
       </div>
-      <div class="fld"><label>Note</label><textarea id="re-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
+      <div class="fgrid">
+        <div class="fld"><label>Data stipula</label><input type="date" id="re-p-data"></div>
+        <div class="fld ffull"><label>Note</label><textarea id="re-p-note" rows="2" placeholder="Note opzionali..."></textarea></div>
+      </div>
     </div>
   </div>
 </div>
@@ -6381,6 +6384,7 @@ function renderCONSAP() {
   const listEl = document.getElementById('cs-pos-list');
   if (!listEl) return;
   if (!CS_POSIZIONI.length) { listEl.innerHTML='<div style="color:var(--txt3);font-size:13px;padding:8px 0;">Nessuna posizione registrata</div>'; return; }
+  aggiornaBadgeKPI();
   listEl.innerHTML = CS_POSIZIONI.map((p,i) => {
     const tipoColor = p.tipo==='Nuovo'?'var(--grn)':p.tipo==='Riscattato'?'var(--blu)':'var(--amb)';
     return `<div style="padding:10px 0;border-top:.5px solid var(--bord);display:flex;align-items:flex-start;gap:8px;">
@@ -6721,6 +6725,7 @@ function renderRE() {
   // Aggiorna grafico obiettivi
   const prevVal = parseNum(document.getElementById('re-prev')?.value || RE_CONFIG.volume_anno_prec || 0);
   renderREObjChart(prevVal);
+  aggiornaBadgeKPI();
 }
 
 function renderREByProduttore() {
@@ -6833,7 +6838,10 @@ function renderREList() {
         <div style="font-size:11px;color:var(--txt2);">
           ${p.produttore?'👤 '+p.produttore+' · ':''}€${fmt(p.premio_netto)} rata · ${frzLabel} · <b style="color:var(--acc);">€${fmt(annuo)} annuo</b>
         </div>
-        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;">
+          ${p.data_stipula?`<span style="font-size:10px;color:var(--txt3);"><i class="ti ti-calendar" style="font-size:10px;vertical-align:-1px;"></i> ${new Date(p.data_stipula).toLocaleDateString('it-IT')}</span>`:''}
+          ${p.note?`<span style="font-size:11px;color:var(--txt3);">📝 ${p.note}</span>`:''}
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
         <button onclick="editREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
@@ -6857,7 +6865,8 @@ function openREPosModal(editId) {
       document.getElementById('re-p-cliente').value  = p.cliente   || '';
       document.getElementById('re-p-prodotto').value = p.prodotto  || '';
       document.getElementById('re-p-premio').value   = p.premio_netto || '';
-      document.getElementById('re-p-note').value     = p.note      || '';
+      document.getElementById('re-p-note').value     = p.note        || '';
+      document.getElementById('re-p-data').value     = p.data_stipula || new Date().toISOString().split('T')[0];
       const frzVal = p.frazionamento==='annuale'?'1':p.frazionamento==='semestrale'?'2':p.frazionamento==='quadrimestrale'?'3':p.frazionamento==='trimestrale'?'4':p.frazionamento==='bimestrale'?'6':'12';
       document.getElementById('re-p-frz').value = frzVal;
       document.getElementById('re-p-target').checked = p.is_target || false;
@@ -6867,6 +6876,7 @@ function openREPosModal(editId) {
     }
   } else {
     ['re-p-cliente','re-p-prodotto','re-p-premio','re-p-note'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+    const dataEl = document.getElementById('re-p-data'); if(dataEl) dataEl.value = new Date().toISOString().split('T')[0];
     document.getElementById('re-p-frz').value = '1';
     document.getElementById('re-p-target').checked = false;
     document.getElementById('re-toggle-bg').style.background = 'var(--bord2)';
@@ -6891,6 +6901,7 @@ async function saveREPos() {
     frazionamento: frzTxt[frzSel] || 'annuale',
     is_target:     document.getElementById('re-p-target')?.checked || false,
     note:          gv('re-p-note')    || null,
+    data_stipula:  gv('re-p-data')    || null,
     aggiornato_il: new Date().toISOString(),
   };
   if (!db) return;
@@ -7245,6 +7256,19 @@ function renderTCM() {
         <button onclick="delTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('');
+  aggiornaBadgeKPI();
+}
+
+function aggiornaBadgeKPI() {
+  const badge = (n) => n > 0
+    ? ` <span style="background:var(--acc);color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:4px;">${n}</span>`
+    : '';
+  const btnRE = document.getElementById('pt-re');
+  if (btnRE) btnRE.innerHTML = 'RE' + badge(RE_POSIZIONI.length);
+  const btnCS = document.getElementById('pt-consap');
+  if (btnCS) btnCS.innerHTML = 'CONSAP' + badge(CS_POSIZIONI.length);
+  const btnTCM = document.getElementById('pt-tcm');
+  if (btnTCM) btnTCM.innerHTML = 'TCM' + badge(TCM_POSIZIONI.length);
 }
 
 function openTCMPosModal(editId) {

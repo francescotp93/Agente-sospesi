@@ -468,6 +468,11 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
+  <button class="nbtn" id="nb-changelog" onclick="goTab('changelog')">
+    <i class="ti ti-history"></i>
+    <span>Log</span>
+    <span class="nbadge" id="n-changelog" style="display:none;">N</span>
+  </button>
 
   <button class="nbtn" id="nb-lab" onclick="openLab()" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5l-4-8V3"/><line x1="6.5" y1="13" x2="17.5" y2="13"/></svg>
@@ -1226,6 +1231,27 @@ input[type=file]{display:none;}
       </div>
     </div>
   </div>
+</div>
+
+<div class="panel" id="panel-changelog">
+  <div style="padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between;">
+    <div class="slbl" style="padding:0;">📋 Changelog & Aggiornamenti</div>
+    <button id="btn-add-changelog" onclick="apriNuovoChangelog()"
+      style="display:none;padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+      + Aggiungi
+    </button>
+  </div>
+  <div style="padding:8px 12px;">
+    <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;">
+      <button id="cl-f-tutti" onclick="setCLFilter('tutti')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;">Tutti</button>
+      <button id="cl-f-fix" onclick="setCLFilter('fix')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">🔧 Fix</button>
+      <button id="cl-f-novita" onclick="setCLFilter('novita')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">✨ Novità</button>
+      <button id="cl-f-problema" onclick="setCLFilter('problema')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">⚠️ Problemi</button>
+      <button id="cl-f-aggiornamento" onclick="setCLFilter('aggiornamento')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">🔄 Aggiornamenti</button>
+    </div>
+    <div id="cl-list"></div>
+  </div>
+  <div style="height:80px;"></div>
 </div>
 
 <!-- MODAL POSIZIONE HDI/CONSAP/RE -->
@@ -2449,6 +2475,11 @@ function goTab(t) {
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
+  if (t === 'changelog') {
+    loadChangelog();
+    const btn = document.getElementById('btn-add-changelog');
+    if (btn) btn.style.display = (PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master') ? 'block' : 'none';
+  }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
@@ -4253,6 +4284,7 @@ function applicaPermessi(ruolo) {
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
+    'nb-changelog':   true,
     'nb-ai':          false, // AI spostato su FAB flottante
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
@@ -6905,6 +6937,7 @@ async function setTKStato(id, stato) {
   }
   try {
     await db.from('iam_ticket').update(payload).eq('id', id);
+    if (stato === 'risolto') await addChangelogAuto('fix', 'Ticket #'+id+' risolto', null, id);
     await loadTickets();
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }
@@ -7175,6 +7208,157 @@ async function confermaModificaTicket() {
 }
 
 // ─── FAB TRASCINABILE ─────────────────────────────────────────────────────────
+
+// ─── CHANGELOG ────────────────────────────────────────────────────────────────
+let CL_FILTER = 'tutti';
+let CL_LIST = [];
+
+const CL_TIPI = {
+  fix:           { label:'Fix',          icon:'ti-tool',           color:'var(--grn)', bg:'var(--grn-bg)' },
+  novita:        { label:'Novità',        icon:'ti-sparkles',       color:'var(--blu)', bg:'var(--blu-bg)' },
+  problema:      { label:'Problema',      icon:'ti-alert-triangle', color:'var(--red)', bg:'var(--red-bg)' },
+  aggiornamento: { label:'Aggiornamento', icon:'ti-refresh',        color:'var(--amb)', bg:'var(--amb-bg)' },
+};
+
+async function loadChangelog() {
+  if (!db) return;
+  try {
+    let q = db.from('iam_changelog').select('*').order('creato_il', { ascending: false }).limit(100);
+    if (CL_FILTER !== 'tutti') q = q.eq('tipo', CL_FILTER);
+    const { data } = await q;
+    CL_LIST = data || [];
+    renderChangelog();
+    const sette = new Date(); sette.setDate(sette.getDate() - 7);
+    const nuovi = (data||[]).filter(c => new Date(c.creato_il) > sette).length;
+    const badge = document.getElementById('n-changelog');
+    if (badge) { badge.textContent = nuovi; badge.style.display = nuovi > 0 ? 'block' : 'none'; }
+  } catch(e) { console.warn('loadChangelog:', e); }
+}
+
+function renderChangelog() {
+  const el = document.getElementById('cl-list');
+  if (!el) return;
+  if (!CL_LIST.length) {
+    el.innerHTML = '<div class="empty"><i class="ti ti-history"></i><p>Nessun aggiornamento ancora.</p></div>';
+    return;
+  }
+  const gruppi = {};
+  CL_LIST.forEach(c => {
+    const data = new Date(c.creato_il).toLocaleDateString('it-IT', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
+    if (!gruppi[data]) gruppi[data] = [];
+    gruppi[data].push(c);
+  });
+  el.innerHTML = Object.entries(gruppi).map(([data, items]) => `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);padding:6px 0;border-bottom:.5px solid var(--bord);margin-bottom:8px;">${data}</div>
+      ${items.map(c => {
+        const t = CL_TIPI[c.tipo] || CL_TIPI.aggiornamento;
+        const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
+        return `
+          <div style="display:flex;gap:10px;padding:10px;background:var(--surf);border-radius:var(--rs);margin-bottom:6px;border-left:3px solid ${t.color};box-shadow:var(--shd);">
+            <div style="width:32px;height:32px;border-radius:8px;background:${t.bg};color:${t.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="ti ${t.icon}" style="font-size:15px;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+                <span style="font-size:13px;font-weight:700;">${c.titolo}</span>
+                <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:${t.bg};color:${t.color};font-weight:600;">${t.label}</span>
+                ${c.ticket_id ? `<span style="font-size:10px;color:var(--txt3);">#${c.ticket_id}</span>` : ''}
+              </div>
+              ${c.descrizione ? `<div style="font-size:12px;color:var(--txt2);line-height:1.5;">${c.descrizione}</div>` : ''}
+              <div style="font-size:10px;color:var(--txt3);margin-top:4px;">
+                ${new Date(c.creato_il).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
+                ${c.autore_nome ? ' · ' + c.autore_nome : ''}
+              </div>
+            </div>
+            ${isAdmin ? `<button onclick="delChangelog(${c.id})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;align-self:flex-start;">✕</button>` : ''}
+          </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function setCLFilter(f) {
+  CL_FILTER = f;
+  ['tutti','fix','novita','problema','aggiornamento'].forEach(x => {
+    const btn = document.getElementById('cl-f-'+x);
+    if (btn) {
+      btn.style.background = x===f ? 'var(--acc)' : 'var(--surf2)';
+      btn.style.color = x===f ? '#fff' : 'var(--txt2)';
+    }
+  });
+  loadChangelog();
+}
+
+function apriNuovoChangelog() {
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;"
+      id="cl-overlay" onclick="if(event.target.id==='cl-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">+ Nuovo aggiornamento</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Tipo</label>
+            <select id="cl-tipo" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
+              <option value="fix">🔧 Fix</option>
+              <option value="novita">✨ Novità</option>
+              <option value="problema">⚠️ Problema</option>
+              <option value="aggiornamento" selected>🔄 Aggiornamento</option>
+            </select>
+          </div>
+          <div class="fld"><label>Titolo *</label>
+            <input type="text" id="cl-titolo" placeholder="Es. Fix countdown sospesi">
+          </div>
+          <div class="fld"><label>Descrizione</label>
+            <textarea id="cl-descr" rows="3" placeholder="Dettagli della modifica..."></textarea>
+          </div>
+          <div class="fld"><label>Ticket collegato (opzionale)</label>
+            <input type="number" id="cl-ticket" placeholder="Es. 20">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaChangelog()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Pubblica</button>
+          <button onclick="document.getElementById('cl-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function salvaChangelog() {
+  const titolo = document.getElementById('cl-titolo')?.value.trim();
+  if (!titolo) { alert('Inserisci un titolo.'); return; }
+  try {
+    await db.from('iam_changelog').insert({
+      tipo:        document.getElementById('cl-tipo')?.value || 'aggiornamento',
+      titolo,
+      descrizione: document.getElementById('cl-descr')?.value.trim() || null,
+      ticket_id:   parseInt(document.getElementById('cl-ticket')?.value) || null,
+      autore_id:   ME?.id,
+      autore_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email,
+      creato_il:   new Date().toISOString(),
+    });
+    document.getElementById('cl-overlay')?.remove();
+    await loadChangelog();
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+async function delChangelog(id) {
+  if (!confirm('Eliminare questo aggiornamento?')) return;
+  await db.from('iam_changelog').delete().eq('id', id);
+  await loadChangelog();
+}
+
+async function addChangelogAuto(tipo, titolo, descrizione, ticketId) {
+  if (!db || !ME) return;
+  try {
+    await db.from('iam_changelog').insert({
+      tipo, titolo, descrizione: descrizione || null,
+      ticket_id: ticketId || null,
+      autore_id: ME?.id,
+      autore_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email,
+      creato_il: new Date().toISOString(),
+    });
+  } catch(e) { console.warn('changelog auto:', e); }
+}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // ─── TEMA & ACCENT ───────────────────────────────────────────────────────────

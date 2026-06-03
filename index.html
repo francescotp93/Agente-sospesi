@@ -3234,10 +3234,16 @@ async function loadTeamDB() {
         port:     c.port     || '',
         note:     c.note     || '',
         dinizio:  c.dinizio  || '',
-        rami:     c.rami     || {},
-        anni:     c.anni     || [],
-        provv:    c.provv    || [],
-        docs:     c.docs     || {},
+        rami:           c.rami           || {},
+        anni:           c.anni           || [],
+        provv:          c.provv          || [],
+        docs:           c.docs           || {},
+        compagnie:      c.compagnie      || [],
+        report_volumi:  c.report_volumi  || [],
+        port_attuale:   c.port_attuale   || 0,
+        retention:      c.retention      || 0,
+        gare_collab:    c.gare_collab    || [],
+        storico_collab: c.storico_collab || [],
       }));
       saveTeam(); // cache locale
     } else {
@@ -3269,10 +3275,16 @@ async function saveTeamDB(c) {
       port:         c.port     ? parseNum(c.port) : null,
       note:         c.note     || null,
       dinizio:      c.dinizio  || null,
-      rami:         c.rami     || {},
-      anni:         c.anni     || [],
-      provv:        c.provv    || [],
-      docs:         {},
+      rami:           c.rami           || {},
+      anni:           c.anni           || [],
+      provv:          c.provv          || [],
+      docs:           {},
+      compagnie:      c.compagnie      || [],
+      report_volumi:  c.report_volumi  || [],
+      port_attuale:   c.port_attuale   || 0,
+      retention:      c.retention      || 0,
+      gare_collab:    c.gare_collab    || [],
+      storico_collab: c.storico_collab || [],
       creato_da:    ME?.id     || null,
       aggiornato_il: new Date().toISOString(),
     };
@@ -3587,16 +3599,81 @@ function renderGraficoReport() {
 }
 
 function apriNuovaGaraCollab() {
-  const tipo = prompt('Tipo obiettivo:\n1. Pezzi\n2. Volume (€)\n3. Percentuale (%)');
-  if (!tipo) return;
-  const tipoMap = {'1':'pezzi','2':'volume','3':'percentuale'};
-  const tipoSel = tipoMap[tipo] || 'pezzi';
-  const label = prompt('Nome gara/obiettivo:');
-  if (!label) return;
-  const target = parseNum(prompt('Target ('+tipoSel+'):')||'0');
-  const dataInizio = prompt('Data inizio (YYYY-MM-DD):') || new Date().toISOString().split('T')[0];
-  const dataFine = prompt('Data fine (YYYY-MM-DD):') || '';
-  COLLAB_GARE.push({ id: Date.now(), label, tipo: tipoSel, target, dataInizio, dataFine, posizioni: [] });
+  const oggi = new Date().toISOString().split('T')[0];
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="gara-overlay"
+      onclick="if(event.target.id==='gara-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">
+          <i class="ti ti-trophy" style="color:var(--acc);"></i> Nuova gara / obiettivo
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Nome gara *</label>
+            <input type="text" id="gc-label" placeholder="Es. Gara RE Q2 2026">
+          </div>
+          <div class="fld"><label>Tipo obiettivo</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+              <button onclick="setGaraTipo('pezzi')" id="gc-t-pezzi"
+                style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
+                🔢 Pezzi</button>
+              <button onclick="setGaraTipo('volume')" id="gc-t-volume"
+                style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
+                💶 Volume</button>
+              <button onclick="setGaraTipo('percentuale')" id="gc-t-percentuale"
+                style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
+                📊 %</button>
+            </div>
+            <input type="hidden" id="gc-tipo" value="pezzi">
+          </div>
+          <div class="fld"><label id="gc-target-label">Target (pezzi)</label>
+            <input type="number" id="gc-target" placeholder="0" step="1" min="0">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="fld"><label>Data inizio</label>
+              <input type="date" id="gc-inizio" value="${oggi}">
+            </div>
+            <div class="fld"><label>Data fine</label>
+              <input type="date" id="gc-fine">
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaNuovaGaraCollab()"
+            style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Crea gara</button>
+          <button onclick="document.getElementById('gara-overlay').remove()"
+            style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">
+            Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function setGaraTipo(tipo) {
+  document.getElementById('gc-tipo').value = tipo;
+  ['pezzi','volume','percentuale'].forEach(t => {
+    const btn = document.getElementById('gc-t-'+t);
+    if (!btn) return;
+    if (t === tipo) { btn.style.background='var(--acc)'; btn.style.color='#fff'; btn.style.borderColor='var(--acc)'; }
+    else { btn.style.background='var(--surf2)'; btn.style.color='var(--txt2)'; btn.style.borderColor='var(--bord2)'; }
+  });
+  const labels = { pezzi:'Target (pezzi)', volume:'Target (€)', percentuale:'Target (%)' };
+  const lbl = document.getElementById('gc-target-label');
+  if (lbl) lbl.textContent = labels[tipo];
+}
+
+function salvaNuovaGaraCollab() {
+  const label  = document.getElementById('gc-label')?.value.trim();
+  const tipo   = document.getElementById('gc-tipo')?.value || 'pezzi';
+  const target = parseNum(document.getElementById('gc-target')?.value || '0');
+  const inizio = document.getElementById('gc-inizio')?.value || '';
+  const fine   = document.getElementById('gc-fine')?.value || '';
+  if (!label) { alert('Inserisci il nome della gara.'); return; }
+  COLLAB_GARE.push({ id: Date.now(), label, tipo, target, dataInizio: inizio, dataFine: fine, posizioni: [] });
+  document.getElementById('gara-overlay')?.remove();
   renderGareCollab();
 }
 
@@ -3644,24 +3721,102 @@ function renderGareCollab() {
 }
 
 function aggiungiPosizioneGaraCollab(garaIdx) {
-  const nome = prompt('Nome cliente/pratica:');
-  if (!nome) return;
-  const valore = parseNum(prompt('Valore:')||'1');
-  COLLAB_GARE[garaIdx].posizioni.push({ nome, valore, data: new Date().toISOString().split('T')[0] });
+  const g = COLLAB_GARE[garaIdx];
+  if (!g) return;
+  const oggi = new Date().toISOString().split('T')[0];
+  const step = g.tipo === 'volume' ? '100' : '1';
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="pos-g-overlay"
+      onclick="if(event.target.id==='pos-g-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">+ Posizione — ${g.label}</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Cliente / Pratica *</label>
+            <input type="text" id="posg-nome" placeholder="Nome cliente">
+          </div>
+          <div class="fld"><label>Valore (${g.tipo})</label>
+            <input type="number" id="posg-valore" placeholder="1" value="1" step="${step}" min="0">
+          </div>
+          <div class="fld"><label>Data</label>
+            <input type="date" id="posg-data" value="${oggi}">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaPosizioneGaraCollab(${garaIdx})"
+            style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Aggiungi</button>
+          <button onclick="document.getElementById('pos-g-overlay').remove()"
+            style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">
+            Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function salvaPosizioneGaraCollab(garaIdx) {
+  const nome   = document.getElementById('posg-nome')?.value.trim();
+  const valore = parseNum(document.getElementById('posg-valore')?.value || '1');
+  const data   = document.getElementById('posg-data')?.value || '';
+  if (!nome) { alert('Inserisci il nome.'); return; }
+  COLLAB_GARE[garaIdx].posizioni.push({ nome, valore, data });
+  document.getElementById('pos-g-overlay')?.remove();
   renderGareCollab();
 }
 
 function apriNuovaNotaCollab() {
-  const tipo = prompt('Tipo:\n1. Riunione\n2. Chiamata\n3. Altro') || '3';
-  const tipoMap = {'1':'Riunione','2':'Chiamata','3':'Altro'};
-  const tipoSel = tipoMap[tipo] || 'Altro';
-  const titolo = prompt('Titolo:');
-  if (!titolo) return;
-  const note = prompt('Note:') || '';
-  COLLAB_STORICO.push({
-    id: Date.now(), tipo: tipoSel, titolo, note,
-    data: new Date().toLocaleDateString('it-IT')
-  });
+  const oggi = new Date().toISOString().split('T')[0];
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="nota-overlay"
+      onclick="if(event.target.id==='nota-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">
+          <i class="ti ti-notes" style="color:var(--acc);"></i> Nuova nota storico
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Tipo</label>
+            <select id="nota-tipo" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
+              <option value="Riunione">👥 Riunione</option>
+              <option value="Chiamata">📞 Chiamata</option>
+              <option value="Email">📧 Email</option>
+              <option value="Altro">📝 Altro</option>
+            </select>
+          </div>
+          <div class="fld"><label>Titolo *</label>
+            <input type="text" id="nota-titolo" placeholder="Es. Riunione obiettivi Q2">
+          </div>
+          <div class="fld"><label>Data</label>
+            <input type="date" id="nota-data" value="${oggi}">
+          </div>
+          <div class="fld"><label>Note</label>
+            <textarea id="nota-testo" rows="3" placeholder="Dettagli..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaNuovaNotaCollab()"
+            style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Salva</button>
+          <button onclick="document.getElementById('nota-overlay').remove()"
+            style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">
+            Annulla</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function salvaNuovaNotaCollab() {
+  const tipo   = document.getElementById('nota-tipo')?.value || 'Altro';
+  const titolo = document.getElementById('nota-titolo')?.value.trim();
+  const data   = document.getElementById('nota-data')?.value || new Date().toISOString().split('T')[0];
+  const testo  = document.getElementById('nota-testo')?.value.trim() || '';
+  if (!titolo) { alert('Inserisci un titolo.'); return; }
+  COLLAB_STORICO.push({ id: Date.now(), tipo, titolo, note: testo, data: new Date(data).toLocaleDateString('it-IT') });
+  document.getElementById('nota-overlay')?.remove();
   renderStoricoCollab();
 }
 

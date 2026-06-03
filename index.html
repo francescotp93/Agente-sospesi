@@ -468,11 +468,6 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
-  <button class="nbtn" id="nb-changelog" onclick="goTab('changelog')">
-    <i class="ti ti-history"></i>
-    <span>Log</span>
-    <span class="nbadge" id="n-changelog" style="display:none;">N</span>
-  </button>
 
   <button class="nbtn" id="nb-lab" onclick="openLab()" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5l-4-8V3"/><line x1="6.5" y1="13" x2="17.5" y2="13"/></svg>
@@ -1233,26 +1228,6 @@ input[type=file]{display:none;}
   </div>
 </div>
 
-<div class="panel" id="panel-changelog">
-  <div style="padding:12px 16px 0;display:flex;align-items:center;justify-content:space-between;">
-    <div class="slbl" style="padding:0;">📋 Changelog & Aggiornamenti</div>
-    <button id="btn-add-changelog" onclick="apriNuovoChangelog()"
-      style="display:none;padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
-      + Aggiungi
-    </button>
-  </div>
-  <div style="padding:8px 12px;">
-    <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:8px;">
-      <button id="cl-f-tutti" onclick="setCLFilter('tutti')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;">Tutti</button>
-      <button id="cl-f-fix" onclick="setCLFilter('fix')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">🔧 Fix</button>
-      <button id="cl-f-novita" onclick="setCLFilter('novita')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">✨ Novità</button>
-      <button id="cl-f-problema" onclick="setCLFilter('problema')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">⚠️ Problemi</button>
-      <button id="cl-f-aggiornamento" onclick="setCLFilter('aggiornamento')" style="flex:0 0 auto;font-size:11px;padding:4px 12px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">🔄 Aggiornamenti</button>
-    </div>
-    <div id="cl-list"></div>
-  </div>
-  <div style="height:80px;"></div>
-</div>
 
 <!-- MODAL POSIZIONE HDI/CONSAP/RE -->
 <div class="modal" id="modal-pos">
@@ -1639,16 +1614,24 @@ input[type=file]{display:none;}
           </div>
           <div class="fld ffull">
             <label>Compagnie operative</label>
-            <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;">
-              <div id="mc-compagnie-lista" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
-              <div style="margin-top:8px;padding-top:8px;border-top:.5px solid var(--bord);">
-                <div style="display:flex;gap:6px;align-items:center;">
-                  <input type="text" id="mc-comp-altra-testo" placeholder="Aggiungi compagnia..."
-                    style="flex:1;padding:6px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt);font-family:inherit;"
-                    onkeydown="if(event.key==='Enter'){aggiungiCompagnia();event.preventDefault();}">
-                  <button onclick="aggiungiCompagnia()"
-                    style="padding:6px 12px;background:var(--acc);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
-                </div>
+            <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;" id="mc-compagnie-grid">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-hdi" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> HDI</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-allianz" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Allianz</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-groupama" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Groupama</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-prima" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Prima</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-generali" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Generali</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-sara" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Sara</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-vittoria" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> Vittoria</label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;"><input type="checkbox" id="mc-comp-unipolsai" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"> UnipolSai</label>
+              </div>
+              <div id="mc-comp-custom-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+              <div style="display:flex;gap:6px;">
+                <input type="text" id="mc-comp-nuova" placeholder="Aggiungi compagnia..."
+                  style="flex:1;padding:7px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt);font-family:inherit;"
+                  onkeydown="if(event.key==='Enter'){aggiungiCompagniaCustom();event.preventDefault();}">
+                <button onclick="aggiungiCompagniaCustom()"
+                  style="padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:12px;cursor:pointer;font-family:inherit;">+</button>
               </div>
             </div>
           </div>
@@ -2475,11 +2458,6 @@ function goTab(t) {
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
   if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
-  if (t === 'changelog') {
-    loadChangelog();
-    const btn = document.getElementById('btn-add-changelog');
-    if (btn) btn.style.display = (PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master') ? 'block' : 'none';
-  }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
@@ -3355,7 +3333,7 @@ function renderTeam() {
     if(c.rami?.cau)  rami.push('<span class="rc rc-cau">Cauzioni</span>');
     if(c.rami?.inf)  rami.push('<span class="rc rc-re">Infortuni</span>');
     const compLabels = {hdi:'HDI',allianz:'Allianz',groupama:'Groupama',prima:'Prima',generali:'Generali',sara:'Sara',vittoria:'Vittoria',unipolsai:'UnipolSai'};
-    const compCustomMap = Object.fromEntries(getCompagnieCustom().map(x=>[x.key,x.label]));
+    const compCustomMap = Object.fromEntries((getCompagnieCustom()||[]).map(x=>[x.key,x.label]));
     const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${compLabels[k]||compCustomMap[k]||k}</span>`).join('');
 
     return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;">
@@ -3504,10 +3482,13 @@ function openCollabModal(id) {
   renderAnni(); renderProvv(); renderCollabDocs();
   selCollabTab('ana');
   document.getElementById('modal-collab').classList.add('show');
-  setTimeout(() => {
-    renderCompagnieModal(c?.compagnie || []);
-    renderVolumiReport(); renderGareCollab(); renderStoricoCollab();
-  }, 50);
+  const comps = c?.compagnie || [];
+  ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai'].forEach(k=>{
+    const el=document.getElementById('mc-comp-'+k);
+    if(el) el.checked = comps.includes(k);
+  });
+  renderCompagnieCustom(comps);
+  setTimeout(() => { renderVolumiReport(); renderGareCollab(); renderStoricoCollab(); }, 50);
 }
 
 function closeCollabModal() {
@@ -3554,29 +3535,51 @@ function renderVolumiReport() {
 function renderGraficoReport() {
   const el = document.getElementById('mc-report-grafico');
   if (!el || !COLLAB_VOLUMI.length) { if(el) el.innerHTML=''; return; }
-  const mesi = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-  const colors = ['var(--acc)','var(--blu)','var(--grn)','var(--amb)'];
-  const allVals = COLLAB_VOLUMI.flatMap(v => v.mesi);
+  const mesi = ['G','F','M','A','M','G','L','A','S','O','N','D'];
+  const COLORS = ['#E8500A','#2563EB','#16A34A','#7C3AED','#DC2626','#0D9488'];
+  const allVals = COLLAB_VOLUMI.flatMap(v => v.mesi.map(x=>parseNum(x)));
   const maxVal = Math.max(...allVals, 1);
   el.innerHTML = `
-    <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;">
-      <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;margin-bottom:10px;">Andamento volume</div>
-      <div style="display:flex;align-items:flex-end;gap:3px;height:80px;">
-        ${mesi.map((m,mi) => `
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
-            ${COLLAB_VOLUMI.map((v,vi) => `
-              <div style="width:100%;background:${colors[vi%colors.length]};border-radius:2px 2px 0 0;
-                height:${Math.round((v.mesi[mi]||0)/maxVal*70)}px;min-height:${v.mesi[mi]?2:0}px;
-                opacity:0.85;" title="${v.anno}: €${fmt(v.mesi[mi]||0)}"></div>`).join('')}
-            <div style="font-size:8px;color:var(--txt3);">${m}</div>
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:14px;margin-top:8px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;">
+          Andamento volume portafoglio
+        </div>
+        <div style="display:flex;gap:8px;">
+          ${COLLAB_VOLUMI.map((v,vi)=>`
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
+              <div style="width:10px;height:10px;border-radius:2px;background:${COLORS[vi%COLORS.length]};"></div>
+              <span>${v.anno}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:100px;padding-bottom:16px;position:relative;">
+        ${[0.25,0.5,0.75,1].map(p=>`
+          <div style="position:absolute;left:0;right:0;bottom:${p*100}px;border-top:.5px dashed var(--bord);"></div>
+        `).join('')}
+        ${mesi.map((m,mi)=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:1px;">
+            ${COLLAB_VOLUMI.map((v,vi)=>{
+              const val = parseNum(v.mesi[mi]||0);
+              const h = val > 0 ? Math.max(3, Math.round(val/maxVal*90)) : 0;
+              return `<div style="width:${Math.max(4, Math.floor(14/COLLAB_VOLUMI.length))}px;
+                height:${h}px;background:${COLORS[vi%COLORS.length]};
+                border-radius:2px 2px 0 0;opacity:.85;"
+                title="${v.anno} ${m}: €${fmt(val)}"></div>`;
+            }).join('')}
+            <div style="font-size:8px;color:var(--txt3);margin-top:3px;">${m}</div>
           </div>`).join('')}
       </div>
-      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
-        ${COLLAB_VOLUMI.map((v,vi) => `
-          <div style="display:flex;align-items:center;gap:4px;font-size:10px;">
-            <div style="width:10px;height:10px;border-radius:2px;background:${colors[vi%colors.length]};"></div>
-            ${v.anno}
-          </div>`).join('')}
+      <div style="display:grid;grid-template-columns:repeat(${Math.min(COLLAB_VOLUMI.length,3)},1fr);gap:6px;margin-top:8px;">
+        ${COLLAB_VOLUMI.map((v,vi)=>{
+          const tot = v.mesi.reduce((a,x)=>a+parseNum(x),0);
+          const media = tot/12;
+          return `<div style="background:var(--surf);border-radius:var(--rs);padding:8px 10px;border-left:3px solid ${COLORS[vi%COLORS.length]};">
+            <div style="font-size:10px;color:var(--txt3);font-weight:700;">${v.anno}</div>
+            <div style="font-size:14px;font-weight:800;color:${COLORS[vi%COLORS.length]};">€${fmt(tot)}</div>
+            <div style="font-size:10px;color:var(--txt3);">media €${fmt(media)}/mese</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
 }
@@ -3682,61 +3685,52 @@ function renderStoricoCollab() {
 }
 
 // ── COMPAGNIE OPERATIVE ──
-const COMPAGNIE_CUSTOM_KEY = 'iam_compagnie_custom';
-
 function getCompagnieCustom() {
-  try { return JSON.parse(localStorage.getItem(COMPAGNIE_CUSTOM_KEY)||'[]'); }
-  catch(e) { return []; }
+  try { return JSON.parse(localStorage.getItem('iam_comp_custom')||'[]'); } catch(e){ return []; }
 }
 
-function saveCompagnieCustom(lista) {
-  localStorage.setItem(COMPAGNIE_CUSTOM_KEY, JSON.stringify(lista));
-}
-
-function renderCompagnieModal(selezionate) {
-  const BASE = [
-    {key:'hdi', label:'HDI'}, {key:'allianz', label:'Allianz'},
-    {key:'groupama', label:'Groupama'}, {key:'prima', label:'Prima'},
-    {key:'generali', label:'Generali'}, {key:'sara', label:'Sara'},
-    {key:'vittoria', label:'Vittoria'}, {key:'unipolsai', label:'UnipolSai'},
-  ];
+function renderCompagnieCustom(selezionate) {
   const custom = getCompagnieCustom();
-  const tutte = [...BASE, ...custom];
-  const el = document.getElementById('mc-compagnie-lista');
+  const el = document.getElementById('mc-comp-custom-list');
   if (!el) return;
-  el.innerHTML = tutte.map(c => `
-    <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap;">
-      <input type="checkbox" class="mc-comp-cb" data-key="${c.key}"
-        style="accent-color:var(--acc);"
-        ${(selezionate||[]).includes(c.key) ? 'checked' : ''}>
+  el.innerHTML = custom.map(c => `
+    <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;
+      background:var(--surf);border-radius:20px;padding:4px 10px;border:.5px solid var(--bord2);">
+      <input type="checkbox" id="mc-comp-${c.key}"
+        style="width:14px;height:14px;accent-color:var(--acc);cursor:pointer;"
+        ${(selezionate||[]).includes(c.key)?'checked':''}>
       ${c.label}
-      ${custom.find(x => x.key === c.key) ?
-        `<span onclick="rimuoviCompagniaCustom('${c.key}')" title="Rimuovi"
-          style="margin-left:2px;color:var(--red);cursor:pointer;font-size:10px;line-height:1;">✕</span>` : ''}
+      <span onclick="event.preventDefault();rimuoviCompagniaCustom('${c.key}')"
+        style="color:var(--red);cursor:pointer;margin-left:2px;font-size:11px;">✕</span>
     </label>`).join('');
 }
 
-function aggiungiCompagnia() {
-  const inp = document.getElementById('mc-comp-altra-testo');
+function aggiungiCompagniaCustom() {
+  const inp = document.getElementById('mc-comp-nuova');
   const nome = inp?.value.trim();
   if (!nome) return;
-  const key = nome.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  const key = 'custom_' + nome.toLowerCase().replace(/\s+/g,'_');
   const custom = getCompagnieCustom();
-  if (!custom.find(c => c.key === key)) {
-    custom.push({ key, label: nome });
-    saveCompagnieCustom(custom);
+  if (!custom.find(c=>c.key===key)) {
+    custom.push({key, label: nome});
+    localStorage.setItem('iam_comp_custom', JSON.stringify(custom));
   }
-  if (inp) inp.value = '';
-  const selezionate = Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key);
-  renderCompagnieModal([...selezionate, key]);
+  inp.value = '';
+  const sel = getCompagnieSelezionate();
+  if (!sel.includes(key)) sel.push(key);
+  renderCompagnieCustom(sel);
 }
 
 function rimuoviCompagniaCustom(key) {
-  if (!confirm('Rimuovere questa compagnia dall\'elenco?')) return;
-  const custom = getCompagnieCustom().filter(c => c.key !== key);
-  saveCompagnieCustom(custom);
-  const selezionate = Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key).filter(k => k !== key);
-  renderCompagnieModal(selezionate);
+  const custom = getCompagnieCustom().filter(c=>c.key!==key);
+  localStorage.setItem('iam_comp_custom', JSON.stringify(custom));
+  renderCompagnieCustom([]);
+}
+
+function getCompagnieSelezionate() {
+  const base = ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai'];
+  const custom = getCompagnieCustom().map(c=>c.key);
+  return [...base,...custom].filter(k => document.getElementById('mc-comp-'+k)?.checked);
 }
 
 function saveCollab() {
@@ -3749,7 +3743,7 @@ function saveCollab() {
     iban2: gv('mc-iban2'), port: parseNum(gv('mc-port'))||null, note: gv('mc-note'),
     dinizio: gv('mc-dinizio')||null,
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
-    compagnie: Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key),
+    compagnie: getCompagnieSelezionate(),
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
     provv: TEAM_PROVV.map(p=>({...p})),
     report_volumi: COLLAB_VOLUMI.map(v=>({...v,mesi:[...v.mesi]})),
@@ -4284,7 +4278,6 @@ function applicaPermessi(ruolo) {
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
-    'nb-changelog':   true,
     'nb-ai':          false, // AI spostato su FAB flottante
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
@@ -6937,7 +6930,6 @@ async function setTKStato(id, stato) {
   }
   try {
     await db.from('iam_ticket').update(payload).eq('id', id);
-    if (stato === 'risolto') await addChangelogAuto('fix', 'Ticket #'+id+' risolto', null, id);
     await loadTickets();
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }
@@ -7209,156 +7201,6 @@ async function confermaModificaTicket() {
 
 // ─── FAB TRASCINABILE ─────────────────────────────────────────────────────────
 
-// ─── CHANGELOG ────────────────────────────────────────────────────────────────
-let CL_FILTER = 'tutti';
-let CL_LIST = [];
-
-const CL_TIPI = {
-  fix:           { label:'Fix',          icon:'ti-tool',           color:'var(--grn)', bg:'var(--grn-bg)' },
-  novita:        { label:'Novità',        icon:'ti-sparkles',       color:'var(--blu)', bg:'var(--blu-bg)' },
-  problema:      { label:'Problema',      icon:'ti-alert-triangle', color:'var(--red)', bg:'var(--red-bg)' },
-  aggiornamento: { label:'Aggiornamento', icon:'ti-refresh',        color:'var(--amb)', bg:'var(--amb-bg)' },
-};
-
-async function loadChangelog() {
-  if (!db) return;
-  try {
-    let q = db.from('iam_changelog').select('*').order('creato_il', { ascending: false }).limit(100);
-    if (CL_FILTER !== 'tutti') q = q.eq('tipo', CL_FILTER);
-    const { data } = await q;
-    CL_LIST = data || [];
-    renderChangelog();
-    const sette = new Date(); sette.setDate(sette.getDate() - 7);
-    const nuovi = (data||[]).filter(c => new Date(c.creato_il) > sette).length;
-    const badge = document.getElementById('n-changelog');
-    if (badge) { badge.textContent = nuovi; badge.style.display = nuovi > 0 ? 'block' : 'none'; }
-  } catch(e) { console.warn('loadChangelog:', e); }
-}
-
-function renderChangelog() {
-  const el = document.getElementById('cl-list');
-  if (!el) return;
-  if (!CL_LIST.length) {
-    el.innerHTML = '<div class="empty"><i class="ti ti-history"></i><p>Nessun aggiornamento ancora.</p></div>';
-    return;
-  }
-  const gruppi = {};
-  CL_LIST.forEach(c => {
-    const data = new Date(c.creato_il).toLocaleDateString('it-IT', {weekday:'long', day:'2-digit', month:'long', year:'numeric'});
-    if (!gruppi[data]) gruppi[data] = [];
-    gruppi[data].push(c);
-  });
-  el.innerHTML = Object.entries(gruppi).map(([data, items]) => `
-    <div style="margin-bottom:16px;">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);padding:6px 0;border-bottom:.5px solid var(--bord);margin-bottom:8px;">${data}</div>
-      ${items.map(c => {
-        const t = CL_TIPI[c.tipo] || CL_TIPI.aggiornamento;
-        const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
-        return `
-          <div style="display:flex;gap:10px;padding:10px;background:var(--surf);border-radius:var(--rs);margin-bottom:6px;border-left:3px solid ${t.color};box-shadow:var(--shd);">
-            <div style="width:32px;height:32px;border-radius:8px;background:${t.bg};color:${t.color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <i class="ti ${t.icon}" style="font-size:15px;"></i>
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
-                <span style="font-size:13px;font-weight:700;">${c.titolo}</span>
-                <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:${t.bg};color:${t.color};font-weight:600;">${t.label}</span>
-                ${c.ticket_id ? `<span style="font-size:10px;color:var(--txt3);">#${c.ticket_id}</span>` : ''}
-              </div>
-              ${c.descrizione ? `<div style="font-size:12px;color:var(--txt2);line-height:1.5;">${c.descrizione}</div>` : ''}
-              <div style="font-size:10px;color:var(--txt3);margin-top:4px;">
-                ${new Date(c.creato_il).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}
-                ${c.autore_nome ? ' · ' + c.autore_nome : ''}
-              </div>
-            </div>
-            ${isAdmin ? `<button onclick="delChangelog(${c.id})" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;align-self:flex-start;">✕</button>` : ''}
-          </div>`;
-      }).join('')}
-    </div>`).join('');
-}
-
-function setCLFilter(f) {
-  CL_FILTER = f;
-  ['tutti','fix','novita','problema','aggiornamento'].forEach(x => {
-    const btn = document.getElementById('cl-f-'+x);
-    if (btn) {
-      btn.style.background = x===f ? 'var(--acc)' : 'var(--surf2)';
-      btn.style.color = x===f ? '#fff' : 'var(--txt2)';
-    }
-  });
-  loadChangelog();
-}
-
-function apriNuovoChangelog() {
-  const html = `
-    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;"
-      id="cl-overlay" onclick="if(event.target.id==='cl-overlay')this.remove()">
-      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">+ Nuovo aggiornamento</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="fld"><label>Tipo</label>
-            <select id="cl-tipo" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
-              <option value="fix">🔧 Fix</option>
-              <option value="novita">✨ Novità</option>
-              <option value="problema">⚠️ Problema</option>
-              <option value="aggiornamento" selected>🔄 Aggiornamento</option>
-            </select>
-          </div>
-          <div class="fld"><label>Titolo *</label>
-            <input type="text" id="cl-titolo" placeholder="Es. Fix countdown sospesi">
-          </div>
-          <div class="fld"><label>Descrizione</label>
-            <textarea id="cl-descr" rows="3" placeholder="Dettagli della modifica..."></textarea>
-          </div>
-          <div class="fld"><label>Ticket collegato (opzionale)</label>
-            <input type="number" id="cl-ticket" placeholder="Es. 20">
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button onclick="salvaChangelog()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Pubblica</button>
-          <button onclick="document.getElementById('cl-overlay').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">Annulla</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
-}
-
-async function salvaChangelog() {
-  const titolo = document.getElementById('cl-titolo')?.value.trim();
-  if (!titolo) { alert('Inserisci un titolo.'); return; }
-  try {
-    await db.from('iam_changelog').insert({
-      tipo:        document.getElementById('cl-tipo')?.value || 'aggiornamento',
-      titolo,
-      descrizione: document.getElementById('cl-descr')?.value.trim() || null,
-      ticket_id:   parseInt(document.getElementById('cl-ticket')?.value) || null,
-      autore_id:   ME?.id,
-      autore_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email,
-      creato_il:   new Date().toISOString(),
-    });
-    document.getElementById('cl-overlay')?.remove();
-    await loadChangelog();
-  } catch(e) { alert('Errore: '+e.message); }
-}
-
-async function delChangelog(id) {
-  if (!confirm('Eliminare questo aggiornamento?')) return;
-  await db.from('iam_changelog').delete().eq('id', id);
-  await loadChangelog();
-}
-
-async function addChangelogAuto(tipo, titolo, descrizione, ticketId) {
-  if (!db || !ME) return;
-  try {
-    await db.from('iam_changelog').insert({
-      tipo, titolo, descrizione: descrizione || null,
-      ticket_id: ticketId || null,
-      autore_id: ME?.id,
-      autore_nome: PROFILO ? (PROFILO.nome+' '+PROFILO.cognome).trim() : ME?.email,
-      creato_il: new Date().toISOString(),
-    });
-  } catch(e) { console.warn('changelog auto:', e); }
-}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // ─── TEMA & ACCENT ───────────────────────────────────────────────────────────

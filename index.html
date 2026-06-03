@@ -5964,29 +5964,54 @@ function apriConfigGara(tipo) {
 
 async function salvaConfigGara(tipo) {
   const isFinanziati = tipo === 'finanziati';
+  const isRinnovi = tipo === 'rinnovi';
   const pezzi = document.getElementById('gcfg-pezzi')?.value;
-  const periodo = document.getElementById('gcfg-periodo')?.value.trim();
-  const regolamento = document.getElementById('gcfg-regolamento')?.value.trim();
-  const cfg = { tipo, anno: new Date().getFullYear(), regolamento: regolamento||null, aggiornato_il: new Date().toISOString(), attiva: true };
-  if (isFinanziati) cfg.pezzi_min = parseInt(pezzi)||0;
-  else if (pezzi !== undefined) cfg.pezzi_min = parseInt(pezzi)||0;
-  if (periodo) { cfg.periodo_dal = periodo; }
+  const periodo = document.getElementById('gcfg-periodo')?.value?.trim();
+  const regolamento = document.getElementById('gcfg-regolamento')?.value?.trim();
+
+  const cfg = {
+    tipo,
+    anno: new Date().getFullYear(),
+    regolamento: regolamento || null,
+    periodo_dal: periodo || null,
+    attiva: true,
+    aggiornato_il: new Date().toISOString()
+  };
+
+  if (isFinanziati) cfg.anno_prec_n = parseInt(pezzi) || 0;
+  else if (!isRinnovi) cfg.pezzi_min = parseInt(pezzi) || 0;
+
   try {
     if (db) {
-      const { data: ex } = await db.from('iam_gare_config').select('id').eq('tipo', tipo).maybeSingle();
-      if (ex?.id) await db.from('iam_gare_config').update(cfg).eq('id', ex.id);
-      else await db.from('iam_gare_config').insert({...cfg, creato_da: ME?.id});
+      const { data: ex, error: exErr } = await db
+        .from('iam_gare_config')
+        .select('id')
+        .eq('tipo', tipo)
+        .eq('anno', cfg.anno)
+        .maybeSingle();
+
+      if (ex?.id) {
+        const { error } = await db
+          .from('iam_gare_config')
+          .update(cfg)
+          .eq('id', ex.id);
+        if (error) throw error;
+      } else {
+        const { error } = await db
+          .from('iam_gare_config')
+          .insert({ ...cfg, creato_da: ME?.id });
+        if (error) throw error;
+      }
     }
     GARE_CONFIG[tipo] = cfg;
     localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
+    document.getElementById('gara-cfg-overlay')?.remove();
+    showSavemsg('✅ Configurazione salvata');
+    renderGara(tipo);
   } catch(e) {
     console.error('salvaConfigGara error:', e);
-    alert('Errore config: '+(e.message||e));
-    GARE_CONFIG[tipo] = cfg;
-    localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
+    alert('Errore salvataggio: ' + (e.message || e));
   }
-  document.getElementById('gara-cfg-overlay')?.remove();
-  renderGara(tipo);
 }
 
 function editRinnMese(mese) {

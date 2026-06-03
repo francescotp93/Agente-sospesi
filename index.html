@@ -876,6 +876,22 @@ input[type=file]{display:none;}
           </label>
         </div>
       </div>
+      <div class="fld">
+        <label>Luogo (opzionale)</label>
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <input type="text" id="wd-luogo" placeholder="es. Sede agenzia, Via Roma 1..."
+            style="flex:1;padding:10px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
+          <button onclick="geoLocalizzaWD()"
+            style="padding:10px 12px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-size:13px;flex-shrink:0;">
+            <i class="ti ti-map-pin" style="font-size:15px;"></i>
+          </button>
+        </div>
+        <div id="wd-luogo-map-link" style="display:none;margin-top:4px;">
+          <a id="wd-luogo-link" target="_blank" style="font-size:11px;color:var(--blu-txt);text-decoration:none;">
+            <i class="ti ti-external-link" style="font-size:11px;"></i> Apri in Maps
+          </a>
+        </div>
+      </div>
       <button onclick="addToCalWD()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;justify-content:center;"><i class="ti ti-calendar-plus" style="font-size:15px;"></i> Aggiungi al calendario</button>
     </div>
   </div>
@@ -5257,6 +5273,7 @@ function renderWD() {
           ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">👥 ${sharedNames.join(', ')}</div>`:''}
           ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;">${w.note}</div>`:''}
           ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
+          ${w.luogo?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px;"></i> ${w.luogo}${w.lat&&w.lng?` <a href="https://www.google.com/maps?q=${w.lat},${w.lng}" target="_blank" style="color:var(--blu-txt);margin-left:4px;text-decoration:none;font-size:10px;">Mappa</a>`:''}</div>`:''}
           ${commenti.length?`<div style="font-size:11px;color:var(--txt3);margin-top:4px;"><i class="ti ti-message-circle" style="font-size:12px;vertical-align:-1px;"></i> ${commenti.length} commento${commenti.length>1?'i':''}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
@@ -5342,6 +5359,40 @@ async function inviaWDC(wdId) {
   } catch(e) { alert('Errore invio commento: '+e.message); }
 }
 
+function geoLocalizzaWD() {
+  if (!navigator.geolocation) { alert('Geolocalizzazione non supportata dal browser.'); return; }
+  const btn = document.querySelector('[onclick="geoLocalizzaWD()"]');
+  if (btn) btn.innerHTML = '<i class="ti ti-loader" style="font-size:15px;animation:ptrSpin .7s linear infinite;"></i>';
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      try {
+        const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+        const data = await res.json();
+        const corta = data.address
+          ? [data.address.road, data.address.house_number, data.address.city||data.address.town].filter(Boolean).join(' ')
+          : (data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+        const inp = document.getElementById('wd-luogo');
+        if (inp) { inp.value = corta; inp.dataset.lat = lat; inp.dataset.lng = lng; }
+        const linkEl = document.getElementById('wd-luogo-map-link');
+        const link   = document.getElementById('wd-luogo-link');
+        if (linkEl) linkEl.style.display = 'block';
+        if (link)   link.href = `https://www.google.com/maps?q=${lat},${lng}`;
+      } catch(e) {
+        const inp = document.getElementById('wd-luogo');
+        if (inp) { inp.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`; inp.dataset.lat = lat; inp.dataset.lng = lng; }
+      }
+      if (btn) btn.innerHTML = '<i class="ti ti-map-pin" style="font-size:15px;"></i>';
+    },
+    (err) => {
+      alert('Impossibile ottenere posizione: ' + err.message);
+      if (btn) btn.innerHTML = '<i class="ti ti-map-pin" style="font-size:15px;"></i>';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
 async function openWDModal(id) {
   WD_ID = id; WD_FILE = null;
   const w = id ? WD.find(x=>x.id===id) : null;
@@ -5351,6 +5402,10 @@ async function openWDModal(id) {
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
+  const luogoEl = document.getElementById('wd-luogo');
+  if (luogoEl) { luogoEl.value = w?.luogo || ''; delete luogoEl.dataset.lat; delete luogoEl.dataset.lng; }
+  const mapLinkEl = document.getElementById('wd-luogo-map-link');
+  if (mapLinkEl) mapLinkEl.style.display = 'none';
 
   // Popola condividi con select a tendina (escludi se stesso)
   const sel = document.getElementById('wd-condividi-sel');
@@ -5396,6 +5451,9 @@ function saveWD() {
     condivisi,
     file_nome: WD_FILE?.nome  || existing?.file_nome || '',
     file_data: WD_FILE?.data  || existing?.file_data || '',
+    luogo:     document.getElementById('wd-luogo')?.value.trim() || null,
+    lat:       parseNum(document.getElementById('wd-luogo')?.dataset.lat) || null,
+    lng:       parseNum(document.getElementById('wd-luogo')?.dataset.lng) || null,
   };
   if (!w.titolo) { alert('Inserisci un titolo.'); return; }
   saveWD_DB(w).then(() => {

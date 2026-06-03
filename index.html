@@ -1611,16 +1611,15 @@ input[type=file]{display:none;}
           <div class="fld ffull">
             <label>Compagnie operative</label>
             <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;">
-              <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-hdi" style="accent-color:var(--acc);"> HDI</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-allianz" style="accent-color:var(--acc);"> Allianz</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-groupama" style="accent-color:var(--acc);"> Groupama</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-prima" style="accent-color:var(--acc);"> Prima</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-generali" style="accent-color:var(--acc);"> Generali</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-sara" style="accent-color:var(--acc);"> Sara</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-vittoria" style="accent-color:var(--acc);"> Vittoria</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-unipolsai" style="accent-color:var(--acc);"> UnipolSai</label>
-                <label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;"><input type="checkbox" id="mc-comp-altre" style="accent-color:var(--acc);"> Altre</label>
+              <div id="mc-compagnie-lista" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+              <div style="margin-top:8px;padding-top:8px;border-top:.5px solid var(--bord);">
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <input type="text" id="mc-comp-altra-testo" placeholder="Aggiungi compagnia..."
+                    style="flex:1;padding:6px 10px;background:var(--surf);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:12px;color:var(--txt);font-family:inherit;"
+                    onkeydown="if(event.key==='Enter'){aggiungiCompagnia();event.preventDefault();}">
+                  <button onclick="aggiungiCompagnia()"
+                    style="padding:6px 12px;background:var(--acc);color:#fff;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
+                </div>
               </div>
             </div>
           </div>
@@ -3279,8 +3278,9 @@ function renderTeam() {
     if(c.rami?.re)   rami.push('<span class="rc rc-re">Rami El.</span>');
     if(c.rami?.cau)  rami.push('<span class="rc rc-cau">Cauzioni</span>');
     if(c.rami?.inf)  rami.push('<span class="rc rc-re">Infortuni</span>');
-    const compLabels = {hdi:'HDI',allianz:'Allianz',groupama:'Groupama',prima:'Prima',generali:'Generali',sara:'Sara',vittoria:'Vittoria',unipolsai:'UnipolSai',altre:'Altre'};
-    const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${compLabels[k]||k}</span>`).join('');
+    const compLabels = {hdi:'HDI',allianz:'Allianz',groupama:'Groupama',prima:'Prima',generali:'Generali',sara:'Sara',vittoria:'Vittoria',unipolsai:'UnipolSai'};
+    const compCustomMap = Object.fromEntries(getCompagnieCustom().map(x=>[x.key,x.label]));
+    const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${compLabels[k]||compCustomMap[k]||k}</span>`).join('');
 
     return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;">
 
@@ -3407,9 +3407,7 @@ function openCollabModal(id) {
     sv('mc-note',c.note); sv('mc-dinizio',c.dinizio);
     if(document.getElementById('mc-tipo')) document.getElementById('mc-tipo').value=c.tipo||'Subagente';
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=!!(c.rami?.[r]); });
-    const comps = c?.compagnie || [];
-    ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
-      .forEach(k => { const el=document.getElementById('mc-comp-'+k); if(el) el.checked=comps.includes(k); });
+    renderCompagnieModal(c?.compagnie || []);
     TEAM_ANNI = (c.anni||[]).map(a=>({...a,files:[...(a.files||[])]}));
     // Ripristina doc labels — tutti i tipi inclusi i nuovi
     ['id','ts','vis','priv','altri','dip','cas','cs','mand','tabp'].forEach(k=>{
@@ -3419,8 +3417,7 @@ function openCollabModal(id) {
   } else {
     ['mc-nome','mc-cogn','mc-email','mc-tel','mc-ind','mc-cf','mc-ddn','mc-rui','mc-piva','mc-iban1','mc-iban2','mc-port','mc-note','mc-dinizio'].forEach(id=>sv(id,''));
     ['auto','vita','re','cau','inf'].forEach(r=>{ const el=document.getElementById('mr-'+r); if(el) el.checked=false; });
-    ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
-      .forEach(k => { const el=document.getElementById('mc-comp-'+k); if(el) el.checked=false; });
+    renderCompagnieModal([]);
     ['id','ts','vis','priv','altri'].forEach(k=>{ const el=document.getElementById('docn-'+k); if(el) el.innerHTML=''; });
   }
   TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
@@ -3434,6 +3431,64 @@ function closeCollabModal() {
   TEAM_DOCS = {};
 }
 
+// ── COMPAGNIE OPERATIVE ──
+const COMPAGNIE_CUSTOM_KEY = 'iam_compagnie_custom';
+
+function getCompagnieCustom() {
+  try { return JSON.parse(localStorage.getItem(COMPAGNIE_CUSTOM_KEY)||'[]'); }
+  catch(e) { return []; }
+}
+
+function saveCompagnieCustom(lista) {
+  localStorage.setItem(COMPAGNIE_CUSTOM_KEY, JSON.stringify(lista));
+}
+
+function renderCompagnieModal(selezionate) {
+  const BASE = [
+    {key:'hdi', label:'HDI'}, {key:'allianz', label:'Allianz'},
+    {key:'groupama', label:'Groupama'}, {key:'prima', label:'Prima'},
+    {key:'generali', label:'Generali'}, {key:'sara', label:'Sara'},
+    {key:'vittoria', label:'Vittoria'}, {key:'unipolsai', label:'UnipolSai'},
+  ];
+  const custom = getCompagnieCustom();
+  const tutte = [...BASE, ...custom];
+  const el = document.getElementById('mc-compagnie-lista');
+  if (!el) return;
+  el.innerHTML = tutte.map(c => `
+    <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap;">
+      <input type="checkbox" class="mc-comp-cb" data-key="${c.key}"
+        style="accent-color:var(--acc);"
+        ${(selezionate||[]).includes(c.key) ? 'checked' : ''}>
+      ${c.label}
+      ${custom.find(x => x.key === c.key) ?
+        `<span onclick="rimuoviCompagniaCustom('${c.key}')" title="Rimuovi"
+          style="margin-left:2px;color:var(--red);cursor:pointer;font-size:10px;line-height:1;">✕</span>` : ''}
+    </label>`).join('');
+}
+
+function aggiungiCompagnia() {
+  const inp = document.getElementById('mc-comp-altra-testo');
+  const nome = inp?.value.trim();
+  if (!nome) return;
+  const key = nome.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+  const custom = getCompagnieCustom();
+  if (!custom.find(c => c.key === key)) {
+    custom.push({ key, label: nome });
+    saveCompagnieCustom(custom);
+  }
+  if (inp) inp.value = '';
+  const selezionate = Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key);
+  renderCompagnieModal([...selezionate, key]);
+}
+
+function rimuoviCompagniaCustom(key) {
+  if (!confirm('Rimuovere questa compagnia dall\'elenco?')) return;
+  const custom = getCompagnieCustom().filter(c => c.key !== key);
+  saveCompagnieCustom(custom);
+  const selezionate = Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key).filter(k => k !== key);
+  renderCompagnieModal(selezionate);
+}
+
 function saveCollab() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
   const c = {
@@ -3444,8 +3499,7 @@ function saveCollab() {
     iban2: gv('mc-iban2'), port: parseNum(gv('mc-port'))||null, note: gv('mc-note'),
     dinizio: gv('mc-dinizio')||null,
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
-    compagnie: ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai','altre']
-      .filter(k => document.getElementById('mc-comp-'+k)?.checked),
+    compagnie: Array.from(document.querySelectorAll('.mc-comp-cb:checked')).map(el => el.dataset.key),
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
     provv: TEAM_PROVV.map(p=>({...p})),
     docs: {}

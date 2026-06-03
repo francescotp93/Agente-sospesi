@@ -681,6 +681,9 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-team">
   <div style="padding:12px 12px 0;display:flex;gap:8px;align-items:center;">
     <input type="search" id="tm-search" placeholder="Cerca nome, cognome o ramo..." style="flex:1;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTeam()">
+    <select id="tm-hub-filter" onchange="renderTeam()" style="padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:12px;color:var(--txt);font-family:inherit;">
+      <option value="">Tutti gli HUB</option>
+    </select>
     <button onclick="openCollabModal(null)" style="width:38px;height:38px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:18px;"></i></button>
   </div>
   <div class="slbl">Team · <span id="tm-count">0</span> collaboratori</div>
@@ -766,6 +769,19 @@ input[type=file]{display:none;}
   <div style="margin-top:16px;">
     <div class="slbl">Obiettivi operatori</div>
     <div class="card" style="padding:14px 16px;"><div id="obiettivi-admin-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div></div>
+  </div>
+  <!-- HUB Produttori -->
+  <div style="margin-top:16px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 6px;">
+      <div class="slbl" style="padding:0;">🏢 HUB Produttori</div>
+      <button onclick="apriGestioneHub()"
+        style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+        <i class="ti ti-plus" style="font-size:13px;"></i> Nuovo HUB
+      </button>
+    </div>
+    <div class="card" style="padding:12px;">
+      <div id="hub-list"><div style="color:var(--txt3);font-size:13px;">Caricamento...</div></div>
+    </div>
   </div>
   <!-- Audit Log -->
   <div style="margin-top:16px;">
@@ -1635,6 +1651,11 @@ input[type=file]{display:none;}
           <div class="fld"><label>Tipo collaborazione</label>
             <select id="mc-tipo"><option>Subagente</option><option>Produttore</option><option>Dipendente</option><option>Altro</option></select>
           </div>
+          <div class="fld"><label>HUB di appartenenza</label>
+            <select id="mc-hub" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
+              <option value="">— Nessun HUB —</option>
+            </select>
+          </div>
           <div class="fld ffull">
             <label>Compagnie operative</label>
             <div style="background:var(--surf2);border-radius:var(--rs);padding:2px 12px;">
@@ -2487,6 +2508,7 @@ function goTab(t) {
       renderKpiCtrl();
       renderGestioneObiettivi('obiettivi-admin-list');
       renderAuditLog(document.getElementById('audit-log-list'));
+      renderHubList();
     });
   }
   if (t === 'profilo') {
@@ -3263,6 +3285,7 @@ async function loadTeamDB() {
         retention:      c.retention      || 0,
         gare_collab:    c.gare_collab    || [],
         storico_collab: c.storico_collab || [],
+        hub_id:         c.hub_id         || null,
       }));
       saveTeam(); // cache locale
     } else {
@@ -3304,6 +3327,7 @@ async function saveTeamDB(c) {
       retention:      c.retention      || 0,
       gare_collab:    c.gare_collab    || [],
       storico_collab: c.storico_collab || [],
+      hub_id:         c.hub_id         || null,
       creato_da:    ME?.id     || null,
       aggiornato_il: new Date().toISOString(),
     };
@@ -3347,11 +3371,13 @@ function calcPerf(c) {
 function renderTeam() {
   loadTeam();
   const q = (document.getElementById('tm-search')?.value||'').toLowerCase();
+  const hubFilter = document.getElementById('tm-hub-filter')?.value;
   let lista = TEAM;
   if (q) lista = TEAM.filter(c =>
     (c.nome+' '+c.cogn).toLowerCase().includes(q) ||
     Object.entries(c.rami||{}).some(([k,v])=>v&&k.toLowerCase().includes(q))
   );
+  if (hubFilter) lista = lista.filter(c => String(c.hub_id) === String(hubFilter));
   document.getElementById('tm-count').textContent = TEAM.length;
   document.getElementById('tm-empty').style.display = lista.length?'none':'block';
   document.getElementById('tm-list').innerHTML = lista.map(c => {
@@ -3481,10 +3507,16 @@ function selCardTab(collabId, tab) {
   });
 }
 
-function openCollabModal(id) {
+async function openCollabModal(id) {
   loadTeam();
   TEAM_ID = id; TEAM_ANNI = []; TEAM_DOCS = {};
   const c = id ? TEAM.find(x=>x.id===id) : null;
+  await loadHubDB();
+  const hubSel = document.getElementById('mc-hub');
+  if (hubSel) {
+    hubSel.innerHTML = '<option value="">— Nessun HUB —</option>' +
+      HUB_LIST.map(h=>`<option value="${h.id}" ${c?.hub_id==h.id?'selected':''}>${h.nome}</option>`).join('');
+  }
   document.getElementById('mc-title').textContent = c ? c.nome+' '+c.cogn : 'Nuovo collaboratore';
   const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
   if (c) {
@@ -3921,6 +3953,7 @@ function saveCollab() {
     tipo: gv('mc-tipo')||'Subagente', piva: gv('mc-piva'), iban1: gv('mc-iban1'),
     iban2: gv('mc-iban2'), port: parseNum(gv('mc-port'))||null, note: gv('mc-note'),
     dinizio: gv('mc-dinizio')||null,
+    hub_id: parseInt(document.getElementById('mc-hub')?.value) || null,
     rami: { auto: !!document.getElementById('mr-auto')?.checked, vita: !!document.getElementById('mr-vita')?.checked, re: !!document.getElementById('mr-re')?.checked, cau: !!document.getElementById('mr-cau')?.checked, inf: !!document.getElementById('mr-inf')?.checked },
     compagnie: getCompagnieSelezionate(),
     anni: TEAM_ANNI.map(a=>({anno:a.anno,ore:a.ore,files:a.files||[]})),
@@ -7610,6 +7643,265 @@ async function confermaModificaTicket() {
 
 // ─── FAB TRASCINABILE ─────────────────────────────────────────────────────────
 
+
+// ─── HUB PRODUTTORI ───────────────────────────────────────────────────────────
+let HUB_LIST = [];
+
+async function loadHubDB() {
+  if (!db) return;
+  try {
+    const { data } = await db.from('iam_hub').select('*').order('nome');
+    HUB_LIST = data || [];
+  } catch(e) { console.warn('loadHubDB:', e); }
+}
+
+async function saveHubDB(hub) {
+  if (!db) return;
+  try {
+    if (hub.id) {
+      await db.from('iam_hub').update({ nome: hub.nome, colore: hub.colore, aggiornato_il: new Date().toISOString() }).eq('id', hub.id);
+    } else {
+      await db.from('iam_hub').insert({ nome: hub.nome, colore: hub.colore, creato_da: ME?.id });
+    }
+    await loadHubDB();
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+function apriGestioneHub() {
+  const cols = ['#E8500A','#2563EB','#16A34A','#7C3AED','#DC2626','#0D9488','#D97706','#DB2777'];
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="hub-overlay"
+      onclick="if(event.target.id==='hub-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">🏢 Gestione HUB</div>
+        <div id="hub-overlay-list" style="margin-bottom:16px;"></div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;">+ Nuovo HUB</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="fld"><label>Nome HUB</label>
+            <input type="text" id="hub-nome" placeholder="Es. Hub Nord, Hub Sud...">
+          </div>
+          <div class="fld"><label>Colore</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="hub-colori">
+              ${cols.map(c=>`<button onclick="selHubColore('${c}')"
+                style="width:28px;height:28px;border-radius:50%;background:${c};border:2px solid transparent;cursor:pointer;transition:transform .15s;"
+                id="hub-col-${c.replace('#','')}"></button>`).join('')}
+            </div>
+            <input type="hidden" id="hub-colore" value="#2563EB">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button onclick="salvaNuovoHub()"
+            style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">
+            Crea HUB</button>
+          <button onclick="document.getElementById('hub-overlay').remove()"
+            style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;">
+            Chiudi</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+  renderHubOverlay();
+  setTimeout(() => selHubColore('#2563EB'), 50);
+}
+
+function selHubColore(colore) {
+  document.getElementById('hub-colore').value = colore;
+  document.querySelectorAll('#hub-colori button').forEach(btn => {
+    btn.style.border = '2px solid transparent'; btn.style.transform = 'scale(1)';
+  });
+  const btn = document.getElementById('hub-col-'+colore.replace('#',''));
+  if (btn) { btn.style.border = '2px solid var(--txt)'; btn.style.transform = 'scale(1.2)'; }
+}
+
+function renderHubOverlay() {
+  const el = document.getElementById('hub-overlay-list');
+  if (!el) return;
+  if (!HUB_LIST.length) { el.innerHTML = '<div style="color:var(--txt3);font-size:12px;margin-bottom:8px;">Nessun HUB creato</div>'; return; }
+  loadTeam();
+  el.innerHTML = HUB_LIST.map(h => {
+    const membri = TEAM.filter(c => c.hub_id === h.id);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surf2);border-radius:var(--rs);margin-bottom:6px;border-left:3px solid ${h.colore||'var(--acc)'};">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;">${h.nome}</div>
+        <div style="font-size:11px;color:var(--txt3);">${membri.length} produttori</div>
+      </div>
+      <button onclick="eliminaHub(${h.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:6px;cursor:pointer;">✕</button>
+    </div>`;
+  }).join('');
+}
+
+async function salvaNuovoHub() {
+  const nome = document.getElementById('hub-nome')?.value.trim();
+  const colore = document.getElementById('hub-colore')?.value || '#2563EB';
+  if (!nome) { alert('Inserisci il nome dell\'HUB.'); return; }
+  await saveHubDB({ nome, colore });
+  const inp = document.getElementById('hub-nome'); if(inp) inp.value = '';
+  renderHubOverlay();
+  renderHubList();
+}
+
+async function eliminaHub(id) {
+  if (!confirm('Eliminare questo HUB? I produttori associati non verranno eliminati.')) return;
+  try {
+    await db.from('iam_hub').delete().eq('id', id);
+    await loadHubDB();
+    renderHubOverlay();
+    renderHubList();
+  } catch(e) { alert('Errore: '+e.message); }
+}
+
+async function renderHubList() {
+  await loadHubDB();
+  loadTeam();
+  const el = document.getElementById('hub-list');
+  if (!el) return;
+  if (!HUB_LIST.length) {
+    el.innerHTML = '<div style="color:var(--txt3);font-size:13px;">Nessun HUB. Creane uno con + Nuovo HUB.</div>';
+    return;
+  }
+  // Aggiorna filtro HUB nel team
+  const sel = document.getElementById('tm-hub-filter');
+  if (sel) {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Tutti gli HUB</option>' +
+      HUB_LIST.map(h=>`<option value="${h.id}" ${cur==h.id?'selected':''}>${h.nome}</option>`).join('');
+  }
+  el.innerHTML = HUB_LIST.map(h => {
+    const membri = TEAM.filter(c => c.hub_id === h.id);
+    const totPort = membri.reduce((a,c) => a+(parseNum(c.port)||0), 0);
+    return `<div style="background:var(--surf2);border-radius:var(--rs);padding:14px;margin-bottom:10px;border-left:4px solid ${h.colore||'var(--acc)'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;">${h.nome}</div>
+          <div style="font-size:11px;color:var(--txt3);">${membri.length} produttori · €${fmt(totPort)} portafoglio</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="apriClassificaHub(${h.id})" style="font-size:11px;padding:5px 10px;background:${h.colore||'var(--acc)'};color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🏆 Classifica</button>
+          <button onclick="apriAlertHub(${h.id})" style="font-size:11px;padding:5px 10px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:8px;cursor:pointer;font-family:inherit;">⚠️ Alert</button>
+        </div>
+      </div>
+      ${membri.length ? `
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          ${membri.sort((a,b)=>(parseNum(b.port)||0)-(parseNum(a.port)||0)).map((c,i) => {
+            const maxP = parseNum(membri[0]?.port)||1;
+            const perc = Math.round((parseNum(c.port)||0)/maxP*100);
+            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
+              <span style="width:20px;text-align:center;">${medal||i+1}</span>
+              <span style="flex:1;font-weight:${i<3?'700':'400'};">${c.nome} ${c.cogn}</span>
+              <div style="width:80px;height:6px;background:var(--bord);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${h.colore||'var(--acc)'};border-radius:3px;width:${perc}%;"></div></div>
+              <span style="font-size:11px;color:var(--acc);font-weight:600;min-width:60px;text-align:right;">€${fmt(parseNum(c.port)||0)}</span>
+            </div>`;
+          }).join('')}
+        </div>` :
+        '<div style="color:var(--txt3);font-size:12px;">Nessun produttore in questo HUB.</div>'}
+    </div>`;
+  }).join('');
+}
+
+function apriClassificaHub(hubId) {
+  const hub = HUB_LIST.find(h=>h.id===hubId); if (!hub) return;
+  loadTeam();
+  const membri = TEAM.filter(c=>c.hub_id===hubId).sort((a,b)=>(parseNum(b.port)||0)-(parseNum(a.port)||0));
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="class-overlay"
+      onclick="if(event.target.id==='class-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div style="width:12px;height:12px;border-radius:50%;background:${hub.colore};flex-shrink:0;"></div>
+          <div style="font-size:15px;font-weight:700;">🏆 Classifica ${hub.nome}</div>
+        </div>
+        ${!membri.length ? '<div style="color:var(--txt3);text-align:center;padding:20px;">Nessun produttore in questo HUB</div>' :
+          membri.map((c,i) => {
+            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            const maxP = parseNum(membri[0]?.port)||1;
+            const perc = Math.round((parseNum(c.port)||0)/maxP*100);
+            const gareVinte = (c.gare_collab||[]).filter(g=>{
+              const tot=g.posizioni.reduce((a,p)=>a+(parseNum(p.valore)||0),0);
+              return tot>=g.target;
+            }).length;
+            return `<div style="display:flex;align-items:center;gap:12px;padding:12px;
+              background:${i===0?'rgba('+hexToRgb(hub.colore)+',.08)':'var(--surf2)'};border-radius:var(--rs);margin-bottom:8px;
+              border:${i===0?'1.5px solid '+hub.colore:'1px solid var(--bord)'};">
+              <div style="font-size:24px;width:36px;text-align:center;">${medal||i+1}</div>
+              <div style="flex:1;">
+                <div style="font-size:14px;font-weight:700;">${c.nome} ${c.cogn}</div>
+                <div style="font-size:11px;color:var(--txt3);">${c.tipo||'—'} · ${gareVinte} gare raggiunte</div>
+                <div style="background:var(--bord);border-radius:3px;height:6px;margin-top:6px;overflow:hidden;">
+                  <div style="height:100%;background:${hub.colore};border-radius:3px;width:${perc}%;transition:width .6s;"></div>
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:800;color:${hub.colore};">€${fmt(parseNum(c.port)||0)}</div>
+                <div style="font-size:10px;color:var(--txt3);">portafoglio</div>
+              </div>
+            </div>`;
+          }).join('')}
+        <button onclick="document.getElementById('class-overlay').remove()"
+          style="width:100%;margin-top:8px;padding:12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">
+          Chiudi</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function apriAlertHub(hubId) {
+  const hub = HUB_LIST.find(h=>h.id===hubId); if (!hub) return;
+  loadTeam();
+  const membri = TEAM.filter(c=>c.hub_id===hubId);
+  const alerts = [];
+  const oggi = new Date().toISOString().split('T')[0];
+  membri.forEach(c => {
+    (c.gare_collab||[]).forEach(g => {
+      if (g.dataFine && g.dataFine < oggi) return;
+      const tot = g.posizioni.reduce((a,p)=>a+(parseNum(p.valore)||0),0);
+      const perc = g.target>0 ? Math.round(tot/g.target*100) : 0;
+      if (perc < 50) alerts.push({ collab:c.nome+' '+c.cogn, gara:g.label, perc, tot, target:g.target, tipo:g.tipo, scadenza:g.dataFine||'—', livello:perc<25?'crit':'warn' });
+    });
+  });
+  const html = `
+    <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:9999;
+      display:flex;align-items:flex-end;" id="alert-overlay"
+      onclick="if(event.target.id==='alert-overlay')this.remove()">
+      <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
+        width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">⚠️ Alert ${hub.nome}</div>
+        ${!alerts.length ?
+          `<div style="text-align:center;padding:24px;color:var(--grn-txt);">
+            <i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;"></i>
+            Tutti i produttori sono in target! 🎉</div>` :
+          alerts.map(a=>`<div style="padding:12px;background:${a.livello==='crit'?'var(--red-bg)':'var(--amb-bg)'};border-radius:var(--rs);margin-bottom:8px;border-left:3px solid ${a.livello==='crit'?'var(--red)':'var(--amb)'};">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div style="font-size:13px;font-weight:700;">${a.collab}</div>
+                <div style="font-size:12px;color:var(--txt2);">Gara: ${a.gara}</div>
+                <div style="font-size:11px;color:var(--txt3);">Scadenza: ${a.scadenza}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:20px;font-weight:800;color:${a.livello==='crit'?'var(--red)':'var(--amb)'};">${a.perc}%</div>
+                <div style="font-size:10px;color:var(--txt3);">${a.tot}/${a.target} ${a.tipo}</div>
+              </div>
+            </div>
+            <div style="background:rgba(0,0,0,.1);border-radius:3px;height:6px;margin-top:8px;overflow:hidden;">
+              <div style="height:100%;background:${a.livello==='crit'?'var(--red)':'var(--amb)'};border-radius:3px;width:${a.perc}%;"></div>
+            </div>
+          </div>`).join('')}
+        <button onclick="document.getElementById('alert-overlay').remove()"
+          style="width:100%;margin-top:8px;padding:12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">
+          Chiudi</button>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function hexToRgb(hex) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 // ─── TEMA & ACCENT ───────────────────────────────────────────────────────────

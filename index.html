@@ -7395,15 +7395,28 @@ async function loadTickets() {
     const { data, error } = await q;
     if (error) throw error;
     TK_LIST = data || [];
-    // Badge aperti
-    const badge = document.getElementById('ai-ticket-badge');
-    const nAperti = TK_LIST.filter(t=>t.stato==='aperto').length;
-    if (badge) {
-      badge.style.display = nAperti > 0 ? 'flex' : 'none';
-      badge.textContent   = nAperti;
-    }
+    await updateTicketBadge();
     renderTickets();
   } catch(e) { console.error('loadTickets:', e); }
+}
+
+async function updateTicketBadge() {
+  const badge = document.getElementById('ai-ticket-badge');
+  if (!badge || !db) return;
+  try {
+    let q = db.from('iam_ticket').select('id', { count: 'exact', head: true }).eq('stato', 'aperto');
+    if (PROFILO?.ruolo !== 'top_master') q = q.eq('segnalato_da', ME?.id);
+    const { count, error } = await q;
+    if (error) throw error;
+    const nAperti = count || 0;
+    badge.style.display = nAperti > 0 ? 'flex' : 'none';
+    badge.textContent = nAperti;
+  } catch(e) {
+    console.error('updateTicketBadge:', e);
+    const nAperti = TK_LIST.filter(t => t.stato === 'aperto').length;
+    badge.style.display = nAperti > 0 ? 'flex' : 'none';
+    badge.textContent = nAperti;
+  }
 }
 
 function setTKFilter(f) {

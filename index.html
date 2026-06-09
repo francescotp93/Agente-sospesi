@@ -1670,7 +1670,7 @@ input[type=file]{display:none;}
     <!-- Lista ticket -->
     <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
       <!-- Filtri (solo top_master) -->
-      <div id="tk-filtri" style="display:none;padding:10px 16px 6px;display:flex;gap:6px;background:var(--surf);border-bottom:.5px solid var(--bord);flex-wrap:wrap;">
+      <div id="tk-filtri" style="display:none;padding:10px 16px 6px;gap:6px;background:var(--surf);border-bottom:.5px solid var(--bord);flex-wrap:wrap;">
         <button id="tk-f-aperti"   onclick="setTKFilter('aperto')"    style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;font-family:inherit;">Aperti</button>
         <button id="tk-f-lavoraz"  onclick="setTKFilter('in_lavorazione')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">In lavorazione</button>
         <button id="tk-f-risolti"  onclick="setTKFilter('risolto')"   style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-family:inherit;">Risolti</button>
@@ -7342,6 +7342,12 @@ const TK_STATO = {
   risolto:        { label:'Risolto ✓',      color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
 };
 
+function escHTML(v) {
+  return String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 function selAITab(tab) {
   AI_TAB = tab;
   const isChat   = tab === 'chat';
@@ -7376,15 +7382,18 @@ async function loadTickets() {
   if (!db) return;
   try {
     let q = db.from('iam_ticket').select('*').order('creato_il', {ascending: false});
+    const isTopMaster = PROFILO?.ruolo === 'top_master';
+    const filtri = document.getElementById('tk-filtri');
+    if (filtri) filtri.style.display = isTopMaster ? 'flex' : 'none';
+
     if (PROFILO?.ruolo !== 'top_master') {
       q = q.eq('segnalato_da', ME?.id);
-    } else {
-      // top_master vede filtro
-      const filtri = document.getElementById('tk-filtri');
-      if (filtri) filtri.style.display = 'flex';
-      if (TK_FILTER !== 'tutti') q = q.eq('stato', TK_FILTER);
     }
-    const { data } = await q;
+
+    if (TK_FILTER !== 'tutti') q = q.eq('stato', TK_FILTER);
+
+    const { data, error } = await q;
+    if (error) throw error;
     TK_LIST = data || [];
     // Badge aperti
     const badge = document.getElementById('ai-ticket-badge');
@@ -7424,19 +7433,23 @@ function renderTickets() {
     const pr  = TK_PRIORITA[t.priorita] || TK_PRIORITA.normale;
     const st  = TK_STATO[t.stato]       || TK_STATO.aperto;
     const dt  = new Date(t.creato_il).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const titolo = escHTML(t.titolo || 'Ticket senza titolo');
+    const descrizione = escHTML(t.descrizione || '');
+    const segnalatoNome = escHTML(t.segnalato_nome || '—');
+    const risoltoNome = escHTML(t.risolto_nome || '');
     return `<div style="padding:12px 16px;border-bottom:.5px solid var(--bord);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
-            <span style="font-size:13px;font-weight:700;">${t.titolo}</span>
+            <span style="font-size:13px;font-weight:700;">${titolo}</span>
           </div>
           <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px;">
             <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:${pr.bg};color:${pr.color};">${pr.label}</span>
             <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:${st.bg};color:${st.color};">${st.label}</span>
           </div>
-          ${t.descrizione?`<div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${t.descrizione}</div>`:''}
-          <div style="font-size:10px;color:var(--txt3);">👤 ${t.segnalato_nome||'—'} · ${dt}</div>
-          ${t.stato==='risolto'&&t.risolto_nome?`<div style="font-size:10px;color:var(--grn-txt);margin-top:2px;">✓ Risolto da ${t.risolto_nome}</div>`:''}
+          ${descrizione?`<div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${descrizione}</div>`:''}
+          <div style="font-size:10px;color:var(--txt3);">👤 ${segnalatoNome} · ${dt}</div>
+          ${t.stato==='risolto'&&risoltoNome?`<div style="font-size:10px;color:var(--grn-txt);margin-top:2px;">✓ Risolto da ${risoltoNome}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
           ${(t.segnalato_da === ME?.id || isAdmin) && t.stato !== 'risolto' ?
@@ -7711,13 +7724,15 @@ function openEditTicket(id) {
   const t = TK_LIST.find(x => x.id === id);
   if (!t) return;
   TK_EDIT_ID = id;
+  const titolo = escHTML(t.titolo || '');
+  const descrizione = escHTML(t.descrizione || '');
   const html = `
     <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:600;display:flex;align-items:flex-end;" id="tk-edit-overlay" onclick="if(event.target.id==='tk-edit-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
         <div style="font-size:15px;font-weight:700;margin-bottom:14px;"><i class="ti ti-pencil"></i> Modifica ticket #${id}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
-          <div class="fld"><label>Titolo</label><input type="text" id="tke-titolo" value="${(t.titolo||'').replace(/"/g,'&quot;')}"></div>
-          <div class="fld"><label>Descrizione</label><textarea id="tke-descr" rows="2">${t.descrizione||''}</textarea></div>
+          <div class="fld"><label>Titolo</label><input type="text" id="tke-titolo" value="${titolo}"></div>
+          <div class="fld"><label>Descrizione</label><textarea id="tke-descr" rows="2">${descrizione}</textarea></div>
           <div class="fld"><label>Priorità</label>
             <select id="tke-priorita">
               <option value="bassa" ${t.priorita==='bassa'?'selected':''}>🟢 Bassa</option>

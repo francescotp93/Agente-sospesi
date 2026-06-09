@@ -7435,9 +7435,15 @@ function setTKFilter(f) {
 function renderTickets() {
   const el = document.getElementById('tk-list'); if (!el) return;
   if (!TK_LIST.length) {
+    const emptyMsg = {
+      aperto: 'Nessun ticket aperto',
+      in_lavorazione: 'Nessun ticket in lavorazione',
+      risolto: 'Nessun ticket risolto',
+      tutti: 'Nessun ticket'
+    }[TK_FILTER] || 'Nessun ticket';
     el.innerHTML = `<div style="text-align:center;padding:30px 16px;color:var(--txt3);">
       <div style="font-size:28px;margin-bottom:8px;">🎫</div>
-      <div style="font-size:13px;">${TK_FILTER==='risolto'?'Nessun ticket risolto':'Nessun ticket aperto'}</div>
+      <div style="font-size:13px;">${emptyMsg}</div>
     </div>`;
     return;
   }
@@ -7506,6 +7512,7 @@ async function inviaTicket() {
 
 async function setTKStato(id, stato) {
   if (!db) return;
+  if (stato === 'risolto' && !confirm('Vuoi segnare questo ticket come RISOLTO? L\'operazione è definitiva.')) return;
   const payload = { stato, aggiornato_il: new Date().toISOString() };
   if (stato === 'risolto') {
     payload.risolto_da   = ME?.id;
@@ -7737,6 +7744,7 @@ function openEditTicket(id) {
   const t = TK_LIST.find(x => x.id === id);
   if (!t) return;
   TK_EDIT_ID = id;
+  document.getElementById('tk-edit-overlay')?.remove();
   const titolo = escHTML(t.titolo || '');
   const descrizione = escHTML(t.descrizione || '');
   const html = `

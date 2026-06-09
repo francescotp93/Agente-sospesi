@@ -1096,8 +1096,8 @@ input[type=file]{display:none;}
               oninput="renderCONSAP()">
           </div>
           <button id="cs-prev-lock" onclick="toggleCSPrevLock()"
-            style="margin-top:18px;width:36px;height:36px;border-radius:10px;border:.5px solid var(--bord2);background:var(--surf2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"
-            title="Sblocca per modificare"><i class="ti ti-lock"></i></button>
+            style="margin-top:18px;width:36px;height:36px;border-radius:10px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"
+            title="Sblocca per modificare" aria-label="Sblocca anno precedente"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v3"></path></svg></button>
         </div>
 
         <!-- Contatore anno corrente (calcolato) -->
@@ -1186,8 +1186,8 @@ input[type=file]{display:none;}
               oninput="renderRE()">
           </div>
           <button id="re-prev-lock" onclick="toggleREPrevLock()"
-            style="margin-top:18px;width:36px;height:36px;border-radius:10px;border:.5px solid var(--bord2);background:var(--surf2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"
-            title="Sblocca per modificare"><i class="ti ti-lock"></i></button>
+            style="margin-top:18px;width:36px;height:36px;border-radius:10px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;"
+            title="Sblocca per modificare" aria-label="Sblocca volume anno precedente"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v3"></path></svg></button>
         </div>
 
         <!-- Obiettivi crescita -->
@@ -6644,20 +6644,31 @@ function calcolaBonusCONSAP(nAnnoCorr, nAnnoPre) {
   return             { bonus: 5000, label: `+${delta} pezzi vs anno prec. → €5.000 una tantum` };
 }
 
+const KPI_PREV_LOCK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v3"></path></svg>';
+const KPI_PREV_UNLOCK_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 7.2-2.4"></path><path d="M16 5l1.5-1.5"></path><path d="M12 14v3"></path></svg>';
+
+function setKpiPrevLockButton(btn, locked) {
+  if (!btn) return;
+  btn.innerHTML = locked ? KPI_PREV_LOCK_ICON : KPI_PREV_UNLOCK_ICON;
+  btn.style.color = locked ? 'var(--txt2)' : 'var(--acc)';
+  btn.title = locked ? 'Sblocca per modificare' : 'Blocca e salva';
+  btn.setAttribute('aria-label', locked ? 'Sblocca anno precedente' : 'Blocca e salva anno precedente');
+}
+
 function toggleCSPrevLock() {
   CS_PREV_LOCKED = !CS_PREV_LOCKED;
   const inp = document.getElementById('cs-prev-n');
   const btn = document.getElementById('cs-prev-lock');
   if (CS_PREV_LOCKED) {
     inp.readOnly = true; inp.style.cursor = 'not-allowed'; inp.style.background = 'var(--surf2)';
-    btn.textContent = '<i class="ti ti-lock"></i>'; btn.title = 'Sblocca per modificare';
+    setKpiPrevLockButton(btn, true);
     saveCSConfig();
   } else {
     if (!confirm('Vuoi modificare il numero CONSAP anno precedente? Questo aggiornerà tutti i calcoli.')) {
       CS_PREV_LOCKED = true; return;
     }
     inp.readOnly = false; inp.style.cursor = 'text'; inp.style.background = 'var(--surf)';
-    btn.textContent = '<i class="ti ti-lock-open"></i>'; btn.title = 'Blocca e salva';
+    setKpiPrevLockButton(btn, false);
     inp.focus();
   }
 }
@@ -6673,7 +6684,7 @@ async function loadCSFromDB() {
     CS_PREV_LOCKED = true;
     if (prevEl) { prevEl.readOnly = true; prevEl.style.cursor='not-allowed'; prevEl.style.background='var(--surf2)'; }
     const lockBtn = document.getElementById('cs-prev-lock');
-    if (lockBtn) { lockBtn.textContent = '<i class="ti ti-lock"></i>'; }
+    setKpiPrevLockButton(lockBtn, true);
     const { data: pos } = await db.from('iam_kpi_consap_posizioni').select('*').eq('anno', anno).order('creato_il', {ascending: false});
     CS_POSIZIONI = pos || [];
     renderCONSAP();
@@ -6875,8 +6886,7 @@ function toggleREPrevLock() {
     inp.readOnly = true;
     inp.style.cursor = 'not-allowed';
     inp.style.background = 'var(--surf2)';
-    btn.textContent = '<i class="ti ti-lock"></i>';
-    btn.title = 'Sblocca per modificare';
+    setKpiPrevLockButton(btn, true);
     // Salva al ribloccaggio
     saveREConfig();
   } else {
@@ -6886,8 +6896,7 @@ function toggleREPrevLock() {
     inp.readOnly = false;
     inp.style.cursor = 'text';
     inp.style.background = 'var(--surf)';
-    btn.textContent = '<i class="ti ti-lock-open"></i>';
-    btn.title = 'Blocca e salva';
+    setKpiPrevLockButton(btn, false);
     inp.focus();
   }
 }
@@ -6990,7 +6999,7 @@ async function loadREFromDB() {
     RE_PREV_LOCKED = true;
     if (prevEl) { prevEl.readOnly = true; prevEl.style.cursor='not-allowed'; prevEl.style.background='var(--surf2)'; }
     const lockBtn = document.getElementById('re-prev-lock');
-    if (lockBtn) { lockBtn.textContent = '<i class="ti ti-lock"></i>'; lockBtn.title = 'Sblocca per modificare'; }
+    setKpiPrevLockButton(lockBtn, true);
     // Ripristina obiettivo crescita
     const savedPerc = RE_CONFIG.obiettivo_perc || 0;
     RE_OBJ_PERC = savedPerc;

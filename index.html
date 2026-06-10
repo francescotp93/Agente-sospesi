@@ -3681,6 +3681,28 @@ function renderGraficoReport() {
   const COLORS = ['#E8500A','#2563EB','#16A34A','#7C3AED','#DC2626','#0D9488'];
   const allVals = COLLAB_VOLUMI.flatMap(v => v.mesi.map(x=>parseNum(x)));
   const maxVal = Math.max(...allVals, 1);
+  const volumeByYear = new Map(COLLAB_VOLUMI.map(v => [parseInt(v.anno), v]));
+  const latest = COLLAB_VOLUMI
+    .map(v => ({ ...v, annoNum: parseInt(v.anno) }))
+    .filter(v => !Number.isNaN(v.annoNum))
+    .sort((a,b) => b.annoNum - a.annoNum)[0];
+  const previous = latest ? volumeByYear.get(latest.annoNum - 1) : null;
+  const fmtDelta = v => `${v >= 0 ? '+' : '-'}€${fmt(Math.abs(v))}`;
+  const monthlyDeltaHtml = latest && previous ? `
+    <div style="background:var(--surf);border-radius:var(--rs);padding:10px 12px;margin-top:10px;">
+      <div style="font-size:10px;font-weight:800;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Differenza mensile ${latest.anno} vs ${previous.anno}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;">
+        ${mesi.map((m,mi) => {
+          const diff = parseNum(latest.mesi[mi] || 0) - parseNum(previous.mesi?.[mi] || 0);
+          const col = diff >= 0 ? 'var(--grn-txt)' : 'var(--red-txt)';
+          const bg  = diff >= 0 ? 'var(--grn-bg)'  : 'var(--red-bg)';
+          return `<div style="border-radius:6px;background:${bg};padding:5px 4px;text-align:center;">
+            <div style="font-size:8px;color:${col};font-weight:700;">${m}</div>
+            <div style="font-size:10px;color:${col};font-weight:800;">${fmtDelta(diff)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
   el.innerHTML = `
     <div style="background:var(--surf2);border-radius:var(--rs);padding:14px;margin-top:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -3712,14 +3734,19 @@ function renderGraficoReport() {
             <div style="font-size:8px;color:var(--txt3);margin-top:3px;">${m}</div>
           </div>`).join('')}
       </div>
+      ${monthlyDeltaHtml}
       <div style="display:grid;grid-template-columns:repeat(${Math.min(COLLAB_VOLUMI.length,3)},1fr);gap:6px;margin-top:8px;">
         ${COLLAB_VOLUMI.map((v,vi)=>{
           const tot = v.mesi.reduce((a,x)=>a+parseNum(x),0);
-          const media = tot/12;
+          const annoNum = parseInt(v.anno);
+          const prev = !Number.isNaN(annoNum) ? volumeByYear.get(annoNum - 1) : null;
+          const prevTot = prev ? prev.mesi.reduce((a,x)=>a+parseNum(x),0) : null;
+          const diffTot = prev ? tot - prevTot : null;
+          const diffColor = diffTot === null ? 'var(--txt3)' : (diffTot >= 0 ? 'var(--grn-txt)' : 'var(--red-txt)');
           return `<div style="background:var(--surf);border-radius:var(--rs);padding:8px 10px;border-left:3px solid ${COLORS[vi%COLORS.length]};">
             <div style="font-size:10px;color:var(--txt3);font-weight:700;">${v.anno}</div>
             <div style="font-size:14px;font-weight:800;color:${COLORS[vi%COLORS.length]};">€${fmt(tot)}</div>
-            <div style="font-size:10px;color:var(--txt3);">media €${fmt(media)}/mese</div>
+            <div style="font-size:10px;color:${diffColor};">${prev ? `diff. vs ${prev.anno}: ${fmtDelta(diffTot)}` : 'aggiungi anno precedente per confronto'}</div>
           </div>`;
         }).join('')}
       </div>

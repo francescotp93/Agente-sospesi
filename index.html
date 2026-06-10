@@ -1926,6 +1926,7 @@ input[type=file]{display:none;}
         <div class="fld"><label>Probabilità</label><select id="mt-prob"><option value="10">10%</option><option value="30" selected>30%</option><option value="50">50%</option><option value="70">70%</option><option value="90">90%</option><option value="100">100%</option></select></div>
         <div class="fld"><label>Priorità</label><select id="mt-prior"><option value="normale">Normale</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select></div>
         <div class="fld"><label>Collaboratore</label><select id="mt-collab"><option value="">— nessuno —</option></select></div>
+        <div class="fld"><label>Condividi con</label><select id="mt-condividi"><option value="">— nessuna condivisione —</option></select></div>
       </div>
       <div class="fld"><label>Note</label><textarea id="mt-note" rows="3" placeholder="Storico contatti, note..."></textarea></div>
       <button onclick="exportRecalling()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;justify-content:center;"><i class="ti ti-calendar-plus" style="font-size:15px;"></i> Aggiungi recalling al calendario</button>
@@ -2050,7 +2051,7 @@ function onLogin(user) {
       const isAdmin = isPipelineAdmin();
       let trattQ = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
       if (!isAdmin) {
-        trattQ = trattQ.eq('utente_id', ME.id);
+        trattQ = trattQ.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
       }
       trattQ.then(({data}) => {
         if (data?.length) {
@@ -2541,7 +2542,7 @@ function goTab(t) {
     if (db) {
       const isAdmin = isPipelineAdmin();
       let q = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
-      if (!isAdmin && ME) q = q.eq('utente_id', ME.id);
+      if (!isAdmin && ME) q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
       q
         .then(({data, error}) => {
           if (error) { console.warn('pipeline load:', error.message); return; }
@@ -4205,10 +4206,12 @@ function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[
 function savePipe() { localStorage.setItem('iam_pipe', JSON.stringify(PIPE)); }
 function saveAg()   { localStorage.setItem('iam_agenda', JSON.stringify(AGENDA)); }
 function isPipelineAdmin() { return PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master'; }
+function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
+function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (isPipelineAdmin()) return list;
   if (!ME) return [];
-  return list.filter(t => !t.utente_id || t.utente_id === ME.id);
+  return list.filter(t => isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 
 function selPTab(t) {
@@ -4230,6 +4233,7 @@ function renderTratt() {
     db.from('iam_utenti').select('id,nome,cognome').eq('attivo', true)
       .then(({data}) => {
         if (data) {
+          UTENTI_LISTA = data;
           selC.innerHTML = '<option value="">Tutti i collab.</option>' +
             data.map(u => {
               const nome = ((u.nome||'')+' '+(u.cognome||'')).trim();
@@ -4259,6 +4263,13 @@ function renderTratt() {
   document.getElementById('tr-list').innerHTML = lista.length ? lista.map(t=>{
     const sc = SC[t.status]||SC.prospect;
     const scad = t.recall&&t.recall<=oggi;
+    const isMine = isPipelineMine(t) || isPipelineAdmin();
+    const isShared = isPipelineSharedWithMe(t);
+    const canEdit = isMine;
+    const sharedNames = (t.condivisi_con || t.condivisi || []).map(uid => {
+      const u = UTENTI_LISTA.find(x => x.id === uid);
+      return u ? ((u.nome||'')+' '+(u.cognome||'')).trim() || u.email : '';
+    }).filter(Boolean);
     return `<div class="tcard">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
         <div style="flex:1;min-width:0;">
@@ -4268,6 +4279,8 @@ function renderTratt() {
             ${t.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':t.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
           </div>
           <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · 👤 '+t.collab:''}</div>
+          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">👥 ${sharedNames.join(', ')}</div>`:''}
+          ${isShared?'<div style="font-size:10px;color:var(--blu-txt);margin-top:2px;font-weight:700;">CONDIVISA CON TE</div>':''}
           ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'<i class="ti ti-calendar-event"></i>'} Recalling: ${t.recall}
             <button onclick="openGCal('Recalling: ${encodeForAttr(t.cliente)} - ${encodeForAttr(t.prodotto)}','${t.recall}')" style="margin-left:5px;font-size:10px;padding:1px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
           </div>`:''}
@@ -4275,10 +4288,10 @@ function renderTratt() {
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-size:14px;font-weight:700;color:var(--acc);">€${fmt(parseNum(t.importo)||0)}</div>
           <div style="font-size:10px;color:var(--txt3);">${t.prob||0}%</div>
-          <div class="tact-btns">
+          ${canEdit?`<div class="tact-btns">
             <button class="tact-btn" style="background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);" onclick="openTrattModal('${t.id}')"><i class="ti ti-pencil"></i></button>
             <button class="tact-btn" style="background:var(--red-bg);color:var(--red-txt);border:.5px solid var(--red);" onclick="delTratt('${t.id}')">✕</button>
-          </div>
+          </div>`:''}
         </div>
       </div>
     </div>`;
@@ -4312,6 +4325,8 @@ function openTrattModal(id) {
   }
   // Popola select con utenti IAM registrati
   const sel = document.getElementById('mt-collab');
+  const shareSel = document.getElementById('mt-condividi');
+  if (shareSel) shareSel.innerHTML = '<option value="">— nessuna condivisione —</option>';
   if (sel && db) {
     sel.innerHTML = '<option value="">— nessuno —</option>';
     db.from('iam_utenti').select('id,nome,cognome,email').eq('attivo', true)
@@ -4324,6 +4339,14 @@ function openTrattModal(id) {
             opt.textContent = nome;
             if (t?.collab === nome) opt.selected = true;
             sel.appendChild(opt);
+
+            if (shareSel && u.id !== ME?.id) {
+              const sopt = document.createElement('option');
+              sopt.value = u.id;
+              sopt.textContent = nome;
+              if ((t?.condivisi_con || t?.condivisi || []).includes(u.id)) sopt.selected = true;
+              shareSel.appendChild(sopt);
+            }
           });
         }
       });
@@ -4335,7 +4358,8 @@ function openTrattModal(id) {
 
 async function saveTratt() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
-  const t = { id: PIPE_ID||Date.now().toString(), cliente:gv('mt-cliente'), prodotto:gv('mt-prodotto'), importo:gv('mt-importo'), status:gv('mt-status'), recall:gv('mt-recall')||null, prob:gv('mt-prob'), prior:gv('mt-prior'), collab:gv('mt-collab'), note:gv('mt-note'), data_ins: new Date().toISOString().split('T')[0] };
+  const condivisi = gv('mt-condividi') ? [gv('mt-condividi')] : [];
+  const t = { id: PIPE_ID||Date.now().toString(), cliente:gv('mt-cliente'), prodotto:gv('mt-prodotto'), importo:gv('mt-importo'), status:gv('mt-status'), recall:gv('mt-recall')||null, prob:gv('mt-prob'), prior:gv('mt-prior'), collab:gv('mt-collab'), condivisi_con: condivisi, note:gv('mt-note'), data_ins: new Date().toISOString().split('T')[0] };
   if (!t.cliente) { alert('Inserisci il nome del cliente.'); return; }
   const btn = document.querySelector('#modal-tratt .mbtn.prim');
   if (btn) { btn.textContent='...'; btn.disabled=true; }
@@ -4653,10 +4677,9 @@ async function loadTrattDB() {
     const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
     let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
 
-    // Operativi vedono solo le proprie — la RLS fa già il filtro
-    // ma aggiungiamo anche lato JS per sicurezza
+    // Operativi vedono solo le proprie o quelle condivise con loro.
     if (!isAdmin) {
-      q = q.eq('utente_id', ME.id);
+      q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
     }
 
     const { data, error } = await q;
@@ -4675,6 +4698,7 @@ async function loadTrattDB() {
       note:      t.note     || '',
       data_ins:  t.data_ins || '',
       utente_id: t.utente_id|| '',
+      condivisi_con: t.condivisi_con || [],
     }));
     savePipe();
   } catch(e) {
@@ -4697,6 +4721,7 @@ async function saveTrattDB(t) {
         prob: t.prob ? parseInt(t.prob) : null,
         prior: t.prior || null,
         collab: t.collab || null,
+        condivisi_con: t.condivisi_con || [],
         note: t.note || null,
         data_ins: t.data_ins || new Date().toISOString().split('T')[0],
         utente_id: ME.id,
@@ -4706,6 +4731,7 @@ async function saveTrattDB(t) {
       if (error) throw error;
       if (data?.id) { const idx = PIPE.findIndex(x=>x.id===t.id); if(idx>=0) PIPE[idx].id = String(data.id); t.id = String(data.id); savePipe(); }
     } else {
+      const existing = PIPE.find(x => x.id === String(t.id));
       const payload = {
         cliente: t.cliente || '',
         prodotto: t.prodotto || null,
@@ -4715,9 +4741,10 @@ async function saveTrattDB(t) {
         prob: t.prob ? parseInt(t.prob) : null,
         prior: t.prior || null,
         collab: t.collab || null,
+        condivisi_con: t.condivisi_con || [],
         note: t.note || null,
         data_ins: t.data_ins || new Date().toISOString().split('T')[0],
-        utente_id: ME.id,
+        utente_id: existing?.utente_id || ME.id,
         aggiornato_il: new Date().toISOString()
       };
       const { error } = await db.from('iam_trattative').update(payload).eq('id', parseInt(t.id));

@@ -2047,19 +2047,8 @@ function onLogin(user) {
     // Precarica trattative, agenda e team in background
     // Carica direttamente senza aspettare PROFILO
     if (db) {
-      // Carica trattative: admin vedono tutto, operativi solo le proprie
-      const isAdmin = isPipelineAdmin();
-      let trattQ = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
-      if (!isAdmin) {
-        trattQ = trattQ.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
-      }
-      trattQ.then(({data}) => {
-        if (data?.length) {
-          let lista = visiblePipelineItems(data);
-          PIPE = lista.map(t=>({...t, id:String(t.id)}));
-          savePipe();
-        }
-      });
+      // Carica trattative tramite loadTrattDB (gestisce filtro utente)
+      loadTrattDB();
       db.from('iam_team').select('*').order('cogn',{ascending:true})
         .then(({data}) => { if(data?.length){ TEAM=data.map(c=>({...c})); saveTeam(); }});
     }
@@ -2539,21 +2528,7 @@ function goTab(t) {
   if (t === 'team')        { loadTeamDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
     renderTratt();
-    if (db) {
-      const isAdmin = isPipelineAdmin();
-      let q = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
-      if (!isAdmin && ME) q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
-      q
-        .then(({data, error}) => {
-          if (error) { console.warn('pipeline load:', error.message); return; }
-          if (data?.length) {
-            let lista = visiblePipelineItems(data);
-            PIPE = lista.map(t=>({...t, id:String(t.id)}));
-            savePipe();
-            renderTratt();
-          }
-        });
-    }
+    loadTrattDB().then(() => renderTratt());
   }
   sessionStorage.setItem('iam_last_tab', t);
   // FAB AI sempre visibile tranne quando l'overlay è aperto
@@ -4672,38 +4647,28 @@ function mostraBadgeRuolo() {
 
 // ─── CARICA TRATTATIVE DA SUPABASE ────────────────────────────────────────────
 async function loadTrattDB() {
-  if (!db || !ME) { loadPipe(); return; }
+  if (!db || !ME) { PIPE = []; return; }
   try {
-    const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
+    const isAdmin = isPipelineAdmin();
     let q = db.from('iam_trattative').select('*').order('data_ins', { ascending: false });
-
-    // Operativi vedono solo le proprie o quelle condivise con loro.
     if (!isAdmin) {
-      q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
+      // Prova con condivisi_con, se la colonna non esiste usa solo utente_id
+      let { data, error } = await db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
+        .or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
+      if (error) {
+        ({ data, error } = await db.from('iam_trattative').select('*').order('data_ins',{ascending:false}).eq('utente_id', ME.id));
+      }
+      if (error) { console.warn('loadTrattDB:', error.message); PIPE = []; return; }
+      PIPE = (data || []).map(t => ({ id:String(t.id), cliente:t.cliente||'', prodotto:t.prodotto||'', importo:t.importo||0, status:t.status||'prospect', recall:t.recall||'', prob:t.prob||30, prior:t.prior||'normale', collab:t.collab||'', note:t.note||'', data_ins:t.data_ins||'', utente_id:t.utente_id||'', condivisi_con:t.condivisi_con||[] }));
+      savePipe(); return;
     }
-
     const { data, error } = await q;
-    if (error) { console.warn('loadTrattDB:', error.message); loadPipe(); return; }
-
-    PIPE = (data || []).map(t => ({
-      id:        String(t.id),
-      cliente:   t.cliente  || '',
-      prodotto:  t.prodotto || '',
-      importo:   t.importo  || 0,
-      status:    t.status   || 'prospect',
-      recall:    t.recall   || '',
-      prob:      t.prob     || 30,
-      prior:     t.prior    || 'normale',
-      collab:    t.collab   || '',
-      note:      t.note     || '',
-      data_ins:  t.data_ins || '',
-      utente_id: t.utente_id|| '',
-      condivisi_con: t.condivisi_con || [],
-    }));
+    if (error) { console.warn('loadTrattDB:', error.message); PIPE = []; return; }
+    PIPE = (data || []).map(t => ({ id:String(t.id), cliente:t.cliente||'', prodotto:t.prodotto||'', importo:t.importo||0, status:t.status||'prospect', recall:t.recall||'', prob:t.prob||30, prior:t.prior||'normale', collab:t.collab||'', note:t.note||'', data_ins:t.data_ins||'', utente_id:t.utente_id||'', condivisi_con:t.condivisi_con||[] }));
     savePipe();
   } catch(e) {
     console.warn('loadTrattDB error:', e);
-    loadPipe();
+    PIPE = [];
   }
 }
 

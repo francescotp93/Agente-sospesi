@@ -2059,6 +2059,8 @@ function onLogin(user) {
 
 function onLogout() {
   ME = null;
+  PIPE = [];
+  localStorage.removeItem('iam_pipe');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('umenu').style.display = 'none';
@@ -4201,7 +4203,7 @@ function selPTab(t) {
 
 function renderTratt() {
   console.log('renderTratt chiamato, PIPE:', PIPE.length);
-  loadPipe(); loadTeam();
+  loadTeam();
   const selC = document.getElementById('tr-collab');
   if (selC && db) {
     const curC = selC.value;

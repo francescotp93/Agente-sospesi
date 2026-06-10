@@ -1232,10 +1232,12 @@ input[type=file]{display:none;}
           <button onclick="openREPosModal()" style="padding:5px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">+ Aggiungi</button>
         </div>
         <!-- Filtro target -->
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
           <button id="re-f-all"    onclick="setREFilter('all')"    style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;">Tutte</button>
           <button id="re-f-target" onclick="setREFilter('target')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">🎯 Target</button>
           <button id="re-f-no"     onclick="setREFilter('no')"     style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">No Target</button>
+          <button id="re-f-nuova_produzione" onclick="setREFilter('nuova_produzione')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">Nuova prod.</button>
+          <button id="re-f-rinnovo" onclick="setREFilter('rinnovo')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">Rinnovi</button>
         </div>
         <div id="re-pos-list"><div style="color:var(--txt3);font-size:13px;padding:8px 0;">Caricamento...</div></div>
       </div>
@@ -1343,8 +1345,30 @@ input[type=file]{display:none;}
           <select id="re-p-prod"><option value="">— nessuno —</option></select>
         </div>
         <div class="fld ffull">
-          <label>Prodotto (campo libero)</label>
-          <input type="text" id="re-p-prodotto" placeholder="es. Infortuni, RC, Incendio, Cristalli...">
+          <label>Prodotto</label>
+          <input type="text" id="re-p-prodotto" list="re-prodotti-list" placeholder="Scegli o scrivi un prodotto">
+          <datalist id="re-prodotti-list">
+            <option value="Abitazione">
+            <option value="Infortuni">
+            <option value="Malattia">
+            <option value="RC Capofamiglia">
+            <option value="RC Professionale">
+            <option value="Commercio">
+            <option value="Impresa">
+            <option value="Incendio">
+            <option value="Furto">
+            <option value="Cristalli">
+            <option value="Cauzioni">
+            <option value="Trasporti">
+            <option value="Tutela legale">
+          </datalist>
+        </div>
+        <div class="fld">
+          <label>Tipo operazione</label>
+          <select id="re-p-tipo-op">
+            <option value="nuova_produzione">Nuova produzione</option>
+            <option value="rinnovo">Rinnovo</option>
+          </select>
         </div>
         <div class="fld"><label>Premio netto (rata €)</label><input type="number" id="re-p-premio" placeholder="0.00" step="0.01" inputmode="decimal" oninput="aggiornaPremioAnnuo()"></div>
         <div class="fld">
@@ -1374,9 +1398,9 @@ input[type=file]{display:none;}
               <div style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;"
                 id="re-toggle-knob"></div>
             </div>
-            <span style="font-size:13px;font-weight:600;">🎯 Posizione Target</span>
+            <span style="font-size:13px;font-weight:600;">🎯 Rientra nel target</span>
           </label>
-          <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Attiva se questa posizione rientra negli obiettivi target dell'agenzia</div>
+          <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Usalo solo per le posizioni che devono concorrere al conteggio target.</div>
         </div>
       </div>
       <div class="fgrid">
@@ -6931,7 +6955,7 @@ function openCSPos() { openCSPosModal(); }
 // ─── RE — Rami Elementari (Supabase) ─────────────────────────────────────────
 let RE_POSIZIONI  = [];
 let RE_CONFIG     = { volume_anno_prec: 0 };
-let RE_FILTER     = 'all'; // 'all' | 'target' | 'no'
+let RE_FILTER     = 'all'; // 'all' | 'target' | 'no' | 'nuova_produzione' | 'rinnovo'
 let RE_EDIT_ID    = null;
 let RE_PREV_LOCKED = true;
 let RE_OBJ_PERC   = 0; // 0 = nessuno, 10/15/25
@@ -7041,6 +7065,7 @@ function renderREObjChart(prev) {
 
 const FRZ_MAP = {'1':1,'2':2,'3':3,'4':4,'6':6,'12':12};
 const FRZ_LABEL = {'1':'Annuale','2':'Semestrale','3':'Quadrimestrale','4':'Trimestrale','6':'Bimestrale','12':'Mensile'};
+const RE_TIPO_LABEL = { nuova_produzione:'Nuova produzione', rinnovo:'Rinnovo' };
 
 function getREAnno() { return parseInt(document.getElementById('re-anno')?.value || new Date().getFullYear()); }
 
@@ -7101,7 +7126,7 @@ function aggiornaPremioAnnuo() {
 
 function setREFilter(f) {
   RE_FILTER = f;
-  ['all','target','no'].forEach(x => {
+  ['all','target','no','nuova_produzione','rinnovo'].forEach(x => {
     const btn = document.getElementById('re-f-'+x);
     if (btn) {
       btn.style.background = x===f ? 'var(--acc)' : 'var(--surf2)';
@@ -7184,6 +7209,10 @@ function renderREByProduttore() {
     }).join('')}`;
 }
 
+function getRETipoOperazione(p) {
+  return p.tipo_operazione || p.tipo || 'nuova_produzione';
+}
+
 function buildGaugeRE(elId, attuale, precedente) {
   const el = document.getElementById(elId); if(!el) return;
   const percVsPrec = precedente > 0 ? Math.round(attuale/precedente*100) : 0;
@@ -7231,17 +7260,24 @@ function renderREList() {
   let list = RE_POSIZIONI;
   if (RE_FILTER === 'target') list = list.filter(p=>p.is_target);
   if (RE_FILTER === 'no')     list = list.filter(p=>!p.is_target);
+  if (RE_FILTER === 'nuova_produzione') list = list.filter(p=>getRETipoOperazione(p)==='nuova_produzione');
+  if (RE_FILTER === 'rinnovo') list = list.filter(p=>getRETipoOperazione(p)==='rinnovo');
   if (!list.length) { el.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:12px 0;">Nessuna posizione trovata</div>'; return; }
   el.innerHTML = list.map(p => {
     const frzLabel = FRZ_LABEL[String(p.frazionamento==='annuale'?1:p.frazionamento==='semestrale'?2:p.frazionamento==='quadrimestrale'?3:p.frazionamento==='trimestrale'?4:p.frazionamento==='bimestrale'?6:12)] || p.frazionamento;
     const annuo = p.premio_annuo || 0;
+    const tipoOp = getRETipoOperazione(p);
     const targetBadge = p.is_target
       ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);">🎯 Target</span>'
       : '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--surf2);color:var(--txt3);border:.5px solid var(--bord2);">No Target</span>';
+    const tipoBadge = tipoOp === 'rinnovo'
+      ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--amb-bg);color:var(--amb-txt);">Rinnovo</span>'
+      : '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);">Nuova produzione</span>';
     return `<div style="padding:10px 0;border-top:.5px solid var(--bord);display:flex;align-items:flex-start;gap:8px;">
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
           <span style="font-size:13px;font-weight:700;">${p.cliente}</span>
+          ${tipoBadge}
           ${targetBadge}
           ${p.prodotto?`<span style="font-size:11px;padding:1px 7px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);">${p.prodotto}</span>`:''}
         </div>
@@ -7274,6 +7310,7 @@ function openREPosModal(editId) {
     if (p) {
       document.getElementById('re-p-cliente').value  = p.cliente   || '';
       document.getElementById('re-p-prodotto').value = p.prodotto  || '';
+      document.getElementById('re-p-tipo-op').value  = getRETipoOperazione(p);
       document.getElementById('re-p-premio').value   = p.premio_netto || '';
       document.getElementById('re-p-note').value     = p.note        || '';
       document.getElementById('re-p-data').value     = p.data_stipula || new Date().toISOString().split('T')[0];
@@ -7286,6 +7323,7 @@ function openREPosModal(editId) {
     }
   } else {
     ['re-p-cliente','re-p-prodotto','re-p-premio','re-p-note'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+    document.getElementById('re-p-tipo-op').value = 'nuova_produzione';
     const dataEl = document.getElementById('re-p-data'); if(dataEl) dataEl.value = new Date().toISOString().split('T')[0];
     document.getElementById('re-p-frz').value = '1';
     document.getElementById('re-p-target').checked = false;
@@ -7307,6 +7345,7 @@ async function saveREPos() {
     cliente,
     produttore:    gv('re-p-prod')    || null,
     prodotto:      gv('re-p-prodotto')|| null,
+    tipo_operazione: gv('re-p-tipo-op') || 'nuova_produzione',
     premio_netto:  parseNum(gv('re-p-premio')),
     frazionamento: frzTxt[frzSel] || 'annuale',
     is_target:     document.getElementById('re-p-target')?.checked || false,

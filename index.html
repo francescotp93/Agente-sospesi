@@ -2046,25 +2046,15 @@ function onLogin(user) {
     // Precarica trattative, agenda e team in background
     // Carica direttamente senza aspettare PROFILO
     if (db) {
-      // Carica trattative: proprie + assegnate a me
-      // TOP master e master vedono tutto
-      const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
+      // Carica trattative: admin vedono tutto, operativi solo le proprie
+      const isAdmin = isPipelineAdmin();
       let trattQ = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
       if (!isAdmin) {
-        // Operativo: vede le proprie e quelle dove collab corrisponde al suo nome
-        const nomeUtente = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
-        // Carica tutto e filtra lato client (più semplice con la struttura attuale)
+        trattQ = trattQ.eq('utente_id', ME.id);
       }
       trattQ.then(({data}) => {
         if (data?.length) {
-          let lista = data;
-          if (!isAdmin && ME) {
-            const nomeMe = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
-            lista = data.filter(t =>
-              t.utente_id === ME.id ||                    // mia
-              (nomeMe && t.collab === nomeMe)             // assegnata a me
-            );
-          }
+          let lista = visiblePipelineItems(data);
           PIPE = lista.map(t=>({...t, id:String(t.id)}));
           savePipe();
         }
@@ -2549,16 +2539,14 @@ function goTab(t) {
   if (t === 'pipeline') {
     renderTratt();
     if (db) {
-      const isAdmin = PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
-      db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
+      const isAdmin = isPipelineAdmin();
+      let q = db.from('iam_trattative').select('*').order('data_ins',{ascending:false});
+      if (!isAdmin && ME) q = q.eq('utente_id', ME.id);
+      q
         .then(({data, error}) => {
           if (error) { console.warn('pipeline load:', error.message); return; }
           if (data?.length) {
-            let lista = data;
-            if (!isAdmin && ME) {
-              const nomeMe = PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '';
-              lista = data.filter(t => t.utente_id === ME.id || (nomeMe && t.collab === nomeMe));
-            }
+            let lista = visiblePipelineItems(data);
             PIPE = lista.map(t=>({...t, id:String(t.id)}));
             savePipe();
             renderTratt();
@@ -4189,6 +4177,12 @@ const SC = { prospect:{lbl:'Prospect',c:'var(--txt3)',bg:'var(--surf2)'}, preven
 function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[]'); } catch(e){PIPE=[];} try { AGENDA=JSON.parse(localStorage.getItem('iam_agenda')||'[]'); } catch(e){AGENDA=[];} }
 function savePipe() { localStorage.setItem('iam_pipe', JSON.stringify(PIPE)); }
 function saveAg()   { localStorage.setItem('iam_agenda', JSON.stringify(AGENDA)); }
+function isPipelineAdmin() { return PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master'; }
+function visiblePipelineItems(list) {
+  if (isPipelineAdmin()) return list;
+  if (!ME) return [];
+  return list.filter(t => !t.utente_id || t.utente_id === ME.id);
+}
 
 function selPTab(t) {
   document.getElementById('pp-tratt').style.display  = t==='tratt' ?'block':'none';
@@ -4217,11 +4211,12 @@ function renderTratt() {
         }
       });
   }
+  const visiblePipe = visiblePipelineItems(PIPE);
   const q       = (document.getElementById('tr-search')?.value||'').toLowerCase();
   const ft      = document.getElementById('tr-filt')?.value||'';
   const fc      = document.getElementById('tr-collab')?.value||'';
   const periodo = parseInt(document.getElementById('tr-periodo')?.value||'0');
-  let lista = PIPE.filter(t=>!ft||t.status===ft).filter(t=>!fc||t.collab===fc);
+  let lista = visiblePipe.filter(t=>!ft||t.status===ft).filter(t=>!fc||t.collab===fc);
   if (q) lista = lista.filter(t=>(t.cliente+t.prodotto).toLowerCase().includes(q));
   if (periodo) {
     const limite = new Date(); limite.setDate(limite.getDate()-periodo);
@@ -4229,10 +4224,10 @@ function renderTratt() {
     lista = lista.filter(t=>!t.data_ins||t.data_ins>=limStr);
   }
   lista.sort((a,b)=>({urgente:0,alta:1,normale:2}[a.prior]||2)-({urgente:0,alta:1,normale:2}[b.prior]||2));
-  document.getElementById('ktr-tot').textContent = PIPE.length;
-  document.getElementById('ktr-val').textContent = '€'+fmt(PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0));
-  document.getElementById('ktr-ch').textContent  = PIPE.filter(t=>t.status==='chiusa').length;
-  const kps = document.getElementById('ktr-ps'); if(kps) kps.textContent = PIPE.filter(t=>t.status==='persa').length;
+  document.getElementById('ktr-tot').textContent = visiblePipe.length;
+  document.getElementById('ktr-val').textContent = '€'+fmt(visiblePipe.reduce((a,t)=>a+(parseNum(t.importo)||0),0));
+  document.getElementById('ktr-ch').textContent  = visiblePipe.filter(t=>t.status==='chiusa').length;
+  const kps = document.getElementById('ktr-ps'); if(kps) kps.textContent = visiblePipe.filter(t=>t.status==='persa').length;
   const oggi = new Date().toISOString().split('T')[0];
   document.getElementById('tr-list').innerHTML = lista.length ? lista.map(t=>{
     const sc = SC[t.status]||SC.prospect;

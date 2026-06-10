@@ -167,6 +167,42 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .mcard:nth-child(3){animation-delay:.15s}.mcard:nth-child(4){animation-delay:.2s}
 .mcard:nth-child(5){animation-delay:.25s}.mcard:nth-child(6){animation-delay:.3s}
 
+/* ── PROFESSIONAL DASHBOARD ── */
+.dash-pro{padding:18px 18px 24px;background:linear-gradient(180deg,var(--surf3) 0%,var(--bg) 100%);min-height:100%;}
+.dash-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
+.dash-title{font-size:25px;font-weight:700;color:var(--txt);letter-spacing:0;}
+.dash-action{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 18px rgba(var(--acc-rgb),.22);}
+.dash-section-title{text-align:center;font-size:28px;font-weight:500;color:var(--acc);margin:18px 0 14px;letter-spacing:0;}
+.dash-section-title span{color:var(--blu-txt);}
+.dash-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:24px;}
+.dash-card{background:var(--surf);border:1.5px solid rgba(var(--acc-rgb),.78);border-radius:8px;padding:18px 20px;box-shadow:var(--shd);min-height:170px;position:relative;overflow:hidden;}
+.dash-card-title{font-size:21px;font-weight:500;color:var(--acc);margin-bottom:12px;letter-spacing:0;}
+.dash-card-title span{color:var(--blu-txt);}
+.dash-ribbon{position:absolute;top:20px;right:0;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:8px 22px 8px 28px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);}
+.dash-news{font-size:13px;line-height:1.55;color:var(--txt2);font-weight:600;max-width:92%;}
+.dash-list{border:1px solid var(--bord2);border-radius:8px;overflow:hidden;background:var(--surf2);}
+.dash-list-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--bord);font-size:14px;color:var(--txt2);cursor:pointer;transition:background .15s,color .15s;}
+.dash-list-row:first-child{border-top:none;}
+.dash-list-row:hover{background:rgba(var(--acc-rgb),.08);color:var(--txt);}
+.dash-list-row i{font-size:18px;color:var(--txt2);}
+.dash-pill{margin-left:auto;min-width:32px;text-align:center;border-radius:999px;background:var(--acc);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;}
+.dash-metrics{display:grid;grid-template-columns:1fr;gap:14px;}
+.dash-metric-card{background:var(--surf);border:1.5px solid rgba(var(--acc-rgb),.78);border-radius:8px;padding:18px 20px;box-shadow:var(--shd);min-height:170px;}
+.dash-metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+.dash-metric-title{font-size:20px;font-weight:500;color:var(--acc);}
+.dash-metric-title span{color:var(--blu-txt);}
+.dash-metric-icon{color:var(--acc);font-size:20px;}
+#d-metrics,.dash-stat-list{border:1px solid var(--bord);border-radius:8px;overflow:hidden;background:var(--surf2);}
+.dash-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--bord);}
+.dash-stat:first-child{border-top:none;}
+.dash-stat-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.dash-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px rgba(var(--acc-rgb),.12);flex-shrink:0;}
+.dash-stat-label{font-size:13px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-stat-value{font-size:17px;font-weight:800;color:var(--acc);white-space:nowrap;}
+.dash-data-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}
+@media(min-width:860px){.dash-grid{grid-template-columns:1fr 1fr 1fr}.dash-metrics{grid-template-columns:1.1fr 1.4fr .8fr}.dash-data-grid{grid-template-columns:1fr 1fr 1fr}.dash-pro{padding:24px 30px 30px}}
+@media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-section-title{font-size:24px}.dash-card,.dash-metric-card{padding:16px}.dash-ribbon{position:static;clip-path:none;border-radius:6px;margin:-4px 0 12px;width:max-content}.dash-news{max-width:100%}}
+
 /* ── ALERTS ── */
 .alert{display:flex;gap:10px;padding:13px 16px;border-left:3px solid transparent;cursor:default;}
 .alert+.alert{border-top:.5px solid var(--bord);}
@@ -388,7 +424,7 @@ input[type=file]{display:none;}
 
 <!-- ═══ RESET PASSWORD ═══ -->
 <div class="ls" id="reset-screen" style="display:none;">
-  <div style="font-size:28px;margin-bottom:12px;">🔑</div>
+  <div style="font-size:28px;margin-bottom:12px;"><i class="ti ti-key"></i></div>
   <div style="font-family:Georgia,serif;font-size:24px;color:#fff;margin-bottom:6px;">Nuova password</div>
   <div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;">Scegli una nuova password</div>
   <div class="lcard">
@@ -441,12 +477,12 @@ input[type=file]{display:none;}
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
   <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
   <div class="umenu-sep"></div>
-  <div class="umenu-section-title">🎨 Aspetto</div>
+  <div class="umenu-section-title"><i class="ti ti-palette"></i> Aspetto</div>
   <div style="padding:4px 10px 8px;display:flex;align-items:center;justify-content:space-between;">
     <span style="font-size:12px;color:var(--txt2);">Tema</span>
     <div style="display:flex;gap:4px;">
-      <button onclick="setTheme('dark')" id="theme-btn-dark" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;">🌙 Scuro</button>
-      <button onclick="setTheme('light')" id="theme-btn-light" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;">☀️ Chiaro</button>
+      <button onclick="setTheme('dark')" id="theme-btn-dark" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;"><i class="ti ti-moon"></i> Scuro</button>
+      <button onclick="setTheme('light')" id="theme-btn-light" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;"><i class="ti ti-sun"></i> Chiaro</button>
     </div>
   </div>
   <div style="padding:2px 10px 10px;display:flex;align-items:center;gap:10px;">
@@ -671,20 +707,60 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-dashboard">
   <div id="d-empty" class="empty" style="margin-top:50px;"><i class="ti ti-chart-bar"></i><p>Carica i file per vedere la dashboard</p></div>
   <div id="d-content" style="display:none;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0;">
-      <div class="slbl" style="padding:0;">Riepilogo</div>
-      <button onclick="apriGiacenza()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3);">
-        <i class="ti ti-wallet" style="font-size:14px;"></i> Giacenza contanti
-      </button>
+    <div class="dash-pro">
+      <div class="dash-top">
+        <div class="dash-title">Scrivania</div>
+        <button class="dash-action" onclick="apriGiacenza()"><i class="ti ti-wallet"></i> Giacenza contanti</button>
+      </div>
+
+      <div class="dash-section-title">I nostri <span>consigli</span></div>
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-ribbon">Alert</div>
+          <div class="dash-card-title">In <span>evidenza</span></div>
+          <div id="d-evidenza" class="dash-news"></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Funzioni più <span>utilizzate</span></div>
+          <div class="dash-list">
+            <div class="dash-list-row" onclick="goTab('sospesi')"><i class="ti ti-file-invoice"></i><span>Controlla sospesi</span></div>
+            <div class="dash-list-row" onclick="goTab('pipeline')"><i class="ti ti-chart-arrows-vertical"></i><span>Apri pipeline</span></div>
+            <div class="dash-list-row" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Chiudi estratto conto</span></div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-title">Ti suggeriamo <span>di</span></div>
+          <div id="d-suggerimenti" class="dash-list"></div>
+        </div>
+      </div>
+
+      <div class="dash-section-title">Tu al centro del <span>nostro lavoro</span></div>
+      <div class="dash-metrics">
+        <div class="dash-metric-card">
+          <div class="dash-metric-head"><div class="dash-metric-title">I tuoi <span>numeri</span></div><i class="ti ti-help-square-rounded dash-metric-icon"></i></div>
+          <div id="d-metrics"></div>
+        </div>
+        <div class="dash-metric-card">
+          <div class="dash-metric-head"><div class="dash-metric-title">A te <span>la parola</span></div><i class="ti ti-message-question dash-metric-icon"></i></div>
+          <div class="dash-list">
+            <div class="dash-list-row" onclick="goTab('ai')"><i class="ti ti-message-circle"></i><span>Chiedi un riepilogo alla AI</span></div>
+            <div class="dash-list-row" onclick="sendChip('Quali sono le priorità di oggi?');goTab('ai')"><i class="ti ti-list-check"></i><span>Priorità operative</span></div>
+            <div class="dash-list-row" onclick="sendChip('Dammi un riepilogo completo della situazione');goTab('ai')"><i class="ti ti-report-analytics"></i><span>Report completo</span></div>
+          </div>
+        </div>
+        <div class="dash-metric-card" style="background:var(--acc);color:#fff;border-color:var(--acc);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+          <div style="font-size:20px;font-weight:600;margin-bottom:16px;">Livello operativo</div>
+          <i class="ti ti-shield-check" style="font-size:64px;margin-bottom:10px;color:#fff;"></i>
+          <div style="font-size:22px;font-weight:800;">SILVER</div>
+        </div>
+      </div>
+
+      <div class="dash-data-grid">
+        <div class="dash-metric-card"><div class="dash-metric-head"><div class="dash-metric-title">Per <span>produttore</span></div></div><div class="plist" id="d-tipo"></div></div>
+        <div class="dash-metric-card"><div class="dash-metric-head"><div class="dash-metric-title">Per <span>anzianità</span></div></div><div class="plist" id="d-anz"></div></div>
+        <div class="dash-metric-card"><div class="dash-metric-head"><div class="dash-metric-title">Movimenti <span>cassa</span></div></div><div id="d-mov"></div></div>
+      </div>
     </div>
-    <div class="mgrid" id="d-metrics"></div>
-    <div class="slbl">Distribuzione per produttore</div>
-    <div class="card"><div class="plist" id="d-tipo" style="padding-top:12px;"></div></div>
-    <div class="slbl">Distribuzione per anzianità</div>
-    <div class="card"><div class="plist" id="d-anz" style="padding-top:12px;"></div></div>
-    <div class="slbl">Movimenti cassa</div>
-    <div class="card" id="d-mov"></div>
-    <div style="height:16px;"></div>
   </div>
 </div>
 
@@ -793,7 +869,7 @@ input[type=file]{display:none;}
   <!-- HUB Produttori -->
   <div style="margin-top:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 6px;">
-      <div class="slbl" style="padding:0;">🏢 HUB Produttori</div>
+      <div class="slbl" style="padding:0;"><i class="ti ti-building-community"></i> HUB Produttori</div>
       <button onclick="apriGestioneHub()"
         style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
         <i class="ti ti-plus" style="font-size:13px;"></i> Nuovo HUB
@@ -958,7 +1034,7 @@ input[type=file]{display:none;}
     <div id="gp-re_pezzi" style="padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">🎯 RE Pezzi</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-target-arrow"></i> RE Pezzi</div>
           <div id="gare-re-admin" style="display:none;">
             <button onclick="apriConfigGara('re_pezzi')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-settings"></i> Config</button>
           </div>
@@ -981,7 +1057,7 @@ input[type=file]{display:none;}
     <div id="gp-rca" style="display:none;padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">🚗 RCA Attack</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-car"></i> RCA Attack</div>
           <div id="gare-rca-admin" style="display:none;">
             <button onclick="apriConfigGara('rca')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-settings"></i> Config</button>
           </div>
@@ -1004,7 +1080,7 @@ input[type=file]{display:none;}
     <div id="gp-finanziati" style="display:none;padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">💰 Finanziati</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-cash-banknote"></i> Finanziati</div>
           <div id="gare-fin-admin" style="display:none;">
             <button onclick="apriConfigGara('finanziati')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-settings"></i> Config</button>
           </div>
@@ -1035,7 +1111,7 @@ input[type=file]{display:none;}
     <div id="gp-cross" style="display:none;padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">🔀 Cross Selling</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-switch-horizontal"></i> Cross Selling</div>
           <div id="gare-cross-admin" style="display:none;">
             <button onclick="apriConfigGara('cross')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-settings"></i> Config</button>
           </div>
@@ -1058,7 +1134,7 @@ input[type=file]{display:none;}
     <div id="gp-rinnovi" style="display:none;padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">🔄 Rinnovi</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-refresh"></i> Rinnovi</div>
           <div id="gare-rinn-admin" style="display:none;">
             <button onclick="apriConfigGara('rinnovi')" style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-settings"></i> Config</button>
           </div>
@@ -1079,7 +1155,7 @@ input[type=file]{display:none;}
       <!-- Card contatori + compensi -->
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">📋 CONSAP</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-clipboard-list"></i> CONSAP</div>
           <select id="cs-anno" onchange="loadCSFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
             <option value="2026">2026</option>
             <option value="2025">2025</option>
@@ -1168,7 +1244,7 @@ input[type=file]{display:none;}
       <!-- Card obiettivo + indicatore -->
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">📊 Volume Rami Elementari</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-chart-bar"></i> Volume Rami Elementari</div>
           <select id="re-anno" onchange="loadREFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
             <option value="2026">2026</option>
             <option value="2025">2025</option>
@@ -1213,12 +1289,12 @@ input[type=file]{display:none;}
         <!-- Contatori Target / No Target -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
           <div style="background:var(--grn-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--grn-txt);letter-spacing:.5px;margin-bottom:4px;">🎯 Target</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--grn-txt);letter-spacing:.5px;margin-bottom:4px;"><i class="ti ti-target-arrow"></i> Target</div>
             <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="re-count-target">0</div>
             <div style="font-size:11px;color:var(--grn-txt);" id="re-val-target">€0,00</div>
           </div>
           <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;text-align:center;border:.5px solid var(--bord);">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--txt3);letter-spacing:.5px;margin-bottom:4px;">○ No Target</div>
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--txt3);letter-spacing:.5px;margin-bottom:4px;"><i class="ti ti-circle"></i> No Target</div>
             <div style="font-size:22px;font-weight:800;" id="re-count-notarget">0</div>
             <div style="font-size:11px;color:var(--txt3);" id="re-val-notarget">€0,00</div>
           </div>
@@ -1234,7 +1310,7 @@ input[type=file]{display:none;}
         <!-- Filtro target -->
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
           <button id="re-f-all"    onclick="setREFilter('all')"    style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--acc);color:#fff;cursor:pointer;">Tutte</button>
-          <button id="re-f-target" onclick="setREFilter('target')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">🎯 Target</button>
+          <button id="re-f-target" onclick="setREFilter('target')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;"><i class="ti ti-target-arrow"></i> Target</button>
           <button id="re-f-no"     onclick="setREFilter('no')"     style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">No Target</button>
           <button id="re-f-nuova_produzione" onclick="setREFilter('nuova_produzione')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">Nuova prod.</button>
           <button id="re-f-rinnovo" onclick="setREFilter('rinnovo')" style="font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;">Rinnovi</button>
@@ -1253,7 +1329,7 @@ input[type=file]{display:none;}
     <div style="padding:0 12px 12px;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:700;">🛡️ TCM — Nuova Produzione 2026</div>
+          <div style="font-size:13px;font-weight:700;"><i class="ti ti-shield-check"></i> TCM — Nuova Produzione 2026</div>
           <select id="tcm-anno" onchange="loadTCMFromDB()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt);font-family:inherit;">
             <option value="2026">2026</option>
             <option value="2025">2025</option>
@@ -1398,7 +1474,7 @@ input[type=file]{display:none;}
               <div style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;pointer-events:none;"
                 id="re-toggle-knob"></div>
             </div>
-            <span style="font-size:13px;font-weight:600;">🎯 Rientra nel target</span>
+            <span style="font-size:13px;font-weight:600;"><i class="ti ti-target-arrow"></i> Rientra nel target</span>
           </label>
           <div style="font-size:11px;color:var(--txt3);margin-top:4px;">Usalo solo per le posizioni che devono concorrere al conteggio target.</div>
         </div>
@@ -1561,7 +1637,7 @@ input[type=file]{display:none;}
 <!-- MODAL GIACENZA -->
 <div id="giacenza-overlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);display:none;align-items:flex-end;">
   <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;box-shadow:0 -4px 32px rgba(0,0,0,.15);">
-    <div style="font-size:16px;font-weight:700;margin-bottom:4px;">💰 Giacenza contanti</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px;"><i class="ti ti-cash-banknote"></i> Giacenza contanti</div>
     <div style="font-size:12px;color:var(--txt3);margin-bottom:16px;">Aggiorna il totale contanti in giacenza al momento</div>
     <div style="background:var(--surf2);border-radius:var(--rs);padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:13px;color:var(--txt2);">Cassa progressiva attuale</span>
@@ -1623,7 +1699,7 @@ input[type=file]{display:none;}
       </button>
       <button id="ai-tab-ticket" onclick="selAITab('ticket')"
         style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:transparent;color:var(--txt2);position:relative;">
-        🎫 Ticket
+        <i class="ti ti-ticket"></i> Ticket
         <span id="ai-ticket-badge" style="display:none;position:absolute;top:-3px;right:-3px;width:16px;height:16px;border-radius:50%;background:#c0392b;color:#fff;font-size:9px;font-weight:800;align-items:center;justify-content:center;">0</span>
       </button>
     </div>
@@ -1639,19 +1715,19 @@ input[type=file]{display:none;}
   </div>
   <!-- Chips suggerimenti -->
   <div class="chips" style="padding:10px 12px 6px;flex-shrink:0;background:var(--surf);border-bottom:.5px solid var(--bord);">
-    <div class="chip" onclick="sendChip('Ci sono sospesi spariti senza incasso?')">Sospesi spariti 👻</div>
-    <div class="chip" onclick="sendChip('Quali sono i sospesi più vecchi?')">Sospesi anziani ⏳</div>
-    <div class="chip" onclick="sendChip('La cassa è in equilibrio?')">Cassa 💰</div>
-    <div class="chip" onclick="sendChip('Anomalie critiche')">Anomalie 🚨</div>
-    <div class="chip" onclick="sendChip('Chi ha più sospesi aperti?')">Per produttore 👤</div>
-    <div class="chip" onclick="sendChip('Dammi un riepilogo completo della situazione')">Riepilogo 📊</div>
+    <div class="chip" onclick="sendChip('Ci sono sospesi spariti senza incasso?')">Sospesi spariti <i class="ti ti-file-alert"></i></div>
+    <div class="chip" onclick="sendChip('Quali sono i sospesi più vecchi?')">Sospesi anziani <i class="ti ti-clock-exclamation"></i></div>
+    <div class="chip" onclick="sendChip('La cassa è in equilibrio?')">Cassa <i class="ti ti-cash-banknote"></i></div>
+    <div class="chip" onclick="sendChip('Anomalie critiche')">Anomalie <i class="ti ti-alert-triangle"></i></div>
+    <div class="chip" onclick="sendChip('Chi ha più sospesi aperti?')">Per produttore <i class="ti ti-user"></i></div>
+    <div class="chip" onclick="sendChip('Dammi un riepilogo completo della situazione')">Riepilogo <i class="ti ti-chart-bar"></i></div>
   </div>
   <!-- Messaggi -->
   <div class="cbody" id="c-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="cmsgs" id="c-msgs">
       <div class="cmsg agent">
         <div class="clbl">IAM AI</div>
-        <div class="cbubble">Ciao! Sono l'assistente IAM 👋<br>Carica i file nella sezione <b>Contabilità</b>, poi posso aiutarti ad analizzare sospesi, anomalie, cassa e molto altro.</div>
+        <div class="cbubble">Ciao, sono l'assistente IAM.<br>Carica i file nella sezione <b>Contabilità</b>, poi posso aiutarti ad analizzare sospesi, anomalie, cassa e molto altro.</div>
       </div>
     </div>
   </div>
@@ -1667,7 +1743,7 @@ input[type=file]{display:none;}
 
     <!-- Form nuovo ticket -->
     <div style="padding:14px 16px;border-bottom:.5px solid var(--bord);background:var(--surf);flex-shrink:0;">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🎫 Segnala un problema</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;"><i class="ti ti-ticket"></i> Segnala un problema</div>
       <div style="display:flex;flex-direction:column;gap:8px;">
         <input type="text" id="tk-titolo" placeholder="Descrivi brevemente il problema *"
           style="padding:10px 14px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:13px;color:var(--txt);font-family:inherit;"
@@ -1678,10 +1754,10 @@ input[type=file]{display:none;}
         <div style="display:flex;gap:8px;align-items:center;">
           <select id="tk-priorita"
             style="flex:1;padding:8px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:12px;font-size:12px;color:var(--txt);font-family:inherit;">
-            <option value="bassa">🟢 Priorità bassa</option>
-            <option value="normale" selected>🟡 Priorità normale</option>
-            <option value="alta">🟠 Priorità alta</option>
-            <option value="critica">🔴 Critica</option>
+            <option value="bassa">Priorità bassa</option>
+            <option value="normale" selected>Priorità normale</option>
+            <option value="alta">Priorità alta</option>
+            <option value="critica">Critica</option>
           </select>
           <button onclick="inviaTicket()"
             style="padding:8px 18px;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">
@@ -2331,7 +2407,7 @@ async function saveSession(sospesi, incassi, dati) {
     }
   } catch(e) {
     console.error('saveSession error:', e);
-    showSavemsg('❌ Errore salvataggio: ' + (e.message || e));
+    showSavemsg('Errore salvataggio: ' + (e.message || e));
   }
 }
 
@@ -2385,7 +2461,7 @@ async function loadLastSession() {
     // Indica chiaramente che stiamo mostrando i dati più recenti
     const dataLabel = new Date(s.data_riferimento+'T12:00:00').toLocaleDateString('it-IT');
     const aggLabel  = s.aggiornato_il ? new Date(s.aggiornato_il).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : dataLabel;
-    showSavemsg('📂 Dati del '+dataLabel+' · salvati il '+aggLabel+' · Cassa progressiva: €'+new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
+    showSavemsg('Dati del '+dataLabel+' · salvati il '+aggLabel+' · Cassa progressiva: €'+new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
 
     await new Promise(r => setTimeout(r, 50));
     buildDashboard(); buildAnomalie(); buildSospesi(); updatePill();
@@ -2480,6 +2556,9 @@ function fmt(n) {
   if (n == null || isNaN(n)) return '—';
   return new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
 }
+function iconHtml(name, extra='') {
+  return `<i class="ti ${name}" style="${extra}"></i>`;
+}
 function parseNum(v) {
   if (v === null || v === undefined || v === '') return 0;
   if (typeof v === 'number') return isNaN(v) ? 0 : v;
@@ -2525,7 +2604,7 @@ async function caricaDatiPerData(dataSelezionata) {
       setVal('i-note',      sess.note        || '');
       try { APP.sospesi = JSON.parse(sess.sospesi_json||'[]'); } catch(e){ APP.sospesi=[]; }
       try { APP.incassi = JSON.parse(sess.incassi_json||'[]'); } catch(e){ APP.incassi=[]; }
-      showSavemsg('📂 Dati del '+new Date(dataSelezionata+'T12:00:00').toLocaleDateString('it-IT')+' caricati');
+      showSavemsg('Dati del '+new Date(dataSelezionata+'T12:00:00').toLocaleDateString('it-IT')+' caricati');
       buildDashboard();
     } else {
       setVal('i-cassa',0); setVal('i-vers',0); setVal('i-spese',0);
@@ -2774,19 +2853,19 @@ async function doAnalisi() {
 
   // Se sospesi non caricati → salva solo i dati numerici e avvisa
   if (!APP.sospesi.length) {
-    const conferma = confirm(`Confermi il salvataggio dei dati per il ${new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT')}?\n\n⚠️ Nessun file sospesi caricato — verranno salvati solo i dati numerici.`);
+    const conferma = confirm(`Confermi il salvataggio dei dati per il ${new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT')}?\n\nNessun file sospesi caricato: verranno salvati solo i dati numerici.`);
     if (!conferma) return;
-    showSavemsg('💾 Salvataggio in corso...');
+    showSavemsg('Salvataggio in corso...');
     await saveSession([], [], dati);
     await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
-    showSavemsg('✅ Dati salvati (senza file sospesi)');
+    showSavemsg('Dati salvati (senza file sospesi)');
     buildDashboard();
     return;
   }
 
   const conferma = confirm(`Confermi il salvataggio dei dati per il ${new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT')}?\n\nQuesta operazione sovrascriverà eventuali dati già presenti per quella data.`);
   if (!conferma) return;
-  showSavemsg('💾 Salvataggio in corso...');
+  showSavemsg('Salvataggio in corso...');
   APP.prevProg = await loadPrevProg();
   await saveSession(APP.sospesi, APP.incassi, dati);
   try {
@@ -2795,7 +2874,7 @@ async function doAnalisi() {
       prog: s.prog, nominativo: s.nominativo, importo: s.importo, compagnia: s.compagnia
     }))));
   } catch(e){}
-  showSavemsg('✅ Dati salvati');
+  showSavemsg('Dati salvati');
   await logAudit('SALVA_SESSIONE', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
   buildDashboard(); buildAnomalie(); buildSospesi(); buildStorico();
   updatePill(); APP.loaded = true;
@@ -2807,7 +2886,7 @@ async function salvaDatiGiornalieri() {
   if (!dataSel) { alert('Seleziona prima una data.'); return; }
   const dataFmt = new Date(dataSel+'T12:00:00').toLocaleDateString('it-IT');
   if (!confirm(`Confermi il salvataggio dei dati per il ${dataFmt}?`)) return;
-  showSavemsg('💾 Salvataggio in corso...');
+  showSavemsg('Salvataggio in corso...');
   const dati = {
     data:       dataSel,
     cassa:      parseNum(g('i-cassa')),
@@ -2821,7 +2900,7 @@ async function salvaDatiGiornalieri() {
   await saveSession(APP.sospesi.length ? APP.sospesi : [], APP.incassi.length ? APP.incassi : [], dati);
   await logAudit('SALVA_DATI_GIORNALIERI', 'sessioni_giornaliere', dati.data, { contanti: dati.cassa, versamenti: dati.vers, spese: dati.spese });
   buildDashboard();
-  showSavemsg('✅ Dati giornalieri salvati');
+  showSavemsg('Dati giornalieri salvati');
 }
 
 function updatePill() {
@@ -2901,11 +2980,26 @@ function buildDashboard() {
   if (W.spese)        metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)', onclick:"goTab('carica');selContabTab('carica')"});
 
   document.getElementById('d-metrics').innerHTML = metrics.map((m,i) => `
-    <div class="mcard" style="animation-delay:${i*.05+.05}s;${m.onclick?'cursor:pointer;':''}" ${m.onclick?`onclick="${m.onclick}"`:''}>
-      <div class="mlbl">${m.lbl}</div>
-      <div class="mval" ${m.color?`style="color:${m.color}"`:''}>${m.val}</div>
-      <div class="msub">${m.sub}</div>
+    <div class="dash-stat" style="${m.onclick?'cursor:pointer;':''}" ${m.onclick?`onclick="${m.onclick}"`:''}>
+      <div class="dash-stat-left"><span class="dash-dot" style="${m.color?`background:${m.color};box-shadow:0 0 0 4px color-mix(in srgb, ${m.color} 18%, transparent);`:''}"></span><span class="dash-stat-label">${m.lbl}</span></div>
+      <div class="dash-stat-value" ${m.color?`style="color:${m.color}"`:''}>${m.val}</div>
     </div>`).join('') || '<div class="mcard" style="grid-column:1/-1;"><div class="mlbl">Nessun widget attivo</div><div class="msub">Usa <i class="ti ti-settings"></i> per configurare</div></div>';
+
+  const evidenza = oltre60 > 0
+    ? `<i class="ti ti-alert-triangle" style="color:var(--red);margin-right:6px;"></i><b>${oltre60} sospesi oltre 60 giorni</b><br>Valuta un controllo prioritario delle pratiche più datate e degli incassi collegati.`
+    : `<i class="ti ti-circle-check" style="color:var(--grn);margin-right:6px;"></i><b>Situazione sotto controllo</b><br>Non risultano sospesi critici oltre 60 giorni nella sessione corrente.`;
+  const evidEl = document.getElementById('d-evidenza');
+  if (evidEl) evidEl.innerHTML = evidenza;
+
+  const sug = [
+    {ico:'ti-file-search', label:'Controllare le anomalie', count: APP.anomalie?.length || 0, onclick:"goTab('anomalie')"},
+    {ico:'ti-refresh', label:'Gestire i sospesi anziani', count: oltre60, onclick:"goTab('sospesi')"},
+    {ico:'ti-cash-banknote', label:'Verificare scostamento cassa', count: Math.abs(scostamento) > 0.01 ? 1 : 0, onclick:"goTab('carica');selContabTab('carica')"},
+  ];
+  const sugEl = document.getElementById('d-suggerimenti');
+  if (sugEl) sugEl.innerHTML = sug.map(s => `
+    <div class="dash-list-row" onclick="${s.onclick}"><i class="ti ${s.ico}"></i><span>${s.label}</span>${s.count?`<span class="dash-pill">${s.count}</span>`:''}</div>
+  `).join('');
 
   // Distribuzione per produttore (ex Tipo Sospeso nel file)
   const byProd = {};
@@ -2994,7 +3088,7 @@ function buildAnomalie() {
         tipo:'crit', icon:'ti-ghost',
         titolo:`${nonIncassati.length} sospesi spariti SENZA corrispondenza negli incassi`,
         desc: nonIncassati.map(s=>s.nominativo||('Prog. '+s.prog)).slice(0,5).join(', ') + (nonIncassati.length>5?'…':'') + ' — Verificare immediatamente!',
-        sospesi: nonIncassati.map(s=>({nominativo:(s.nominativo||'Prog. '+s.prog), importo:s.importo||0, gg:0, compagnia:s.compagnia||'—', polizza:s.prog||'', nota:'⚠️ Sparito senza incasso'}))
+        sospesi: nonIncassati.map(s=>({nominativo:(s.nominativo||'Prog. '+s.prog), importo:s.importo||0, gg:0, compagnia:s.compagnia||'—', polizza:s.prog||'', nota:'Sparito senza incasso'}))
       });
       if (incassati.length) APP.anomalie.push({
         tipo:'ok', icon:'ti-circle-check',
@@ -3048,7 +3142,7 @@ function buildAnomalie() {
           if (deltaContanti < 0 && deltaIngiustificato > 1) {
             APP.anomalie.push({
               tipo: 'crit', icon: 'ti-alert-triangle',
-              titolo: `⚠️ Variazione contanti non giustificata: -€${fmt(Math.abs(deltaIngiustificato))}`,
+              titolo: `Variazione contanti non giustificata: -€${fmt(Math.abs(deltaIngiustificato))}`,
               desc: `Cassa ieri: €${fmt(cassaIeri)} → oggi: €${fmt(cassaOggi)}. Spese dichiarate: €${fmt(speseTot)}. Differenza non giustificata: €${fmt(deltaIngiustificato)}. Verificare immediatamente.`,
               sospesi: []
             });
@@ -3070,7 +3164,7 @@ function buildAnomalie() {
       <div style="flex:1;">
         <div class="at">${a.titolo}</div>
         <div class="ad">${a.desc}</div>
-        ${a.sospesi?.length?`<div style="font-size:11px;margin-top:4px;opacity:.7;">👆 Tocca per vedere i dettagli</div>`:''}
+        ${a.sospesi?.length?`<div style="font-size:11px;margin-top:4px;opacity:.7;"><i class="ti ti-hand-click"></i> Tocca per vedere i dettagli</div>`:''}
       </div>
       ${a.sospesi?.length?`<i class="ti ti-chevron-down" style="font-size:16px;opacity:.5;flex-shrink:0;margin-top:2px;"></i>`:''}
     </div>`).join('');
@@ -3205,7 +3299,7 @@ function renderSospesi() {
         ${oltre60.length ? `
         <div style="padding:8px 14px;background:var(--red-bg);border-top:.5px solid var(--bord);">
           <div style="font-size:11px;color:var(--red-txt);font-weight:600;">
-            ⚠️ ${oltre60.length} sospesi critici · €${fmt(oltre60.reduce((a,s)=>a+s.importo,0))} da recuperare con urgenza
+            ${iconHtml('ti-alert-triangle', 'color:var(--red);')} ${oltre60.length} sospesi critici · €${fmt(oltre60.reduce((a,s)=>a+s.importo,0))} da recuperare con urgenza
           </div>
         </div>` : ''}
       </div>`;
@@ -3240,7 +3334,7 @@ function rowSosp(s, c) {
     <div class="rmain">
       <div class="rname">${s.nominativo||s.polizza||'—'}</div>
       <div class="rsub">${s.compagnia||'—'} · ${s.polizza||'—'}${s.targa?' · '+s.targa:''}</div>
-      ${prodNome&&prodNome!=='—'?`<div class="rsub" style="color:var(--txt2);">👤 ${prodNome}</div>`:''}
+      ${prodNome&&prodNome!=='—'?`<div class="rsub" style="color:var(--txt2);">${iconHtml('ti-user', 'font-size:12px;vertical-align:-2px;')} ${prodNome}</div>`:''}
       ${s.nota?`<div class="rsub" style="color:var(--red)">${s.nota}</div>`:''}
     </div>
     <div class="rright">
@@ -3310,7 +3404,7 @@ function renderConto() {
     <div class="mcard"><div class="mlbl">Entrate</div><div class="mval" style="color:var(--grn)">€${fmt(totE)}</div></div>
     <div class="mcard"><div class="mlbl">Uscite</div><div class="mval" style="color:var(--red)">€${fmt(totU)}</div></div>
     <div class="mcard"><div class="mlbl">Abbinati</div><div class="mval" style="color:var(--acc)">${nAbb}/${movs.length}</div></div>
-    <div class="mcard" style="grid-column:1/-1;border-color:var(--acc);background:rgba(var(--acc-rgb),.06)"><div class="mlbl">Saldo disponibile</div><div class="mval" style="color:${saldoDisp>=0?'var(--grn)':'var(--red)'}">€${fmt(saldoDisp)}${bonifSospeso.length?' <span style="font-size:11px;font-weight:400;color:var(--txt2);">(⏳ €'+fmt(totSospeso)+' in sospeso)</span>':''}</div></div>`;
+    <div class="mcard" style="grid-column:1/-1;border-color:var(--acc);background:rgba(var(--acc-rgb),.06)"><div class="mlbl">Saldo disponibile</div><div class="mval" style="color:${saldoDisp>=0?'var(--grn)':'var(--red)'}">€${fmt(saldoDisp)}${bonifSospeso.length?' <span style="font-size:11px;font-weight:400;color:var(--txt2);">('+iconHtml('ti-clock-hour-4', 'font-size:12px;vertical-align:-2px;')+' €'+fmt(totSospeso)+' in sospeso)</span>':''}</div></div>`;
   const q = (document.getElementById('co-search')?.value||'').toLowerCase();
   const ft = document.getElementById('co-filt')?.value||'';
   let lista = movs;
@@ -3337,7 +3431,7 @@ function renderConto() {
   const sosp = document.getElementById('co-sospeso');
   if (sosp) {
     if (bonifSospeso.length) {
-      sosp.innerHTML = `<div style="margin:16px 12px 6px;display:flex;align-items:center;justify-content:space-between;"><span style="font-weight:700;font-size:13px;color:var(--red);">⏳ Bonifici in sospeso</span><span style="font-size:12px;font-weight:600;color:var(--red);">${bonifSospeso.length} · €${fmt(totSospeso)}</span></div>${bonifSospeso.map(m=>`<div class="row" style="border-left:3px solid var(--red);opacity:.9;"><div class="rmain"><div class="rname" style="font-size:12px;">${m.desc||'—'}</div><div class="rsub">${m.data}</div></div><div class="rright" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><div class="ramt" style="color:var(--grn)">+€${fmt(m.avere)}</div><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap;"><input type="checkbox" onchange="toggleBonif(${m.id},this.checked)" style="accent-color:var(--grn);width:14px;height:14px;">Conferma</label></div></div>`).join('')}`;
+      sosp.innerHTML = `<div style="margin:16px 12px 6px;display:flex;align-items:center;justify-content:space-between;"><span style="font-weight:700;font-size:13px;color:var(--red);">${iconHtml('ti-clock-hour-4', 'font-size:14px;vertical-align:-2px;')} Bonifici in sospeso</span><span style="font-size:12px;font-weight:600;color:var(--red);">${bonifSospeso.length} · €${fmt(totSospeso)}</span></div>${bonifSospeso.map(m=>`<div class="row" style="border-left:3px solid var(--red);opacity:.9;"><div class="rmain"><div class="rname" style="font-size:12px;">${m.desc||'—'}</div><div class="rsub">${m.data}</div></div><div class="rright" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;"><div class="ramt" style="color:var(--grn)">+€${fmt(m.avere)}</div><label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;white-space:nowrap;"><input type="checkbox" onchange="toggleBonif(${m.id},this.checked)" style="accent-color:var(--grn);width:14px;height:14px;">Conferma</label></div></div>`).join('')}`;
       sosp.style.display = 'block';
     } else {
       sosp.style.display = 'none';
@@ -3805,13 +3899,13 @@ function apriNuovaGaraCollab() {
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
               <button onclick="setGaraTipo('pezzi')" id="gc-t-pezzi"
                 style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
-                🔢 Pezzi</button>
+                <i class="ti ti-list-numbers"></i> Pezzi</button>
               <button onclick="setGaraTipo('volume')" id="gc-t-volume"
                 style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
-                💶 Volume</button>
+                <i class="ti ti-currency-euro"></i> Volume</button>
               <button onclick="setGaraTipo('percentuale')" id="gc-t-percentuale"
                 style="padding:8px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">
-                📊 %</button>
+                <i class="ti ti-chart-bar"></i> %</button>
             </div>
             <input type="hidden" id="gc-tipo" value="pezzi">
           </div>
@@ -3968,10 +4062,10 @@ function apriNuovaNotaCollab() {
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div class="fld"><label>Tipo</label>
             <select id="nota-tipo" style="width:100%;padding:9px 12px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:var(--rs);font-size:14px;color:var(--txt);font-family:inherit;">
-              <option value="Riunione">👥 Riunione</option>
-              <option value="Chiamata">📞 Chiamata</option>
-              <option value="Email">📧 Email</option>
-              <option value="Altro">📝 Altro</option>
+              <option value="Riunione">Riunione</option>
+              <option value="Chiamata">Chiamata</option>
+              <option value="Email">Email</option>
+              <option value="Altro">Altro</option>
             </select>
           </div>
           <div class="fld"><label>Titolo *</label>
@@ -4309,10 +4403,10 @@ function renderTratt() {
             <span class="tstatus" style="background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
             ${t.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':t.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
           </div>
-          <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · 👤 '+t.collab:''}</div>
-          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">👥 ${sharedNames.join(', ')}</div>`:''}
+          <div style="font-size:12px;color:var(--txt2);">${t.prodotto||'—'}${t.collab?' · '+iconHtml('ti-user', 'font-size:12px;vertical-align:-2px;')+' '+t.collab:''}</div>
+          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">${iconHtml('ti-users', 'font-size:12px;vertical-align:-2px;')} ${sharedNames.join(', ')}</div>`:''}
           ${isShared?'<div style="font-size:10px;color:var(--blu-txt);margin-top:2px;font-weight:700;">CONDIVISA CON TE</div>':''}
-          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?'⏰':'<i class="ti ti-calendar-event"></i>'} Recalling: ${t.recall}
+          ${t.recall?`<div style="font-size:11px;margin-top:3px;color:${scad?'var(--red-txt)':'var(--txt3)'};">${scad?iconHtml('ti-clock-exclamation', 'font-size:12px;vertical-align:-2px;'):'<i class="ti ti-calendar-event"></i>'} Recalling: ${t.recall}
             <button onclick="openGCal('Recalling: ${encodeForAttr(t.cliente)} - ${encodeForAttr(t.prodotto)}','${t.recall}')" style="margin-left:5px;font-size:10px;padding:1px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
           </div>`:''}
         </div>
@@ -4505,7 +4599,7 @@ async function sendMsg() {
     addBubble('agent', data.choices?.[0]?.message?.content||'Nessuna risposta.');
   } catch(e) {
     removeLoader(lid);
-    if (e.message?.includes('401')||e.message?.includes('Unauthorized')) addBubble('agent','⚠️ Chiave API Groq non valida. Controlla il config.js.');
+    if (e.message?.includes('401')||e.message?.includes('Unauthorized')) addBubble('agent',`${iconHtml('ti-alert-triangle')} Chiave API Groq non valida. Controlla il config.js.`);
     else addBubble('agent','Errore: '+e.message);
   }
 }
@@ -4934,11 +5028,11 @@ async function creaNuovoUtente() {
     document.getElementById('nu-overlay')?.remove();
     await renderUtenti();
     alert(
-      `✓ Invito inviato a ${email}\n\n` +
+      `Invito inviato a ${email}\n\n` +
       `L'utente riceverà un'email di conferma da Supabase.\n` +
       `Dopo aver confermato potrà accedere con:\n\n` +
-      `📧 Email: ${email}\n` +
-      `🔑 Password: ${pass}\n\n` +
+      `Email: ${email}\n` +
+      `Password: ${pass}\n\n` +
       `Comunica la password in modo sicuro (non via email).`
     );
   } catch(e) {
@@ -5091,8 +5185,8 @@ async function renderPannelloPersonale() {
         </div>
         <div style="font-size:13px;color:var(--txt2);margin-bottom:6px;"><b>Email:</b> ${ME.email}</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
-          <button onclick="apriCambioEmail()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;">✉️ Cambia email di accesso</button>
-          <button onclick="apriCambioPassword()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;">🔑 Cambia password</button>
+          <button onclick="apriCambioEmail()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"><i class="ti ti-mail"></i> Cambia email di accesso</button>
+          <button onclick="apriCambioPassword()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"><i class="ti ti-key"></i> Cambia password</button>
         </div>
       </div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);margin-bottom:8px;">Le mie preferenze calendario</div>
@@ -5371,7 +5465,7 @@ async function salvaModificaStorico(dataRif) {
     }
 
     buildDashboard(); buildAnomalie(); updatePill(); buildStorico();
-    showSavemsg('✅ Cassa progressiva: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
+    showSavemsg('Cassa progressiva: €' + new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(APP.saldoCumulativo));
   } catch(e) { if(err) err.textContent='Errore: '+e.message; }
 }
 
@@ -5505,7 +5599,7 @@ function renderWD() {
             ${nonLetto?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">NUOVO</span>':''}
           </div>
           <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${w.data||''}${w.ora?' · '+w.ora:''}</div>
-          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">👥 ${sharedNames.join(', ')}</div>`:''}
+          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">${iconHtml('ti-users', 'font-size:12px;vertical-align:-2px;')} ${sharedNames.join(', ')}</div>`:''}
           ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;">${w.note}</div>`:''}
           ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
           ${w.luogo?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px;"></i> ${w.luogo}${w.lat&&w.lng?` <a href="https://www.google.com/maps?q=${w.lat},${w.lng}" target="_blank" style="color:var(--blu-txt);margin-left:4px;text-decoration:none;font-size:10px;">Mappa</a>`:''}</div>`:''}
@@ -5797,7 +5891,7 @@ function showWDDay(ds) {
         <div style="flex:1;">
           <div style="font-size:13px;font-weight:600;">${w.titolo}</div>
           <div style="font-size:11px;color:var(--txt2);">${w.ora||''}
-            ${w.prior==='urgente'?'· 🔴 Urgente':w.prior==='alta'?'· 🟠 Alta':''}</div>
+            ${w.prior==='urgente'?'· Urgente':w.prior==='alta'?'· Alta':''}</div>
         </div>
         <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>
       </div>`;
@@ -5948,7 +6042,7 @@ async function renderObiettiviOperatore() {
         ${(()=>{ const sim = o.misura === 'euro' ? '€' : ' pz'; return `<span>Raggiunto: ${o.misura==='euro'?'€'+fmt(tot):fmt(tot)+' pz'}</span><span>Obiettivo: ${o.misura==='euro'?'€'+fmt(o.obiettivo):fmt(o.obiettivo)+' pz'}</span>`; })()}
       </div>
       ${perc>=100
-        ? '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:6px;">🎉 OBIETTIVO RAGGIUNTO!</div>'
+        ? '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:6px;"><i class="ti ti-award"></i> OBIETTIVO RAGGIUNTO</div>'
         : `<div style="font-size:11px;color:var(--txt2);margin-top:4px;">Mancano: ${o.misura==='euro'?'€'+fmt(Math.max(0,o.obiettivo-tot)):fmt(Math.max(0,o.obiettivo-tot))+' pz'}</div>`}
     </div>`;
   }));
@@ -6024,7 +6118,7 @@ async function aggiungiObiettivo(userId, nomeUtente) {
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
               <button onclick="setObjMisura('pezzi')" id="obj-m-pezzi"
                 style="padding:10px;border-radius:var(--rs);border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">
-                🔢 Pezzi</button>
+                <i class="ti ti-list-numbers"></i> Pezzi</button>
               <button onclick="setObjMisura('euro')" id="obj-m-euro"
                 style="padding:10px;border-radius:var(--rs);border:1.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">
                 € Volume</button>
@@ -6154,7 +6248,7 @@ async function salvaGiacenza() {
     document.getElementById('giacenza-overlay').style.display = 'none';
     buildDashboard();
     buildStorico();
-    showSavemsg(`✅ Giacenza del ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT')}: €${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo)}`);
+    showSavemsg(`Giacenza del ${new Date(dataRif+'T12:00:00').toLocaleDateString('it-IT')}: €${new Intl.NumberFormat('it-IT',{minimumFractionDigits:2}).format(importo)}`);
   } catch(e) { alert('Errore: '+e.message); }
 }
 
@@ -6208,10 +6302,10 @@ async function salvaAzienda() {
         aggiornato_il: new Date().toISOString(),
         aggiornato_da: ME?.id
       });
-      showSavemsg('✅ Dati azienda salvati e condivisi');
-    } catch(e) { showSavemsg('✅ Salvato in locale (errore DB: '+e.message+')'); }
+      showSavemsg('Dati azienda salvati e condivisi');
+    } catch(e) { showSavemsg('Salvato in locale (errore DB: '+e.message+')'); }
   } else {
-    showSavemsg('✅ Dati azienda salvati');
+    showSavemsg('Dati azienda salvati');
   }
 }
 
@@ -6382,7 +6476,7 @@ function buildGauge(elId, attuale, obiettivo) {
   const el = document.getElementById(elId); if(!el) return;
   const perc = obiettivo > 0 ? Math.min(100, Math.round(attuale/obiettivo*100)) : 0;
   const color = perc >= 80 ? '#1a8a5a' : perc >= 50 ? '#ba7517' : '#c0392b';
-  const label = perc >= 80 ? '🟢 In target' : perc >= 50 ? '🟡 Attenzione' : '🔴 Sotto target';
+  const label = perc >= 80 ? 'In target' : perc >= 50 ? 'Attenzione' : 'Sotto target';
   el.innerHTML = `
     <div style="font-size:28px;font-weight:800;color:${color};">${perc}%</div>
     <div style="font-size:12px;color:var(--txt2);margin:4px 0;">${label}</div>
@@ -6502,7 +6596,7 @@ function renderGara(tipo) {
             <span style="color:var(--txt3);">Prec: <b>${prevPerc}%</b></span>
             <span style="color:var(--acc);">Att: <b>${currPerc}%</b></span>
           </div>
-          <button onclick="editRinnMese(${i+1})" style="font-size:10px;padding:2px 8px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;font-family:inherit;">✏</button>
+          <button onclick="editRinnMese(${i+1})" style="font-size:10px;padding:2px 8px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i></button>
         </div>`;
       }).join('');
     }
@@ -6632,7 +6726,7 @@ async function salvaConfigGara(tipo) {
     GARE_CONFIG[tipo] = cfg;
     localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG));
     document.getElementById('gara-cfg-overlay')?.remove();
-    showSavemsg('✅ Configurazione salvata');
+    showSavemsg('Configurazione salvata');
     await loadGareData();
     renderGara(tipo);
   } catch(e) {
@@ -6646,7 +6740,7 @@ function editRinnMese(mese) {
   const html = `
     <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="rinn-mese-overlay" onclick="if(event.target.id==='rinn-mese-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">🔄 Rinnovi — mese ${mese}</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;"><i class="ti ti-refresh"></i> Rinnovi — mese ${mese}</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div class="fld"><label>% Rinnovi anno precedente</label><input type="number" id="rinn-prev" step="0.1" value="${pos?.perc_prev||''}"></div>
           <div class="fld"><label>% Rinnovi anno corrente</label><input type="number" id="rinn-curr" step="0.1" value="${pos?.perc_curr||''}"></div>
@@ -6860,8 +6954,8 @@ function renderCONSAP() {
         <div style="font-size:13px;font-weight:700;">${p.cliente}
           <span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px;background:var(--surf2);color:${tipoColor};margin-left:4px;">${p.tipo||'Nuovo'}</span>
         </div>
-        <div style="font-size:11px;color:var(--txt2);">${p.produttore?'👤 '+p.produttore+' · ':''}${p.importo?'€'+fmt(p.importo)+' · ':''} ${new Date(p.creato_il).toLocaleDateString('it-IT')}</div>
-        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">📝 ${p.note}</div>`:''}
+        <div style="font-size:11px;color:var(--txt2);">${p.produttore?iconHtml('ti-user', 'font-size:12px;vertical-align:-2px;')+' '+p.produttore+' · ':''}${p.importo?'€'+fmt(p.importo)+' · ':''} ${new Date(p.creato_il).toLocaleDateString('it-IT')}</div>
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">${iconHtml('ti-notes', 'font-size:12px;vertical-align:-2px;')} ${p.note}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
         <button onclick="editCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
@@ -6911,7 +7005,7 @@ function renderCSChart(n, nPrec) {
         </div>`;
     }).join('')}
     ${nPrec>0 ? `<div style="margin-top:6px;padding:8px 10px;border-radius:var(--rs);background:var(--surf2);border:.5px solid var(--bord);">
-      <div style="font-size:11px;font-weight:700;margin-bottom:4px;">📈 Crescita vs anno precedente (${nPrec} pezzi)</div>
+      <div style="font-size:11px;font-weight:700;margin-bottom:4px;">${iconHtml('ti-trending-up', 'font-size:13px;vertical-align:-2px;')} Crescita vs anno precedente (${nPrec} pezzi)</div>
       ${(()=>{
         const d=n-nPrec;
         const {bonus,label}=calcolaBonusCONSAP(n,nPrec);
@@ -7215,11 +7309,11 @@ function renderREByProduttore() {
   el.style.display = 'block';
   el.innerHTML = `
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:10px;">
-      🏆 Produzione per produttore
+      ${iconHtml('ti-trophy', 'font-size:13px;vertical-align:-2px;')} Produzione per produttore
     </div>
     ${sorted.map(([nome, d], i) => {
       const perc = Math.round(d.valore / max * 100);
-      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      const medal = i===0?iconHtml('ti-award', 'color:var(--amb);'):i===1?iconHtml('ti-award', 'color:var(--txt2);'):i===2?iconHtml('ti-award', 'color:#b66a2c;'):'';
       return `
         <div style="margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -7256,10 +7350,10 @@ function buildGaugeRE(elId, attuale, precedente) {
   let color, label;
   if (objPerc > 0) {
     color = percVsObj >= 100 ? '#1a8a5a' : percVsObj >= 70 ? '#ba7517' : '#c0392b';
-    label = percVsObj >= 100 ? '🟢 Obiettivo raggiunto!' : percVsObj >= 70 ? '🟡 In progressione' : '🔴 Sotto obiettivo';
+    label = percVsObj >= 100 ? 'Obiettivo raggiunto' : percVsObj >= 70 ? 'In progressione' : 'Sotto obiettivo';
   } else {
     color = percVsPrec >= 100 ? '#1a8a5a' : percVsPrec >= 80 ? '#ba7517' : '#c0392b';
-    label = percVsPrec >= 100 ? '🟢 Sopra anno precedente' : percVsPrec >= 80 ? '🟡 In linea' : '🔴 Sotto anno precedente';
+    label = percVsPrec >= 100 ? 'Sopra anno precedente' : percVsPrec >= 80 ? 'In linea' : 'Sotto anno precedente';
   }
   const barPerc = objPerc > 0 ? Math.min(percVsObj, 100) : Math.min(percVsPrec, 100);
   el.innerHTML = `
@@ -7299,7 +7393,7 @@ function renderREList() {
     const annuo = p.premio_annuo || 0;
     const tipoOp = getRETipoOperazione(p);
     const targetBadge = p.is_target
-      ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);">🎯 Target</span>'
+      ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);"><i class="ti ti-target-arrow"></i> Target</span>'
       : '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--surf2);color:var(--txt3);border:.5px solid var(--bord2);">No Target</span>';
     const tipoBadge = tipoOp === 'rinnovo'
       ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--amb-bg);color:var(--amb-txt);">Rinnovo</span>'
@@ -7313,11 +7407,11 @@ function renderREList() {
           ${p.prodotto?`<span style="font-size:11px;padding:1px 7px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);">${p.prodotto}</span>`:''}
         </div>
         <div style="font-size:11px;color:var(--txt2);">
-          ${p.produttore?'👤 '+p.produttore+' · ':''}€${fmt(p.premio_netto)} rata · ${frzLabel} · <b style="color:var(--acc);">€${fmt(annuo)} annuo</b>
+          ${p.produttore?iconHtml('ti-user', 'font-size:12px;vertical-align:-2px;')+' '+p.produttore+' · ':''}€${fmt(p.premio_netto)} rata · ${frzLabel} · <b style="color:var(--acc);">€${fmt(annuo)} annuo</b>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;">
           ${p.data_stipula?`<span style="font-size:10px;color:var(--txt3);"><i class="ti ti-calendar" style="font-size:10px;vertical-align:-1px;"></i> ${new Date(p.data_stipula).toLocaleDateString('it-IT')}</span>`:''}
-          ${p.note?`<span style="font-size:11px;color:var(--txt3);">📝 ${p.note}</span>`:''}
+          ${p.note?`<span style="font-size:11px;color:var(--txt3);">${iconHtml('ti-notes', 'font-size:12px;vertical-align:-2px;')} ${p.note}</span>`:''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
@@ -7459,10 +7553,10 @@ let TK_FILTER = 'aperto';
 let AI_TAB    = 'chat';
 
 const TK_PRIORITA = {
-  bassa:   { label:'🟢 Bassa',   color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
-  normale: { label:'🟡 Normale', color:'var(--amb-txt)',  bg:'var(--amb-bg)'  },
-  alta:    { label:'🟠 Alta',    color:'#d4500a',         bg:'#fff0e6'        },
-  critica: { label:'🔴 Critica', color:'var(--red-txt)',  bg:'var(--red-bg)'  },
+  bassa:   { label:'Bassa',   color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
+  normale: { label:'Normale', color:'var(--amb-txt)',  bg:'var(--amb-bg)'  },
+  alta:    { label:'Alta',    color:'#d4500a',         bg:'#fff0e6'        },
+  critica: { label:'Critica', color:'var(--red-txt)',  bg:'var(--red-bg)'  },
 };
 const TK_STATO = {
   aperto:         { label:'Aperto',         color:'var(--red-txt)',  bg:'var(--red-bg)'  },
@@ -7570,7 +7664,7 @@ function renderTickets() {
       tutti: 'Nessun ticket'
     }[TK_FILTER] || 'Nessun ticket';
     el.innerHTML = `<div style="text-align:center;padding:30px 16px;color:var(--txt3);">
-      <div style="font-size:28px;margin-bottom:8px;">🎫</div>
+      <div style="font-size:28px;margin-bottom:8px;"><i class="ti ti-ticket"></i></div>
       <div style="font-size:13px;">${emptyMsg}</div>
     </div>`;
     return;
@@ -7595,7 +7689,7 @@ function renderTickets() {
             <span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;background:${st.bg};color:${st.color};">${st.label}</span>
           </div>
           ${descrizione?`<div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${descrizione}</div>`:''}
-          <div style="font-size:10px;color:var(--txt3);">👤 ${segnalatoNome} · ${dt}</div>
+          <div style="font-size:10px;color:var(--txt3);">${iconHtml('ti-user', 'font-size:11px;vertical-align:-2px;')} ${segnalatoNome} · ${dt}</div>
           ${t.stato==='risolto'&&risoltoNome?`<div style="font-size:10px;color:var(--grn-txt);margin-top:2px;">✓ Risolto da ${risoltoNome}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
@@ -7604,7 +7698,7 @@ function renderTickets() {
               style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;"><i class="ti ti-pencil"></i> Modifica</button>` : ''}
           ${isAdmin && t.stato !== 'risolto' ? `
           ${t.stato==='aperto'?`<button onclick="setTKStato(${t.id},'in_lavorazione')"
-            style="font-size:10px;padding:3px 8px;background:var(--amb-bg);color:var(--amb-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">🔧 Prendi in carico</button>`:''}
+            style="font-size:10px;padding:3px 8px;background:var(--amb-bg);color:var(--amb-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;"><i class="ti ti-tool"></i> Prendi in carico</button>`:''}
           <button onclick="setTKStato(${t.id},'risolto')"
             style="font-size:10px;padding:3px 8px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">✓ Segna risolto</button>
           <button onclick="delTicket(${t.id})"
@@ -7741,7 +7835,7 @@ function renderTCM() {
         <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;margin-bottom:6px;">Fascia attiva</div>
         <div style="font-size:18px;font-weight:800;color:${fascia.color};">${fascia.label} · ${fascia.rappel}% rappel</div>
         <div style="font-size:13px;color:var(--txt2);margin-top:4px;">Rappel maturato: <b>€${fmt(rappel)}</b></div>
-        ${prossima ? `<div style="font-size:12px;color:var(--txt3);margin-top:4px;">Prossima fascia: €${fmt(prossima.min)} (mancano €${fmt(mancano)})</div>` : '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:4px;">🏆 Fascia massima raggiunta!</div>'}
+        ${prossima ? `<div style="font-size:12px;color:var(--txt3);margin-top:4px;">Prossima fascia: €${fmt(prossima.min)} (mancano €${fmt(mancano)})</div>` : '<div style="font-size:12px;color:var(--grn);font-weight:700;margin-top:4px;"><i class="ti ti-trophy"></i> Fascia massima raggiunta</div>'}
       </div>`;
   } else if (gaugeEl) {
     const prossima = TCM_FASCE[0];
@@ -7761,8 +7855,8 @@ function renderTCM() {
       <div style="width:24px;height:24px;border-radius:50%;background:var(--grn-bg);color:var(--grn-txt);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;">${i+1}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;">${p.cliente}</div>
-        <div style="font-size:11px;color:var(--txt2);">${p.produttore?'👤 '+p.produttore+' · ':''}${p.prodotto?p.prodotto+' · ':''}<b style="color:var(--acc);">€${fmt(parseNum(p.importo))}</b></div>
-        ${p.note?`<div style="font-size:11px;color:var(--txt3);">📝 ${p.note}</div>`:''}
+        <div style="font-size:11px;color:var(--txt2);">${p.produttore?iconHtml('ti-user', 'font-size:12px;vertical-align:-2px;')+' '+p.produttore+' · ':''}${p.prodotto?p.prodotto+' · ':''}<b style="color:var(--acc);">€${fmt(parseNum(p.importo))}</b></div>
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);">${iconHtml('ti-notes', 'font-size:12px;vertical-align:-2px;')} ${p.note}</div>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
         <button onclick="editTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
@@ -7884,10 +7978,10 @@ function openEditTicket(id) {
           <div class="fld"><label>Descrizione</label><textarea id="tke-descr" rows="2">${descrizione}</textarea></div>
           <div class="fld"><label>Priorità</label>
             <select id="tke-priorita">
-              <option value="bassa" ${t.priorita==='bassa'?'selected':''}>🟢 Bassa</option>
-              <option value="normale" ${t.priorita==='normale'?'selected':''}>🟡 Normale</option>
-              <option value="alta" ${t.priorita==='alta'?'selected':''}>🟠 Alta</option>
-              <option value="critica" ${t.priorita==='critica'?'selected':''}>🔴 Critica</option>
+              <option value="bassa" ${t.priorita==='bassa'?'selected':''}>Bassa</option>
+              <option value="normale" ${t.priorita==='normale'?'selected':''}>Normale</option>
+              <option value="alta" ${t.priorita==='alta'?'selected':''}>Alta</option>
+              <option value="critica" ${t.priorita==='critica'?'selected':''}>Critica</option>
             </select>
           </div>
           <div class="fld"><label>Stato</label>
@@ -7968,7 +8062,7 @@ function apriGestioneHub() {
       onclick="if(event.target.id==='hub-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
         width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:14px;">🏢 Gestione HUB</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:14px;"><i class="ti ti-building-community"></i> Gestione HUB</div>
         <div id="hub-overlay-list" style="margin-bottom:16px;"></div>
         <div style="font-size:13px;font-weight:700;margin-bottom:10px;">+ Nuovo HUB</div>
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -8071,8 +8165,8 @@ async function renderHubList() {
           <div style="font-size:11px;color:var(--txt3);">${membri.length} produttori · €${fmt(totPort)} portafoglio</div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button onclick="apriClassificaHub(${h.id})" style="font-size:11px;padding:5px 10px;background:${h.colore||'var(--acc)'};color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;">🏆 Classifica</button>
-          <button onclick="apriAlertHub(${h.id})" style="font-size:11px;padding:5px 10px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:8px;cursor:pointer;font-family:inherit;">⚠️ Alert</button>
+          <button onclick="apriClassificaHub(${h.id})" style="font-size:11px;padding:5px 10px;background:${h.colore||'var(--acc)'};color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-trophy"></i> Classifica</button>
+          <button onclick="apriAlertHub(${h.id})" style="font-size:11px;padding:5px 10px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:8px;cursor:pointer;font-family:inherit;"><i class="ti ti-alert-triangle"></i> Alert</button>
         </div>
       </div>
       ${membri.length ? `
@@ -8080,7 +8174,7 @@ async function renderHubList() {
           ${membri.sort((a,b)=>(parseNum(b.port)||0)-(parseNum(a.port)||0)).map((c,i) => {
             const maxP = parseNum(membri[0]?.port)||1;
             const perc = Math.round((parseNum(c.port)||0)/maxP*100);
-            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            const medal = i===0?iconHtml('ti-award', 'color:var(--amb);'):i===1?iconHtml('ti-award', 'color:var(--txt2);'):i===2?iconHtml('ti-award', 'color:#b66a2c;'):'';
             return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
               <span style="width:20px;text-align:center;">${medal||i+1}</span>
               <span style="flex:1;font-weight:${i<3?'700':'400'};">${c.nome} ${c.cogn}</span>
@@ -8106,11 +8200,11 @@ function apriClassificaHub(hubId) {
         width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
           <div style="width:12px;height:12px;border-radius:50%;background:${hub.colore};flex-shrink:0;"></div>
-          <div style="font-size:15px;font-weight:700;">🏆 Classifica ${hub.nome}</div>
+          <div style="font-size:15px;font-weight:700;"><i class="ti ti-trophy"></i> Classifica ${hub.nome}</div>
         </div>
         ${!membri.length ? '<div style="color:var(--txt3);text-align:center;padding:20px;">Nessun produttore in questo HUB</div>' :
           membri.map((c,i) => {
-            const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+            const medal = i===0?iconHtml('ti-award', 'color:var(--amb);'):i===1?iconHtml('ti-award', 'color:var(--txt2);'):i===2?iconHtml('ti-award', 'color:#b66a2c;'):'';
             const maxP = parseNum(membri[0]?.port)||1;
             const perc = Math.round((parseNum(c.port)||0)/maxP*100);
             const gareVinte = (c.gare_collab||[]).filter(g=>{
@@ -8162,11 +8256,11 @@ function apriAlertHub(hubId) {
       onclick="if(event.target.id==='alert-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;
         width:100%;padding:20px 16px 32px;max-height:85vh;overflow-y:auto;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">⚠️ Alert ${hub.nome}</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;"><i class="ti ti-alert-triangle"></i> Alert ${hub.nome}</div>
         ${!alerts.length ?
           `<div style="text-align:center;padding:24px;color:var(--grn-txt);">
             <i class="ti ti-circle-check" style="font-size:36px;display:block;margin-bottom:8px;"></i>
-            Tutti i produttori sono in target! 🎉</div>` :
+            Tutti i produttori sono in target</div>` :
           alerts.map(a=>`<div style="padding:12px;background:${a.livello==='crit'?'var(--red-bg)':'var(--amb-bg)'};border-radius:var(--rs);margin-bottom:8px;border-left:3px solid ${a.livello==='crit'?'var(--red)':'var(--amb)'};">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
               <div>

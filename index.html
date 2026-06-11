@@ -2179,8 +2179,7 @@ function onLogin(user) {
     if (db) {
       // Carica trattative tramite loadTrattDB (gestisce filtro utente)
       loadTrattDB();
-      db.from('iam_team').select('*').order('cogn',{ascending:true})
-        .then(({data}) => { if(data?.length){ TEAM=data.map(c=>({...c})); saveTeam(); }});
+      loadTeamDB();
     }
     loadAgendaDB();
     loadLastSession();
@@ -2859,6 +2858,34 @@ function loadIncassi(inp) {
 }
 
 
+function contoMovId(row, i) {
+  const data = fmtDate(row['Data'] || row['data'] || row['DATA'] || '');
+  const desc = row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || '';
+  const dare = parseNum(row['Dare'] || row['DARE'] || row['Uscita'] || 0);
+  const avere = parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
+  const saldo = parseNum(row['Saldo'] || row['SALDO'] || 0);
+  return `${data}|${desc}|${dare}|${avere}|${saldo}|${i}`;
+}
+
+function saveContoCache(tipo) {
+  try {
+    localStorage.setItem('iam_conto_'+tipo, JSON.stringify(APP.conto[tipo].movimenti || []));
+    localStorage.setItem('iam_bonif_'+tipo, JSON.stringify(APP.conto[tipo].bonif || {}));
+  } catch(e) {}
+}
+
+function loadContoCache() {
+  ['hdi','pluri'].forEach(tipo => {
+    try { APP.conto[tipo].movimenti = JSON.parse(localStorage.getItem('iam_conto_'+tipo)||'[]'); } catch(e) { APP.conto[tipo].movimenti = []; }
+    try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e) { APP.conto[tipo].bonif = {}; }
+    const okEl = document.getElementById('ok-'+tipo);
+    if (okEl && APP.conto[tipo].movimenti.length) {
+      okEl.textContent = 'Estratto conto memorizzato (' + APP.conto[tipo].movimenti.length + ' mov.)';
+      okEl.style.display = 'block';
+    }
+  });
+}
+
 function loadConto(inp, tipo) {
   const file = inp.files[0]; if (!file) return;
   const r = new FileReader();
@@ -2867,7 +2894,7 @@ function loadConto(inp, tipo) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
     APP.conto[tipo].movimenti = data.map((row, i) => ({
-      id: i,
+      id: contoMovId(row, i),
       data: fmtDate(row['Data'] || row['data'] || row['DATA'] || ''),
       desc: row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || '',
       dare:  parseNum(row['Dare']  || row['DARE']  || row['Uscita']  || 0),
@@ -2875,6 +2902,7 @@ function loadConto(inp, tipo) {
       saldo: parseNum(row['Saldo'] || row['SALDO'] || 0),
     }));
     try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e){ APP.conto[tipo].bonif = {}; }
+    saveContoCache(tipo);
     const okEl = document.getElementById('ok-'+tipo);
     if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + data.length + ' mov.)'; okEl.style.display = 'block'; }
     renderConto();
@@ -3566,7 +3594,7 @@ function toggleBonif(id, checked) {
   if (!c.bonif) c.bonif = {};
   if (checked) c.bonif[id] = true;
   else delete c.bonif[id];
-  try { localStorage.setItem('iam_bonif_'+tipo, JSON.stringify(c.bonif)); } catch(e){}
+  saveContoCache(tipo);
   renderConto();
   if (APP.loaded) buildDashboard();
 }
@@ -5478,18 +5506,33 @@ function aggiungiFatturaCollab() {
   const chk = document.getElementById('mc-fat-pagata'); if (chk) chk.checked = false;
   const file = document.getElementById('mc-fat-file'); if (file) file.value = '';
   TEAM_FATTURA_FILE = null;
+  persistFattureCollaboratore();
   renderFattureCollab();
+  if (APP.loaded) buildDashboard();
 }
 
 function toggleFatturaPagata(id, checked) {
   const f = TEAM_FATTURE.find(x => String(x.id) === String(id));
   if (f) f.pagata = checked;
+  persistFattureCollaboratore();
   renderFattureCollab();
+  if (APP.loaded) buildDashboard();
 }
 
 function eliminaFatturaCollab(id) {
   TEAM_FATTURE = TEAM_FATTURE.filter(x => String(x.id) !== String(id));
+  persistFattureCollaboratore();
   renderFattureCollab();
+  if (APP.loaded) buildDashboard();
+}
+
+function persistFattureCollaboratore() {
+  if (!TEAM_ID) return;
+  loadTeam();
+  const idx = TEAM.findIndex(c => String(c.id) === String(TEAM_ID));
+  if (idx < 0) return;
+  TEAM[idx].fatture = TEAM_FATTURE.map(f => ({...f, file:f.file?{...f.file}:null}));
+  saveTeam();
 }
 
 function renderFattureCollab() {
@@ -8659,6 +8702,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('i-data').value = new Date().toISOString().split('T')[0];
   initDB();
   loadTeam(); loadPipe(); loadWD(); loadPerf(); loadAzienda();
+  loadContoCache();
   ['hdi','pluri'].forEach(t => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });

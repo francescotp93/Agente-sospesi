@@ -2860,11 +2860,13 @@ function loadIncassi(inp) {
 
 function contoMovId(row, i) {
   const data = fmtDate(row['Data'] || row['data'] || row['DATA'] || '');
-  const desc = row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || '';
+  const operazione = row['Operazione'] || row['OPERAZIONE'] || row['operazione'] || '';
+  const desc = row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || operazione || '';
+  const importo = parseNum(row['Importo'] || row['IMPORTO'] || row['importo'] || 0);
   const dare = parseNum(row['Dare'] || row['DARE'] || row['Uscita'] || 0);
-  const avere = parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
+  const avere = importo > 0 ? importo : parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
   const saldo = parseNum(row['Saldo'] || row['SALDO'] || 0);
-  return `${data}|${desc}|${dare}|${avere}|${saldo}|${i}`;
+  return `${data}|${operazione}|${desc}|${dare}|${avere}|${saldo}|${i}`;
 }
 
 function saveContoCache(tipo) {
@@ -2893,14 +2895,21 @@ function loadConto(inp, tipo) {
     const wb = XLSX.read(e.target.result, {type:'array', raw:true});
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
-    APP.conto[tipo].movimenti = data.map((row, i) => ({
-      id: contoMovId(row, i),
-      data: fmtDate(row['Data'] || row['data'] || row['DATA'] || ''),
-      desc: row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || '',
-      dare:  parseNum(row['Dare']  || row['DARE']  || row['Uscita']  || 0),
-      avere: parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0),
-      saldo: parseNum(row['Saldo'] || row['SALDO'] || 0),
-    }));
+    APP.conto[tipo].movimenti = data.map((row, i) => {
+      const operazione = row['Operazione'] || row['OPERAZIONE'] || row['operazione'] || '';
+      const importo = parseNum(row['Importo'] || row['IMPORTO'] || row['importo'] || 0);
+      const avere = importo > 0 ? importo : parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
+      return {
+        id: contoMovId(row, i),
+        data: fmtDate(row['Data'] || row['data'] || row['DATA'] || ''),
+        operazione,
+        desc: row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || operazione || '',
+        dare:  parseNum(row['Dare']  || row['DARE']  || row['Uscita']  || 0),
+        avere,
+        importo,
+        saldo: parseNum(row['Saldo'] || row['SALDO'] || 0),
+      };
+    });
     try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e){ APP.conto[tipo].bonif = {}; }
     saveContoCache(tipo);
     const okEl = document.getElementById('ok-'+tipo);
@@ -2994,7 +3003,7 @@ function getBonificiNonFlaggati() {
     const c = APP.conto?.[tipo] || {};
     const bonif = c.bonif || {};
     return (c.movimenti || [])
-      .filter(m => m.avere > 0 && !(bonif[m.id] === true || bonif[m.id]?.checked))
+      .filter(m => isBonificoInEntrata(m) && !(bonif[m.id] === true || bonif[m.id]?.checked))
       .map(m => ({ ...m, conto: tipo }));
   });
 }
@@ -3511,6 +3520,12 @@ function selConto(tipo) {
   renderConto();
 }
 
+function isBonificoInEntrata(m) {
+  const operazione = String(m.operazione || m.desc || '').toLowerCase();
+  const importo = Number(m.importo !== undefined ? m.importo : m.avere) || 0;
+  return operazione.includes('bonifico') && importo > 0;
+}
+
 function renderConto() {
   const c = APP.conto[APP.conto.att];
   const movs = c.movimenti;
@@ -3534,14 +3549,14 @@ function renderConto() {
       </div>
       <div class="card"><div id="co-list"></div></div>`;
   }
-  const bonificiEntrata = movs.filter(m => m.avere > 0);
-  const totE = bonificiEntrata.reduce((a,m)=>a+m.avere,0);
+  const bonificiEntrata = movs.filter(isBonificoInEntrata);
+  const totE = bonificiEntrata.reduce((a,m)=>a+(Number(m.importo !== undefined ? m.importo : m.avere)||0),0);
   const totU = movs.reduce((a,m)=>a+m.dare,0);
   const bonif = c.bonif || {};
   const isBonifFlaggato = id => bonif[id] === true || !!bonif[id]?.checked;
   const getBonifNota = id => bonif[id]?.note || '';
   const bonifSospeso = bonificiEntrata.filter(m => !isBonifFlaggato(m.id));
-  const totSospeso = bonifSospeso.reduce((a,m)=>a+m.avere,0);
+  const totSospeso = bonifSospeso.reduce((a,m)=>a+(Number(m.importo !== undefined ? m.importo : m.avere)||0),0);
   const lastSaldo = movs.length ? movs[movs.length-1].saldo : (totE - totU);
   const saldoDisp = lastSaldo - totSospeso;
   document.getElementById('co-metrics').innerHTML = `
@@ -3560,15 +3575,16 @@ function renderConto() {
     const id = JSON.stringify(String(m.id));
     const confermato = isBonifFlaggato(m.id);
     const nota = getBonifNota(m.id);
+    const importoBonifico = Number(m.importo !== undefined ? m.importo : m.avere) || 0;
     return `<div class="row" style="border-left:4px solid ${confermato?'var(--grn)':'var(--red)'};background:${confermato?'var(--grn-bg)':'var(--red-bg)'};">
       <input type="checkbox" ${confermato?'checked':''} onchange="toggleBonif(${id},this.checked)" style="width:18px;height:18px;accent-color:var(--grn);cursor:pointer;flex-shrink:0;margin-top:3px;" title="Conferma bonifico ricevuto">
       <div class="rmain" style="display:grid;gap:6px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
           <div style="min-width:0;">
-            <div class="rname" style="font-size:12px;">${m.desc||'—'}</div>
-            <div class="rsub">${m.data} · ${confermato?'Bonifico flaggato':'Da abbinare'}</div>
+            <div class="rname" style="font-size:12px;">${m.operazione||'Bonifico'}</div>
+            <div class="rsub">${m.data}${m.desc&&m.desc!==m.operazione?' · '+m.desc:''} · ${confermato?'Bonifico flaggato':'Da abbinare'}</div>
           </div>
-          <div class="ramt" style="color:var(--grn);font-size:16px;white-space:nowrap;">+€${fmt(m.avere)}</div>
+          <div class="ramt" style="color:var(--grn);font-size:16px;white-space:nowrap;">+€${fmt(importoBonifico)}</div>
         </div>
         <input type="text" value="${nota.replace(/"/g,'&quot;')}" placeholder="Nota bonifico..." onchange="updateBonifNota(${id},this.value)" style="width:100%;padding:8px 10px;background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-size:12px;font-family:inherit;">
       </div>

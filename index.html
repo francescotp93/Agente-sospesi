@@ -221,6 +221,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-ticket-item:hover{background:rgba(var(--acc-rgb),.07);}
 .dash-ticket-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;color:var(--txt);}
 .dash-ticket-meta{font-size:10px;color:var(--txt3);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;}
+.dash-alerts{display:grid;gap:10px;}
+.dash-alert-tile{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:1px solid var(--bord2);border-radius:8px;background:var(--surf2);color:var(--txt);text-align:left;cursor:pointer;font-family:inherit;position:relative;overflow:hidden;}
+.dash-alert-tile:before{content:'';width:11px;height:11px;border-radius:50%;background:var(--amb);box-shadow:0 0 0 0 rgba(245,158,11,.42);animation:alertPulse 1.25s ease-out infinite;flex-shrink:0;}
+.dash-alert-tile.crit:before{background:var(--red);box-shadow:0 0 0 0 rgba(239,68,68,.46);}
+.dash-alert-tile.ok{cursor:default;}
+.dash-alert-tile.ok:before{background:var(--grn);animation:none;box-shadow:0 0 0 5px rgba(34,197,94,.14);}
+.dash-alert-main{flex:1;min-width:0;}
+.dash-alert-title{font-size:13px;font-weight:850;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-alert-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+.dash-alert-count{min-width:30px;text-align:center;border-radius:999px;background:var(--acc);color:#fff;font-size:12px;font-weight:850;padding:4px 8px;}
+@keyframes alertPulse{0%{box-shadow:0 0 0 0 currentColor;opacity:1}70%{box-shadow:0 0 0 8px transparent;opacity:.72}100%{box-shadow:0 0 0 0 transparent;opacity:1}}
 @media(min-width:860px){.dash-grid{grid-template-columns:1fr 1fr 1fr}.dash-metrics{grid-template-columns:1fr 1.45fr}.dash-data-grid{grid-template-columns:1fr 1fr 1fr}.dash-pro{padding:24px 30px 30px}}
 @media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-section-title{font-size:24px}.dash-card,.dash-metric-card{padding:16px}.dash-ribbon{position:static;clip-path:none;border-radius:6px;margin:-4px 0 12px;width:max-content}.dash-news{max-width:100%}#d-metrics{grid-template-columns:1fr}}
 
@@ -477,7 +488,6 @@ input[type=file]{display:none;}
     </div>
     <div class="hdr-right">
       <div class="spill" id="s-pill">In attesa</div>
-      <button class="hdr-ico" onclick="openSettings()" aria-label="Impostazioni"><i class="ti ti-settings" style="font-size:19px;"></i></button>
       <div class="uavatar" id="u-av" onclick="toggleUMenu()">?</div>
     </div>
   </div>
@@ -750,7 +760,7 @@ input[type=file]{display:none;}
           </div>
         </div>
         <div class="dash-card">
-          <div class="dash-card-title">Ti suggeriamo <span>di</span></div>
+          <div class="dash-card-title">Alert</div>
           <div id="d-suggerimenti" class="dash-list"></div>
         </div>
       </div>
@@ -1883,6 +1893,21 @@ input[type=file]{display:none;}
         </div>
         <div id="mc-provv" style="display:flex;flex-direction:column;gap:8px;margin-top:6px;"></div>
       </div>
+      <div class="fsec">
+        <div class="fsec-title">Fatture collaboratore</div>
+        <div style="background:var(--surf2);border-radius:var(--rs);padding:12px;display:grid;gap:8px;">
+          <div class="fgrid">
+            <div class="fld ffull"><label>Descrizione fattura</label><input type="text" id="mc-fat-desc" placeholder="Es. Fattura provvigioni giugno"></div>
+            <div class="fld"><label>Importo da pagare</label><input type="number" id="mc-fat-importo" step="0.01" inputmode="decimal"></div>
+            <div class="fld"><label>Allegato</label><input type="file" id="mc-fat-file" accept=".pdf,.jpg,.jpeg,.png" onchange="loadFatturaFile(this)"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">
+            <input type="checkbox" id="mc-fat-pagata" style="width:16px;height:16px;accent-color:var(--grn);"> Segna come pagata
+          </label>
+          <button onclick="aggiungiFatturaCollab()" style="padding:10px 12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">Aggiungi fattura</button>
+        </div>
+        <div id="mc-fatture-list" style="margin-top:10px;"></div>
+      </div>
     </div>
 
     <!-- TAB 3: DOCUMENTI & ALLEGATI -->
@@ -2847,6 +2872,7 @@ function loadConto(inp, tipo) {
     const okEl = document.getElementById('ok-'+tipo);
     if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + data.length + ' mov.)'; okEl.style.display = 'block'; }
     renderConto();
+    if (APP.loaded) buildDashboard();
   };
   r.readAsArrayBuffer(file);
 }
@@ -2929,6 +2955,64 @@ function updatePill() {
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
+function getBonificiNonFlaggati() {
+  return ['hdi','pluri'].flatMap(tipo => {
+    const c = APP.conto?.[tipo] || {};
+    const bonif = c.bonif || {};
+    return (c.movimenti || [])
+      .filter(m => m.avere > 0 && !bonif[m.id])
+      .map(m => ({ ...m, conto: tipo }));
+  });
+}
+
+function getFattureCollaboratoriAperte() {
+  try { loadTeam(); } catch(e) {}
+  return (TEAM || []).flatMap(c =>
+    (c.fatture || [])
+      .filter(f => !f.pagata)
+      .map(f => ({ ...f, collaboratore: `${c.nome||''} ${c.cogn||''}`.trim() || 'Collaboratore' }))
+  );
+}
+
+function renderDashboardAlerts() {
+  const el = document.getElementById('d-suggerimenti');
+  if (!el) return;
+  const bonifici = getBonificiNonFlaggati();
+  const fatture = getFattureCollaboratoriAperte();
+  const totBonifici = bonifici.reduce((a,m)=>a+m.avere,0);
+  const totFatture = fatture.reduce((a,f)=>a+parseNum(f.importo),0);
+  const alerts = [];
+  if (bonifici.length) alerts.push({
+    cls: 'crit',
+    title: 'Bonifici non abbinati',
+    sub: `${bonifici.length} movimenti · €${fmt(totBonifici)}`,
+    count: bonifici.length,
+    click: "goTab('carica');selContabTab('conto')"
+  });
+  if (fatture.length) alerts.push({
+    cls: 'warn',
+    title: 'Fatture collaboratori non pagate',
+    sub: `${fatture.length} fatture · €${fmt(totFatture)}`,
+    count: fatture.length,
+    click: "goTab('team')"
+  });
+  el.className = 'dash-alerts';
+  el.innerHTML = alerts.length ? alerts.map(a => `
+    <button class="dash-alert-tile ${a.cls}" onclick="${a.click}">
+      <div class="dash-alert-main">
+        <div class="dash-alert-title">${a.title}</div>
+        <div class="dash-alert-sub">${a.sub}</div>
+      </div>
+      <div class="dash-alert-count">${a.count}</div>
+    </button>`).join('') : `
+    <div class="dash-alert-tile ok">
+      <div class="dash-alert-main">
+        <div class="dash-alert-title">Nessun alert attivo</div>
+        <div class="dash-alert-sub">Bonifici e fatture risultano in ordine.</div>
+      </div>
+    </div>`;
+}
+
 function buildDashboard() {
   const sosp  = APP.sospesi.filter(s => s.importo >= 0);
   const valTot = sosp.reduce((a,s)=>a+s.importo,0);
@@ -3032,6 +3116,7 @@ function buildDashboard() {
     <div class="rmain"><div class="rname">${m.desc}</div></div>
     <div class="rright"><div class="ramt" style="color:var(--${m.color==='grn'?'grn':'red'})">${m.amt}</div></div></div>`).join('')
     : '<div class="row" style="color:var(--txt3);font-size:13px;">Nessun movimento inserito</div>';
+  renderDashboardAlerts();
 
   document.getElementById('d-empty').style.display = 'none';
   document.getElementById('d-content').style.display = 'block';
@@ -3382,45 +3467,55 @@ function renderConto() {
     document.getElementById('co-content').style.display = 'none'; return;
   }
   document.getElementById('co-empty').style.display = 'none';
-  document.getElementById('co-content').style.display = 'block';
-  const totE = movs.reduce((a,m)=>a+m.avere,0);
-  const totU = movs.reduce((a,m)=>a+m.dare,0);
-  const nAbb = Object.keys(c.abb||{}).length;
-  const bonif = c.bonif || {};
+  const coContent = document.getElementById('co-content');
+  coContent.style.display = 'block';
+  if (!document.getElementById('co-metrics')) {
+    coContent.innerHTML = `
+      <div class="mgrid" id="co-metrics"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin:0 12px 10px;">
+        <input id="co-search" type="search" placeholder="Cerca bonifico..." oninput="renderConto()" style="flex:1;padding:9px 12px;background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;">
+        <select id="co-filt" onchange="renderConto()" style="padding:9px 10px;background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-family:inherit;font-size:13px;">
+          <option value="">Tutti</option>
+          <option value="0">Da abbinare</option>
+          <option value="1">Flaggati</option>
+        </select>
+      </div>
+      <div class="card"><div id="co-list"></div></div>`;
+  }
   const bonificiEntrata = movs.filter(m => m.avere > 0);
+  const totE = bonificiEntrata.reduce((a,m)=>a+m.avere,0);
+  const totU = movs.reduce((a,m)=>a+m.dare,0);
+  const bonif = c.bonif || {};
   const bonifSospeso = bonificiEntrata.filter(m => !bonif[m.id]);
   const totSospeso = bonifSospeso.reduce((a,m)=>a+m.avere,0);
   const lastSaldo = movs.length ? movs[movs.length-1].saldo : (totE - totU);
   const saldoDisp = lastSaldo - totSospeso;
   document.getElementById('co-metrics').innerHTML = `
-    <div class="mcard"><div class="mlbl">Movimenti</div><div class="mval">${movs.length}</div></div>
-    <div class="mcard"><div class="mlbl">Entrate</div><div class="mval" style="color:var(--grn)">€${fmt(totE)}</div></div>
+    <div class="mcard"><div class="mlbl">Bonifici ricevuti</div><div class="mval">${bonificiEntrata.length}</div></div>
+    <div class="mcard"><div class="mlbl">Totale bonifici</div><div class="mval" style="color:var(--grn)">€${fmt(totE)}</div></div>
     <div class="mcard"><div class="mlbl">Uscite</div><div class="mval" style="color:var(--red)">€${fmt(totU)}</div></div>
-    <div class="mcard"><div class="mlbl">Abbinati</div><div class="mval" style="color:var(--acc)">${nAbb}/${movs.length}</div></div>
+    <div class="mcard"><div class="mlbl">Flaggati</div><div class="mval" style="color:var(--acc)">${bonificiEntrata.length-bonifSospeso.length}/${bonificiEntrata.length}</div></div>
     <div class="mcard" style="grid-column:1/-1;border-color:var(--acc);background:rgba(var(--acc-rgb),.06)"><div class="mlbl">Saldo disponibile</div><div class="mval" style="color:${saldoDisp>=0?'var(--grn)':'var(--red)'}">€${fmt(saldoDisp)}${bonifSospeso.length?' <span style="font-size:11px;font-weight:400;color:var(--txt2);">( €'+fmt(totSospeso)+' in sospeso)</span>':''}</div></div>`;
   const q = (document.getElementById('co-search')?.value||'').toLowerCase();
   const ft = document.getElementById('co-filt')?.value||'';
-  let lista = movs;
-  if (ft==='1') lista = movs.filter(m=>c.abb[m.id]);
-  if (ft==='0') lista = movs.filter(m=>!c.abb[m.id]);
+  let lista = bonificiEntrata;
+  if (ft==='1') lista = lista.filter(m=>bonif[m.id]);
+  if (ft==='0') lista = lista.filter(m=>!bonif[m.id]);
   if (q) lista = lista.filter(m=>m.desc.toLowerCase().includes(q)||String(m.avere||m.dare).includes(q));
   document.getElementById('co-list').innerHTML = lista.map(m=>{
-    const abb = c.abb[m.id];
-    const isBonif = m.avere > 0;
-    const confermato = isBonif && !!bonif[m.id];
-    return `<div class="row" style="${abb?'background:var(--grn-bg)':''}">
-      <input type="checkbox" ${abb?'checked':''} onchange="toggleAbb(${m.id},this.checked)" style="width:18px;height:18px;accent-color:var(--acc);cursor:pointer;flex-shrink:0;margin-top:2px;" title="Abbina polizza">
+    const confermato = !!bonif[m.id];
+    return `<div class="row" style="border-left:3px solid ${confermato?'var(--grn)':'var(--red)'};background:${confermato?'var(--grn-bg)':'var(--red-bg)'};">
+      <input type="checkbox" ${confermato?'checked':''} onchange="toggleBonif(${m.id},this.checked)" style="width:18px;height:18px;accent-color:var(--grn);cursor:pointer;flex-shrink:0;margin-top:2px;" title="Conferma bonifico ricevuto">
       <div class="rmain">
         <div class="rname" style="font-size:12px;">${m.desc||'—'}</div>
-        <div class="rsub">${m.data}${abb?' · ✓ '+abb:''}</div>
+        <div class="rsub">${m.data} · ${confermato?'Bonifico flaggato':'Da abbinare'}</div>
       </div>
       <div class="rright" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-        ${m.avere?`<div class="ramt" style="color:var(--grn)">+€${fmt(m.avere)}</div>`:''}
-        ${m.dare?`<div class="ramt" style="color:var(--red)">-€${fmt(m.dare)}</div>`:''}
-        ${isBonif?`<label style="display:flex;align-items:center;gap:4px;font-size:11px;color:${confermato?'var(--grn)':'var(--txt2)'};cursor:pointer;white-space:nowrap;"><input type="checkbox" ${confermato?'checked':''} onchange="toggleBonif(${m.id},this.checked)" style="accent-color:var(--grn);width:14px;height:14px;">${confermato?'✓ Confermato':'Conferma bonifico'}</label>`:''}
+        <div class="ramt" style="color:var(--grn)">+€${fmt(m.avere)}</div>
+        <div class="rbadge ${confermato?'bgrn':'bred'}">${confermato?'Confermato':'Da abbinare'}</div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') || '<div class="empty" style="padding:20px;"><p>Nessun bonifico ricevuto trovato</p></div>';
   const sosp = document.getElementById('co-sospeso');
   if (sosp) {
     if (bonifSospeso.length) {
@@ -3449,6 +3544,7 @@ function toggleBonif(id, checked) {
   else delete c.bonif[id];
   try { localStorage.setItem('iam_bonif_'+tipo, JSON.stringify(c.bonif)); } catch(e){}
   renderConto();
+  if (APP.loaded) buildDashboard();
 }
 
 // ─── TEAM ─────────────────────────────────────────────────────────────────────
@@ -3456,6 +3552,8 @@ let TEAM = [];
 let TEAM_ID = null;
 let TEAM_ANNI = [];
 let TEAM_DOCS = {};
+let TEAM_FATTURE = [];
+let TEAM_FATTURA_FILE = null;
 
 function loadTeam() { try { TEAM = JSON.parse(localStorage.getItem('iam_team')||'[]'); } catch(e){ TEAM=[]; } }
 function saveTeam() { localStorage.setItem('iam_team', JSON.stringify(TEAM)); }
@@ -3463,6 +3561,9 @@ function saveTeam() { localStorage.setItem('iam_team', JSON.stringify(TEAM)); }
 async function loadTeamDB() {
   if (!db) { loadTeam(); return; }
   try {
+    let localTeam = [];
+    try { localTeam = JSON.parse(localStorage.getItem('iam_team')||'[]'); } catch(e) { localTeam = []; }
+    const localById = Object.fromEntries(localTeam.map(c => [String(c.id), c]));
     const { data, error } = await db.from('iam_team').select('*').order('cogn', { ascending: true });
     if (error) { console.warn("loadTeamDB:", error.message); loadTeam(); return; }
     if (data && data.length > 0) {
@@ -3493,6 +3594,7 @@ async function loadTeamDB() {
         retention:      c.retention      || 0,
         gare_collab:    c.gare_collab    || [],
         storico_collab: c.storico_collab || [],
+        fatture:         localById[String(c.id)]?.fatture || [],
         hub_id:         c.hub_id         || null,
       }));
       saveTeam(); // cache locale
@@ -3544,7 +3646,7 @@ async function saveTeamDB(c) {
     // Aggiorna cache locale con docs
     loadTeam();
     const idx = TEAM.findIndex(x=>x.id===c.id);
-    if (idx>=0) TEAM[idx]={...payload, docs:c.docs}; else TEAM.push({...payload, docs:c.docs});
+    if (idx>=0) TEAM[idx]={...payload, docs:c.docs, fatture:c.fatture||[]}; else TEAM.push({...payload, docs:c.docs, fatture:c.fatture||[]});
     saveTeam();
   } catch(e) {
     console.error('saveTeamDB error:', e);
@@ -3574,6 +3676,24 @@ function calcPerf(c) {
   const ore = (c.anni||[]).reduce((a,an)=>a+(parseInt(an.ore)||0),0);
   if (ore>=60) s+=20; else if (ore>=30) s+=10; else if (ore>0) s+=5;
   return Math.min(100, s);
+}
+
+function renderFattureCardHTML(c) {
+  const fatture = c.fatture || [];
+  if (!fatture.length) {
+    return '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:14px 0;">Nessuna fattura caricata</div>';
+  }
+  return fatture.slice().reverse().map(f => {
+    const pagata = !!f.pagata;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:${pagata?'var(--grn-bg)':'var(--amb-bg)'};border-left:3px solid ${pagata?'var(--grn)':'var(--amb)'};border-radius:8px;margin-bottom:6px;">
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--surf);display:flex;align-items:center;justify-content:center;color:${pagata?'var(--grn)':'var(--amb)'};"><i class="ti ${pagata?'ti-circle-check':'ti-clock-exclamation'}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc||'Fattura collaboratore'}</div>
+        <div style="font-size:11px;color:var(--txt3);">${f.data||''} · €${fmt(parseNum(f.importo))} · ${pagata?'Pagata':'Da pagare'}</div>
+      </div>
+      ${f.file?.data?`<button onclick="viewFatturaCollab('${c.id}','${f.id}')" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
+    </div>`;
+  }).join('');
 }
 
 function renderTeam() {
@@ -3618,6 +3738,7 @@ function renderTeam() {
       <div style="display:flex;border-bottom:.5px solid var(--bord);">
         <button onclick="selCardTab('${c.id}','dati')" id="ct-${c.id}-dati" style="flex:1;padding:8px 6px;font-size:11px;font-weight:600;border:none;background:none;color:var(--acc);border-bottom:2px solid var(--acc);cursor:pointer;font-family:inherit;">Dati utente</button>
         <button onclick="selCardTab('${c.id}','int')" id="ct-${c.id}-int" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Dati intermediario</button>
+        <button onclick="selCardTab('${c.id}','fatture')" id="ct-${c.id}-fatture" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Fatture</button>
         <button onclick="selCardTab('${c.id}','doc')" id="ct-${c.id}-doc" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Documenti</button>
       </div>
 
@@ -3659,6 +3780,15 @@ function renderTeam() {
         :`<div style="color:var(--txt3);font-size:12px;padding:8px 0;text-align:center;">Nessuna provvigione inserita</div>`}
       </div>
 
+      <!-- TAB: Fatture -->
+      <div id="cb-${c.id}-fatture" style="padding:12px 14px;display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);">Fatture collaboratore</div>
+          <button onclick="openCollabModal('${c.id}');setTimeout(()=>selCollabTab('fat'),100)" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Gestisci</button>
+        </div>
+        ${renderFattureCardHTML(c)}
+      </div>
+
       <!-- TAB: Documenti -->
       <div id="cb-${c.id}-doc" style="padding:12px 14px;display:none;">
         ${(c.anni||[]).length?`
@@ -3692,7 +3822,7 @@ function renderTeam() {
 }
 
 function selCardTab(collabId, tab) {
-  ['dati','int','doc'].forEach(t => {
+  ['dati','int','fatture','doc'].forEach(t => {
     const btn = document.getElementById(`ct-${collabId}-${t}`);
     const body = document.getElementById(`cb-${collabId}-${t}`);
     if (btn) {
@@ -3706,7 +3836,7 @@ function selCardTab(collabId, tab) {
 
 async function openCollabModal(id) {
   loadTeam();
-  TEAM_ID = id; TEAM_ANNI = []; TEAM_DOCS = {};
+  TEAM_ID = id; TEAM_ANNI = []; TEAM_DOCS = {}; TEAM_FATTURE = []; TEAM_FATTURA_FILE = null;
   const c = id ? TEAM.find(x=>x.id===id) : null;
   await loadHubDB();
   const hubSel = document.getElementById('mc-hub');
@@ -3737,11 +3867,12 @@ async function openCollabModal(id) {
   COLLAB_VOLUMI = c?.report_volumi ? c.report_volumi.map(v=>({...v,mesi:[...v.mesi]})) : [];
   COLLAB_GARE   = c?.gare_collab   ? c.gare_collab.map(g=>({...g,posizioni:[...(g.posizioni||[])]})) : [];
   COLLAB_STORICO = c?.storico_collab ? [...c.storico_collab] : [];
+  TEAM_FATTURE = c?.fatture ? c.fatture.map(f=>({...f,file:f.file?{...f.file}:null})) : [];
   const svNum = (fid, val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
   svNum('mc-port-attuale', c?.port_attuale||'');
   svNum('mc-retention',    c?.retention||'');
   TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
-  renderAnni(); renderProvv(); renderCollabDocs();
+  renderAnni(); renderProvv(); renderCollabDocs(); renderFattureCollab();
   selCollabTab('ana');
   document.getElementById('modal-collab').classList.add('show');
   const comps = c?.compagnie || [];
@@ -3756,6 +3887,7 @@ async function openCollabModal(id) {
 function closeCollabModal() {
   document.getElementById('modal-collab').classList.remove('show');
   TEAM_DOCS = {};
+  TEAM_FATTURA_FILE = null;
 }
 
 // ── VARIABILI TAB REPORT / GARE / STORICO ──
@@ -4187,6 +4319,7 @@ function saveCollab() {
     retention: parseNum(document.getElementById('mc-retention')?.value||0),
     gare_collab: COLLAB_GARE.map(g=>({...g,posizioni:[...(g.posizioni||[])]})),
     storico_collab: [...COLLAB_STORICO],
+    fatture: TEAM_FATTURE.map(f=>({...f,file:f.file?{...f.file}:null})),
     docs: {}
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
@@ -4197,7 +4330,7 @@ function saveCollab() {
   closeCollabModal();
   // Salva su Supabase e aggiorna lista
   saveTeamDB(c).then(() => {
-    loadTeamDB().then(() => renderTeam());
+    loadTeamDB().then(() => { renderTeam(); if (APP.loaded) buildDashboard(); });
   });
 }
 
@@ -5289,6 +5422,87 @@ function selCollabTab(t) {
     document.getElementById('mcp-'+x).style.display = x===t?'block':'none';
     document.getElementById('mct-'+x).classList.toggle('act', x===t);
   });
+}
+
+function loadFatturaFile(inp) {
+  const file = inp.files?.[0];
+  TEAM_FATTURA_FILE = null;
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    TEAM_FATTURA_FILE = { nome:file.name, tipo:file.type || 'application/octet-stream', data:e.target.result };
+    renderFattureCollab();
+  };
+  r.readAsDataURL(file);
+}
+
+function aggiungiFatturaCollab() {
+  const desc = (document.getElementById('mc-fat-desc')?.value || '').trim();
+  const importo = parseNum(document.getElementById('mc-fat-importo')?.value || 0);
+  const pagata = !!document.getElementById('mc-fat-pagata')?.checked;
+  if (!desc) { alert('Inserisci la descrizione della fattura.'); return; }
+  if (!importo) { alert('Inserisci l importo della fattura.'); return; }
+  TEAM_FATTURE.push({
+    id: Date.now().toString(),
+    desc,
+    importo,
+    pagata,
+    data: new Date().toLocaleDateString('it-IT'),
+    file: TEAM_FATTURA_FILE ? { ...TEAM_FATTURA_FILE } : null
+  });
+  ['mc-fat-desc','mc-fat-importo'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  const chk = document.getElementById('mc-fat-pagata'); if (chk) chk.checked = false;
+  const file = document.getElementById('mc-fat-file'); if (file) file.value = '';
+  TEAM_FATTURA_FILE = null;
+  renderFattureCollab();
+}
+
+function toggleFatturaPagata(id, checked) {
+  const f = TEAM_FATTURE.find(x => String(x.id) === String(id));
+  if (f) f.pagata = checked;
+  renderFattureCollab();
+}
+
+function eliminaFatturaCollab(id) {
+  TEAM_FATTURE = TEAM_FATTURE.filter(x => String(x.id) !== String(id));
+  renderFattureCollab();
+}
+
+function renderFattureCollab() {
+  const el = document.getElementById('mc-fatture-list');
+  if (!el) return;
+  const pendingName = TEAM_FATTURA_FILE?.nome ? `<div style="font-size:11px;color:var(--txt3);margin-bottom:8px;">Allegato pronto: ${TEAM_FATTURA_FILE.nome}</div>` : '';
+  el.innerHTML = pendingName + (TEAM_FATTURE.length ? TEAM_FATTURE.slice().reverse().map((f,i) => {
+    const idx = TEAM_FATTURE.length - 1 - i;
+    const pagata = !!f.pagata;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:${pagata?'var(--grn-bg)':'var(--amb-bg)'};border-left:3px solid ${pagata?'var(--grn)':'var(--amb)'};border-radius:8px;margin-bottom:7px;">
+      <label style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;">
+        <input type="checkbox" ${pagata?'checked':''} onchange="toggleFatturaPagata('${f.id}',this.checked)" style="width:16px;height:16px;accent-color:var(--grn);">
+        <span style="min-width:0;">
+          <span style="display:block;font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc||'Fattura collaboratore'}</span>
+          <span style="display:block;font-size:11px;color:var(--txt3);">${f.data||''} · €${fmt(parseNum(f.importo))} · ${pagata?'Pagata':'Da pagare'}</span>
+        </span>
+      </label>
+      ${f.file?.data?`<button onclick="viewFatturaTemp(${idx})" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
+      <button onclick="eliminaFatturaCollab('${f.id}')" style="font-size:11px;padding:4px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:5px;cursor:pointer;">Elimina</button>
+    </div>`;
+  }).join('') : '<div style="font-size:12px;color:var(--txt3);padding:8px 0;">Nessuna fattura inserita.</div>');
+}
+
+function viewFatturaTemp(idx) {
+  const f = TEAM_FATTURE[idx];
+  if (!f?.file?.data) { alert('Allegato non disponibile.'); return; }
+  const w = window.open('', '_blank');
+  w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><iframe src="${f.file.data}" style="width:100%;height:100vh;border:0;background:#fff;"></iframe></body>`);
+}
+
+function viewFatturaCollab(collabId, fatturaId) {
+  loadTeam();
+  const c = TEAM.find(x => String(x.id) === String(collabId));
+  const f = (c?.fatture || []).find(x => String(x.id) === String(fatturaId));
+  if (!f?.file?.data) { alert('Allegato non disponibile.'); return; }
+  const w = window.open('', '_blank');
+  w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><iframe src="${f.file.data}" style="width:100%;height:100vh;border:0;background:#fff;"></iframe></body>`);
 }
 
 function aggiungiProvv() {

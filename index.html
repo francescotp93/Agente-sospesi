@@ -2591,11 +2591,18 @@ function iconHtml(name, extra='') {
 function parseNum(v) {
   if (v === null || v === undefined || v === '') return 0;
   if (typeof v === 'number') return isNaN(v) ? 0 : v;
-  const s = String(v).trim().replace(/\s/g,'');
+  let s = String(v).trim().replace(/\s/g,'').replace(/[€+]/g,'');
   if (!s || s === '-') return 0;
+  if (s.startsWith('(') && s.endsWith(')')) s = '-' + s.slice(1,-1);
   if (/\d\.\d{3},/.test(s)) return parseFloat(s.replace(/\./g,'').replace(',','.')) || 0;
   if (s.includes(',') && !s.includes('.')) return parseFloat(s.replace(',','.')) || 0;
   return parseFloat(s) || 0;
+}
+function normKey(k) { return String(k||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,''); }
+function rowVal(row, names) {
+  const wanted = names.map(normKey);
+  const key = Object.keys(row||{}).find(k => wanted.includes(normKey(k)));
+  return key ? row[key] : '';
 }
 function g(id) { return (document.getElementById(id)?.value || '').trim(); }
 function showSavemsg(txt) {
@@ -2859,13 +2866,13 @@ function loadIncassi(inp) {
 
 
 function contoMovId(row, i) {
-  const data = fmtDate(row['Data'] || row['data'] || row['DATA'] || '');
-  const operazione = row['Operazione'] || row['OPERAZIONE'] || row['operazione'] || '';
-  const desc = row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || operazione || '';
-  const importo = parseNum(row['Importo'] || row['IMPORTO'] || row['importo'] || 0);
-  const dare = parseNum(row['Dare'] || row['DARE'] || row['Uscita'] || 0);
-  const avere = importo > 0 ? importo : parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
-  const saldo = parseNum(row['Saldo'] || row['SALDO'] || 0);
+  const data = fmtDate(rowVal(row, ['Data']) || '');
+  const operazione = rowVal(row, ['Operazione']);
+  const desc = rowVal(row, ['Descrizione','Causale']) || operazione || '';
+  const importo = parseNum(rowVal(row, ['Importo']));
+  const dare = parseNum(rowVal(row, ['Dare','Uscita']));
+  const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata']));
+  const saldo = parseNum(rowVal(row, ['Saldo']));
   return `${data}|${operazione}|${desc}|${dare}|${avere}|${saldo}|${i}`;
 }
 
@@ -2896,18 +2903,18 @@ function loadConto(inp, tipo) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
     APP.conto[tipo].movimenti = data.map((row, i) => {
-      const operazione = row['Operazione'] || row['OPERAZIONE'] || row['operazione'] || '';
-      const importo = parseNum(row['Importo'] || row['IMPORTO'] || row['importo'] || 0);
-      const avere = importo > 0 ? importo : parseNum(row['Avere'] || row['AVERE'] || row['Entrata'] || 0);
+      const operazione = rowVal(row, ['Operazione']);
+      const importo = parseNum(rowVal(row, ['Importo']));
+      const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata']));
       return {
         id: contoMovId(row, i),
-        data: fmtDate(row['Data'] || row['data'] || row['DATA'] || ''),
+        data: fmtDate(rowVal(row, ['Data']) || ''),
         operazione,
-        desc: row['Descrizione'] || row['DESCRIZIONE'] || row['Causale'] || operazione || '',
-        dare:  parseNum(row['Dare']  || row['DARE']  || row['Uscita']  || 0),
+        desc: rowVal(row, ['Descrizione','Causale']) || operazione || '',
+        dare:  parseNum(rowVal(row, ['Dare','Uscita'])),
         avere,
         importo,
-        saldo: parseNum(row['Saldo'] || row['SALDO'] || 0),
+        saldo: parseNum(rowVal(row, ['Saldo'])),
       };
     });
     try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e){ APP.conto[tipo].bonif = {}; }
@@ -3635,15 +3642,28 @@ let TEAM_DOCS = {};
 let TEAM_FATTURE = [];
 let TEAM_FATTURA_FILE = null;
 
-function loadTeam() { try { TEAM = JSON.parse(localStorage.getItem('iam_team')||'[]'); } catch(e){ TEAM=[]; } }
+function loadFattureStore() { try { return JSON.parse(localStorage.getItem('iam_fatture_collab')||'{}'); } catch(e){ return {}; } }
+function saveFattureStore(store) {
+  try { localStorage.setItem('iam_fatture_collab', JSON.stringify(store)); return true; }
+  catch(e) {
+    const light = {};
+    Object.entries(store||{}).forEach(([id, fatture]) => {
+      light[id] = (fatture||[]).map(f => ({...f, file:null}));
+    });
+    try { localStorage.setItem('iam_fatture_collab', JSON.stringify(light)); return true; } catch(e2) { return false; }
+  }
+}
+function getFattureCollab(id) { return loadFattureStore()[String(id)] || []; }
+function mergeTeamFatture(list) {
+  const store = loadFattureStore();
+  return (list||[]).map(c => ({...c, fatture: store[String(c.id)] || c.fatture || []}));
+}
+function loadTeam() { try { TEAM = mergeTeamFatture(JSON.parse(localStorage.getItem('iam_team')||'[]')); } catch(e){ TEAM=[]; } }
 function saveTeam() { localStorage.setItem('iam_team', JSON.stringify(TEAM)); }
 
 async function loadTeamDB() {
   if (!db) { loadTeam(); return; }
   try {
-    let localTeam = [];
-    try { localTeam = JSON.parse(localStorage.getItem('iam_team')||'[]'); } catch(e) { localTeam = []; }
-    const localById = Object.fromEntries(localTeam.map(c => [String(c.id), c]));
     const { data, error } = await db.from('iam_team').select('*').order('cogn', { ascending: true });
     if (error) { console.warn("loadTeamDB:", error.message); loadTeam(); return; }
     if (data && data.length > 0) {
@@ -3674,7 +3694,7 @@ async function loadTeamDB() {
         retention:      c.retention      || 0,
         gare_collab:    c.gare_collab    || [],
         storico_collab: c.storico_collab || [],
-        fatture:         localById[String(c.id)]?.fatture || [],
+        fatture:         getFattureCollab(c.id),
         hub_id:         c.hub_id         || null,
       }));
       saveTeam(); // cache locale
@@ -5556,10 +5576,14 @@ function eliminaFatturaCollab(id) {
 
 function persistFattureCollaboratore() {
   if (!TEAM_ID) return;
+  const fatture = TEAM_FATTURE.map(f => ({...f, file:f.file?{...f.file}:null}));
+  const store = loadFattureStore();
+  store[String(TEAM_ID)] = fatture;
+  saveFattureStore(store);
   loadTeam();
   const idx = TEAM.findIndex(c => String(c.id) === String(TEAM_ID));
   if (idx < 0) return;
-  TEAM[idx].fatture = TEAM_FATTURE.map(f => ({...f, file:f.file?{...f.file}:null}));
+  TEAM[idx].fatture = fatture;
   saveTeam();
 }
 

@@ -192,13 +192,21 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-metric-title{font-size:20px;font-weight:500;color:var(--acc);}
 .dash-metric-title span{color:var(--blu-txt);}
 .dash-metric-icon{color:var(--acc);font-size:20px;}
-#d-metrics,.dash-stat-list{border:1px solid var(--bord);border-radius:8px;overflow:hidden;background:var(--surf2);}
-.dash-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-top:1px solid var(--bord);}
-.dash-stat:first-child{border-top:none;}
-.dash-stat-left{display:flex;align-items:center;gap:10px;min-width:0;}
+.dash-help{position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:0;background:transparent;color:var(--acc);cursor:help;padding:0;border-radius:8px;}
+.dash-help i{font-size:20px;}
+.dash-help:focus-visible{outline:2px solid rgba(var(--acc-rgb),.35);outline-offset:2px;}
+.dash-help:after{content:attr(data-tip);position:absolute;right:0;top:calc(100% + 8px);width:min(300px,72vw);padding:10px 12px;background:var(--txt);color:var(--surf);border-radius:8px;font-size:11px;font-weight:600;line-height:1.4;text-align:left;box-shadow:var(--shd);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s;z-index:20;}
+.dash-help:hover:after,.dash-help:focus:after{opacity:1;transform:translateY(0);}
+#d-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:transparent;}
+.dash-stat-list{border:1px solid var(--bord);border-radius:8px;overflow:hidden;background:var(--surf2);}
+.dash-stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:7px;min-height:82px;padding:11px 12px;border:1px solid var(--bord);border-radius:8px;background:var(--surf2);transition:background .15s,border-color .15s,transform .15s;}
+.dash-stat[onclick]{cursor:pointer;}
+.dash-stat[onclick]:hover{background:rgba(var(--acc-rgb),.06);border-color:rgba(var(--acc-rgb),.28);transform:translateY(-1px);}
+.dash-stat-left{display:flex;align-items:center;gap:8px;min-width:0;width:100%;}
 .dash-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px rgba(var(--acc-rgb),.12);flex-shrink:0;}
-.dash-stat-label{font-size:13px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dash-stat-value{font-size:17px;font-weight:800;color:var(--acc);white-space:nowrap;}
+.dash-stat-label{font-size:11px;font-weight:800;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.3px;}
+.dash-stat-value{font-size:18px;font-weight:850;color:var(--acc);white-space:nowrap;letter-spacing:0;}
+.dash-stat-sub{font-size:11px;color:var(--txt3);line-height:1.25;min-height:14px;}
 .dash-data-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}
 .dash-ticket-form{display:grid;gap:8px;margin-bottom:12px;}
 .dash-ticket-field{width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;}
@@ -214,7 +222,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-ticket-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;color:var(--txt);}
 .dash-ticket-meta{font-size:10px;color:var(--txt3);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;}
 @media(min-width:860px){.dash-grid{grid-template-columns:1fr 1fr 1fr}.dash-metrics{grid-template-columns:1fr 1.45fr}.dash-data-grid{grid-template-columns:1fr 1fr 1fr}.dash-pro{padding:24px 30px 30px}}
-@media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-section-title{font-size:24px}.dash-card,.dash-metric-card{padding:16px}.dash-ribbon{position:static;clip-path:none;border-radius:6px;margin:-4px 0 12px;width:max-content}.dash-news{max-width:100%}}
+@media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-section-title{font-size:24px}.dash-card,.dash-metric-card{padding:16px}.dash-ribbon{position:static;clip-path:none;border-radius:6px;margin:-4px 0 12px;width:max-content}.dash-news{max-width:100%}#d-metrics{grid-template-columns:1fr}}
 
 /* ── ALERTS ── */
 .alert{display:flex;gap:10px;padding:13px 16px;border-left:3px solid transparent;cursor:default;}
@@ -750,7 +758,7 @@ input[type=file]{display:none;}
       <div class="dash-section-title">Tu al centro del <span>nostro lavoro</span></div>
       <div class="dash-metrics">
         <div class="dash-metric-card">
-          <div class="dash-metric-head"><div class="dash-metric-title">I tuoi <span>numeri</span></div><i class="ti ti-help-square-rounded dash-metric-icon"></i></div>
+          <div class="dash-metric-head"><div class="dash-metric-title">I tuoi <span>numeri</span></div><button type="button" class="dash-help" title="Attiva o Disattiva il widget che non sono di tuo interesse dalle impostazioni del tuo account" data-tip="Attiva o Disattiva il widget che non sono di tuo interesse dalle impostazioni del tuo account" aria-label="Informazioni widget"><i class="ti ti-help-square-rounded"></i></button></div>
           <div id="d-metrics"></div>
         </div>
         <div class="dash-metric-card">
@@ -2683,10 +2691,9 @@ const WDEF = { sospesi_n:true, valore:true, oltre60:true, cassa:true, vers:true,
 const WLBL = { sospesi_n:'Sospesi aperti', valore:'Valore sospesi', oltre60:'Oltre 60 giorni', cassa:'Contanti oggi', vers:'Versato compagnie', saldo:'Cassa progressiva', fondo:'Fondo cassa', scostamento:'Scostamento cassa', pos_bianco:'POS Bianco', pos_nero:'POS Nero', incassato:'Incassato oggi', spese:'Spese agenzia' };
 function getW() { try { return {...WDEF,...JSON.parse(localStorage.getItem('iam_w')||'{}')}; } catch(e){ return {...WDEF}; } }
 function saveW(w) { localStorage.setItem('iam_w', JSON.stringify(w)); }
-
-function openSettings() {
+function renderWidgetPrefsHTML() {
   const w = getW();
-  document.getElementById('settings-body').innerHTML = Object.entries(WLBL).map(([k,lbl]) => `
+  return Object.entries(WLBL).map(([k,lbl]) => `
     <div class="sw-row">
       <span class="sw-lbl">${lbl}</span>
       <label class="sw">
@@ -2694,6 +2701,12 @@ function openSettings() {
         <span class="sw-track"></span><span class="sw-thumb"></span>
       </label>
     </div>`).join('');
+}
+
+function openSettings() {
+  document.getElementById('settings-body').innerHTML = `
+    <div style="font-size:13px;color:var(--txt2);line-height:1.45;margin-bottom:12px;">La gestione dei widget della dashboard ora si trova nella sezione <b>Il mio profilo</b>.</div>
+    <button onclick="closeSettings();goTab('profilo')" style="width:100%;padding:11px 12px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;">Apri Il mio profilo</button>`;
   document.getElementById('settings-overlay').classList.add('show');
 }
 function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
@@ -2972,11 +2985,14 @@ function buildDashboard() {
   if (W.spese)        metrics.push({lbl:'Spese agenzia', val:'€'+fmt(spese), sub:'uscite varie', color:'var(--amb)', onclick:"goTab('carica');selContabTab('carica')"});
 
   document.getElementById('d-metrics').innerHTML = metrics.map((m,i) => `
-    <div class="mcard" style="animation-delay:${i*.05+.05}s;${m.onclick?'cursor:pointer;':''}" ${m.onclick?`onclick="${m.onclick}"`:''}>
-      <div class="mlbl">${m.lbl}</div>
-      <div class="mval" ${m.color?`style="color:${m.color}"`:''}>${m.val}</div>
-      <div class="msub">${m.sub}</div>
-    </div>`).join('') || '<div class="mcard" style="grid-column:1/-1;"><div class="mlbl">Nessun widget attivo</div><div class="msub">Usa <i class="ti ti-settings"></i> per configurare</div></div>';
+    <div class="dash-stat" style="animation-delay:${i*.05+.05}s;" ${m.onclick?`onclick="${m.onclick}" role="button" tabindex="0"`:''}>
+      <div class="dash-stat-left">
+        <span class="dash-dot" ${m.color?`style="background:${m.color};box-shadow:0 0 0 4px color-mix(in srgb, ${m.color} 18%, transparent);"`:''}></span>
+        <span class="dash-stat-label">${m.lbl}</span>
+      </div>
+      <div class="dash-stat-value" ${m.color?`style="color:${m.color}"`:''}>${m.val}</div>
+      <div class="dash-stat-sub">${m.sub}</div>
+    </div>`).join('') || '<div class="dash-stat" style="grid-column:1/-1;"><div class="dash-stat-left"><span class="dash-dot"></span><span class="dash-stat-label">Nessun widget attivo</span></div><div class="dash-stat-sub">Puoi riattivarli da Il mio profilo.</div></div>';
 
   // Distribuzione per produttore (ex Tipo Sospeso nel file)
   const byProd = {};
@@ -5165,6 +5181,11 @@ async function renderPannelloPersonale() {
           <button onclick="apriCambioEmail()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"> Cambia email di accesso</button>
           <button onclick="apriCambioPassword()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"> Cambia password</button>
         </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);margin-bottom:8px;">Widget dashboard</div>
+      <div style="background:var(--surf);border-radius:var(--r);padding:14px;box-shadow:var(--shd);margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--txt3);line-height:1.4;margin-bottom:10px;">Attiva o disattiva i widget che vuoi visualizzare nella dashboard.</div>
+        ${renderWidgetPrefsHTML()}
       </div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);margin-bottom:8px;">Le mie preferenze calendario</div>
       <div style="background:var(--surf);border-radius:var(--r);padding:14px;box-shadow:var(--shd);">

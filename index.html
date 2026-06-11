@@ -180,6 +180,12 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-card-title span{color:var(--blu-txt);}
 .dash-ribbon{position:absolute;top:20px;right:0;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:8px 22px 8px 28px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);}
 .dash-news{font-size:13px;line-height:1.55;color:var(--txt2);font-weight:600;max-width:92%;}
+.dash-updates{display:grid;gap:9px;max-width:100%;}
+.dash-update{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--bord);}
+.dash-update:first-child{border-top:none;padding-top:0;}
+.dash-update-date{font-size:10px;font-weight:850;color:#fff;background:var(--acc);border-radius:999px;padding:3px 8px;white-space:nowrap;line-height:1.2;}
+.dash-update-text{font-size:12px;line-height:1.45;color:var(--txt2);font-weight:650;}
+.dash-update-text b{color:var(--txt);}
 .dash-list{border:1px solid var(--bord2);border-radius:8px;overflow:hidden;background:var(--surf2);}
 .dash-list-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--bord);font-size:14px;color:var(--txt2);cursor:pointer;transition:background .15s,color .15s;}
 .dash-list-row:first-child{border-top:none;}
@@ -747,7 +753,7 @@ input[type=file]{display:none;}
       <div class="dash-section-title">I nostri <span>consigli</span></div>
       <div class="dash-grid">
         <div class="dash-card">
-          <div class="dash-ribbon">Alert</div>
+          <div class="dash-ribbon">Novità</div>
           <div class="dash-card-title">In <span>evidenza</span></div>
           <div id="d-evidenza" class="dash-news"></div>
         </div>
@@ -3013,6 +3019,23 @@ function renderDashboardAlerts() {
     </div>`;
 }
 
+function renderPlatformUpdates() {
+  const el = document.getElementById('d-evidenza');
+  if (!el) return;
+  const updates = [
+    { data:'11/06', testo:'Nuova sezione <b>Alert</b> in dashboard per bonifici non abbinati e fatture collaboratori non pagate.' },
+    { data:'11/06', testo:'Area <b>Conto</b> aggiornata: visualizzazione dei soli bonifici ricevuti con flag di conferma.' },
+    { data:'11/06', testo:'Schede <b>Collaboratori</b> aggiornate con gestione fatture, importi, allegati e stato pagamento.' },
+    { data:'11/06', testo:'Gestione widget spostata in <b>Il mio profilo</b> e ingranaggio rimosso dall header.' }
+  ];
+  el.className = 'dash-updates';
+  el.innerHTML = updates.map(u => `
+    <div class="dash-update">
+      <div class="dash-update-date">${u.data}</div>
+      <div class="dash-update-text">${u.testo}</div>
+    </div>`).join('');
+}
+
 function buildDashboard() {
   const sosp  = APP.sospesi.filter(s => s.importo >= 0);
   const valTot = sosp.reduce((a,s)=>a+s.importo,0);
@@ -3116,6 +3139,7 @@ function buildDashboard() {
     <div class="rmain"><div class="rname">${m.desc}</div></div>
     <div class="rright"><div class="ramt" style="color:var(--${m.color==='grn'?'grn':'red'})">${m.amt}</div></div></div>`).join('')
     : '<div class="row" style="color:var(--txt3);font-size:13px;">Nessun movimento inserito</div>';
+  renderPlatformUpdates();
   renderDashboardAlerts();
 
   document.getElementById('d-empty').style.display = 'none';

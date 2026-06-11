@@ -7460,6 +7460,7 @@ function setREObiettivo(perc) {
     const anno = getREAnno();
     db.from('iam_kpi_re_config').select('id').eq('anno', anno).maybeSingle().then(({data}) => {
       if (data?.id) db.from('iam_kpi_re_config').update({ obiettivo_perc: perc, aggiornato_il: new Date().toISOString() }).eq('id', data.id);
+      else db.from('iam_kpi_re_config').insert({ anno, volume_anno_prec: parseNum(document.getElementById('re-prev')?.value || 0), obiettivo_perc: perc, creato_da: ME?.id });
     });
   }
 }
@@ -7470,7 +7471,7 @@ function renderREObjChart(prev) {
   if (!prev || prev <= 0) { el.style.display='none'; return; }
   el.style.display = 'block';
 
-  const totale = RE_POSIZIONI.reduce((a,p) => a+(p.premio_annuo||0), 0);
+  const totale = RE_POSIZIONI.reduce((a,p) => a+getREPremioAnnuo(p), 0);
   const steps  = [
     { perc:10, label:'+10%', color:'#ba7517' },
     { perc:15, label:'+15%', color:'var(--acc)' },
@@ -7524,6 +7525,16 @@ const FRZ_LABEL = {'1':'Annuale','2':'Semestrale','3':'Quadrimestrale','4':'Trim
 const RE_TIPO_LABEL = { nuova_produzione:'Nuova produzione', rinnovo:'Rinnovo' };
 
 function getREAnno() { return parseInt(document.getElementById('re-anno')?.value || new Date().getFullYear()); }
+function getREFrazionamentoMoltiplicatore(frz) {
+  const raw = String(frz || '1').toLowerCase();
+  const map = { annuale:1, semestrale:2, quadrimestrale:3, trimestrale:4, bimestrale:6, mensile:12 };
+  return FRZ_MAP[raw] || map[raw] || 1;
+}
+function getREPremioAnnuo(p) {
+  const saved = parseNum(p?.premio_annuo || 0);
+  if (saved > 0) return saved;
+  return parseNum(p?.premio_netto || 0) * getREFrazionamentoMoltiplicatore(p?.frazionamento);
+}
 
 async function loadREFromDB() {
   if (!db) return;
@@ -7594,8 +7605,8 @@ function setREFilter(f) {
 
 function renderRE() {
   // Calcoli totali
-  const totTarget   = RE_POSIZIONI.filter(p=>p.is_target).reduce((a,p)=>a+(p.premio_annuo||0),0);
-  const totNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).reduce((a,p)=>a+(p.premio_annuo||0),0);
+  const totTarget   = RE_POSIZIONI.filter(p=>p.is_target).reduce((a,p)=>a+getREPremioAnnuo(p),0);
+  const totNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).reduce((a,p)=>a+getREPremioAnnuo(p),0);
   const totale      = totTarget + totNoTarget;
   const prev        = parseNum(document.getElementById('re-prev')?.value || RE_CONFIG.volume_anno_prec || 0);
 
@@ -7630,8 +7641,8 @@ function renderREByProduttore() {
     const nome = p.produttore || '— Nessuno —';
     if (!byProd[nome]) byProd[nome] = { n:0, nTarget:0, valore:0, valoreTarget:0 };
     byProd[nome].n++;
-    byProd[nome].valore += p.premio_annuo || 0;
-    if (p.is_target) { byProd[nome].nTarget++; byProd[nome].valoreTarget += p.premio_annuo || 0; }
+    byProd[nome].valore += getREPremioAnnuo(p);
+    if (p.is_target) { byProd[nome].nTarget++; byProd[nome].valoreTarget += getREPremioAnnuo(p); }
   });
 
   const sorted = Object.entries(byProd).sort((a, b) => b[1].valore - a[1].valore);
@@ -7721,8 +7732,9 @@ function renderREList() {
   if (!list.length) { el.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:12px 0;">Nessuna posizione trovata</div>'; return; }
   el.innerHTML = list.map(p => {
     const frzLabel = FRZ_LABEL[String(p.frazionamento==='annuale'?1:p.frazionamento==='semestrale'?2:p.frazionamento==='quadrimestrale'?3:p.frazionamento==='trimestrale'?4:p.frazionamento==='bimestrale'?6:12)] || p.frazionamento;
-    const annuo = p.premio_annuo || 0;
+    const annuo = getREPremioAnnuo(p);
     const tipoOp = getRETipoOperazione(p);
+    const idArg = JSON.stringify(String(p.id));
     const targetBadge = p.is_target
       ? '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);"> Target</span>'
       : '<span style="font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--surf2);color:var(--txt3);border:.5px solid var(--bord2);">No Target</span>';
@@ -7746,8 +7758,8 @@ function renderREList() {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-        <button onclick="editREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
-        <button onclick="delREPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
+        <button onclick="editREPos(${idArg})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
+        <button onclick="delREPos(${idArg})" style="font-size:10px;padding:3px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`;
   }).join('');
@@ -7762,7 +7774,7 @@ function openREPosModal(editId) {
   const sel = document.getElementById('re-p-prod');
   if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
   if (editId) {
-    const p = RE_POSIZIONI.find(x=>x.id===editId);
+    const p = RE_POSIZIONI.find(x=>String(x.id)===String(editId));
     if (p) {
       document.getElementById('re-p-cliente').value  = p.cliente   || '';
       document.getElementById('re-p-prodotto').value = p.prodotto  || '';
@@ -7796,13 +7808,16 @@ async function saveREPos() {
   if (!cliente) { alert('Inserisci il nome del cliente.'); return; }
   const frzTxt = {'1':'annuale','2':'semestrale','3':'quadrimestrale','4':'trimestrale','6':'bimestrale','12':'mensile'};
   const frzSel = document.getElementById('re-p-frz')?.value || '1';
+  const premioNetto = parseNum(gv('re-p-premio'));
+  const premioAnnuo = premioNetto * (FRZ_MAP[frzSel] || 1);
   const payload = {
     anno:          getREAnno(),
     cliente,
     produttore:    gv('re-p-prod')    || null,
     prodotto:      gv('re-p-prodotto')|| null,
     tipo_operazione: gv('re-p-tipo-op') || 'nuova_produzione',
-    premio_netto:  parseNum(gv('re-p-premio')),
+    premio_netto:  premioNetto,
+    premio_annuo:  premioAnnuo,
     frazionamento: frzTxt[frzSel] || 'annuale',
     is_target:     document.getElementById('re-p-target')?.checked || false,
     note:          gv('re-p-note')    || null,
@@ -7811,12 +7826,19 @@ async function saveREPos() {
   };
   if (!db) return;
   try {
+    let error;
     if (RE_EDIT_ID) {
-      await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID);
+      ({ error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID));
     } else {
       payload.creato_da = ME?.id;
-      await db.from('iam_kpi_re_posizioni').insert(payload);
+      ({ error } = await db.from('iam_kpi_re_posizioni').insert(payload));
     }
+    if (error && String(error.message||'').includes('premio_annuo')) {
+      delete payload.premio_annuo;
+      if (RE_EDIT_ID) ({ error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID));
+      else ({ error } = await db.from('iam_kpi_re_posizioni').insert(payload));
+    }
+    if (error) throw error;
     // Salva anche config (volume anno prec)
     await saveREConfig();
     closeModal('modal-re-pos');

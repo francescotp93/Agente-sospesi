@@ -961,6 +961,29 @@ input[type=file]{display:none;}
 
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
+  <div id="wd-lista" style="display:none;">
+    <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
+      <input type="search" id="wd-search" placeholder="Cerca operazione..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderWD()">
+      <button onclick="openWDModal(null)" style="width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+    </div>
+    <div style="display:flex;gap:6px;padding:0 12px 6px;overflow-x:auto;scrollbar-width:none;">
+      <select id="wd-tipo" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti i tipi</option>
+        <option value="riunione">Riunione</option>
+        <option value="reclutamento">Reclutamento</option>
+        <option value="formazione">Formazione</option>
+        <option value="obiettivo">Obiettivo</option>
+        <option value="altro">Altro</option>
+      </select>
+      <select id="wd-stato" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Tutti</option>
+        <option value="aperto">Aperti</option>
+        <option value="completato">Completati</option>
+      </select>
+    </div>
+    <div class="card"><div id="wd-list"></div></div>
+    <div style="height:16px;"></div>
+  </div>
   <div id="wd-cal">
     <div style="padding:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">

@@ -2671,7 +2671,7 @@ function goTab(t) {
   // FAB AI sempre visibile tranne quando l'overlay è aperto
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
-  if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); }); }
+  if (t === 'workdiary')   { loadWD_DB().then(() => { renderWD(); renderWDCal(); }); }
   if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }

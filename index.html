@@ -961,11 +961,7 @@ input[type=file]{display:none;}
 
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
-  <div class="ptabs">
-    <button class="ptab act" id="wd-tab-lista" onclick="selWDTab('lista')">Operazioni</button>
-    <button class="ptab" id="wd-tab-cal" onclick="selWDTab('cal')">Calendario</button>
-  </div>
-  <div id="wd-lista">
+  <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
       <input type="search" id="wd-search" placeholder="Cerca operazione..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderWD()">
       <button onclick="openWDModal(null)" style="width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
@@ -988,7 +984,7 @@ input[type=file]{display:none;}
     <div class="card"><div id="wd-list"></div></div>
     <div style="height:16px;"></div>
   </div>
-  <div id="wd-cal" style="display:none;">
+  <div id="wd-cal">
     <div style="padding:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <button onclick="wdCalPrev()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">‹</button>
@@ -5869,8 +5865,8 @@ const WD_TIPI = {
 };
 
 function selWDTab(t) {
-  document.getElementById('wd-lista').style.display = t==='lista'?'block':'none';
-  document.getElementById('wd-cal').style.display   = t==='cal'?'block':'none';
+  document.getElementById('wd-lista').style.display = 'none';
+  document.getElementById('wd-cal').style.display   = 'block';
   document.getElementById('wd-tab-lista').classList.toggle('act', t==='lista');
   document.getElementById('wd-tab-cal').classList.toggle('act', t==='cal');
   if (t==='cal') renderWDCal();
@@ -6198,39 +6194,43 @@ function renderWDCal() {
 function wdCalPrev() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()-1, 1); renderWDCal(); }
 function wdCalNext() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()+1, 1); renderWDCal(); }
 
+function toggleCompletatiDay(ds, n) {
+  var d = document.getElementById('list-comp-'+ds);
+  var b = document.getElementById('btn-comp-'+ds);
+  if (!d || !b) return;
+  var vis = d.style.display === 'block';
+  d.style.display = vis ? 'none' : 'block';
+  b.innerHTML = vis
+    ? '<i class="ti ti-eye"></i> Mostra completati (' + n + ')'
+    : '<i class="ti ti-eye-off"></i> Nascondi completati (' + n + ')';
+}
 function showWDDay(ds) {
-  const ev = WD.filter(w=>w.data===ds);
+  const allEv = WD.filter(w => w.data === ds);
+  const daFare = allEv.filter(w => w.stato !== 'completato');
+  const completati = allEv.filter(w => w.stato === 'completato');
   const dataFmt = new Date(ds+'T12:00:00').toLocaleDateString('it-IT',
     {weekday:'long', day:'2-digit', month:'long'});
-
+  const renderEv = list => list.map(w => {
+    const tc = WD_TIPI[w.tipo] || WD_TIPI.altro;
+    const isComp = w.stato === 'completato';
+    return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;${isComp?'opacity:.5;':''}" onclick="openWDModal('${w.id}')">
+      <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${w.titolo}</div>
+        <div style="font-size:11px;color:var(--txt2);">${w.ora||''}${w.prior==='urgente'?' · ⚡ Urgente':w.prior==='alta'?' · Alta':''}</div>
+      </div>
+      <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>
+    </div>`;
+  }).join('');
   document.getElementById('wd-cal-eventi').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--txt);">${dataFmt}</div>
-      <button onclick="apriNuovoEventoData('${ds}')"
-        style="display:flex;align-items:center;gap:5px;padding:7px 14px;
-          background:var(--acc);color:#fff;border:none;border-radius:20px;
-          font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+      <button onclick="apriNuovoEventoData('${ds}')" style="display:flex;align-items:center;gap:5px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
         <i class="ti ti-plus" style="font-size:13px;"></i> Nuovo evento
       </button>
     </div>
-    ${ev.length ? ev.map(w => {
-      const tc = WD_TIPI[w.tipo] || WD_TIPI.altro;
-      return `<div style="background:${tc.bg};border-radius:var(--rs);
-        padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;
-        align-items:center;cursor:pointer;" onclick="openWDModal('${w.id}')">
-        <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
-        <div style="flex:1;">
-          <div style="font-size:13px;font-weight:600;">${w.titolo}</div>
-          <div style="font-size:11px;color:var(--txt2);">${w.ora||''}
-            ${w.prior==='urgente'?'·  Urgente':w.prior==='alta'?'·  Alta':''}</div>
-        </div>
-        <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>
-      </div>`;
-    }).join('') :
-    `<div style="text-align:center;padding:20px;color:var(--txt3);">
-      <i class="ti ti-calendar-off" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3;"></i>
-      Nessun evento per questo giorno
-    </div>`}`;
+    ${daFare.length ? renderEv(daFare) : `<div style="text-align:center;padding:20px;color:var(--txt3);"><i class="ti ti-calendar-check" style="font-size:24px;display:block;margin-bottom:8px;opacity:.3;"></i>Nessun evento da completare</div>`}
+    ${completati.length ? `<div style="margin-top:8px;"><button id="btn-comp-${ds}" onclick="toggleCompletatiDay('${ds}',${completati.length})" style="width:100%;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;"><i class="ti ti-eye"></i> Mostra completati (${completati.length})</button><div id="list-comp-${ds}" style="display:none;margin-top:6px;">${renderEv(completati)}</div></div>` : ''}`;
 }
 
 function apriNuovoEventoData(ds) {

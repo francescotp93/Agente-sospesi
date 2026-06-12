@@ -6143,7 +6143,7 @@ function saveWD() {
   };
   if (!w.titolo) { alert('Inserisci un titolo.'); return; }
   saveWD_DB(w).then(() => {
-    loadWD_DB().then(() => { renderWD(); if(document.getElementById('wd-cal').style.display!=='none') renderWDCal(); });
+    loadWD_DB().then(() => { renderWD(); renderWDCal(); });
   });
   closeModal('modal-wd');
 }

@@ -425,6 +425,16 @@ input[type=file]{display:none;}
 .ctab.act{border-color:var(--acc);background:rgba(var(--acc-rgb),.08);color:var(--acc);}
 
 .divider{height:.5px;background:var(--bord);margin:0 14px;}
+
+/* Gestione utenti: select ruolo + switch */
+.ruolo-sel{font-size:11px;padding:5px 8px;border:1px solid var(--bord2);border-radius:8px;background:var(--surf2);color:var(--txt);font-family:inherit;cursor:pointer;}
+.sw{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+.sw input{opacity:0;width:0;height:0;}
+.sw .sl{position:absolute;cursor:pointer;inset:0;background:var(--surf3);border-radius:24px;transition:.2s;}
+.sw .sl:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25);}
+.sw input:checked + .sl{background:linear-gradient(135deg,var(--acc),var(--acc2));}
+.sw input:checked + .sl:before{transform:translateX(18px);}
+.sw-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--txt2);}
 </style>
 </head>
 <body>
@@ -5210,6 +5220,7 @@ async function renderUtenti() {
   el.innerHTML = UTENTI_LISTA.map(u => {
     const r = RUOLI[u.ruolo] || RUOLI.collaboratore;
     const isSelf = u.id === ME?.id;
+    const isSA = (u.email||'').toLowerCase() === SUPER_ADMIN_EMAIL;
     const canEdit = PROFILO?.ruolo === 'admin' || (PROFILO?.ruolo === 'operatore' && u.ruolo === 'collaboratore');
     const _kpiFlags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
     const quotoOn = _kpiFlags[u.id]?.['quoto'] === true;
@@ -5223,13 +5234,16 @@ async function renderUtenti() {
           ${!u.attivo?'<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);">SOSPESO</span>':''}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:4px;">
-        ${canEdit && !isSelf ? `
-        <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
-        ${PROFILO?.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
-        ` : ''}
-        ${canEdit ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
-        ${canEdit ? `<button onclick="toggleQuotoAccess('${u.id}',${quotoOn})" style="font-size:11px;padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:${quotoOn?'linear-gradient(135deg,var(--acc),var(--acc2))':'var(--surf3)'};color:${quotoOn?'#fff':'var(--txt3)'};">Quoto ${quotoOn?'ON':'OFF'}</button>` : ''}
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        ${canEdit && !isSelf && !isSA ? `
+        <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>` : ''}
+        ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<select class="ruolo-sel" onchange="setRuolo('${u.id}', this.value)" title="Ruolo utente">
+          <option value="admin" ${u.ruolo==='admin'?'selected':''}>Admin</option>
+          <option value="operatore" ${u.ruolo==='operatore'?'selected':''}>Operatore</option>
+          <option value="collaboratore" ${u.ruolo==='collaboratore'?'selected':''}>Collaboratore</option>
+        </select>` : ''}
+        ${canEdit && !isSA ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
+        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">Quoto <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5316,9 +5330,10 @@ async function toggleSospendi(userId, attivo) {
   if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il Super Admin non può essere sospeso.'); return; }
   if (!confirm(`${attivo?'Sospendere':'Riattivare'} questo utente?`)) return;
   try {
-    await db.from('iam_utenti').update({ attivo: !attivo }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ attivo: !attivo }).eq('id', userId);
+    if (error) throw error;
     await renderUtenti();
-  } catch(e) { alert('Errore: '+e.message); }
+  } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
 async function cambiaRuolo(userId, ruoloAttuale) {
@@ -5328,9 +5343,22 @@ async function cambiaRuolo(userId, ruoloAttuale) {
   if (!nuovo || !['admin','operatore','collaboratore'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
   if (!confirm(`Cambiare ruolo in "${nuovo}"?`)) return;
   try {
-    await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    if (error) throw error;
     await renderUtenti();
-  } catch(e) { alert('Errore: '+e.message); }
+  } catch(e) { alert('Errore: '+(e.message||e)); }
+}
+
+// Cambio ruolo dal menu a tendina (gestione utenti)
+async function setRuolo(userId, nuovo) {
+  const _su = UTENTI_LISTA.find(x => x.id === userId);
+  if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il ruolo del Super Admin non è modificabile.'); await renderUtenti(); return; }
+  if (!['admin','operatore','collaboratore'].includes(nuovo)) { alert('Ruolo non valido.'); await renderUtenti(); return; }
+  try {
+    const { error } = await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    if (error) throw error;
+    await renderUtenti();
+  } catch(e) { alert('Errore cambio ruolo: '+(e.message||e)); await renderUtenti(); }
 }
 
 async function toggleLabAbilitato(userId, abilitato) {
@@ -5353,7 +5381,7 @@ function toggleQuotoAccess(userId, attuale) {
   if (userId === ME?.id && PROFILO) applicaPermessi(PROFILO.ruolo);
   if (db) {
     db.from('iam_utenti').update({ quoto: !attuale }).eq('id', userId)
-      .then(() => renderUtenti());
+      .then(({ error }) => { if (error) alert('Errore salvataggio accesso QUOTO: '+error.message); renderUtenti(); });
   } else {
     renderUtenti();
   }

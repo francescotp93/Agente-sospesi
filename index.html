@@ -2185,6 +2185,7 @@ function onLogin(user) {
 function onLogout() {
   ME = null;
   PIPE = [];
+  CHAT_HISTORY = [];
   localStorage.removeItem('iam_pipe');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
@@ -2651,7 +2652,7 @@ async function caricaDatiPerData(dataSelezionata) {
 // URL pubblico di QUOTO (GitHub Pages). Modificare qui se l'indirizzo cambia.
 const QUOTO_URL = 'https://francescotp93.github.io/QUOTE/';
 function apriQuoto() {
-  const dest = QUOTO_URL + (ME?.email ? ('?email=' + encodeURIComponent(ME.email)) : '');
+  const dest = QUOTO_URL + '?from=iam' + (ME?.email ? ('&email=' + encodeURIComponent(ME.email)) : '');
   // 1) Morph "radicale" dell'interfaccia IAM
   const app = document.getElementById('app');
   if (app) {
@@ -4801,6 +4802,8 @@ function exportICS(titolo, data, ora, note) {
 // ─── AI CHAT ──────────────────────────────────────────────────────────────────
 function sendChip(t) { document.getElementById('c-inp').value=t; sendMsg(); }
 
+let CHAT_HISTORY = []; // memoria della conversazione AI (turni user/assistant)
+
 async function sendMsg() {
   const inp = document.getElementById('c-inp');
   const txt = inp.value.trim(); if (!txt) return;
@@ -4813,22 +4816,29 @@ async function sendMsg() {
     if (key) hdrs['Authorization'] = 'Bearer '+key;
     const isOperativo = PROFILO?.ruolo === 'collaboratore';
     const ctx = buildCtx();
+    const oggi = new Date().toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    const sys = `Sei l'assistente AI dell'app IAM (Insurance Agency Management) per un'agenzia assicurativa italiana. Oggi è ${oggi}. Rispondi SEMPRE in italiano, in modo professionale, chiaro e conciso; usa elenchi puntati quando aiutano la lettura e il simbolo € per gli importi (formato italiano, es. 1.234,56 €). Basati ESCLUSIVAMENTE sui dati reali dell'agenzia nel JSON qui sotto: non inventare nulla e, se un dato richiesto non è presente, dillo esplicitamente. Mantieni il filo della conversazione precedente. Campi chiave: cassa.fondo_cassa=fondo cassa odierno, cassa.cassa_progressiva=totale accumulato, cassa.scostamento=differenza cassa-fondo, cassa.variazione_fondo=variazione fondo rispetto a ieri. ${isOperativo?'Utente con ruolo Collaboratore: parla solo di sospesi, team e pipeline di sua competenza.':''} Dati: ${ctx}`;
+    CHAT_HISTORY.push({ role:'user', content:txt });
+    if (CHAT_HISTORY.length > 12) CHAT_HISTORY = CHAT_HISTORY.slice(-12);
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST', headers:hdrs,
       body:JSON.stringify({
-        model:'llama-3.3-70b-versatile', max_tokens:1000,
-        messages:[
-          {role:'system', content:`Sei l'assistente AI dell'app IAM - Insurance Agency Management per un'agenzia assicurativa italiana. Rispondi in italiano, in modo professionale e conciso. Usa € per gli importi. I dati reali dell'agenzia sono nel JSON seguente — usali sempre per rispondere con precisione. Non inventare dati non presenti nel JSON. Campi importanti: cassa.fondo_cassa=fondo cassa odierno, cassa.cassa_progressiva=totale accumulato, cassa.scostamento=differenza cassa-fondo, cassa.variazione_fondo=variazione fondo rispetto a ieri. ${isOperativo?'Utente operativo: mostra solo sospesi, team e pipeline proprie.':''} Dati: ${ctx}`},
-          {role:'user', content:txt}
-        ]
+        model:'llama-3.3-70b-versatile',
+        temperature:0.35,
+        max_tokens:1200,
+        messages:[ {role:'system', content:sys}, ...CHAT_HISTORY ]
       })
     });
     removeLoader(lid);
     if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'Errore API '+res.status); }
     const data = await res.json();
-    addBubble('agent', data.choices?.[0]?.message?.content||'Nessuna risposta.');
+    const reply = data.choices?.[0]?.message?.content||'Nessuna risposta.';
+    CHAT_HISTORY.push({ role:'assistant', content:reply });
+    addBubble('agent', reply);
   } catch(e) {
     removeLoader(lid);
+    // Rimuove l'ultimo turno utente fallito, così non "sporca" il contesto successivo
+    if (CHAT_HISTORY.length && CHAT_HISTORY[CHAT_HISTORY.length-1].role==='user') CHAT_HISTORY.pop();
     if (e.message?.includes('401')||e.message?.includes('Unauthorized')) addBubble('agent',' Chiave API Groq non valida. Controlla il config.js.');
     else addBubble('agent','Errore: '+e.message);
   }

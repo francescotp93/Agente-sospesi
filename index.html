@@ -2167,6 +2167,14 @@ function onLogin(user) {
   // Carica profilo e applica permessi
   caricaProfilo(user.id).then(async profilo => {
     PROFILO = profilo;
+    // Instradamento per accesso: utente "solo QUOTO" -> va dritto a QUOTO; nessun accesso -> stop
+    if (PROFILO && !isSuperAdmin()) {
+      if (PROFILO.accesso_iam === false) {
+        if (PROFILO.accesso_quoto === true) { apriQuoto(); return; }
+        alert('Il tuo account non ha accesso a IAM. Contatta un amministratore.');
+        onLogout(); return;
+      }
+    }
     if (PROFILO) {
       applicaPermessi(PROFILO.ruolo);
       mostraBadgeRuolo();
@@ -4960,25 +4968,24 @@ let PROFILO = null; // profilo utente corrente con ruolo
 // vede i movimenti/attività di tutti gli utenti. Coerente con QUOTO.
 const SUPER_ADMIN_EMAIL = 'francesco.oddo199307@gmail.com';
 function isSuperAdmin() { return !!ME && (ME.email || '').toLowerCase() === SUPER_ADMIN_EMAIL; }
-// Forza il profilo del super admin: sempre 'admin', sempre attivo, flag superAdmin.
+// Mappatura ruoli: nel DB restano i nomi storici (top_master/master/operativo) per
+// non toccare le regole di sicurezza; nell'app si usano i nomi unificati.
+const LEGACY_RUOLI = { top_master: 'admin', master: 'operatore', operativo: 'collaboratore' };
+const RUOLO_DB     = { admin: 'top_master', operatore: 'master', collaboratore: 'operativo' };
+function canonRuolo(r) { return LEGACY_RUOLI[r] || r || 'collaboratore'; } // valore DB -> nome app
+function dbRuolo(r)    { return RUOLO_DB[r] || r; }                        // nome app -> valore DB
+
+// Forza il profilo del super admin: sempre admin, sempre attivo (solo in memoria).
 function applicaSuperAdmin(prof) {
   if (!prof || !isSuperAdmin()) return prof;
   prof.superAdmin = true;
-  if (prof.ruolo !== 'admin' || prof.attivo === false) {
-    prof.ruolo = 'admin';
-    prof.attivo = true;
-    if (db) { try { db.from('iam_utenti').update({ ruolo: 'admin', attivo: true }).eq('id', prof.id); } catch(e) {} }
-  }
+  prof.ruolo = 'admin';
+  prof.attivo = true;
   return prof;
 }
-// Converte i vecchi ruoli IAM nei nuovi (allineati a QUOTO) e li salva, così gli
-// utenti esistenti restano coerenti senza migrazione manuale obbligatoria.
-const LEGACY_RUOLI = { top_master: 'admin', master: 'operatore', operativo: 'collaboratore' };
+// Converte il ruolo letto dal DB nel nome unificato usato dall'app (solo in memoria).
 function normalizzaRuolo(prof) {
-  if (prof && LEGACY_RUOLI[prof.ruolo]) {
-    prof.ruolo = LEGACY_RUOLI[prof.ruolo];
-    if (db) { try { db.from('iam_utenti').update({ ruolo: prof.ruolo }).eq('id', prof.id); } catch(e) {} }
-  }
+  if (prof) prof.ruolo = canonRuolo(prof.ruolo);
   return prof;
 }
 
@@ -5007,7 +5014,7 @@ async function caricaProfilo(userId) {
         id: userId, email: ME.email,
         nome: ME.user_metadata?.full_name?.split(' ')[0] || '',
         cognome: ME.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-        ruolo
+        ruolo: dbRuolo(ruolo)
       }).select().single();
       return applicaSuperAdmin(normalizzaRuolo(nuovo));
     }
@@ -5036,18 +5043,8 @@ function applicaPermessi(ruolo) {
   });
   const labBtn = document.getElementById('nb-lab');
   if (labBtn) labBtn.style.display = PROFILO?.lab_abilitato ? 'flex' : 'none';
-  if (db && ME) {
-    db.from('iam_utenti').select('quoto').eq('id', ME.id).single()
-      .then(({ data }) => {
-        const btnQuoto = document.getElementById('nb-quoto');
-        if (btnQuoto) btnQuoto.style.display = (data?.quoto === true || isSuperAdmin()) ? 'flex' : 'none';
-      });
-  } else {
-    const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-    const quotoOn = flags[ME?.id]?.['quoto'] === true;
-    const btnQuoto = document.getElementById('nb-quoto');
-    if (btnQuoto) btnQuoto.style.display = (quotoOn || isSuperAdmin()) ? 'flex' : 'none';
-  }
+  const btnQuoto = document.getElementById('nb-quoto');
+  if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
 }
 
 function mostraBadgeRuolo() {
@@ -5218,12 +5215,13 @@ async function renderUtenti() {
 
   // Aggiorna solo la lista utenti
   el.innerHTML = UTENTI_LISTA.map(u => {
-    const r = RUOLI[u.ruolo] || RUOLI.collaboratore;
+    const ruoloApp = canonRuolo(u.ruolo);
+    const r = RUOLI[ruoloApp] || RUOLI.collaboratore;
     const isSelf = u.id === ME?.id;
     const isSA = (u.email||'').toLowerCase() === SUPER_ADMIN_EMAIL;
-    const canEdit = PROFILO?.ruolo === 'admin' || (PROFILO?.ruolo === 'operatore' && u.ruolo === 'collaboratore');
-    const _kpiFlags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-    const quotoOn = _kpiFlags[u.id]?.['quoto'] === true;
+    const canEdit = PROFILO?.ruolo === 'admin' || (PROFILO?.ruolo === 'operatore' && ruoloApp === 'collaboratore');
+    const quotoOn = u.accesso_quoto === true;
+    const iamOn   = u.accesso_iam !== false;
     return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
       <div style="width:40px;height:40px;border-radius:50%;background:${r.bg};color:${r.color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;">${(u.nome||u.email||'?')[0].toUpperCase()}</div>
       <div style="flex:1;min-width:0;">
@@ -5238,12 +5236,13 @@ async function renderUtenti() {
         ${canEdit && !isSelf && !isSA ? `
         <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<select class="ruolo-sel" onchange="setRuolo('${u.id}', this.value)" title="Ruolo utente">
-          <option value="admin" ${u.ruolo==='admin'?'selected':''}>Admin</option>
-          <option value="operatore" ${u.ruolo==='operatore'?'selected':''}>Operatore</option>
-          <option value="collaboratore" ${u.ruolo==='collaboratore'?'selected':''}>Collaboratore</option>
+          <option value="admin" ${ruoloApp==='admin'?'selected':''}>Admin</option>
+          <option value="operatore" ${ruoloApp==='operatore'?'selected':''}>Operatore</option>
+          <option value="collaboratore" ${ruoloApp==='collaboratore'?'selected':''}>Collaboratore</option>
         </select>` : ''}
         ${canEdit && !isSA ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
-        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">Quoto <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
+        ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<label class="sw-row" title="Accesso a IAM">IAM <span class="sw"><input type="checkbox" ${iamOn?'checked':''} onchange="toggleIamAccess('${u.id}',${iamOn})"><span class="sl"></span></span></label>` : ''}
+        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">QUOTO <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5295,16 +5294,18 @@ async function creaNuovoUtente() {
 
     // Pre-inserisci profilo in iam_utenti con ruolo corretto
     // Quando l'utente conferma l'email e fa login, il profilo esiste già
-    const { error: e2 } = await db.from('iam_utenti').upsert({
+    const profiloNuovo = {
       id: userId, email, nome, cognome: cogn,
-      ruolo, attivo: true, creato_da: ME?.id
-    }, { onConflict: 'id' });
+      ruolo: dbRuolo(ruolo), attivo: true, creato_da: ME?.id,
+      accesso_iam: true, accesso_quoto: false
+    };
+    const { error: e2 } = await db.from('iam_utenti').upsert(profiloNuovo, { onConflict: 'id' });
 
     if (e2) {
       // Se non riusciamo a inserire ora (RLS), salviamo in localStorage
       // e lo inseriremo al primo login dell'utente
       const pendenti = JSON.parse(localStorage.getItem('iam_utenti_pendenti')||'[]');
-      pendenti.push({ id: userId, email, nome, cognome: cogn, ruolo, attivo: true, creato_da: ME?.id });
+      pendenti.push(profiloNuovo);
       localStorage.setItem('iam_utenti_pendenti', JSON.stringify(pendenti));
     }
 
@@ -5355,7 +5356,7 @@ async function setRuolo(userId, nuovo) {
   if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il ruolo del Super Admin non è modificabile.'); await renderUtenti(); return; }
   if (!['admin','operatore','collaboratore'].includes(nuovo)) { alert('Ruolo non valido.'); await renderUtenti(); return; }
   try {
-    const { error } = await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ ruolo: dbRuolo(nuovo) }).eq('id', userId);
     if (error) throw error;
     await renderUtenti();
   } catch(e) { alert('Errore cambio ruolo: '+(e.message||e)); await renderUtenti(); }
@@ -5373,18 +5374,23 @@ async function toggleLabAbilitato(userId, abilitato) {
   } catch(e) { alert('Errore Lab toggle: ' + e.message); }
 }
 
-function toggleQuotoAccess(userId, attuale) {
-  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-  if (!flags[userId]) flags[userId] = {};
-  flags[userId]['quoto'] = !attuale;
-  localStorage.setItem('iam_kpi_flags', JSON.stringify(flags));
-  if (userId === ME?.id && PROFILO) applicaPermessi(PROFILO.ruolo);
-  if (db) {
-    db.from('iam_utenti').update({ quoto: !attuale }).eq('id', userId)
-      .then(({ error }) => { if (error) alert('Errore salvataggio accesso QUOTO: '+error.message); renderUtenti(); });
-  } else {
-    renderUtenti();
-  }
+async function toggleQuotoAccess(userId, attuale) {
+  try {
+    const { error } = await db.from('iam_utenti').update({ accesso_quoto: !attuale, quoto: !attuale }).eq('id', userId);
+    if (error) throw error;
+    if (userId === ME?.id && PROFILO) { PROFILO.accesso_quoto = !attuale; applicaPermessi(PROFILO.ruolo); }
+    await renderUtenti();
+  } catch(e) { alert('Errore salvataggio accesso QUOTO: '+(e.message||e)); await renderUtenti(); }
+}
+
+async function toggleIamAccess(userId, attuale) {
+  const _su = UTENTI_LISTA.find(x => x.id === userId);
+  if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il Super Admin ha sempre accesso a IAM.'); await renderUtenti(); return; }
+  try {
+    const { error } = await db.from('iam_utenti').update({ accesso_iam: !attuale }).eq('id', userId);
+    if (error) throw error;
+    await renderUtenti();
+  } catch(e) { alert('Errore salvataggio accesso IAM: '+(e.message||e)); await renderUtenti(); }
 }
 
 async function openLab() {
@@ -6466,7 +6472,7 @@ async function renderGestioneObiettivi(elId) {
   const anno = new Date().getFullYear();
   el.innerHTML = `
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:10px;">Obiettivi operatori ${anno}</div>
-    ${UTENTI_LISTA.filter(u=>u.ruolo==='collaboratore'&&u.attivo).map(u => {
+    ${UTENTI_LISTA.filter(u=>canonRuolo(u.ruolo)==='collaboratore'&&u.attivo).map(u => {
       const objU = OBJ_LIST.filter(o=>o.utente_id===u.id&&o.anno===anno);
       return `<div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:8px;">
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome} ${u.cognome||''}</div>

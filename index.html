@@ -2687,8 +2687,11 @@ function apriQuoto() {
   ov.id = 'quoto-bridge-overlay';
   ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(135deg,#0b1437,#3b1d9e 55%,#6d3bff);color:#fff;opacity:0;transition:opacity .45s ease;font-family:inherit;text-align:center;padding:24px;';
   ov.innerHTML = `
-    <style>@keyframes qbspin{to{transform:rotate(360deg)}}</style>
-    <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;opacity:.7;">Accesso a</div>
+    <style>@keyframes qbspin{to{transform:rotate(360deg)}}@keyframes qbpop{0%{opacity:0;transform:scale(.4)}60%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}</style>
+    <div style="width:96px;height:96px;border-radius:26px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:qbpop .5s ease both;">
+      <i class="ti ti-bolt" style="font-size:54px;color:#fff;"></i>
+    </div>
+    <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;opacity:.7;margin-top:4px;">Accesso a</div>
     <div style="font-size:clamp(44px,12vw,72px);font-weight:900;letter-spacing:.04em;text-shadow:0 6px 30px rgba(0,0,0,.35);">QUOTO</div>
     <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:.85;margin-top:6px;">
       <span style="width:18px;height:18px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:qbspin .8s linear infinite;"></span>

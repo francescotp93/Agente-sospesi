@@ -920,7 +920,7 @@ input[type=file]{display:none;}
     </div>
     <div class="card" style="padding:12px;"><div id="utenti-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
   </div>
-  <!-- Pannello Controllo KPI (solo top_master) -->
+  <!-- Pannello Controllo KPI (solo admin) -->
   <div id="kpi-ctrl-section" style="display:none;margin-top:16px;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;">
       <div class="slbl" style="padding:0;">Pannello Controllo KPI</div>
@@ -2647,6 +2647,38 @@ async function caricaDatiPerData(dataSelezionata) {
   } catch(e) { console.warn('caricaDatiPerData:', e); }
 }
 
+// ─── PONTE IAM → QUOTO ────────────────────────────────────────────────────────
+// URL pubblico di QUOTO (GitHub Pages). Modificare qui se l'indirizzo cambia.
+const QUOTO_URL = 'https://francescotp93.github.io/QUOTE/';
+function apriQuoto() {
+  const dest = QUOTO_URL + (ME?.email ? ('?email=' + encodeURIComponent(ME.email)) : '');
+  // 1) Morph "radicale" dell'interfaccia IAM
+  const app = document.getElementById('app');
+  if (app) {
+    app.style.transition = 'all .35s ease';
+    app.style.filter = 'brightness(1.6) saturate(2.2)';
+    app.style.transform = 'scale(1.03)';
+    setTimeout(() => { app.style.filter = 'invert(1) hue-rotate(180deg)'; app.style.transform = 'scale(.97)'; }, 180);
+  }
+  // 2) Overlay a tutto schermo: IAM "diventa" QUOTO
+  if (document.getElementById('quoto-bridge-overlay')) return;
+  const ov = document.createElement('div');
+  ov.id = 'quoto-bridge-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:linear-gradient(135deg,#0b1437,#3b1d9e 55%,#6d3bff);color:#fff;opacity:0;transition:opacity .45s ease;font-family:inherit;text-align:center;padding:24px;';
+  ov.innerHTML = `
+    <style>@keyframes qbspin{to{transform:rotate(360deg)}}</style>
+    <div style="font-size:13px;letter-spacing:.35em;text-transform:uppercase;opacity:.7;">Accesso a</div>
+    <div style="font-size:clamp(44px,12vw,72px);font-weight:900;letter-spacing:.04em;text-shadow:0 6px 30px rgba(0,0,0,.35);">QUOTO</div>
+    <div style="display:flex;align-items:center;gap:10px;font-size:13px;opacity:.85;margin-top:6px;">
+      <span style="width:18px;height:18px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:qbspin .8s linear infinite;"></span>
+      Apertura del portale preventivi…
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => { ov.style.opacity = '1'; });
+  // 3) Redirect verso QUOTO (con email precompilata)
+  setTimeout(() => { window.location.href = dest; }, 1200);
+}
+
 function goTab(t) {
   // Anomalie, sospesi, storico, conto → aprono Contabilità con sotto-tab
   const contabSub = ['anomalie','sospesi','storico','conto'];
@@ -2676,31 +2708,7 @@ function goTab(t) {
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'quoto') {
-    const app = document.getElementById('app');
-    if (app) {
-      app.style.transition = 'all .3s ease';
-      app.style.filter = 'brightness(2) saturate(3)';
-      app.style.transform = 'scale(1.02)';
-      setTimeout(() => {
-        app.style.filter = 'invert(1) hue-rotate(180deg)';
-        app.style.transform = 'scale(.98)';
-      }, 150);
-      setTimeout(() => {
-        app.style.filter = '';
-        app.style.transform = '';
-        document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
-        document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
-        document.getElementById('nb-quoto')?.classList.add('act');
-        document.getElementById('panel-quoto')?.classList.add('act');
-        sessionStorage.setItem('iam_last_tab', 'quoto');
-      }, 400);
-    } else {
-      document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
-      document.getElementById('nb-quoto')?.classList.add('act');
-      document.getElementById('panel-quoto')?.classList.add('act');
-      sessionStorage.setItem('iam_last_tab', 'quoto');
-    }
+    apriQuoto();
     return;
   }
   if (t === 'utenti') {
@@ -4553,7 +4561,7 @@ const SC = { prospect:{lbl:'Prospect',c:'var(--txt3)',bg:'var(--surf2)'}, preven
 function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[]'); } catch(e){PIPE=[];} try { AGENDA=JSON.parse(localStorage.getItem('iam_agenda')||'[]'); } catch(e){AGENDA=[];} }
 function savePipe() { localStorage.setItem('iam_pipe', JSON.stringify(PIPE)); }
 function saveAg()   { localStorage.setItem('iam_agenda', JSON.stringify(AGENDA)); }
-function isPipelineAdmin() { return PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master'; }
+function isPipelineAdmin() { return PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore'; }
 function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
@@ -4803,7 +4811,7 @@ async function sendMsg() {
     const key = window.GROQ_API_KEY||'';
     const hdrs = {'Content-Type':'application/json'};
     if (key) hdrs['Authorization'] = 'Bearer '+key;
-    const isOperativo = PROFILO?.ruolo === 'operativo';
+    const isOperativo = PROFILO?.ruolo === 'collaboratore';
     const ctx = buildCtx();
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method:'POST', headers:hdrs,
@@ -4827,7 +4835,7 @@ async function sendMsg() {
 }
 
 function buildCtx() {
-  const isOperativo = PROFILO?.ruolo === 'operativo';
+  const isOperativo = PROFILO?.ruolo === 'collaboratore';
   const sosp = APP.sospesi.filter(s=>s.importo>=0);
   const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
   const fondoIeri = APP.fondoIeri || fondo;
@@ -4842,7 +4850,7 @@ function buildCtx() {
   const deltaScost = scostamento - scostamentoIeri;
 
   const ctx = {
-    ruolo: PROFILO?.ruolo || 'operativo',
+    ruolo: PROFILO?.ruolo || 'collaboratore',
     nome_utente: PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '',
     data_sessione: g('i-data'),
     sospesi: {
@@ -4926,17 +4934,43 @@ function closeModal(id) {
 // ─── MULTI-UTENZA ─────────────────────────────────────────────────────────────
 let PROFILO = null; // profilo utente corrente con ruolo
 
+// Super amministratore (account proprietario): sopra tutti, ruolo non modificabile,
+// vede i movimenti/attività di tutti gli utenti. Coerente con QUOTO.
+const SUPER_ADMIN_EMAIL = 'francesco.oddo199307@gmail.com';
+function isSuperAdmin() { return !!ME && (ME.email || '').toLowerCase() === SUPER_ADMIN_EMAIL; }
+// Forza il profilo del super admin: sempre 'admin', sempre attivo, flag superAdmin.
+function applicaSuperAdmin(prof) {
+  if (!prof || !isSuperAdmin()) return prof;
+  prof.superAdmin = true;
+  if (prof.ruolo !== 'admin' || prof.attivo === false) {
+    prof.ruolo = 'admin';
+    prof.attivo = true;
+    if (db) { try { db.from('iam_utenti').update({ ruolo: 'admin', attivo: true }).eq('id', prof.id); } catch(e) {} }
+  }
+  return prof;
+}
+// Converte i vecchi ruoli IAM nei nuovi (allineati a QUOTO) e li salva, così gli
+// utenti esistenti restano coerenti senza migrazione manuale obbligatoria.
+const LEGACY_RUOLI = { top_master: 'admin', master: 'operatore', operativo: 'collaboratore' };
+function normalizzaRuolo(prof) {
+  if (prof && LEGACY_RUOLI[prof.ruolo]) {
+    prof.ruolo = LEGACY_RUOLI[prof.ruolo];
+    if (db) { try { db.from('iam_utenti').update({ ruolo: prof.ruolo }).eq('id', prof.id); } catch(e) {} }
+  }
+  return prof;
+}
+
 const RUOLI = {
-  top_master: { label:'TOP Master', color:'var(--acc)', bg:'rgba(var(--acc-rgb),.12)' },
-  master:     { label:'Master',     color:'#2c7abf', bg:'var(--blu-bg)' },
-  operativo:  { label:'Operativo',  color:'#1a8a5a', bg:'var(--grn-bg)' }
+  admin:         { label:'Admin',         color:'var(--acc)', bg:'rgba(var(--acc-rgb),.12)' },
+  operatore:     { label:'Operatore',     color:'#2c7abf', bg:'var(--blu-bg)' },
+  collaboratore: { label:'Collaboratore', color:'#1a8a5a', bg:'var(--grn-bg)' }
 };
 
 // Permessi per ruolo
 const PERMESSI = {
-  top_master: { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
-  master:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
-  operativo:  { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
+  admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
+  operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
+  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
 
 async function caricaProfilo(userId) {
@@ -4944,23 +4978,23 @@ async function caricaProfilo(userId) {
   try {
     const { data, error } = await db.from('iam_utenti').select('*').eq('id', userId).single();
     if (error || !data) {
-      // Prima volta: crea profilo top_master per il primo utente
+      // Prima volta: crea profilo admin per il primo utente
       const { data: cnt } = await db.from('iam_utenti').select('id', { count: 'exact', head: true });
-      const ruolo = (cnt === 0 || cnt === null) ? 'top_master' : 'operativo';
+      const ruolo = (isSuperAdmin() || cnt === 0 || cnt === null) ? 'admin' : 'collaboratore';
       const { data: nuovo } = await db.from('iam_utenti').insert({
         id: userId, email: ME.email,
         nome: ME.user_metadata?.full_name?.split(' ')[0] || '',
         cognome: ME.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
         ruolo
       }).select().single();
-      return nuovo;
+      return applicaSuperAdmin(normalizzaRuolo(nuovo));
     }
-    return data;
+    return applicaSuperAdmin(normalizzaRuolo(data));
   } catch(e) { console.warn('Errore carica profilo:', e); return null; }
 }
 
 function applicaPermessi(ruolo) {
-  const perm = PERMESSI[ruolo] || PERMESSI.top_master;
+  const perm = PERMESSI[ruolo] || PERMESSI.collaboratore;
   const tabs = {
     'nb-carica':      perm.carica,
     'nb-dashboard':   perm.dashboard,
@@ -4996,19 +5030,20 @@ function applicaPermessi(ruolo) {
 
 function mostraBadgeRuolo() {
   if (!PROFILO) return;
-  const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
+  const r = RUOLI[PROFILO.ruolo] || RUOLI.collaboratore;
+  const lbl = PROFILO.superAdmin ? 'Super Admin' : r.label;
   // Badge nell'header
   const existing = document.getElementById('ruolo-badge');
   if (existing) existing.remove();
   const badge = document.createElement('span');
   badge.id = 'ruolo-badge';
   badge.style.cssText = `font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};`;
-  badge.textContent = r.label;
+  badge.textContent = lbl;
   const hdrRight = document.querySelector('.hdr-right');
   if (hdrRight) hdrRight.insertBefore(badge, hdrRight.firstChild);
   // Badge nel menu
   const umBadge = document.getElementById('um-ruolo-badge');
-  if (umBadge) umBadge.innerHTML = `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${r.label}</span>`;
+  if (umBadge) umBadge.innerHTML = `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${lbl}</span>`;
   // Mostra/nasconde pulsante gestione utenti nel menu
   const btnUtenti = document.getElementById('um-btn-utenti');
   if (btnUtenti) btnUtenti.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
@@ -5114,7 +5149,7 @@ async function loadAgendaDB() {
   if (!db || !ME) return;
   try {
     let q = db.from('iam_agenda').select('*').order('data', { ascending: true });
-    if (PROFILO?.ruolo === 'operativo') {
+    if (PROFILO?.ruolo === 'collaboratore') {
       q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
     }
     const { data } = await q;
@@ -5161,9 +5196,9 @@ async function renderUtenti() {
 
   // Aggiorna solo la lista utenti
   el.innerHTML = UTENTI_LISTA.map(u => {
-    const r = RUOLI[u.ruolo] || RUOLI.operativo;
+    const r = RUOLI[u.ruolo] || RUOLI.collaboratore;
     const isSelf = u.id === ME?.id;
-    const canEdit = PROFILO?.ruolo === 'top_master' || (PROFILO?.ruolo === 'master' && u.ruolo === 'operativo');
+    const canEdit = PROFILO?.ruolo === 'admin' || (PROFILO?.ruolo === 'operatore' && u.ruolo === 'collaboratore');
     const _kpiFlags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
     const quotoOn = _kpiFlags[u.id]?.['quoto'] === true;
     return `<div style="background:var(--surf);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--shd);display:flex;align-items:center;gap:12px;">
@@ -5179,7 +5214,7 @@ async function renderUtenti() {
       <div style="display:flex;flex-direction:column;gap:4px;">
         ${canEdit && !isSelf ? `
         <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
-        ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
+        ${PROFILO?.ruolo==='admin'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
         ` : ''}
         ${canEdit ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
         ${canEdit ? `<button onclick="toggleQuotoAccess('${u.id}',${quotoOn})" style="font-size:11px;padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:${quotoOn?'linear-gradient(135deg,var(--acc),var(--acc2))':'var(--surf3)'};color:${quotoOn?'#fff':'var(--txt3)'};">Quoto ${quotoOn?'ON':'OFF'}</button>` : ''}
@@ -5189,9 +5224,9 @@ async function renderUtenti() {
 }
 
 function apriNuovoUtente() {
-  const ruoloOpts = PROFILO?.ruolo === 'top_master'
-    ? '<option value="master">Master</option><option value="operativo">Operativo</option>'
-    : '<option value="operativo">Operativo</option>';
+  const ruoloOpts = PROFILO?.ruolo === 'admin'
+    ? '<option value="operatore">Operatore</option><option value="collaboratore">Collaboratore</option>'
+    : '<option value="collaboratore">Collaboratore</option>';
   const html = `
     <div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="nu-overlay" onclick="if(event.target.id==='nu-overlay')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
@@ -5265,6 +5300,8 @@ async function creaNuovoUtente() {
 }
 
 async function toggleSospendi(userId, attivo) {
+  const _su = UTENTI_LISTA.find(x => x.id === userId);
+  if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il Super Admin non può essere sospeso.'); return; }
   if (!confirm(`${attivo?'Sospendere':'Riattivare'} questo utente?`)) return;
   try {
     await db.from('iam_utenti').update({ attivo: !attivo }).eq('id', userId);
@@ -5273,8 +5310,10 @@ async function toggleSospendi(userId, attivo) {
 }
 
 async function cambiaRuolo(userId, ruoloAttuale) {
-  const nuovo = prompt(`Ruolo attuale: ${ruoloAttuale}\nNuovo ruolo (top_master / master / operativo):`);
-  if (!nuovo || !['top_master','master','operativo'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
+  const _su = UTENTI_LISTA.find(x => x.id === userId);
+  if (_su && (_su.email||'').toLowerCase() === SUPER_ADMIN_EMAIL) { alert('Il ruolo del Super Admin non è modificabile.'); return; }
+  const nuovo = prompt(`Ruolo attuale: ${ruoloAttuale}\nNuovo ruolo (admin / operatore / collaboratore):`);
+  if (!nuovo || !['admin','operatore','collaboratore'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
   if (!confirm(`Cambiare ruolo in "${nuovo}"?`)) return;
   try {
     await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
@@ -5394,7 +5433,7 @@ async function chiudiLab() {
 async function renderPannelloPersonale() {
   const panel = document.getElementById('profilo-content');
   if (!panel || !ME || !PROFILO) return;
-  const r = RUOLI[PROFILO.ruolo] || RUOLI.operativo;
+  const r = RUOLI[PROFILO.ruolo] || RUOLI.collaboratore;
   panel.innerHTML = `
     <div style="padding:16px 16px 0;">
       <div style="background:var(--surf);border-radius:var(--r);padding:16px;box-shadow:var(--shd);margin-bottom:12px;">
@@ -5878,7 +5917,7 @@ function renderWD() {
   const st = document.getElementById('wd-stato')?.value||'';
   let lista = WD;
   // Operatori vedono solo le proprie voci o quelle condivise con loro
-  if (PROFILO?.ruolo === 'operativo') {
+  if (PROFILO?.ruolo === 'collaboratore') {
     lista = lista.filter(w => !w.utente_id || w.utente_id === ME?.id || (w.condivisi||[]).includes(ME?.id));
   }
   if (tp) lista = lista.filter(w=>w.tipo===tp);
@@ -5901,7 +5940,7 @@ function renderWD() {
     const tc = WD_TIPI[w.tipo]||WD_TIPI.altro;
     const isMine = !w.utente_id || w.utente_id === ME?.id;
     const isCondiviso = (w.condivisi||[]).includes(ME?.id);
-    const canEdit = isMine || isCondiviso || PROFILO?.ruolo === 'top_master' || PROFILO?.ruolo === 'master';
+    const canEdit = isMine || isCondiviso || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
     const nonLetto = !isMine && !(w.letto_da||[]).includes(ME?.id);
     const sharedWith = (w.condivisi||[]).filter(Boolean);
     // Recupera nomi condivisi da UTENTI_LISTA
@@ -5936,7 +5975,7 @@ function renderWD() {
           <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i></button>
           ${canEdit?`<button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>`:''}
           <button onclick="openWDCommenti('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-message-circle"></i></button>
-          ${isMine||PROFILO?.ruolo==='top_master'?`<button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>`:''}
+          ${isMine||PROFILO?.ruolo==='admin'?`<button onclick="delWD('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>`:''}
         </div>
       </div>
     </div>`;
@@ -6382,12 +6421,12 @@ async function renderObiettiviOperatore() {
 
 async function renderGestioneObiettivi(elId) {
   const el = document.getElementById(elId);
-  if (!el || PROFILO?.ruolo !== 'top_master') return;
+  if (!el || PROFILO?.ruolo !== 'admin') return;
   await loadObiettivi(); await caricaUtenti();
   const anno = new Date().getFullYear();
   el.innerHTML = `
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:10px;">Obiettivi operatori ${anno}</div>
-    ${UTENTI_LISTA.filter(u=>u.ruolo==='operativo'&&u.attivo).map(u => {
+    ${UTENTI_LISTA.filter(u=>u.ruolo==='collaboratore'&&u.attivo).map(u => {
       const objU = OBJ_LIST.filter(o=>o.utente_id===u.id&&o.anno===anno);
       return `<div style="background:var(--surf2);border-radius:var(--rs);padding:12px;margin-bottom:8px;">
         <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome} ${u.cognome||''}</div>
@@ -6398,7 +6437,7 @@ async function renderGestioneObiettivi(elId) {
         </div>`).join('')}
         <button onclick="aggiungiObiettivo('${u.id}','${u.nome} ${u.cognome||''}')" style="font-size:11px;padding:5px 12px;background:rgba(var(--acc-rgb),.1);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;margin-top:4px;">+ Aggiungi obiettivo</button>
       </div>`;
-    }).join('')||'<div style="color:var(--txt3);font-size:13px;">Nessun operativo registrato</div>'}`;
+    }).join('')||'<div style="color:var(--txt3);font-size:13px;">Nessun collaboratore registrato</div>'}`;
 }
 
 function setObjMisura(misura) {
@@ -6752,7 +6791,7 @@ function selPerfTab(t) {
   PERF_CUR = t;
 
   // Controllo permessi per operativi
-  if (PROFILO?.ruolo === 'operativo') {
+  if (PROFILO?.ruolo === 'collaboratore') {
     const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
     const mieFlags = flags[ME?.id] || {};
     const LOCKED_MSG = '<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;"><i class="ti ti-lock" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>Sezione non abilitata.<br>Contatta il tuo responsabile.</div>';
@@ -6781,7 +6820,7 @@ function selGaraTab(g) {
   });
 
   // Controllo permessi gare per operativi
-  if (PROFILO?.ruolo === 'operativo') {
+  if (PROFILO?.ruolo === 'collaboratore') {
     const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
     const mieFlags = flags[ME?.id] || {};
     const flagKey = { re_pezzi:'gara_re_pezzi', rca:'gara_rca', finanziati:'gara_finanziati', cross:'gara_cross', rinnovi:'gara_rinnovi' }[g];
@@ -6796,7 +6835,7 @@ function selGaraTab(g) {
 }
 
 function renderGaraTabs() {
-  const isAdmin = PROFILO?.ruolo === 'top_master';
+  const isAdmin = PROFILO?.ruolo === 'admin';
   ['re','rca','fin','cross','rinn'].forEach(k => {
     const el = document.getElementById('gare-'+k+'-admin');
     if(el) el.style.display = isAdmin ? 'block' : 'none';
@@ -6863,7 +6902,7 @@ function renderGara(tipo) {
     const pos  = (GARE_POS[tipo]  || []);
     const kpiKey = tipo === 'rinnovi' ? 'gara_rinnovi' : tipo === 're_pezzi' ? 'gara_re_pezzi' : tipo === 'rca' ? 'gara_rca' : tipo === 'finanziati' ? 'gara_finanziati' : 'gara_cross';
     const kpiAbil = PROFILO?.kpi_flags?.[kpiKey] !== false; // default true se non configurato
-    if (!kpiAbil && PROFILO?.ruolo === 'operativo') {
+    if (!kpiAbil && PROFILO?.ruolo === 'collaboratore') {
       ['re_pezzi','rca','finanziati','cross','rinnovi'].forEach(t => {
         const gp = document.getElementById('gp-'+t); if(gp) gp.innerHTML = '<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;">Sezione non abilitata.</div>';
       });
@@ -6993,7 +7032,7 @@ async function delGaraPos(tipo, id) {
 }
 
 function apriConfigGara(tipo) {
-  if (PROFILO?.ruolo !== 'top_master') return;
+  if (PROFILO?.ruolo !== 'admin') return;
   const cfg = GARE_CONFIG[tipo] || {};
   const isRinnovi = tipo === 'rinnovi';
   const isFinanziati = tipo === 'finanziati';
@@ -7125,8 +7164,8 @@ const KPI_FLAGS_LABELS = {
 async function renderKpiCtrl() {
   const sec = document.getElementById('kpi-ctrl-section');
   if (!sec) return;
-  sec.style.display = PROFILO?.ruolo === 'top_master' ? 'block' : 'none';
-  if (PROFILO?.ruolo !== 'top_master') return;
+  sec.style.display = PROFILO?.ruolo === 'admin' ? 'block' : 'none';
+  if (PROFILO?.ruolo !== 'admin') return;
   const el = document.getElementById('kpi-ctrl-list');
   if (!el) return;
   await caricaUtenti();
@@ -7942,11 +7981,11 @@ async function loadTickets() {
   if (!db) return;
   try {
     let q = db.from('iam_ticket').select('*').order('creato_il', {ascending: false});
-    const isTopMaster = PROFILO?.ruolo === 'top_master';
+    const isTopMaster = PROFILO?.ruolo === 'admin';
     const filtri = document.getElementById('tk-filtri');
     if (filtri) filtri.style.display = isTopMaster ? 'flex' : 'none';
 
-    if (PROFILO?.ruolo !== 'top_master') {
+    if (PROFILO?.ruolo !== 'admin') {
       q = q.eq('segnalato_da', ME?.id);
     }
 
@@ -7966,7 +8005,7 @@ async function updateTicketBadge() {
   if (!badge || !db) return;
   try {
     let q = db.from('iam_ticket').select('id', { count: 'exact', head: true }).eq('stato', 'aperto');
-    if (PROFILO?.ruolo !== 'top_master') q = q.eq('segnalato_da', ME?.id);
+    if (PROFILO?.ruolo !== 'admin') q = q.eq('segnalato_da', ME?.id);
     const { count, error } = await q;
     if (error) throw error;
     const nAperti = count || 0;
@@ -8022,7 +8061,7 @@ function renderTickets() {
     </div>`;
     return;
   }
-  const isAdmin = PROFILO?.ruolo === 'top_master';
+  const isAdmin = PROFILO?.ruolo === 'admin';
   el.innerHTML = TK_LIST.map(t => {
     const pr  = TK_PRIORITA[t.priorita] || TK_PRIORITA.normale;
     const st  = TK_STATO[t.stato]       || TK_STATO.aperto;

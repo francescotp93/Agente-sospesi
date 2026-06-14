@@ -4976,7 +4976,7 @@ function isSuperAdmin() { return !!ME && (ME.email || '').toLowerCase() === SUPE
 const LEGACY_RUOLI = { top_master: 'admin', master: 'operatore', operativo: 'collaboratore' };
 const RUOLO_DB     = { admin: 'top_master', operatore: 'master', collaboratore: 'operativo' };
 function canonRuolo(r) { return LEGACY_RUOLI[r] || r || 'collaboratore'; } // valore DB -> nome app
-function dbRuolo(r)    { return RUOLO_DB[r] || r; }                        // nome app -> valore DB
+function dbRuolo(r)    { return r; } // il DB usa i nomi unificati (admin/operatore/collaboratore)
 
 // Forza il profilo del super admin: sempre admin, sempre attivo (solo in memoria).
 function applicaSuperAdmin(prof) {

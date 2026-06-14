@@ -990,6 +990,12 @@ input[type=file]{display:none;}
         <option value="aperto">Aperti</option>
         <option value="completato">Completati</option>
       </select>
+      <select id="wd-quando" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+        <option value="">Quando</option>
+        <option value="oggi">Oggi</option>
+        <option value="settimana">Questa settimana</option>
+        <option value="ritardo">In ritardo</option>
+      </select>
     </div>
     <div class="card"><div id="wd-list"></div></div>
     <div style="height:16px;"></div>
@@ -5960,10 +5966,25 @@ function selWDTab(t) {
   if (t==='cal') renderWDCal();
 }
 
+// Helper Diary: escape contenuti utente + date + completa rapido
+function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escNl(s){ return esc(s).replace(/\n/g,'<br>'); }
+function wdOggi(){ const d=new Date(); const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+function wdFineSettimana(){ const d=new Date(); const g=(d.getDay()+6)%7; d.setDate(d.getDate()+(6-g)); const z=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+async function toggleWDDone(id){
+  const w = WD.find(x=>x.id===id); if(!w) return;
+  const nuovo = (w.stato==='completato') ? 'aperto' : 'completato';
+  w.stato = nuovo; renderWD(); renderWDCal();
+  if (db) { try { const {error}=await db.from('iam_workdiary').update({ stato:nuovo, aggiornato_il:new Date().toISOString() }).eq('id', id); if(error) throw error; } catch(e){ alert('Errore aggiornamento: '+(e.message||e)); } }
+  else { saveWD_store(); }
+}
+
 function renderWD() {
   const q  = (document.getElementById('wd-search')?.value||'').toLowerCase();
   const tp = document.getElementById('wd-tipo')?.value||'';
   const st = document.getElementById('wd-stato')?.value||'';
+  const wq = document.getElementById('wd-quando')?.value||'';
+  const OGGI = wdOggi(), FINESETT = wdFineSettimana();
   let lista = WD;
   // Operatori vedono solo le proprie voci o quelle condivise con loro
   if (PROFILO?.ruolo === 'collaboratore') {
@@ -5971,8 +5992,11 @@ function renderWD() {
   }
   if (tp) lista = lista.filter(w=>w.tipo===tp);
   if (st) lista = lista.filter(w=>w.stato===st);
-  if (q)  lista = lista.filter(w=>(w.titolo+w.note).toLowerCase().includes(q));
-  lista = lista.slice().sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  if (wq === 'oggi')      lista = lista.filter(w => w.data === OGGI);
+  if (wq === 'settimana') lista = lista.filter(w => w.data && w.data >= OGGI && w.data <= FINESETT);
+  if (wq === 'ritardo')   lista = lista.filter(w => w.data && w.data < OGGI && w.stato !== 'completato');
+  if (q)  lista = lista.filter(w=>((w.titolo||'')+(w.note||'')+(w.luogo||'')).toLowerCase().includes(q));
+  lista = lista.slice();
 
   // Conta non letti per badge
   const nonLetti = lista.filter(w => w.utente_id !== ME?.id && !(w.letto_da||[]).includes(ME?.id)).length;
@@ -5998,8 +6022,10 @@ function renderWD() {
       return u ? ((u.nome||'')+' '+(u.cognome||'')).trim()||u.email : uid;
     }).filter(Boolean);
     const commenti = w.commenti || [];
+    const inRitardo = w.data && w.data < OGGI && w.stato !== 'completato';
+    const isOggi = w.data === OGGI && w.stato !== 'completato';
 
-    return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);${nonLetto?'background:rgba(var(--acc-rgb),.05);':''}">
+    return `<div style="padding:12px 14px;border-top:.5px solid var(--bord);${nonLetto?'background:rgba(var(--acc-rgb),.05);':inRitardo?'background:rgba(var(--red-rgb,220,53,69),.04);':''}">
       <div style="display:flex;align-items:flex-start;gap:10px;">
         <div style="width:34px;height:34px;border-radius:9px;background:${tc.bg};color:${tc.c};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;">
           <i class="ti ${tc.ic}"></i>
@@ -6007,20 +6033,23 @@ function renderWD() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="font-size:13px;font-weight:600;">${w.titolo||'—'}</span>
+            <span style="font-size:13px;font-weight:600;${w.stato==='completato'?'text-decoration:line-through;opacity:.65;':''}">${esc(w.titolo)||'—'}</span>
             <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>
             ${w.stato==='completato'?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);font-weight:600;">✓</span>':''}
+            ${inRitardo?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">IN RITARDO</span>':''}
+            ${isOggi?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(var(--acc-rgb),.14);color:var(--acc);font-weight:700;">OGGI</span>':''}
             ${w.prior==='urgente'?'<span style="font-size:10px;color:var(--red-txt);font-weight:700;">URGENTE</span>':w.prior==='alta'?'<span style="font-size:10px;color:var(--amb-txt);font-weight:700;">ALTA</span>':''}
             ${nonLetto?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">NUOVO</span>':''}
           </div>
-          <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${w.data||''}${w.ora?' · '+w.ora:''}</div>
-          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"> ${sharedNames.join(', ')}</div>`:''}
-          ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;">${w.note}</div>`:''}
-          ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${w.file_nome}</div>`:''}
-          ${w.luogo?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px;"></i> ${w.luogo}${w.lat&&w.lng?` <a href="https://www.google.com/maps?q=${w.lat},${w.lng}" target="_blank" style="color:var(--blu-txt);margin-left:4px;text-decoration:none;font-size:10px;">Mappa</a>`:''}</div>`:''}
+          <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${esc(w.data||'')}${w.ora?' · '+esc(w.ora):''}</div>
+          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"> ${sharedNames.map(esc).join(', ')}</div>`:''}
+          ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;">${escNl(w.note)}</div>`:''}
+          ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${esc(w.file_nome)}</div>`:''}
+          ${w.luogo?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px;"></i> ${esc(w.luogo)}${w.lat&&w.lng?` <a href="https://www.google.com/maps?q=${w.lat},${w.lng}" target="_blank" style="color:var(--blu-txt);margin-left:4px;text-decoration:none;font-size:10px;">Mappa</a>`:''}</div>`:''}
           ${commenti.length?`<div style="font-size:11px;color:var(--txt3);margin-top:4px;"><i class="ti ti-message-circle" style="font-size:12px;vertical-align:-1px;"></i> ${commenti.length} commento${commenti.length>1?'i':''}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+          ${canEdit?`<button onclick="toggleWDDone('${w.id}')" title="${w.stato==='completato'?'Riapri':'Completa'}" style="font-size:10px;padding:3px 7px;background:${w.stato==='completato'?'var(--amb-bg)':'var(--grn-bg)'};color:${w.stato==='completato'?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:4px;cursor:pointer;"><i class="ti ${w.stato==='completato'?'ti-rotate-clockwise':'ti-check'}"></i></button>`:''}
           <button onclick="addToCalWDItem('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i></button>
           ${canEdit?`<button onclick="openWDModal('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>`:''}
           <button onclick="openWDCommenti('${w.id}')" style="font-size:10px;padding:3px 7px;background:var(--grn-bg);color:var(--grn-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-message-circle"></i></button>
@@ -6050,12 +6079,15 @@ function renderWD() {
     ? `<div style="padding:12px 14px 6px;font-size:11px;font-weight:800;color:var(--txt);text-transform:uppercase;letter-spacing:.7px;background:var(--surf2);border-top:.5px solid var(--bord);">${title}</div>` + renderByDate(items)
     : '';
 
+  // Ordina: aperti per scadenza più vicina (senza data in fondo); completati dal più recente
+  const ascScad = (a,b) => (a.data||'9999-99-99').localeCompare(b.data||'9999-99-99');
+  const descData = (a,b) => (b.data||'').localeCompare(a.data||'');
   let html = '';
   if (st) {
-    html = renderByDate(lista);
+    html = renderByDate(lista.sort(st === 'completato' ? descData : ascScad));
   } else {
-    html = renderSection('Aperti', lista.filter(w => w.stato !== 'completato')) +
-      renderSection('Completati', lista.filter(w => w.stato === 'completato'));
+    html = renderSection('Aperti', lista.filter(w => w.stato !== 'completato').sort(ascScad)) +
+      renderSection('Completati', lista.filter(w => w.stato === 'completato').sort(descData));
   }
 
   document.getElementById('wd-list').innerHTML = html || '<div class="empty" style="padding:24px;"><i class="ti ti-notebook" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessuna operazione. Premi + per aggiungerne una.</p></div>';
@@ -6088,7 +6120,7 @@ function openWDCommenti(id) {
   const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="wdc-overlay" onclick="if(event.target.id==='wdc-overlay')chiudiWDC()">
     <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;max-height:75vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0);">
       <div style="padding:14px 16px;border-bottom:.5px solid var(--bord);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-        <div style="font-size:14px;font-weight:700;"><i class="ti ti-message-circle"></i> ${w.titolo}</div>
+        <div style="font-size:14px;font-weight:700;"><i class="ti ti-message-circle"></i> ${esc(w.titolo)}</div>
         <button onclick="chiudiWDC()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt2);">✕</button>
       </div>
       <div id="wdc-lista" style="flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -6096,8 +6128,8 @@ function openWDCommenti(id) {
           <div style="display:flex;gap:8px;align-items:flex-start;${c.autore_id===ME?.id?'flex-direction:row-reverse':''}">
             <div style="width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${(c.autore_nome||'?')[0].toUpperCase()}</div>
             <div style="max-width:80%;">
-              <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;${c.autore_id===ME?.id?'text-align:right':''}">${c.autore_nome||'?'} · ${c.data||''}</div>
-              <div style="background:${c.autore_id===ME?.id?'var(--acc)':'var(--surf2)'};color:${c.autore_id===ME?.id?'#fff':'var(--txt)'};padding:8px 12px;border-radius:${c.autore_id===ME?.id?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:13px;line-height:1.5;">${c.testo}</div>
+              <div style="font-size:10px;color:var(--txt3);margin-bottom:3px;${c.autore_id===ME?.id?'text-align:right':''}">${esc(c.autore_nome||'?')} · ${esc(c.data||'')}</div>
+              <div style="background:${c.autore_id===ME?.id?'var(--acc)':'var(--surf2)'};color:${c.autore_id===ME?.id?'#fff':'var(--txt)'};padding:8px 12px;border-radius:${c.autore_id===ME?.id?'12px 12px 2px 12px':'12px 12px 12px 2px'};font-size:13px;line-height:1.5;">${escNl(c.testo)}</div>
             </div>
           </div>`).join('') : '<div style="text-align:center;color:var(--txt3);font-size:13px;padding:20px 0;">Nessun commento ancora. Sii il primo!</div>'}
       </div>
@@ -6304,7 +6336,7 @@ function showWDDay(ds) {
     return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;${isComp?'opacity:.5;':''}" onclick="openWDModal('${w.id}')">
       <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${w.titolo}</div>
+        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${esc(w.titolo)}</div>
         <div style="font-size:11px;color:var(--txt2);">${w.ora||''}${w.prior==='urgente'?' · ⚡ Urgente':w.prior==='alta'?' · Alta':''}</div>
       </div>
       <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>

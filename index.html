@@ -5018,13 +5018,13 @@ function applicaPermessi(ruolo) {
     db.from('iam_utenti').select('quoto').eq('id', ME.id).single()
       .then(({ data }) => {
         const btnQuoto = document.getElementById('nb-quoto');
-        if (btnQuoto) btnQuoto.style.display = data?.quoto === true ? 'flex' : 'none';
+        if (btnQuoto) btnQuoto.style.display = (data?.quoto === true || isSuperAdmin()) ? 'flex' : 'none';
       });
   } else {
     const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
     const quotoOn = flags[ME?.id]?.['quoto'] === true;
     const btnQuoto = document.getElementById('nb-quoto');
-    if (btnQuoto) btnQuoto.style.display = quotoOn ? 'flex' : 'none';
+    if (btnQuoto) btnQuoto.style.display = (quotoOn || isSuperAdmin()) ? 'flex' : 'none';
   }
 }
 

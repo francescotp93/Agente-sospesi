@@ -2504,8 +2504,8 @@ async function loadLastSession() {
       const contabSub = ['anomalie','sospesi','storico','conto'];
       if (contabSub.includes(lastTab)) {
         goTab('carica'); selContabTab(lastTab);
-      } else if (lastTab === 'ai') {
-        goTab('dashboard'); // AI è overlay, non tab
+      } else if (lastTab === 'ai' || lastTab === 'quoto') {
+        goTab('dashboard'); // 'ai' è overlay; 'quoto' apre QUOTO → al rientro mostra la dashboard
       } else {
         goTab(lastTab);
       }
@@ -2653,6 +2653,8 @@ async function caricaDatiPerData(dataSelezionata) {
 const QUOTO_URL = 'https://francescotp93.github.io/QUOTE/';
 function apriQuoto() {
   const dest = QUOTO_URL + '?from=iam' + (ME?.email ? ('&email=' + encodeURIComponent(ME.email)) : '');
+  // Evita che al rientro da QUOTO l'app riapra il tab "quoto" (loop): salva la dashboard
+  sessionStorage.setItem('iam_last_tab', 'dashboard');
   // 1) Morph "radicale" dell'interfaccia IAM
   const app = document.getElementById('app');
   if (app) {

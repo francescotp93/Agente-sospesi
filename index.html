@@ -545,6 +545,7 @@ input[type=file]{display:none;}
   </div>
   <div class="umenu-sep"></div>
   <button class="umenu-item danger" onclick="doLogout()"><i class="ti ti-logout" style="font-size:16px;"></i> Esci dall'account</button>
+  <div style="text-align:center;font-size:10px;color:var(--txt3);padding:8px 0 2px;">IAM · build 2026-06-15b</div>
 </div>
 
 <!-- Settings overlay -->
@@ -2733,7 +2734,7 @@ function goTab(t) {
   // FAB AI sempre visibile tranne quando l'overlay è aperto
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
-  if (t === 'workdiary')   { setTimeout(renderWDCal, 0); loadWD_DB().then(() => { renderWD(); renderWDCal(); }); }
+  if (t === 'workdiary')   { setTimeout(renderWDCal, 0); loadWD_DB().then(() => { renderWD(); renderWDCal(); }); subscribeWD(); }
   if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
@@ -5950,7 +5951,20 @@ async function delWD_DB(id) {
   try { await db.from('iam_workdiary').delete().eq('id', id); } catch(e) { console.warn(e); }
 }
 
-const WD_TIPI = {
+// Aggiornamento in tempo reale del Diary: ricarica quando un collega crea/modifica/commenta
+let WD_RT = null;
+function subscribeWD() {
+  if (!db || WD_RT) return;
+  try {
+    WD_RT = db.channel('iam_wd_rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'iam_workdiary' }, () => {
+        loadWD_DB().then(() => { renderWD(); renderWDCal(); });
+      })
+      .subscribe();
+  } catch(e) { console.warn('subscribeWD:', e); }
+}
+
+
   riunione:     {lbl:'Riunione',     ic:'ti-users',     c:'var(--blu-txt)', bg:'var(--blu-bg)'},
   reclutamento: {lbl:'Reclutamento', ic:'ti-user-plus',  c:'var(--grn-txt)', bg:'var(--grn-bg)'},
   formazione:   {lbl:'Formazione',   ic:'ti-school',     c:'var(--amb-txt)', bg:'var(--amb-bg)'},

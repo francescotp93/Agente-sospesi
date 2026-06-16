@@ -972,6 +972,10 @@ input[type=file]{display:none;}
 
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
+  <div style="display:flex;gap:8px;padding:10px 12px 0;">
+    <button id="wd-tab-lista" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
+    <button id="wd-tab-cal" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Calendario</button>
+  </div>
   <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
       <input type="search" id="wd-search" placeholder="Cerca operazione..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderWD()">
@@ -5974,10 +5978,11 @@ const WD_TIPI = {
 };
 
 function selWDTab(t) {
-  document.getElementById('wd-lista').style.display = (t==='lista') ? 'block' : 'none';
-  document.getElementById('wd-cal').style.display   = (t==='cal')   ? 'block' : 'none';
-  document.getElementById('wd-tab-lista').classList.toggle('act', t==='lista');
-  document.getElementById('wd-tab-cal').classList.toggle('act', t==='cal');
+  const lst=document.getElementById('wd-lista'), cal=document.getElementById('wd-cal');
+  if(lst) lst.style.display=(t==='lista')?'block':'none';
+  if(cal) cal.style.display=(t==='cal')?'block':'none';
+  const tl=document.getElementById('wd-tab-lista'); if(tl) tl.classList.toggle('act', t==='lista');
+  const tc=document.getElementById('wd-tab-cal'); if(tc) tc.classList.toggle('act', t==='cal');
   if (t==='cal') renderWDCal(); else renderWD();
 }
 

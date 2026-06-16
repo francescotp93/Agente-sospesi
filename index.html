@@ -1055,10 +1055,10 @@ input[type=file]{display:none;}
             <option value="urgente">Urgente</option>
           </select>
         </div>
-        <div class="fld"><label>Condividi con</label>
-          <select id="wd-condividi-sel" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;font-size:13px;color:var(--txt);font-family:inherit;">
-            <option value="">— Nessuna condivisione —</option>
+        <div class="fld"><label>Condividi con (lascia vuoto = solo tu)</label>
+          <select id="wd-condividi-sel" multiple size="4" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;font-size:13px;color:var(--txt);font-family:inherit;">
           </select>
+          <div style="font-size:10px;color:var(--txt3);margin-top:4px;">Tieni premuto (o Ctrl/Cmd) per scegliere più colleghi. Se non condividi, l'operazione resta privata.</div>
         </div>
       </div>
       <div class="fld"><label>Descrizione / Note</label><textarea id="wd-note" rows="3" placeholder="Dettagli operazione..."></textarea></div>
@@ -6036,11 +6036,10 @@ function renderWD() {
     const canEdit = isMine || isCondiviso || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
     const nonLetto = !isMine && !(w.letto_da||[]).includes(ME?.id);
     const sharedWith = (w.condivisi||[]).filter(Boolean);
+    const nomeDi = uid => { const u = UTENTI_LISTA.find(x=>x.id===uid); return u ? (((u.nome||'')+' '+(u.cognome||'')).trim()||u.email) : ''; };
     // Recupera nomi condivisi da UTENTI_LISTA
-    const sharedNames = sharedWith.map(uid => {
-      const u = UTENTI_LISTA.find(x=>x.id===uid);
-      return u ? ((u.nome||'')+' '+(u.cognome||'')).trim()||u.email : uid;
-    }).filter(Boolean);
+    const sharedNames = sharedWith.map(nomeDi).filter(Boolean);
+    const ownerName = nomeDi(w.utente_id);
     const commenti = w.commenti || [];
     const inRitardo = w.data && w.data < OGGI && w.stato !== 'completato';
     const isOggi = w.data === OGGI && w.stato !== 'completato';
@@ -6062,7 +6061,8 @@ function renderWD() {
             ${nonLetto?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">NUOVO</span>':''}
           </div>
           <div style="font-size:11px;color:var(--txt2);margin-top:3px;">${esc(w.data||'')}${w.ora?' · '+esc(w.ora):''}</div>
-          ${sharedNames.length?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"> ${sharedNames.map(esc).join(', ')}</div>`:''}
+          ${!isMine && ownerName?`<div style="font-size:11px;color:var(--blu-txt);margin-top:2px;font-weight:600;"><i class="ti ti-share" style="font-size:11px;vertical-align:-1px;"></i> Condiviso da ${esc(ownerName)}</div>`:''}
+          ${isMine && sharedNames.length?`<div style="font-size:11px;color:var(--grn-txt);margin-top:2px;font-weight:600;"><i class="ti ti-users" style="font-size:11px;vertical-align:-1px;"></i> Condiviso con ${sharedNames.map(esc).join(', ')}</div>`:''}
           ${w.note?`<div style="font-size:12px;color:var(--txt2);margin-top:3px;">${escNl(w.note)}</div>`:''}
           ${w.file_nome?`<div style="font-size:11px;color:var(--blu-txt);margin-top:3px;cursor:pointer;" onclick="openWDFile('${w.id}')"><i class="ti ti-paperclip" style="font-size:11px;"></i> ${esc(w.file_nome)}</div>`:''}
           ${w.luogo?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px;"></i> ${esc(w.luogo)}${w.lat&&w.lng?` <a href="https://www.google.com/maps?q=${w.lat},${w.lng}" target="_blank" style="color:var(--blu-txt);margin-left:4px;text-decoration:none;font-size:10px;">Mappa</a>`:''}</div>`:''}
@@ -6239,10 +6239,10 @@ async function openWDModal(id) {
     try {
       const condivisiAttuali = w?.condivisi || [];
       await caricaUtenti();
-      sel.innerHTML = '<option value="">— Nessuna condivisione —</option>' +
+      sel.innerHTML =
         UTENTI_LISTA.filter(u => u.id !== ME?.id && u.attivo).map(u =>
-          `<option value="${u.id}" ${condivisiAttuali.includes(u.id)?'selected':''}>${u.nome||''} ${u.cognome||''}</option>`
-        ).join('');
+          `<option value="${u.id}" ${condivisiAttuali.includes(u.id)?'selected':''}>${esc(((u.nome||'')+' '+(u.cognome||'')).trim()||u.email)}</option>`
+        ).join('') || '<option value="" disabled>Nessun collega disponibile</option>';
     } catch(e) {
       console.warn('openWDModal utenti error:', e);
     }
@@ -6267,7 +6267,8 @@ function openWDFile(id) {
 
 function saveWD() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
-  const condivisi = document.getElementById('wd-condividi-sel')?.value ? [document.getElementById('wd-condividi-sel').value] : [];
+  const _selCond = document.getElementById('wd-condividi-sel');
+  const condivisi = _selCond ? [..._selCond.selectedOptions].map(o=>o.value).filter(Boolean) : [];
   const existing = WD_ID ? WD.find(x=>x.id===WD_ID) : null;
   const w = {
     id:        WD_ID||Date.now().toString(),

@@ -3892,7 +3892,7 @@ function renderTeam() {
           ${c.ind?`<div style="grid-column:1/-1"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Indirizzo</div><div style="font-weight:500;">${c.ind}</div></div>`:''}
           ${c.dinizio?`<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Data inizio</div><div style="font-weight:500;">${c.dinizio}</div></div>`:''}
         </div>
-        ${c.note?`<div style="background:var(--surf2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--txt2);margin-top:10px;"><i class="ti ti-notes" style="font-size:12px;vertical-align:-1px;margin-right:4px;"></i>${c.note}</div>`:''}
+        ${c.note?`<div style="background:var(--surf2);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--txt2);margin-top:10px;"><i class="ti ti-notes" style="font-size:12px;vertical-align:-1px;margin-right:4px;"></i>${esc(c.note)}</div>`:''}
       </div>
 
       <!-- TAB: Dati intermediario -->
@@ -3913,7 +3913,7 @@ function renderTeam() {
             <div>
               <span style="font-size:12px;font-weight:600;">${p.prodotto}</span>
               ${p.speciale?'<span style="font-size:10px;color:var(--acc);margin-left:6px;font-weight:700;"> Speciale</span>':''}
-              ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${p.note}</div>`:''}
+              ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${esc(p.note)}</div>`:''}
             </div>
             <span style="font-size:15px;font-weight:800;color:${p.speciale?'var(--acc)':'var(--txt)'};">${p.perc}%</span>
           </div>`).join('')}`
@@ -4383,7 +4383,7 @@ function renderStoricoCollab() {
             style="font-size:10px;padding:1px 5px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
         </div>
         <div style="font-size:11px;color:var(--txt3);">${s.tipo} · ${s.data}</div>
-        ${s.note?`<div style="font-size:12px;color:var(--txt2);margin-top:2px;">${s.note}</div>`:''}
+        ${s.note?`<div style="font-size:12px;color:var(--txt2);margin-top:2px;">${esc(s.note)}</div>`:''}
       </div>
     </div>`).join('') || '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna nota storico.</div>';
 }
@@ -4792,7 +4792,7 @@ function renderAgenda() {
   const mkList = (arr,label) => arr.length ? `<div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;">${label}</div>`+arr.map(a=>`
     <div class="row">
       <div class="rico ${a.data===oggi?'red':'blu'}"><i class="ti ti-calendar-event"></i></div>
-      <div class="rmain"><div class="rname">${a.titolo}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${a.note}</div>`:''}</div>
+      <div class="rmain"><div class="rname">${a.titolo}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${esc(a.note)}</div>`:''}</div>
       <div class="rright" style="display:flex;flex-direction:column;gap:4px;">
         <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
         <button onclick="delAgenda('${a.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
@@ -4935,7 +4935,7 @@ let MID = 0;
 function addBubble(role, html) {
   const d = document.createElement('div');
   d.className = 'cmsg '+role;
-  d.innerHTML = `<div class="clbl">${role==='user'?'Tu':'IAM AI'}</div><div class="cbubble">${html.replace(/\n/g,'<br>')}</div>`;
+  d.innerHTML = `<div class="clbl">${role==='user'?'Tu':'IAM AI'}</div><div class="cbubble">${escNl(html)}</div>`;
   document.getElementById('c-msgs').appendChild(d);
   document.getElementById('c-body').scrollTop = 99999;
 }
@@ -5813,7 +5813,7 @@ async function apriVisualizzaStorico(dataRif) {
         </div>
         ${data.note?`<div style="background:var(--amb-bg);border-radius:var(--rs);padding:10px 12px;margin-bottom:12px;">
           <div style="font-size:10px;color:var(--amb-txt);font-weight:600;text-transform:uppercase;margin-bottom:4px;">Note</div>
-          <div style="font-size:13px;">${data.note}</div>
+          <div style="font-size:13px;">${esc(data.note)}</div>
         </div>`:''}
         <button onclick="document.getElementById('st-view-overlay').remove();apriModificaStorico('${dataRif}')" style="width:100%;padding:12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;"><i class="ti ti-pencil"></i> Passa alla modifica</button>
       </div>
@@ -7427,7 +7427,7 @@ function renderCONSAP() {
           <span style="font-size:10px;font-weight:600;padding:1px 7px;border-radius:8px;background:var(--surf2);color:${tipoColor};margin-left:4px;">${p.tipo||'Nuovo'}</span>
         </div>
         <div style="font-size:11px;color:var(--txt2);">${p.produttore?' '+p.produttore+' · ':''}${p.importo?'€'+fmt(p.importo)+' · ':''} ${new Date(p.creato_il).toLocaleDateString('it-IT')}</div>
-        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"> ${p.note}</div>`:''}
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;"> ${esc(p.note)}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
         <button onclick="editCSPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
@@ -7492,7 +7492,7 @@ function openCSPosModal(editId) {
   document.getElementById('cs-pos-title').textContent = editId ? 'Modifica posizione CONSAP' : 'Nuova posizione CONSAP';
   loadTeam();
   const sel = document.getElementById('cs-p-prod');
-  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${esc(c.nome)} ${esc(c.cogn)}">${esc(c.nome)} ${esc(c.cogn)}</option>`).join('');
   if (editId) {
     const p = CS_POSIZIONI.find(x=>x.id===editId);
     if (p) {
@@ -7895,7 +7895,7 @@ function renderREList() {
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px;">
           ${p.data_stipula?`<span style="font-size:10px;color:var(--txt3);"><i class="ti ti-calendar" style="font-size:10px;vertical-align:-1px;"></i> ${new Date(p.data_stipula).toLocaleDateString('it-IT')}</span>`:''}
-          ${p.note?`<span style="font-size:11px;color:var(--txt3);"> ${p.note}</span>`:''}
+          ${p.note?`<span style="font-size:11px;color:var(--txt3);"> ${esc(p.note)}</span>`:''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
@@ -7913,7 +7913,7 @@ function openREPosModal(editId) {
   // Carica produttori
   loadTeam();
   const sel = document.getElementById('re-p-prod');
-  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' + TEAM.map(c=>`<option value="${esc(c.nome)} ${esc(c.cogn)}">${esc(c.nome)} ${esc(c.cogn)}</option>`).join('');
   if (editId) {
     const p = RE_POSIZIONI.find(x=>String(x.id)===String(editId));
     if (p) {
@@ -8011,7 +8011,7 @@ function openPosModal(tipo, titolo, showFrz, showTipoCS) {
   document.getElementById('pos-tipo-wrap').style.display = showTipoCS?'block':'none';
   loadTeam();
   const sel = document.getElementById('pos-prod');
-  if(sel) sel.innerHTML = '<option value="">— nessuno —</option>'+TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+  if(sel) sel.innerHTML = '<option value="">— nessuno —</option>'+TEAM.map(c=>`<option value="${esc(c.nome)} ${esc(c.cogn)}">${esc(c.nome)} ${esc(c.cogn)}</option>`).join('');
   document.getElementById('modal-pos').classList.add('show');
 }
 
@@ -8418,7 +8418,7 @@ function renderTCM() {
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;">${p.cliente}</div>
         <div style="font-size:11px;color:var(--txt2);">${p.produttore?' '+p.produttore+' · ':''}${p.prodotto?p.prodotto+' · ':''}<b style="color:var(--acc);">€${fmt(parseNum(p.importo))}</b></div>
-        ${p.note?`<div style="font-size:11px;color:var(--txt3);"> ${p.note}</div>`:''}
+        ${p.note?`<div style="font-size:11px;color:var(--txt3);"> ${esc(p.note)}</div>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
         <button onclick="editTCMPos(${p.id})" style="font-size:10px;padding:3px 8px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-pencil"></i></button>
@@ -8450,7 +8450,7 @@ function openTCMPosModal(editId) {
   loadTeam();
   const sel = document.getElementById('tcm-p-prod');
   if (sel) sel.innerHTML = '<option value="">— nessuno —</option>' +
-    TEAM.map(c=>`<option value="${c.nome} ${c.cogn}">${c.nome} ${c.cogn}</option>`).join('');
+    TEAM.map(c=>`<option value="${esc(c.nome)} ${esc(c.cogn)}">${esc(c.nome)} ${esc(c.cogn)}</option>`).join('');
 
   const p = editId ? TCM_POSIZIONI.find(x=>x.id===editId) : null;
 
@@ -8746,7 +8746,7 @@ async function renderHubList() {
             const medal = i===0?'':i===1?'':i===2?'':'';
             return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;">
               <span style="width:20px;text-align:center;">${medal||i+1}</span>
-              <span style="flex:1;font-weight:${i<3?'700':'400'};">${c.nome} ${c.cogn}</span>
+              <span style="flex:1;font-weight:${i<3?'700':'400'};">${esc(c.nome)} ${esc(c.cogn)}</span>
               <div style="width:80px;height:6px;background:var(--bord);border-radius:3px;overflow:hidden;"><div style="height:100%;background:${h.colore||'var(--acc)'};border-radius:3px;width:${perc}%;"></div></div>
               <span style="font-size:11px;color:var(--acc);font-weight:600;min-width:60px;text-align:right;">€${fmt(parseNum(c.port)||0)}</span>
             </div>`;
@@ -8785,7 +8785,7 @@ function apriClassificaHub(hubId) {
               border:${i===0?'1.5px solid '+hub.colore:'1px solid var(--bord)'};">
               <div style="font-size:24px;width:36px;text-align:center;">${medal||i+1}</div>
               <div style="flex:1;">
-                <div style="font-size:14px;font-weight:700;">${c.nome} ${c.cogn}</div>
+                <div style="font-size:14px;font-weight:700;">${esc(c.nome)} ${esc(c.cogn)}</div>
                 <div style="font-size:11px;color:var(--txt3);">${c.tipo||'—'} · ${gareVinte} gare raggiunte</div>
                 <div style="background:var(--bord);border-radius:3px;height:6px;margin-top:6px;overflow:hidden;">
                   <div style="height:100%;background:${hub.colore};border-radius:3px;width:${perc}%;transition:width .6s;"></div>

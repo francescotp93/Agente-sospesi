@@ -19,6 +19,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <style>
+@keyframes wdBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.7)}}
+.wd-blink-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#8b5cf6;vertical-align:middle;animation:wdBlink 1s infinite;box-shadow:0 0 5px #8b5cf6;}
 /* ── TEMA DARK (default) ── */
 body, body.theme-dark {
   --bg:#0A0A0F;--surf:#13131A;--surf2:#1C1C26;--surf3:#252533;
@@ -973,8 +975,8 @@ input[type=file]{display:none;}
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
   <div style="display:flex;gap:8px;padding:10px 12px 0;">
-    <button id="wd-tab-lista" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
-    <button id="wd-tab-cal" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Calendario</button>
+    <button id="wd-tab-lista" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
+    <button id="wd-tab-cal" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Calendario</button>
   </div>
   <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
@@ -988,6 +990,7 @@ input[type=file]{display:none;}
         <option value="reclutamento">Reclutamento</option>
         <option value="formazione">Formazione</option>
         <option value="obiettivo">Obiettivo</option>
+        <option value="preventivi">Preventivi</option>
         <option value="altro">Altro</option>
       </select>
       <select id="wd-stato" onchange="renderWD()" style="padding:6px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
@@ -1036,6 +1039,7 @@ input[type=file]{display:none;}
             <option value="reclutamento">Reclutamento</option>
             <option value="formazione">Formazione</option>
             <option value="obiettivo">Obiettivo</option>
+            <option value="preventivi">Preventivi</option>
             <option value="altro">Altro</option>
           </select>
         </div>
@@ -2741,7 +2745,7 @@ function goTab(t) {
   // FAB AI sempre visibile tranne quando l'overlay è aperto
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
-  if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('lista'); renderWDCal(); }); subscribeWD(); }
+  if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
   if (t === 'performance') { loadPerf(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
@@ -6008,6 +6012,7 @@ const WD_TIPI = {
   reclutamento: {lbl:'Reclutamento', ic:'ti-user-plus',  c:'var(--grn-txt)', bg:'var(--grn-bg)'},
   formazione:   {lbl:'Formazione',   ic:'ti-school',     c:'var(--amb-txt)', bg:'var(--amb-bg)'},
   obiettivo:    {lbl:'Obiettivo',    ic:'ti-target',     c:'var(--acc)',        bg:'rgba(var(--acc-rgb),.1)'},
+  preventivi:   {lbl:'Preventivi',   ic:'ti-file-text',  c:'#8b5cf6',        bg:'rgba(139,92,246,.12)'},
   altro:        {lbl:'Altro',        ic:'ti-note',       c:'var(--txt2)',    bg:'var(--surf2)'}
 };
 
@@ -6087,7 +6092,7 @@ function renderWD() {
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span style="font-size:13px;font-weight:600;${w.stato==='completato'?'text-decoration:line-through;opacity:.65;':''}">${esc(w.titolo)||'—'}</span>
-            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>
+            <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>${w.tipo==='preventivi'?'<span class="wd-blink-dot" title="Preventivi"></span>':''}
             ${w.stato==='completato'?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);font-weight:600;">✓</span>':''}
             ${inRitardo?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">IN RITARDO</span>':''}
             ${isOggi?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(var(--acc-rgb),.14);color:var(--acc);font-weight:700;">OGGI</span>':''}
@@ -6391,7 +6396,7 @@ function showWDDay(ds) {
     return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;${isComp?'opacity:.5;':''}" onclick="openWDModal('${w.id}')">
       <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${esc(w.titolo)}</div>
+        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${esc(w.titolo)}${w.tipo==='preventivi'?' <span class="wd-blink-dot" title="Preventivi"></span>':''}</div>
         <div style="font-size:11px;color:var(--txt2);">${w.ora||''}${w.prior==='urgente'?' · ⚡ Urgente':w.prior==='alta'?' · Alta':''}</div>
       </div>
       <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>

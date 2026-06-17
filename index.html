@@ -3694,6 +3694,16 @@ function saveFattureStore(store) {
   }
 }
 function getFattureCollab(id) { return loadFattureStore()[String(id)] || []; }
+function getFattureMerged(id, dbFatture) {
+  const local = getFattureCollab(id);
+  if (!dbFatture || !dbFatture.length) return local;
+  const byId = {}; (local||[]).forEach(f => { byId[String(f.id)] = f; });
+  // Le note/importi/stato arrivano dal DB (sincronizzati ovunque); il file allegato resta locale se presente
+  return dbFatture.map(f => {
+    const lf = byId[String(f.id)];
+    return {...f, file: (lf && lf.file && lf.file.data) ? lf.file : (f.file || null)};
+  });
+}
 function mergeTeamFatture(list) {
   const store = loadFattureStore();
   return (list||[]).map(c => ({...c, fatture: store[String(c.id)] || c.fatture || []}));
@@ -3734,7 +3744,7 @@ async function loadTeamDB() {
         retention:      c.retention      || 0,
         gare_collab:    c.gare_collab    || [],
         storico_collab: c.storico_collab || [],
-        fatture:         getFattureCollab(c.id),
+        fatture:         getFattureMerged(c.id, c.fatture),
         hub_id:         c.hub_id         || null,
       }));
       saveTeam(); // cache locale
@@ -3777,6 +3787,7 @@ async function saveTeamDB(c) {
       retention:      c.retention      || 0,
       gare_collab:    c.gare_collab    || [],
       storico_collab: c.storico_collab || [],
+      fatture:        (c.fatture||[]).map(f => ({...f, file: f.file ? { nome:f.file.nome, tipo:f.file.tipo } : null})),
       hub_id:         c.hub_id         || null,
       creato_da:    ME?.id     || null,
       aggiornato_il: new Date().toISOString(),
@@ -5681,6 +5692,12 @@ function persistFattureCollaboratore() {
   if (idx < 0) return;
   TEAM[idx].fatture = fatture;
   saveTeam();
+  // Sincronizza le note/dati delle fatture sul database (il file allegato resta locale)
+  if (db) {
+    const dbFatture = fatture.map(f => ({...f, file: f.file ? { nome:f.file.nome, tipo:f.file.tipo } : null}));
+    db.from('iam_team').update({ fatture: dbFatture, aggiornato_il: new Date().toISOString() }).eq('id', TEAM_ID)
+      .then(({ error }) => { if (error) console.warn('persistFattureCollaboratore DB:', error.message); });
+  }
 }
 
 function renderFattureCollab() {

@@ -3748,6 +3748,21 @@ async function loadTeamDB() {
         hub_id:         c.hub_id         || null,
       }));
       saveTeam(); // cache locale
+      // Migrazione: porta sul DB le fatture rimaste solo in locale (inserite prima del fix)
+      (async () => {
+        try {
+          for (const row of data) {
+            const local = getFattureCollab(row.id);
+            if (!local.length) continue;
+            const dbIds = new Set((row.fatture || []).map(f => String(f.id)));
+            if (!local.some(f => !dbIds.has(String(f.id)))) continue; // niente di nuovo da sincronizzare
+            const byId = {};
+            (row.fatture || []).forEach(f => { byId[String(f.id)] = f; });
+            local.forEach(f => { byId[String(f.id)] = {...f, file: f.file ? { nome:f.file.nome, tipo:f.file.tipo } : null}; });
+            await db.from('iam_team').update({ fatture: Object.values(byId) }).eq('id', row.id);
+          }
+        } catch (e) { console.warn('sync fatture locali:', e); }
+      })();
     } else {
       loadTeam(); // fallback localStorage
     }

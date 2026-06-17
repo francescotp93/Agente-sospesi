@@ -1374,12 +1374,14 @@ input[type=file]{display:none;}
           <div style="background:var(--grn-bg);border-radius:var(--rs);padding:10px 12px;text-align:center;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--grn-txt);letter-spacing:.5px;margin-bottom:4px;"> Target</div>
             <div style="font-size:22px;font-weight:800;color:var(--grn-txt);" id="re-count-target">0</div>
-            <div style="font-size:11px;color:var(--grn-txt);" id="re-val-target">€0,00</div>
+            <div style="font-size:11px;color:var(--grn-txt);"><span id="re-val-target">€0,00</span> <span style="opacity:.65;">val. polizza</span></div>
+            <div style="font-size:11px;color:var(--grn-txt);"><span id="re-inc-target">€0,00</span> <span style="opacity:.65;">incassato</span></div>
           </div>
           <div style="background:var(--surf2);border-radius:var(--rs);padding:10px 12px;text-align:center;border:.5px solid var(--bord);">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--txt3);letter-spacing:.5px;margin-bottom:4px;">○ No Target</div>
             <div style="font-size:22px;font-weight:800;" id="re-count-notarget">0</div>
-            <div style="font-size:11px;color:var(--txt3);" id="re-val-notarget">€0,00</div>
+            <div style="font-size:11px;color:var(--txt3);"><span id="re-val-notarget">€0,00</span> <span style="opacity:.65;">val. polizza</span></div>
+            <div style="font-size:11px;color:var(--txt3);"><span id="re-inc-notarget">€0,00</span> <span style="opacity:.65;">incassato</span></div>
           </div>
         </div>
       </div>
@@ -2740,7 +2742,7 @@ function goTab(t) {
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('lista'); renderWDCal(); }); subscribeWD(); }
-  if (t === 'performance') { loadPerf(); selPerfTab('gare'); loadREFromDB(); }
+  if (t === 'performance') { loadPerf(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'quoto') {
@@ -6911,8 +6913,8 @@ function aggiungiSezioneAz() {
 
 
 let PERF = { gare_re_pezzi:[], gare_rca:[], gare_finanziati:[], gare_cross:[], gare_rinnovi:[], cs:[], re:[] };
-let PERF_CUR = 'gare';
-let GARA_CUR = 're_pezzi';
+let PERF_CUR = localStorage.getItem('iam_perf_tab') || 'gare';
+let GARA_CUR = localStorage.getItem('iam_gara_tab') || 're_pezzi';
 
 function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||'{"gare_re_pezzi":[],"gare_rca":[],"gare_finanziati":[],"gare_cross":[],"gare_rinnovi":[],"cs":[],"re":[]}'); } catch(e){ PERF={gare_re_pezzi:[],gare_rca:[],gare_finanziati:[],gare_cross:[],gare_rinnovi:[],cs:[],re:[]}; } }
 function savePerf() { localStorage.setItem('iam_perf', JSON.stringify(PERF)); }
@@ -6923,6 +6925,7 @@ function selPerfTab(t) {
     const btn = document.getElementById('pt-'+x); if(btn) btn.classList.toggle('act', x===t);
   });
   PERF_CUR = t;
+  try { localStorage.setItem('iam_perf_tab', t); } catch(e) {}
 
   // Controllo permessi per operativi
   if (PROFILO?.ruolo === 'collaboratore') {
@@ -6943,6 +6946,7 @@ function selPerfTab(t) {
 
 function selGaraTab(g) {
   GARA_CUR = g;
+  try { localStorage.setItem('iam_gara_tab', g); } catch(e) {}
   const tabs = ['re_pezzi','rca','finanziati','cross','rinnovi'];
   tabs.forEach(x => {
     const el = document.getElementById('gp-'+x); if(el) el.style.display = x===g?'block':'none';
@@ -7789,11 +7793,16 @@ function renderRE() {
   // Contatori
   const cntTarget   = RE_POSIZIONI.filter(p=>p.is_target).length;
   const cntNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).length;
+  // Incassato = somma delle rate effettivamente pagate (premio netto); Valore polizza = annuo (rata × frazionamento)
+  const incTarget   = RE_POSIZIONI.filter(p=>p.is_target).reduce((a,p)=>a+parseNum(p.premio_netto||0),0);
+  const incNoTarget = RE_POSIZIONI.filter(p=>!p.is_target).reduce((a,p)=>a+parseNum(p.premio_netto||0),0);
   const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.innerHTML = val; };
   setEl('re-count-target',   cntTarget);
   setEl('re-val-target',     '€'+fmt(totTarget));
+  setEl('re-inc-target',     '€'+fmt(incTarget));
   setEl('re-count-notarget', cntNoTarget);
   setEl('re-val-notarget',   '€'+fmt(totNoTarget));
+  setEl('re-inc-notarget',   '€'+fmt(incNoTarget));
 
   renderREList();
   renderREByProduttore();
@@ -7999,19 +8008,20 @@ async function saveREPos() {
   };
   if (!db) return;
   try {
-    let error;
+    let error, data;
     if (RE_EDIT_ID) {
-      ({ error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID));
+      ({ data, error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID).select());
     } else {
       payload.creato_da = ME?.id;
-      ({ error } = await db.from('iam_kpi_re_posizioni').insert(payload));
+      ({ data, error } = await db.from('iam_kpi_re_posizioni').insert(payload).select());
     }
     if (error && String(error.message||'').includes('premio_annuo')) {
       delete payload.premio_annuo;
-      if (RE_EDIT_ID) ({ error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID));
-      else ({ error } = await db.from('iam_kpi_re_posizioni').insert(payload));
+      if (RE_EDIT_ID) ({ data, error } = await db.from('iam_kpi_re_posizioni').update(payload).eq('id', RE_EDIT_ID).select());
+      else ({ data, error } = await db.from('iam_kpi_re_posizioni').insert(payload).select());
     }
     if (error) throw error;
+    if (RE_EDIT_ID && (!data || !data.length)) { alert('Modifica non salvata: permessi insufficienti sul database. Esegui lo script "permessi KPI" e riprova.'); return; }
     // Salva anche config (volume anno prec)
     await saveREConfig();
     closeModal('modal-re-pos');
@@ -8025,7 +8035,9 @@ async function delREPos(id) {
   if (!confirm('Eliminare questa posizione? Operazione non reversibile.')) return;
   if (!db) return;
   try {
-    await db.from('iam_kpi_re_posizioni').delete().eq('id', id);
+    const { data, error } = await db.from('iam_kpi_re_posizioni').delete().eq('id', id).select();
+    if (error) throw error;
+    if (!data || !data.length) { alert('Pratica non eliminata: permessi insufficienti sul database. Esegui lo script "permessi KPI" e riprova.'); return; }
     await loadREFromDB();
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }

@@ -5868,8 +5868,8 @@ function mfaForgetDevice(uid){
 async function mfaVerifiedFactor(){
   try {
     const { data } = await db.auth.mfa.listFactors();
-    const list = (data && (data.totp || [])) || [];
-    return list.find(f => f.status === 'verified') || null;
+    const arr = [ ...((data && data.totp) || []), ...((data && data.all) || []) ];
+    return arr.find(f => (f.factor_type === 'totp' || !f.factor_type) && f.status === 'verified') || null;
   } catch(e){ return null; }
 }
 async function mfaCleanupUnverified(){
@@ -5885,13 +5885,13 @@ async function mfaCleanupUnverified(){
 }
 // Gate al login: chiede il codice se la 2FA è attiva e il dispositivo non è ricordato.
 async function mfaLoginGate(uid){
-  let aal;
-  try { aal = (await db.auth.mfa.getAuthenticatorAssuranceLevel()).data; } catch(e){ return true; }
-  if (!aal || aal.currentLevel !== 'aal1' || aal.nextLevel !== 'aal2') return true;
-  if (mfaDeviceTrusted(uid)) return true;
-  const factor = await mfaVerifiedFactor();
-  if (!factor) return true;
-  return await mfaPromptCode(factor.id, uid, true);
+  let currentLevel = 'aal1';
+  try { const aal = (await db.auth.mfa.getAuthenticatorAssuranceLevel()).data; if (aal && aal.currentLevel) currentLevel = aal.currentLevel; } catch(e){}
+  if (currentLevel === 'aal2') return true;          // 2FA già superata in questa sessione
+  const factor = await mfaVerifiedFactor();           // l'utente ha un TOTP verificato? (query al server)
+  if (!factor) return true;                           // nessuna 2FA attiva → entra
+  if (mfaDeviceTrusted(uid)) return true;             // dispositivo ricordato per 30 giorni
+  return await mfaPromptCode(factor.id, uid, true);   // chiedi il codice
 }
 function mfaPromptCode(factorId, uid, allowTrust){
   return new Promise((resolve) => {

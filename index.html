@@ -3030,7 +3030,7 @@ function parseContoSheet(ws) {
     if (!operazione && !importo) continue;
     const data = fmtDate(dataRaw);
     movs.push({
-      id: `${data}|${operazione}|${importo}|${i}`,
+      id: `${data}|${importo}|${i}`, // id senza testo: evita caratteri speciali che rompono le caselle di spunta
       data, operazione,
       desc: dettagli || operazione,
       dare:  importo < 0 ? -importo : 0,
@@ -3765,8 +3765,8 @@ function renderConto() {
       <div class="rmain" style="display:grid;gap:6px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
           <div style="min-width:0;">
-            <div class="rname" style="font-size:12px;">${m.operazione||'Bonifico'}</div>
-            <div class="rsub">${m.data}${m.desc&&m.desc!==m.operazione?' · '+m.desc:''} · ${confermato?'Bonifico flaggato':'Da abbinare'}</div>
+            <div class="rname" style="font-size:12px;">${esc(m.operazione)||'Bonifico'}</div>
+            <div class="rsub">${esc(m.data)}${m.desc&&m.desc!==m.operazione?' · '+esc(m.desc):''} · ${confermato?'Bonifico flaggato':'Da abbinare'}</div>
           </div>
           <div class="ramt" style="color:var(--grn);font-size:16px;white-space:nowrap;">+€${fmt(importoBonifico)}</div>
         </div>

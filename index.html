@@ -736,6 +736,7 @@ input[type=file]{display:none;}
           <div><div class="ublbl">Estratto conto HDI</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-hdi" style="display:none"></div></div>
         </button>
         <input type="file" id="f-hdi" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'hdi')">
+        <button onclick="resetConto('hdi')" style="margin-top:6px;padding:6px 12px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-trash" style="vertical-align:-2px;"></i> Svuota estratto HDI</button>
       </div>
     </div>
     <div id="cu-pluri" style="display:none;">
@@ -745,6 +746,7 @@ input[type=file]{display:none;}
           <div><div class="ublbl">Estratto conto Plurimandato</div><div class="ubsub">Data, Descrizione, Dare, Avere, Saldo</div><div class="ubok" id="ok-pluri" style="display:none"></div></div>
         </button>
         <input type="file" id="f-pluri" accept=".xlsx,.xls,.csv" onchange="loadConto(this,'pluri')">
+        <button onclick="resetConto('pluri')" style="margin-top:6px;padding:6px 12px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-trash" style="vertical-align:-2px;"></i> Svuota estratto Plurimandato</button>
       </div>
     </div>
     <div id="co-empty" class="empty"><i class="ti ti-building-bank"></i><p>Carica l'estratto conto</p></div>
@@ -3072,6 +3074,20 @@ function loadConto(inp, tipo) {
     if (APP.loaded) buildDashboard();
   };
   r.readAsArrayBuffer(file);
+}
+
+async function resetConto(tipo) {
+  const lbl = tipo === 'hdi' ? 'HDI' : 'Plurimandato';
+  if (!confirm('Svuotare l\'estratto ' + lbl + '?\nVerranno rimossi movimenti, spunte e note caricati (anche per gli altri utenti).')) return;
+  APP.conto[tipo].movimenti = [];
+  APP.conto[tipo].bonif = {};
+  APP.conto[tipo].abb = {};
+  try { localStorage.removeItem('iam_conto_'+tipo); localStorage.removeItem('iam_bonif_'+tipo); localStorage.removeItem('iam_abb_'+tipo); } catch(e) {}
+  const f = document.getElementById('f-'+tipo); if (f) f.value = '';
+  const okEl = document.getElementById('ok-'+tipo); if (okEl) { okEl.textContent = ''; okEl.style.display = 'none'; }
+  if (db) { try { await db.from('iam_conto').upsert({ tipo, movimenti: [], bonif: {}, aggiornato_il: new Date().toISOString() }); } catch(e) { console.warn('resetConto DB:', e.message||e); } }
+  renderConto();
+  if (APP.loaded) buildDashboard();
 }
 
 // ─── ANALISI ──────────────────────────────────────────────────────────────────

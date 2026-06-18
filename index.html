@@ -2503,8 +2503,8 @@ async function loadLastSession() {
       const contabSub = ['anomalie','sospesi','storico','conto'];
       if (contabSub.includes(lastTab)) {
         goTab('carica'); selContabTab(lastTab);
-      } else if (lastTab === 'ai') {
-        goTab('dashboard'); // AI è overlay, non tab
+      } else if (lastTab === 'ai' || lastTab === 'quoto') {
+        goTab('dashboard');
       } else {
         goTab(lastTab);
       }
@@ -2677,13 +2677,6 @@ function goTab(t) {
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'quoto') {
     const app = document.getElementById('app');
-    const showPanel = () => {
-      document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('act'));
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('act'));
-      document.getElementById('nb-quoto')?.classList.add('act');
-      document.getElementById('panel-quoto')?.classList.add('act');
-      sessionStorage.setItem('iam_last_tab', 'quoto');
-    };
     if (app) {
       app.style.transition = 'all .3s ease';
       app.style.filter = 'brightness(2) saturate(3)';
@@ -2693,12 +2686,10 @@ function goTab(t) {
         app.style.transform = 'scale(.98)';
       }, 150);
       setTimeout(() => {
-        app.style.filter = '';
-        app.style.transform = '';
-        showPanel();
+        window.location.href = 'https://francescotp93.github.io/QUOTE/';
       }, 400);
     } else {
-      showPanel();
+      window.location.href = 'https://francescotp93.github.io/QUOTE/';
       // unused fallback
     }
     return;

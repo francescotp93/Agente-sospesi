@@ -111,6 +111,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .nbtn:hover{background:var(--surf2);color:var(--txt2);}
 .nbtn.act{color:#fff;background:var(--acc);font-weight:700;box-shadow:0 4px 12px rgba(var(--acc-rgb),.4);}
 .nbtn.act::after{display:none;}
+.nbtn-badge{position:absolute;top:2px;right:8px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e53935;color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center;box-shadow:0 0 0 2px var(--surf);animation:badgePulse 2s ease-in-out infinite;}
+@keyframes badgePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
 /* ── LAB OVERLAY ──────────────────────────────────────────────────────── */
 #lab-overlay{position:fixed;inset:0;background:#04080F;z-index:9999;display:none;overflow:hidden;}
 #lab-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
@@ -586,6 +588,7 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-posta" onclick="openPosta()" style="display:none;">
     <i class="ti ti-mail"></i>
     <span>Posta</span>
+    <span id="posta-badge" class="nbtn-badge" style="display:none;"></span>
   </button>
 </div>
 
@@ -5302,7 +5305,11 @@ function applicaPermessi(ruolo) {
   const btnQuoto = document.getElementById('nb-quoto');
   if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
   const btnPosta = document.getElementById('nb-posta');
-  if (btnPosta) btnPosta.style.display = (isSuperAdmin() || (PROFILO?.mail_caselle && String(PROFILO.mail_caselle).trim())) ? 'flex' : 'none';
+  if (btnPosta) {
+    const haPosta = (isSuperAdmin() || (PROFILO?.mail_caselle && String(PROFILO.mail_caselle).trim()));
+    btnPosta.style.display = haPosta ? 'flex' : 'none';
+    if (haPosta && typeof mailStartBadgePolling === 'function') mailStartBadgePolling();
+  }
 }
 
 function mostraBadgeRuolo() {
@@ -6077,6 +6084,24 @@ async function mailFetch(path, opts){
   if (!res.ok) throw new Error((body && body.error) || ('Errore ' + res.status));
   return body;
 }
+// ── Pallino notifiche: mail non lette in arrivo ─────────────────────────────────
+let MAIL_BADGE_TIMER = null;
+function mailSetBadge(n){
+  const b = document.getElementById('posta-badge'); if (!b) return;
+  if (n > 0){ b.textContent = n > 99 ? '99+' : String(n); b.style.display = 'block'; }
+  else b.style.display = 'none';
+}
+async function mailRefreshBadge(){
+  const btn = document.getElementById('nb-posta');
+  if (!btn || btn.style.display === 'none') return; // solo se l'utente ha accesso alla posta
+  try { const r = await mailFetch('/mail/unread'); mailSetBadge((r && r.total) || 0); }
+  catch(_){ /* silenzioso: niente errori in faccia all'utente */ }
+}
+function mailStartBadgePolling(){
+  mailRefreshBadge();
+  if (MAIL_BADGE_TIMER) clearInterval(MAIL_BADGE_TIMER);
+  MAIL_BADGE_TIMER = setInterval(mailRefreshBadge, 120000); // ogni 2 minuti
+}
 function mailFirma(){
   if (PROFILO && PROFILO.firma && PROFILO.firma.trim()) return PROFILO.firma;
   const ls = localStorage.getItem('iam_firma'); if (ls) return ls;
@@ -6222,6 +6247,7 @@ async function mailLoad(folder){
     const { messages } = await mailFetch('/mail/list?folder=' + encodeURIComponent(folder) + '&limit=50&casella=' + encodeURIComponent(MAIL_CASELLA));
     MAIL_MSGS = messages;
     renderMailList('');
+    if (folder === 'inbox') mailRefreshBadge();
   } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
 }
 function renderMailList(filter){
@@ -6283,6 +6309,7 @@ async function openMessage(uid, folder){
     const rb = document.getElementById('msg-reply');
     if (rb) rb.onclick = () => composeMail({ to: from.address || '', subject: 'Re: ' + (m.subject || '') });
     (m.attachments || []).forEach((a,i) => { if ((a.contentType || '').indexOf('image/') === 0) mailLoadThumb(uid, folder, i); });
+    if (folder === 'inbox') mailRefreshBadge(); // il messaggio è stato marcato come letto
   } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
 }
 const MAIL_ATT_CACHE = {};

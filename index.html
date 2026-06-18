@@ -6005,6 +6005,27 @@ async function disattiva2FA(factorId){
 // ═══════════════════════════════════════════════════════════════════════════════
 const MAIL_API = 'https://withus-backend-o0ux.onrender.com';
 const MAIL_CASELLA = 'amministrazione@withusassicurazioni.it';
+// Logo aziendale (carica withus-logo.png nella root del repo Agente-sospesi → servito da iam.withusassicurazioni.it)
+const MAIL_LOGO_URL = 'https://iam.withusassicurazioni.it/withus-logo.png';
+// Blocco aziendale FISSO, sempre incluso in fondo a ogni email.
+const MAIL_FOOTER_HTML = `
+<div style="border-top:1px solid #e6e6e6;margin-top:18px;padding-top:12px;font-family:Arial,Helvetica,sans-serif;">
+  <img src="${MAIL_LOGO_URL}" alt="withus — Intermediario Assicurativo" style="height:54px;display:block;margin-bottom:8px;">
+  <div style="font-size:12px;color:#444;line-height:1.5;">
+    <b>Sede operativa:</b> Via Cofano 76 — 91100 Trapani (TP)<br>
+    Tel. 0923 1963896 &nbsp;·&nbsp; WhatsApp <a href="https://wa.me/393791761426" style="color:#00a24a;text-decoration:none;">+39 379 1761426</a><br>
+    withus è una società di intermediazione assicurativa iscritta al RUI <b>A000747484</b>.
+  </div>
+  <div style="font-size:10px;color:#999;line-height:1.4;margin-top:10px;max-width:640px;">
+    <b>ATTENZIONE: Privacy Policy - D.Lgs. 196/2003</b><br>
+    Le informazioni contenute in questo messaggio di posta elettronica sono di carattere privato e confidenziale ed esclusivamente rivolte al destinatario sopra indicato. Nel caso aveste ricevuto questo messaggio di posta elettronica per errore, vi comunichiamo che ai sensi di Legge è vietato l'uso, la diffusione, distribuzione o riproduzione da parte di ogni altra persona. Siete pregati di segnalarlo immediatamente, rispondendo al mittente e distruggere quanto ricevuto (compresi i file allegati) senza farne copia o leggerne il contenuto. Grazie.
+  </div>
+</div>`;
+const MAIL_FOOTER_TEXT = '\n\n--\nSede operativa: Via Cofano 76 — 91100 Trapani (TP)\nTel. 0923 1963896 · WhatsApp +39 379 1761426\nwithus è una società di intermediazione assicurativa iscritta al RUI A000747484.\n\nATTENZIONE: Privacy Policy - D.Lgs. 196/2003 — Le informazioni contenute in questo messaggio sono di carattere privato e confidenziale ed esclusivamente rivolte al destinatario. Se ricevuto per errore, è vietato usarlo/diffonderlo: segnalatelo al mittente e distruggetelo. Grazie.';
+function mailBodyToHtml(text){
+  const safe = esc(text).replace(/\n/g, '<br>');
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222;line-height:1.5;">${safe}</div>${MAIL_FOOTER_HTML}`;
+}
 async function mailToken(){ try { const { data } = await db.auth.getSession(); return (data && data.session && data.session.access_token) || null; } catch(e){ return null; } }
 async function mailFetch(path, opts){
   opts = opts || {};
@@ -6117,7 +6138,7 @@ function composeMail(prefill){
     const err = document.getElementById('cm-err');
     if (!to || !subject) { err.textContent = 'Inserisci destinatario e oggetto.'; return; }
     err.textContent = 'Invio in corso…';
-    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, text }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
+    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
     catch(e) { err.textContent = 'Errore invio: ' + e.message; }
   };
 }

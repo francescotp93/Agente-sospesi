@@ -2661,6 +2661,7 @@ function selContabTab(sub) {
   });
   sessionStorage.setItem('iam_last_tab', sub);
   if (sub==='storico') buildStorico();
+  if (sub==='conto') loadContoDB(); // ricarica estratto + note condivise dal database
 }
 
 async function caricaDatiPerData(dataSelezionata) {
@@ -2998,8 +2999,8 @@ function parseContoSheet(ws) {
   const findCol = names => { const set = names.map(nk); return H.findIndex(h => set.includes(h)); };
   const c = {
     data:      findCol(['Data','Data contabile','Data operazione','Data valuta']),
-    operaz:    findCol(['Operazione','Descrizione']),
-    dettagli:  findCol(['Dettagli','Descrizione estesa','Causale']),
+    operaz:    findCol(['Operazione','Descrizione estesa','Descrizione']),
+    dettagli:  findCol(['Dettagli','Descrizione','Causale']),
     descr:     findCol(['Descrizione']),
     importo:   findCol(['Importo']),
     accrediti: findCol(['Accrediti','Avere','Entrate','Entrata']),

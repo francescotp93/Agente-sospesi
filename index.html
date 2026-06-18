@@ -6075,6 +6075,8 @@ function openPosta(){
       <div style="width:218px;flex-shrink:0;border-right:1px solid var(--bord);padding:14px 12px 14px 0;overflow:auto;background:var(--surf);">
         <button onclick="composeMail()" style="display:flex;align-items:center;gap:10px;width:calc(100% - 12px);margin-left:12px;padding:13px 20px;background:var(--acc);color:#fff;border:none;border-radius:26px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(var(--acc-rgb),.35);margin-bottom:16px;"><i class="ti ti-pencil" style="font-size:18px;"></i> Scrivi</button>
         ${MAIL_FOLDERS.map(f => `<button id="mf-${f.key}" onclick="mailLoad('${f.key}')" style="display:flex;align-items:center;gap:13px;width:100%;padding:10px 16px;border:none;border-radius:0 22px 22px 0;background:transparent;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;margin-bottom:2px;"><i class="ti ${f.icon}" style="font-size:18px;"></i> ${f.label}</button>`).join('')}
+        <div style="height:1px;background:var(--bord);margin:10px 12px 8px 16px;"></div>
+        <button id="mf-gruppi" onclick="mailOpenGruppi()" style="display:flex;align-items:center;gap:13px;width:100%;padding:10px 16px;border:none;border-radius:0 22px 22px 0;background:transparent;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;"><i class="ti ti-users-group" style="font-size:18px;"></i> Gruppi</button>
       </div>
       <div id="posta-body" style="flex:1;overflow:auto;min-width:0;"></div>
     </div>`;
@@ -6096,6 +6098,70 @@ function mailFolderTabs(active){
     b.style.color = on ? 'var(--acc)' : 'var(--txt2)';
     b.style.fontWeight = on ? '800' : '600';
   });
+  const gb = document.getElementById('mf-gruppi');
+  if (gb) { const on = active === 'gruppi'; gb.style.background = on ? 'rgba(var(--acc-rgb),.14)' : 'transparent'; gb.style.color = on ? 'var(--acc)' : 'var(--txt2)'; gb.style.fontWeight = on ? '800' : '600'; }
+}
+// ── Gruppi email (gestione dalla barra laterale) ────────────────────────────────
+function mailOpenGruppi(){ mailFolderTabs('gruppi'); mailRenderGruppi(); }
+function mailRenderGruppi(){
+  const body = document.getElementById('posta-body'); if (!body) return;
+  const gruppi = cmGruppi();
+  body.innerHTML = `<div style="max-width:740px;margin:0 auto;padding:18px 16px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <i class="ti ti-users-group" style="font-size:22px;color:var(--acc);"></i>
+      <div style="font-size:18px;font-weight:800;">Gruppi email</div>
+      <div style="flex:1;"></div>
+      <button onclick="mailGruppoForm()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-plus"></i> Nuovo gruppo</button>
+    </div>
+    ${gruppi.length ? gruppi.map(g => `<div style="border:1px solid var(--bord);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surf);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <i class="ti ti-users-group" style="color:var(--acc);"></i>
+        <div style="font-weight:700;">${esc(g.nome)}</div>
+        <div style="font-size:12px;color:var(--txt3);">${(g.indirizzi||'').split(',').filter(Boolean).length} indirizzi</div>
+        <div style="flex:1;"></div>
+        <button onclick='composeMail({to:${JSON.stringify(g.indirizzi||'')}})' title="Scrivi al gruppo" style="padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;"><i class="ti ti-pencil"></i></button>
+        <button onclick='mailGruppoForm(${JSON.stringify(g.nome)})' title="Modifica" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);"><i class="ti ti-edit"></i></button>
+        <button onclick='mailGruppoDelete(${JSON.stringify(g.nome)})' title="Elimina" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--red);"><i class="ti ti-trash"></i></button>
+      </div>
+      <div style="font-size:12px;color:var(--txt2);margin-top:8px;word-break:break-word;">${esc(g.indirizzi||'')}</div>
+    </div>`).join('') : '<div style="text-align:center;color:var(--txt3);padding:40px;">Nessun gruppo ancora. Crea il primo con "Nuovo gruppo".</div>'}
+  </div>`;
+}
+function mailGruppoForm(nome){
+  const g = nome ? cmGruppi().find(x => x.nome === nome) : null;
+  const id = 'gruppo-ov'; document.getElementById(id)?.remove();
+  const ov = document.createElement('div'); ov.id = id;
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;';
+  ov.innerHTML = `<div style="background:var(--surf);border-radius:14px;width:100%;max-width:520px;padding:18px;">
+    <div style="font-weight:800;font-size:15px;margin-bottom:14px;">${g ? 'Modifica gruppo' : 'Nuovo gruppo'}</div>
+    <div class="fld" style="margin-bottom:10px;"><label>Nome del gruppo</label><input id="gr-nome" type="text" value="${esc(g ? g.nome : '')}" placeholder="es. Collaboratori"></div>
+    <div class="fld" style="margin-bottom:10px;"><label>Indirizzi (separati da virgola o a capo)</label><textarea id="gr-ind" rows="5" style="font-family:inherit;resize:vertical;">${esc(g ? g.indirizzi : '')}</textarea></div>
+    <div id="gr-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button onclick="document.getElementById('${id}').remove()" style="padding:10px 16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;">Annulla</button>
+      <button onclick='mailGruppoSave(${JSON.stringify(nome || '')})' style="padding:10px 18px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('gr-nome')?.focus(), 80);
+}
+function mailGruppoSave(oldNome){
+  const nome = (document.getElementById('gr-nome')?.value || '').trim();
+  let ind = (document.getElementById('gr-ind')?.value || '').trim();
+  const err = document.getElementById('gr-err');
+  if (!nome) { if (err) err.textContent = 'Inserisci un nome.'; return; }
+  ind = ind.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean).join(', ');
+  if (!ind) { if (err) err.textContent = 'Inserisci almeno un indirizzo.'; return; }
+  const gruppi = cmGruppi();
+  const g = gruppi.find(x => x.nome === (oldNome || nome));
+  if (g) { g.nome = nome; g.indirizzi = ind; } else gruppi.push({ nome, indirizzi: ind });
+  localStorage.setItem('iam_mail_gruppi', JSON.stringify(gruppi));
+  document.getElementById('gruppo-ov')?.remove();
+  mailRenderGruppi();
+}
+function mailGruppoDelete(nome){
+  if (!confirm('Eliminare il gruppo "' + nome + '"?')) return;
+  localStorage.setItem('iam_mail_gruppi', JSON.stringify(cmGruppi().filter(g => g.nome !== nome)));
+  mailRenderGruppi();
 }
 function mailAvatarColor(s){
   const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#0ea5e9'];

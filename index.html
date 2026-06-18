@@ -6052,25 +6052,31 @@ const MAIL_FOLDERS = [
   { key:'junk',   label:'Spam',            icon:'ti-alert-triangle' },
   { key:'trash',  label:'Cestino',         icon:'ti-trash' },
 ];
+let MAIL_MSGS = [];
 function openPosta(){
   document.getElementById('posta-ov')?.remove();
   const ov = document.createElement('div');
   ov.id = 'posta-ov';
   ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg,var(--surf));display:flex;flex-direction:column;font-family:inherit;';
   ov.innerHTML = `
-    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bord2);background:var(--surf);">
-      <i class="ti ti-mail" style="font-size:22px;color:var(--acc);"></i>
-      <div style="font-weight:800;font-size:16px;">Posta</div>
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--bord2);background:var(--surf);">
+      <i class="ti ti-mail" style="font-size:24px;color:var(--acc);"></i>
+      <div style="font-weight:800;font-size:17px;">Posta</div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--surf2);border:1px solid var(--bord2);border-radius:24px;padding:7px 14px;flex:1;max-width:520px;margin:0 10px;">
+        <i class="ti ti-search" style="font-size:16px;color:var(--txt3);"></i>
+        <input id="mail-search" placeholder="Cerca nella posta" oninput="renderMailList(this.value)" style="border:none;background:transparent;outline:none;flex:1;font-size:13.5px;color:var(--txt);font-family:inherit;">
+      </div>
       <div style="font-size:12px;color:var(--txt3);">${MAIL_CASELLA}</div>
-      <div style="flex:1;"></div>
-      <button onclick="composeMail()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Scrivi</button>
-      <button onclick="mailLoad(MAIL_FOLDER)" title="Aggiorna" style="padding:9px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-refresh"></i></button>
-      <button onclick="document.getElementById('posta-ov').remove()" title="Chiudi" style="padding:9px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
+      <button onclick="mailLoad(MAIL_FOLDER)" title="Aggiorna" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-refresh"></i></button>
+      <button onclick="document.getElementById('posta-ov').remove()" title="Chiudi" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
     </div>
-    <div style="display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--bord);overflow-x:auto;background:var(--surf);">
-      ${MAIL_FOLDERS.map(f => `<button id="mf-${f.key}" onclick="mailLoad('${f.key}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border:1px solid var(--bord2);border-radius:20px;background:var(--surf2);color:var(--txt2);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;"><i class="ti ${f.icon}"></i> ${f.label}</button>`).join('')}
-    </div>
-    <div id="posta-body" style="flex:1;overflow:auto;"></div>`;
+    <div style="flex:1;display:flex;min-height:0;">
+      <div style="width:218px;flex-shrink:0;border-right:1px solid var(--bord);padding:14px 12px 14px 0;overflow:auto;background:var(--surf);">
+        <button onclick="composeMail()" style="display:flex;align-items:center;gap:10px;width:calc(100% - 12px);margin-left:12px;padding:13px 20px;background:var(--acc);color:#fff;border:none;border-radius:26px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(var(--acc-rgb),.35);margin-bottom:16px;"><i class="ti ti-pencil" style="font-size:18px;"></i> Scrivi</button>
+        ${MAIL_FOLDERS.map(f => `<button id="mf-${f.key}" onclick="mailLoad('${f.key}')" style="display:flex;align-items:center;gap:13px;width:100%;padding:10px 16px;border:none;border-radius:0 22px 22px 0;background:transparent;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;margin-bottom:2px;"><i class="ti ${f.icon}" style="font-size:18px;"></i> ${f.label}</button>`).join('')}
+      </div>
+      <div id="posta-body" style="flex:1;overflow:auto;min-width:0;"></div>
+    </div>`;
   document.body.appendChild(ov);
   mailLoad('inbox');
 }
@@ -6078,33 +6084,58 @@ function mailFolderTabs(active){
   MAIL_FOLDERS.forEach(f => {
     const b = document.getElementById('mf-' + f.key); if (!b) return;
     const on = f.key === active;
-    b.style.background = on ? 'var(--acc)' : 'var(--surf2)';
-    b.style.color = on ? '#fff' : 'var(--txt2)';
-    b.style.borderColor = on ? 'var(--acc)' : 'var(--bord2)';
+    b.style.background = on ? 'rgba(var(--acc-rgb),.14)' : 'transparent';
+    b.style.color = on ? 'var(--acc)' : 'var(--txt2)';
+    b.style.fontWeight = on ? '800' : '600';
   });
+}
+function mailAvatarColor(s){
+  const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#0ea5e9'];
+  let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return colors[h % colors.length];
+}
+function mailDate(dt){
+  const d = new Date(dt), now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+  if (d.getFullYear() === now.getFullYear()) return d.toLocaleDateString('it-IT', { day:'2-digit', month:'short' });
+  return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 async function mailLoad(folder){
   MAIL_FOLDER = folder; mailFolderTabs(folder);
   const body = document.getElementById('posta-body'); if (!body) return;
-  body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Carico…<br><span style="font-size:12px;">(al primo accesso il server può metterci qualche secondo a svegliarsi)</span></div>';
+  body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:50px;">Carico…<br><span style="font-size:12px;">(al primo accesso il server può metterci qualche secondo a svegliarsi)</span></div>';
+  const si = document.getElementById('mail-search'); if (si) si.value = '';
   try {
-    const { messages } = await mailFetch('/mail/list?folder=' + encodeURIComponent(folder) + '&limit=40');
-    if (!messages.length) { body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Nessun messaggio.</div>'; return; }
-    const showTo = (folder === 'sent' || folder === 'drafts');
-    body.innerHTML = messages.map(m => {
-      const who = showTo ? ((m.to && m.to[0]) || {}) : ((m.from && m.from[0]) || {});
-      const d = m.date ? new Date(m.date).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-      const ini = esc(((who.name || who.address || '?')[0] || '?').toUpperCase());
-      const label = (showTo ? 'A: ' : '') + (who.name || who.address || '');
-      return `<div onclick="openMessage(${m.uid},'${folder}')" style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bord);cursor:pointer;${m.seen ? '' : 'background:rgba(var(--acc-rgb),.05);'}">
-        <div style="width:36px;height:36px;border-radius:50%;background:rgba(var(--acc-rgb),.12);color:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${ini}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;gap:8px;"><div style="font-weight:${m.seen?'600':'800'};font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(label)}</div><div style="font-size:11px;color:var(--txt3);flex-shrink:0;">${d}</div></div>
-          <div style="font-size:13px;font-weight:${m.seen?'500':'700'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.subject)}</div>
-        </div>
-      </div>`;
-    }).join('');
+    const { messages } = await mailFetch('/mail/list?folder=' + encodeURIComponent(folder) + '&limit=50');
+    MAIL_MSGS = messages;
+    renderMailList('');
   } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
+}
+function renderMailList(filter){
+  const body = document.getElementById('posta-body'); if (!body) return;
+  const folder = MAIL_FOLDER, showTo = (folder === 'sent' || folder === 'drafts');
+  const q = (filter || '').toLowerCase().trim();
+  let list = MAIL_MSGS;
+  if (q) list = list.filter(m => {
+    const who = (showTo ? (m.to && m.to[0]) : (m.from && m.from[0])) || {};
+    return (m.subject || '').toLowerCase().includes(q) || (who.name || '').toLowerCase().includes(q) || (who.address || '').toLowerCase().includes(q);
+  });
+  if (!list.length) { body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:50px;">' + (q ? 'Nessun risultato.' : 'Nessun messaggio.') + '</div>'; return; }
+  body.innerHTML = list.map(m => {
+    const who = (showTo ? (m.to && m.to[0]) : (m.from && m.from[0])) || {};
+    const nm = who.name || who.address || '';
+    const d = m.date ? mailDate(m.date) : '';
+    const ini = esc((nm[0] || '?').toUpperCase());
+    const col = mailAvatarColor(nm || '?');
+    return `<div onclick="openMessage(${m.uid},'${folder}')" style="display:flex;gap:13px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--bord);cursor:pointer;${m.seen ? '' : 'background:rgba(var(--acc-rgb),.05);'}" onmouseover="this.style.background='rgba(var(--acc-rgb),.09)'" onmouseout="this.style.background='${m.seen ? 'transparent' : 'rgba(var(--acc-rgb),.05)'}'">
+      <div style="width:38px;height:38px;border-radius:50%;background:${col};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${ini}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;gap:8px;align-items:baseline;"><div style="font-weight:${m.seen?'600':'800'};font-size:13.5px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt);">${showTo ? 'A: ' : ''}${esc(nm)}</div><div style="font-size:11px;color:var(--txt3);flex-shrink:0;">${d}</div></div>
+        <div style="font-size:13px;font-weight:${m.seen?'400':'700'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${m.seen?'var(--txt2)':'var(--txt)'};">${esc(m.subject)}</div>
+      </div>
+      ${m.seen ? '' : '<div style="width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0;"></div>'}
+    </div>`;
+  }).join('');
 }
 async function openMessage(uid, folder){
   folder = folder || MAIL_FOLDER || 'inbox';

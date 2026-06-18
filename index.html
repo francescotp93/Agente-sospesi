@@ -6004,7 +6004,8 @@ async function disattiva2FA(factorId){
 //  POSTA — client di posta dentro IAM (usa il backend withus-backend)
 // ═══════════════════════════════════════════════════════════════════════════════
 const MAIL_API = 'https://withus-backend-o0ux.onrender.com';
-const MAIL_CASELLA = 'amministrazione@withusassicurazioni.it';
+let MAIL_CASELLA = 'amministrazione@withusassicurazioni.it';
+let MAIL_ACCOUNTS_LIST = [];
 // Logo aziendale (carica withus-logo.png nella root del repo Agente-sospesi → servito da iam.withusassicurazioni.it)
 const MAIL_LOGO_URL = 'https://iam.withusassicurazioni.it/withus-logo.png';
 // Blocco aziendale FISSO, sempre incluso in fondo a ogni email.
@@ -6066,7 +6067,7 @@ function openPosta(){
         <i class="ti ti-search" style="font-size:16px;color:var(--txt3);"></i>
         <input id="mail-search" placeholder="Cerca nella posta" oninput="renderMailList(this.value)" style="border:none;background:transparent;outline:none;flex:1;font-size:13.5px;color:var(--txt);font-family:inherit;">
       </div>
-      <div style="font-size:12px;color:var(--txt3);">${MAIL_CASELLA}</div>
+      <select id="mail-casella" onchange="mailSwitchCasella(this.value)" title="Casella" style="background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:6px 10px;font-size:12.5px;color:var(--txt);font-family:inherit;cursor:pointer;max-width:240px;"><option>${MAIL_CASELLA}</option></select>
       <button onclick="mailLoad(MAIL_FOLDER)" title="Aggiorna" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-refresh"></i></button>
       <button onclick="document.getElementById('posta-ov').remove()" title="Chiudi" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
     </div>
@@ -6079,7 +6080,14 @@ function openPosta(){
     </div>`;
   document.body.appendChild(ov);
   mailLoad('inbox');
+  mailFetch('/mail/accounts').then(r => { MAIL_ACCOUNTS_LIST = r.accounts || []; mailRenderCaselle(); }).catch(() => {});
 }
+function mailRenderCaselle(){
+  const sel = document.getElementById('mail-casella'); if (!sel || !MAIL_ACCOUNTS_LIST.length) return;
+  if (!MAIL_ACCOUNTS_LIST.includes(MAIL_CASELLA)) MAIL_CASELLA = MAIL_ACCOUNTS_LIST[0];
+  sel.innerHTML = MAIL_ACCOUNTS_LIST.map(a => `<option value="${esc(a)}" ${a === MAIL_CASELLA ? 'selected' : ''}>${esc(a)}</option>`).join('');
+}
+function mailSwitchCasella(email){ MAIL_CASELLA = email; mailLoad('inbox'); }
 function mailFolderTabs(active){
   MAIL_FOLDERS.forEach(f => {
     const b = document.getElementById('mf-' + f.key); if (!b) return;
@@ -6106,7 +6114,7 @@ async function mailLoad(folder){
   body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:50px;">Carico…<br><span style="font-size:12px;">(al primo accesso il server può metterci qualche secondo a svegliarsi)</span></div>';
   const si = document.getElementById('mail-search'); if (si) si.value = '';
   try {
-    const { messages } = await mailFetch('/mail/list?folder=' + encodeURIComponent(folder) + '&limit=50');
+    const { messages } = await mailFetch('/mail/list?folder=' + encodeURIComponent(folder) + '&limit=50&casella=' + encodeURIComponent(MAIL_CASELLA));
     MAIL_MSGS = messages;
     renderMailList('');
   } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
@@ -6142,7 +6150,7 @@ async function openMessage(uid, folder){
   const body = document.getElementById('posta-body'); if (!body) return;
   body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Apro il messaggio…</div>';
   try {
-    const m = await mailFetch('/mail/message/' + uid + '?folder=' + encodeURIComponent(folder));
+    const m = await mailFetch('/mail/message/' + uid + '?folder=' + encodeURIComponent(folder) + '&casella=' + encodeURIComponent(MAIL_CASELLA));
     const from = (m.from && m.from[0]) || {};
     const toList = (m.to || []).map(x => esc(x.name || x.address || '')).join(', ');
     const d = m.date ? new Date(m.date).toLocaleString('it-IT') : '';
@@ -6195,7 +6203,7 @@ function composeMail(prefill){
     const err = document.getElementById('cm-err');
     if (!to || !subject) { err.textContent = 'Inserisci destinatario e oggetto.'; return; }
     err.textContent = 'Invio in corso…';
-    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
+    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
     catch(e) { err.textContent = 'Errore invio: ' + e.message; }
   };
 }

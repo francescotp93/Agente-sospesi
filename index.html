@@ -2979,33 +2979,94 @@ async function loadContoDB() {
   } catch(e) { console.warn('loadContoDB:', e.message||e); }
 }
 
+// Trova automaticamente la riga di intestazione (le banche mettono metadati sopra)
+// e mappa le colonne dei formati più comuni (HDI, Plurimandato, ecc.)
+function parseContoSheet(ws) {
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
+  const nk = s => normKey(s);
+  const AMT = ['importo','accrediti','addebiti','dare','avere','entrate','uscite','entrata','uscita'];
+  const DESCH = ['operazione','descrizione','dettagli','causale'];
+  let hi = -1, H = [];
+  for (let i = 0; i < Math.min(rows.length, 80); i++) {
+    const cells = (rows[i] || []).map(nk);
+    const hasData = cells.some(c => c.startsWith('data'));
+    const hasAmt  = cells.some(c => AMT.includes(c));
+    const hasDesc = cells.some(c => DESCH.includes(c));
+    if (hasData && hasAmt && hasDesc) { hi = i; H = cells; break; }
+  }
+  if (hi < 0) return null; // intestazione non trovata
+  const findCol = names => { const set = names.map(nk); return H.findIndex(h => set.includes(h)); };
+  const c = {
+    data:      findCol(['Data','Data contabile','Data operazione','Data valuta']),
+    operaz:    findCol(['Operazione','Descrizione']),
+    dettagli:  findCol(['Dettagli','Descrizione estesa','Causale']),
+    descr:     findCol(['Descrizione']),
+    importo:   findCol(['Importo']),
+    accrediti: findCol(['Accrediti','Avere','Entrate','Entrata']),
+    addebiti:  findCol(['Addebiti','Dare','Uscite','Uscita']),
+    saldo:     findCol(['Saldo']),
+  };
+  const get = (r, idx) => (idx >= 0 && r[idx] != null) ? r[idx] : '';
+  const movs = [];
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i] || [];
+    const dataRaw = get(r, c.data);
+    if (dataRaw === '' || dataRaw == null) continue; // salta righe vuote / saldi
+    const operazione = String(get(r, c.operaz) || get(r, c.descr) || '').trim();
+    const dettagli   = String(get(r, c.dettagli) || '').trim();
+    let importo = parseNum(get(r, c.importo));
+    if (!importo && (c.accrediti >= 0 || c.addebiti >= 0)) {
+      const acc = parseNum(get(r, c.accrediti));
+      const add = parseNum(get(r, c.addebiti));
+      importo = acc > 0 ? acc : (add > 0 ? -add : 0);
+    }
+    if (!operazione && !importo) continue;
+    const data = fmtDate(dataRaw);
+    movs.push({
+      id: `${data}|${operazione}|${importo}|${i}`,
+      data, operazione,
+      desc: dettagli || operazione,
+      dare:  importo < 0 ? -importo : 0,
+      avere: importo > 0 ?  importo : 0,
+      importo,
+      saldo: parseNum(get(r, c.saldo)),
+    });
+  }
+  return movs;
+}
+
 function loadConto(inp, tipo) {
   const file = inp.files[0]; if (!file) return;
   const r = new FileReader();
   r.onload = e => {
     const wb = XLSX.read(e.target.result, {type:'array', raw:true});
     const ws = wb.Sheets[wb.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
-    APP.conto[tipo].movimenti = data.map((row, i) => {
-      const operazione = rowVal(row, ['Operazione','Tipo operazione','Tipo','Movimento','Causale ABI']);
-      const importo = parseNum(rowVal(row, ['Importo','Importo EUR','Importo (EUR)','Importo €','Importo in EUR']));
-      const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata','Entrate','Accrediti','Accredito']));
-      return {
-        id: contoMovId(row, i),
-        data: fmtDate(rowVal(row, ['Data','Data operazione','Data contabile','Data valuta']) || ''),
-        operazione,
-        desc: rowVal(row, ['Descrizione','Descrizione operazione','Causale','Dettagli','Note operazione']) || operazione || '',
-        dare:  parseNum(rowVal(row, ['Dare','Uscita','Uscite','Addebiti','Addebito'])),
-        avere,
-        importo,
-        saldo: parseNum(rowVal(row, ['Saldo'])),
-      };
-    });
-    try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e){ APP.conto[tipo].bonif = {}; }
+    let movs = parseContoSheet(ws);
+    if (!movs) {
+      // fallback: intestazione già in prima riga
+      const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
+      movs = data.map((row, i) => {
+        const operazione = rowVal(row, ['Operazione','Tipo operazione','Tipo','Movimento','Causale ABI']);
+        const importo = parseNum(rowVal(row, ['Importo','Importo EUR','Importo (EUR)','Importo €','Importo in EUR']));
+        const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata','Entrate','Accrediti','Accredito']));
+        return {
+          id: contoMovId(row, i),
+          data: fmtDate(rowVal(row, ['Data','Data operazione','Data contabile','Data valuta']) || ''),
+          operazione,
+          desc: rowVal(row, ['Descrizione','Descrizione operazione','Causale','Dettagli','Note operazione']) || operazione || '',
+          dare:  parseNum(rowVal(row, ['Dare','Uscita','Uscite','Addebiti','Addebito'])),
+          avere, importo,
+          saldo: parseNum(rowVal(row, ['Saldo'])),
+        };
+      });
+    }
+    if (!movs.length) { alert('Non sono riuscito a leggere i movimenti da questo file. Controlla che sia l\'estratto conto in Excel.'); return; }
+    APP.conto[tipo].movimenti = movs;
+    APP.conto[tipo].bonif = APP.conto[tipo].bonif || {}; // mantiene spunte/note già sincronizzate
     saveContoCache(tipo);
     saveContoDB(tipo); // condividi estratto + spunte/note sul database
     const okEl = document.getElementById('ok-'+tipo);
-    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + data.length + ' mov.)'; okEl.style.display = 'block'; }
+    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + movs.length + ' mov.)'; okEl.style.display = 'block'; }
     renderConto();
     if (APP.loaded) buildDashboard();
   };
@@ -3613,9 +3674,9 @@ function selConto(tipo) {
 }
 
 function isBonificoInEntrata(m) {
-  const operazione = String(m.operazione || m.desc || '').toLowerCase();
+  const testo = (String(m.operazione || '') + ' ' + String(m.desc || '')).toLowerCase();
   const importo = Number(m.importo !== undefined ? m.importo : m.avere) || 0;
-  return operazione.includes('bonifico') && importo > 0;
+  return testo.includes('bonifico') && importo > 0;
 }
 
 function renderConto() {

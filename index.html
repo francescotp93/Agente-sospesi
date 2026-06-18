@@ -2971,11 +2971,15 @@ async function loadContoDB() {
     (data||[]).forEach(row => {
       const tipo = row.tipo;
       if (!APP.conto[tipo]) return;
-      if (Array.isArray(row.movimenti) && row.movimenti.length) APP.conto[tipo].movimenti = row.movimenti;
-      if (row.bonif && typeof row.bonif === 'object') APP.conto[tipo].bonif = row.bonif;
+      // Il database è la fonte condivisa: applico sempre il suo stato (anche se svuotato)
+      APP.conto[tipo].movimenti = Array.isArray(row.movimenti) ? row.movimenti : [];
+      APP.conto[tipo].bonif = (row.bonif && typeof row.bonif === 'object') ? row.bonif : {};
       saveContoCache(tipo); // aggiorna cache locale
       const okEl = document.getElementById('ok-'+tipo);
-      if (okEl && APP.conto[tipo].movimenti.length) { okEl.textContent = 'Estratto conto condiviso (' + APP.conto[tipo].movimenti.length + ' mov.)'; okEl.style.display = 'block'; }
+      if (okEl) {
+        if (APP.conto[tipo].movimenti.length) { okEl.textContent = 'Estratto conto condiviso (' + APP.conto[tipo].movimenti.length + ' mov.)'; okEl.style.display = 'block'; }
+        else { okEl.textContent = ''; okEl.style.display = 'none'; }
+      }
     });
     if (typeof renderConto === 'function') renderConto();
     if (APP.loaded) buildDashboard();

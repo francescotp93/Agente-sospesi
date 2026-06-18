@@ -113,6 +113,17 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .nbtn.act::after{display:none;}
 .nbtn-badge{position:absolute;top:2px;right:8px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#e53935;color:#fff;font-size:10px;font-weight:700;line-height:17px;text-align:center;box-shadow:0 0 0 2px var(--surf);animation:badgePulse 2s ease-in-out infinite;}
 @keyframes badgePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+/* Posta: barra laterale richiudibile */
+.posta-wrap{flex:1;display:flex;min-height:0;position:relative;}
+.posta-side{width:218px;flex-shrink:0;border-right:1px solid var(--bord);padding:14px 12px 14px 0;overflow:auto;background:var(--surf);transition:margin-left .25s ease,transform .25s ease;}
+.posta-side-bd{display:none;}
+#posta-ov.side-closed .posta-side{margin-left:-232px;}
+@media(max-width:760px){
+  .posta-side{position:absolute;top:0;left:0;bottom:0;z-index:30;margin-left:0;box-shadow:3px 0 18px rgba(0,0,0,.32);}
+  #posta-ov.side-closed .posta-side{transform:translateX(-105%);margin-left:0;}
+  .posta-side-bd{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:20;}
+  #posta-ov:not(.side-closed) .posta-side-bd{display:block;}
+}
 /* ── LAB OVERLAY ──────────────────────────────────────────────────────── */
 #lab-overlay{position:fixed;inset:0;background:#04080F;z-index:9999;display:none;overflow:hidden;}
 #lab-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
@@ -6125,6 +6136,7 @@ function openPosta(){
   ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg,var(--surf));display:flex;flex-direction:column;font-family:inherit;';
   ov.innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--bord2);background:var(--surf);">
+      <button onclick="mailToggleSide()" title="Mostra/nascondi menu" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-menu-2"></i></button>
       <i class="ti ti-mail" style="font-size:24px;color:var(--acc);"></i>
       <div style="font-weight:800;font-size:17px;">Posta</div>
       <div style="display:flex;align-items:center;gap:8px;background:var(--surf2);border:1px solid var(--bord2);border-radius:24px;padding:7px 14px;flex:1;max-width:520px;margin:0 10px;">
@@ -6135,8 +6147,9 @@ function openPosta(){
       <button onclick="mailLoad(MAIL_FOLDER)" title="Aggiorna" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-refresh"></i></button>
       <button onclick="document.getElementById('posta-ov').remove()" title="Chiudi" style="padding:8px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
     </div>
-    <div style="flex:1;display:flex;min-height:0;">
-      <div style="width:218px;flex-shrink:0;border-right:1px solid var(--bord);padding:14px 12px 14px 0;overflow:auto;background:var(--surf);">
+    <div class="posta-wrap">
+      <div id="posta-side-bd" class="posta-side-bd" onclick="mailToggleSide(false)"></div>
+      <div id="posta-side" class="posta-side">
         <button onclick="composeMail()" style="display:flex;align-items:center;gap:10px;width:calc(100% - 12px);margin-left:12px;padding:13px 20px;background:var(--acc);color:#fff;border:none;border-radius:26px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(var(--acc-rgb),.35);margin-bottom:16px;"><i class="ti ti-pencil" style="font-size:18px;"></i> Scrivi</button>
         ${MAIL_FOLDERS.map(f => `<button id="mf-${f.key}" onclick="mailLoad('${f.key}')" style="display:flex;align-items:center;gap:13px;width:100%;padding:10px 16px;border:none;border-radius:0 22px 22px 0;background:transparent;color:var(--txt2);font-size:13.5px;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;margin-bottom:2px;"><i class="ti ${f.icon}" style="font-size:18px;"></i> ${f.label}</button>`).join('')}
         <div style="height:1px;background:var(--bord);margin:10px 12px 8px 16px;"></div>
@@ -6145,9 +6158,17 @@ function openPosta(){
       <div id="posta-body" style="flex:1;overflow:auto;min-width:0;"></div>
     </div>`;
   document.body.appendChild(ov);
+  if (window.innerWidth <= 760) ov.classList.add('side-closed'); // su smartphone parte richiusa
   mailLoad('inbox');
   mailFetch('/mail/accounts').then(r => { MAIL_ACCOUNTS_LIST = r.accounts || []; mailRenderCaselle(); }).catch(() => {});
 }
+// Apre/chiude la barra laterale (a scomparsa su smartphone). open omesso = inverte.
+function mailToggleSide(open){
+  const ov = document.getElementById('posta-ov'); if (!ov) return;
+  if (open === undefined) open = ov.classList.contains('side-closed');
+  ov.classList.toggle('side-closed', !open);
+}
+function mailAutoCloseSide(){ if (window.innerWidth <= 760) mailToggleSide(false); }
 function mailRenderCaselle(){
   const sel = document.getElementById('mail-casella'); if (!sel || !MAIL_ACCOUNTS_LIST.length) return;
   if (!MAIL_ACCOUNTS_LIST.includes(MAIL_CASELLA)) MAIL_CASELLA = MAIL_ACCOUNTS_LIST[0];
@@ -6166,7 +6187,7 @@ function mailFolderTabs(active){
   if (gb) { const on = active === 'gruppi'; gb.style.background = on ? 'rgba(var(--acc-rgb),.14)' : 'transparent'; gb.style.color = on ? 'var(--acc)' : 'var(--txt2)'; gb.style.fontWeight = on ? '800' : '600'; }
 }
 // ── Gruppi email (gestione dalla barra laterale) ────────────────────────────────
-function mailOpenGruppi(){ mailFolderTabs('gruppi'); mailRenderGruppi(); }
+function mailOpenGruppi(){ mailFolderTabs('gruppi'); mailRenderGruppi(); mailAutoCloseSide(); }
 function mailRenderGruppi(){
   const body = document.getElementById('posta-body'); if (!body) return;
   const gruppi = cmGruppi();
@@ -6239,7 +6260,7 @@ function mailDate(dt){
   return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'2-digit' });
 }
 async function mailLoad(folder){
-  MAIL_FOLDER = folder; mailFolderTabs(folder);
+  MAIL_FOLDER = folder; mailFolderTabs(folder); mailAutoCloseSide();
   const body = document.getElementById('posta-body'); if (!body) return;
   body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:50px;">Carico…<br><span style="font-size:12px;">(al primo accesso il server può metterci qualche secondo a svegliarsi)</span></div>';
   const si = document.getElementById('mail-search'); if (si) si.value = '';

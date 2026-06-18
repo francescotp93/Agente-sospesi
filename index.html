@@ -5475,6 +5475,7 @@ async function renderUtenti() {
         ${canEdit && !isSA ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<label class="sw-row" title="Accesso a IAM">IAM <span class="sw"><input type="checkbox" ${iamOn?'checked':''} onchange="toggleIamAccess('${u.id}',${iamOn})"><span class="sl"></span></span></label>` : ''}
         ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">QUOTO <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
+        ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="setRui('${u.id}')" title="N. iscrizione RUI (usato da Quoto per la rimessa)" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">RUI ${u.rui?esc(u.rui):'—'}</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5494,6 +5495,7 @@ function apriNuovoUtente() {
           <div class="fld"><label>Cognome</label><input type="text" id="nu-cogn" placeholder="Rossi"></div>
           <div class="fld"><label>Ruolo</label><select id="nu-ruolo">${ruoloOpts}</select></div>
           <div class="fld"><label>Password temporanea</label><input type="text" id="nu-pass" placeholder="min. 6 caratteri" value="IAM${Math.random().toString(36).slice(2,8).toUpperCase()}"></div>
+          <div class="fld"><label>N. iscrizione RUI <span style="color:var(--txt3);font-weight:400;">(per emissione/rimessa in Quoto)</span></label><input type="text" id="nu-rui" placeholder="A000000000"></div>
           <div id="nu-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
           <div style="display:flex;gap:8px;">
             <button onclick="creaNuovoUtente()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Crea utente</button>
@@ -5511,6 +5513,7 @@ async function creaNuovoUtente() {
   const cogn  = document.getElementById('nu-cogn')?.value.trim();
   const ruolo = document.getElementById('nu-ruolo')?.value;
   const pass  = document.getElementById('nu-pass')?.value.trim();
+  const rui   = document.getElementById('nu-rui')?.value.trim() || null;
   const err   = document.getElementById('nu-err');
   if (!email || !pass || pass.length < 6) { if(err) err.textContent='Email e password obbligatorie (min 6 car.)'; return; }
   if(err) err.textContent = 'Creazione in corso...';
@@ -5527,7 +5530,7 @@ async function creaNuovoUtente() {
     // Pre-inserisci profilo in iam_utenti con ruolo corretto
     // Quando l'utente conferma l'email e fa login, il profilo esiste già
     const profiloNuovo = {
-      id: userId, email, nome, cognome: cogn,
+      id: userId, email, nome, cognome: cogn, rui,
       ruolo: dbRuolo(ruolo), attivo: true, creato_da: ME?.id,
       accesso_iam: true, accesso_quoto: false
     };
@@ -5613,6 +5616,18 @@ async function toggleQuotoAccess(userId, attuale) {
     if (userId === ME?.id && PROFILO) { PROFILO.accesso_quoto = !attuale; applicaPermessi(PROFILO.ruolo); }
     await renderUtenti();
   } catch(e) { alert('Errore salvataggio accesso QUOTO: '+(e.message||e)); await renderUtenti(); }
+}
+
+async function setRui(userId) {
+  const u = UTENTI_LISTA.find(x => x.id === userId); if (!u) return;
+  const val = prompt('N. iscrizione RUI per ' + (u.nome || u.email || 'utente') + ':', u.rui || '');
+  if (val === null) return;
+  try {
+    const { error } = await db.from('iam_utenti').update({ rui: val.trim() || null }).eq('id', userId);
+    if (error) throw error;
+    if (userId === ME?.id && PROFILO) PROFILO.rui = val.trim() || null;
+    await renderUtenti();
+  } catch(e) { alert('Errore salvataggio RUI: ' + (e.message || e) + '\n\n(Serve la colonna "rui" su iam_utenti in Supabase.)'); }
 }
 
 async function toggleIamAccess(userId, attuale) {

@@ -6204,6 +6204,23 @@ async function mailLoadThumb(uid, folder, index){
   } catch(e){}
 }
 let MAIL_ATTACH = [];
+function cmToggle(which){ const w = document.getElementById('cm-' + which + '-wrap'); if (!w) return; w.style.display = w.style.display === 'none' ? '' : 'none'; const inp = w.querySelector('input'); if (inp && w.style.display !== 'none') inp.focus(); }
+function cmGruppi(){ try { return JSON.parse(localStorage.getItem('iam_mail_gruppi') || '[]'); } catch(e){ return []; } }
+function cmGruppiOptions(){ return cmGruppi().map(g => `<option value="${esc(g.nome)}">${esc(g.nome)} (${(g.indirizzi||'').split(',').filter(Boolean).length})</option>`).join(''); }
+function cmInsertGruppo(nome){ if (!nome) return; const g = cmGruppi().find(x => x.nome === nome); if (!g) return; const to = document.getElementById('cm-to'); const cur = to.value.trim().replace(/,\s*$/, ''); to.value = cur ? (cur + ', ' + g.indirizzi) : g.indirizzi; }
+function cmSalvaGruppo(){
+  const to = (document.getElementById('cm-to')?.value || '').trim();
+  const cc = (document.getElementById('cm-cc')?.value || '').trim();
+  const indirizzi = [to, cc].filter(Boolean).join(', ').replace(/\s+/g, ' ').trim();
+  if (!indirizzi) { alert('Inserisci prima i destinatari da salvare nel gruppo.'); return; }
+  const nome = prompt('Nome del gruppo (es. Collaboratori):'); if (!nome) return;
+  const gruppi = cmGruppi(); const ex = gruppi.find(g => g.nome === nome);
+  if (ex) ex.indirizzi = indirizzi; else gruppi.push({ nome, indirizzi });
+  localStorage.setItem('iam_mail_gruppi', JSON.stringify(gruppi));
+  const sel = document.getElementById('cm-gruppi'); if (sel) sel.innerHTML = '<option value="">Gruppi…</option>' + cmGruppiOptions();
+  alert('Gruppo "' + nome + '" salvato.');
+}
+function cmSchedLabel(){ const b = document.getElementById('cm-send'); const v = document.getElementById('cm-sched')?.value; if (b) b.innerHTML = v ? '<i class="ti ti-clock"></i> Programma' : '<i class="ti ti-send"></i> Invia'; }
 function composeMail(prefill){
   prefill = prefill || {};
   MAIL_ATTACH = [];
@@ -6214,9 +6231,20 @@ function composeMail(prefill){
   ov.innerHTML = `<div style="background:var(--surf);border-radius:14px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
     <div style="padding:14px 16px;border-bottom:1px solid var(--bord2);font-weight:800;display:flex;align-items:center;gap:8px;"><i class="ti ti-pencil" style="color:var(--acc);"></i> Nuovo messaggio</div>
     <div style="padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px;">
-      <div class="fld"><label>A</label><input id="cm-to" type="email" placeholder="destinatario@email.com" value="${esc(prefill.to || '')}"></div>
+      <div class="fld"><label>A <span style="color:var(--txt3);font-weight:400;">(più indirizzi separati da virgola)</span></label><input id="cm-to" type="text" placeholder="dest1@email.com, dest2@email.com" value="${esc(prefill.to || '')}"></div>
+      <div style="display:flex;gap:14px;align-items:center;font-size:12px;flex-wrap:wrap;margin-top:-4px;">
+        <a onclick="cmToggle('cc')" style="color:var(--acc);cursor:pointer;font-weight:600;">Cc</a>
+        <a onclick="cmToggle('ccn')" style="color:var(--acc);cursor:pointer;font-weight:600;">Ccn</a>
+        <a onclick="cmToggle('sched')" style="color:var(--acc);cursor:pointer;font-weight:600;"><i class="ti ti-clock"></i> Programma</a>
+        <span style="flex:1;"></span>
+        <select id="cm-gruppi" onchange="cmInsertGruppo(this.value); this.value='';" style="background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:4px 8px;font-size:12px;color:var(--txt);font-family:inherit;cursor:pointer;"><option value="">Gruppi…</option>${cmGruppiOptions()}</select>
+        <a onclick="cmSalvaGruppo()" style="color:var(--acc);cursor:pointer;font-weight:600;">Salva gruppo</a>
+      </div>
+      <div class="fld" id="cm-cc-wrap" style="display:none;"><label>Cc</label><input id="cm-cc" type="text" placeholder="in copia (separati da virgola)"></div>
+      <div class="fld" id="cm-ccn-wrap" style="display:none;"><label>Ccn — copia nascosta</label><input id="cm-ccn" type="text" placeholder="copia nascosta (separati da virgola)"></div>
+      <div class="fld" id="cm-sched-wrap" style="display:none;"><label>Programma invio</label><input id="cm-sched" type="datetime-local" onchange="cmSchedLabel()" style="font-family:inherit;"></div>
       <div class="fld"><label>Oggetto</label><input id="cm-sub" type="text" value="${esc(prefill.subject || '')}"></div>
-      <div class="fld"><label>Messaggio</label><textarea id="cm-body" rows="10" style="resize:vertical;font-family:inherit;"></textarea></div>
+      <div class="fld"><label>Messaggio</label><textarea id="cm-body" rows="9" style="resize:vertical;font-family:inherit;"></textarea></div>
       <div id="cm-attach" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       <div id="cm-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
       <input type="file" id="cm-file" multiple style="display:none;" onchange="mailAttachAdd(this.files); this.value='';">
@@ -6233,14 +6261,24 @@ function composeMail(prefill){
   setTimeout(() => document.getElementById('cm-to')?.focus(), 80);
   document.getElementById('cm-send').onclick = async () => {
     const to = document.getElementById('cm-to').value.trim();
+    const cc = (document.getElementById('cm-cc')?.value || '').trim();
+    const ccn = (document.getElementById('cm-ccn')?.value || '').trim();
     const subject = document.getElementById('cm-sub').value.trim();
     const text = document.getElementById('cm-body').value;
+    const schedVal = document.getElementById('cm-sched')?.value;
     const err = document.getElementById('cm-err');
     if (!to || !subject) { err.textContent = 'Inserisci destinatario e oggetto.'; return; }
-    err.textContent = 'Invio in corso…';
+    let scheduledAt;
+    if (schedVal) {
+      const dt = new Date(schedVal);
+      if (dt.getTime() < Date.now()) { err.textContent = 'La data di invio è nel passato.'; return; }
+      scheduledAt = dt.toISOString();
+    }
+    err.textContent = scheduledAt ? 'Programmazione…' : 'Invio in corso…';
     try {
-      await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined, attachments: MAIL_ATTACH.map(a => ({ name: a.name, content: a.content })) }) });
-      document.getElementById(id)?.remove(); alert('Messaggio inviato.');
+      await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, cc: cc || undefined, bcc: ccn || undefined, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined, attachments: MAIL_ATTACH.map(a => ({ name: a.name, content: a.content })), scheduledAt }) });
+      document.getElementById(id)?.remove();
+      alert(scheduledAt ? ('Invio programmato per ' + new Date(schedVal).toLocaleString('it-IT')) : 'Messaggio inviato.');
     } catch(e) { err.textContent = 'Errore invio: ' + e.message; }
   };
 }

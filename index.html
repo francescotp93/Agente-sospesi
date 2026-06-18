@@ -6297,12 +6297,27 @@ function renderMailList(filter){
     </div>`;
   }).join('');
 }
+// Pulsante "mail precedente/successiva" (disabilitato se non c'è)
+function mailNavBtn(u, folder, icon, label){
+  if (u == null) return `<button disabled style="display:inline-flex;align-items:center;gap:5px;padding:10px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt3);font-weight:600;font-family:inherit;font-size:13.5px;opacity:.4;cursor:default;"><i class="ti ${icon}"></i> ${label}</button>`;
+  return `<button onclick="openMessage(${u},'${folder}')" style="display:inline-flex;align-items:center;gap:5px;padding:10px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt);font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ${icon}"></i> ${label}</button>`;
+}
+// uid del messaggio adiacente nella lista corrente (dir -1 = sopra/precedente, +1 = sotto/successivo)
+function mailAdjacentUid(uid, dir){
+  if (!Array.isArray(MAIL_MSGS)) return null;
+  const i = MAIL_MSGS.findIndex(m => m.uid === uid);
+  if (i < 0) return null;
+  const j = i + dir;
+  return (j >= 0 && j < MAIL_MSGS.length) ? MAIL_MSGS[j].uid : null;
+}
 async function openMessage(uid, folder){
   folder = folder || MAIL_FOLDER || 'inbox';
   const body = document.getElementById('posta-body'); if (!body) return;
   body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Apro il messaggio…</div>';
   try {
     const m = await mailFetch('/mail/message/' + uid + '?folder=' + encodeURIComponent(folder) + '&casella=' + encodeURIComponent(MAIL_CASELLA));
+    const prevUid = mailAdjacentUid(uid, -1);
+    const nextUid = mailAdjacentUid(uid, +1);
     const from = (m.from && m.from[0]) || {};
     const toList = (m.to || []).map(x => esc(x.name || x.address || '')).join(', ');
     const d = m.date ? new Date(m.date).toLocaleString('it-IT') : '';
@@ -6317,15 +6332,21 @@ async function openMessage(uid, folder){
         </div>`;
       }).join('') + `</div>`) : '';
     body.innerHTML = `
-      <div style="padding:14px 16px;max-width:840px;margin:0 auto;">
+      <div style="padding:14px 16px 0;max-width:840px;margin:0 auto;">
         <button onclick="mailLoad('${folder}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;margin-bottom:12px;"><i class="ti ti-arrow-left"></i> Indietro</button>
         <div style="font-size:18px;font-weight:800;margin-bottom:6px;">${esc(m.subject)}</div>
         <div style="font-size:13px;color:var(--txt2);">Da: <b>${esc(from.name || '')}</b> &lt;${esc(from.address || '')}&gt;</div>
         <div style="font-size:13px;color:var(--txt2);">A: ${toList}</div>
         <div style="font-size:12px;color:var(--txt3);margin:4px 0 14px;">${d}</div>
         ${att}
-        <div style="border-top:1px solid var(--bord);padding-top:12px;">${content}</div>
-        <button id="msg-reply" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-arrow-back-up"></i> Rispondi</button>
+        <div style="border-top:1px solid var(--bord);padding-top:12px;padding-bottom:16px;">${content}</div>
+      </div>
+      <div style="position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;background:var(--surf);border-top:1px solid var(--bord2);box-shadow:0 -4px 14px rgba(0,0,0,.08);">
+        ${mailNavBtn(prevUid, folder, 'ti-chevron-up', 'Prec.')}
+        ${mailNavBtn(nextUid, folder, 'ti-chevron-down', 'Succ.')}
+        <div style="flex:1;min-width:8px;"></div>
+        <button id="msg-reply" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-arrow-back-up"></i> Rispondi</button>
+        <button onclick="document.getElementById('posta-ov')?.remove()" title="Chiudi e torna a IAM" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt);font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-x"></i> Chiudi</button>
       </div>`;
     const rb = document.getElementById('msg-reply');
     if (rb) rb.onclick = () => composeMail({ to: from.address || '', subject: 'Re: ' + (m.subject || '') });

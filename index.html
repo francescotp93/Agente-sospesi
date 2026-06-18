@@ -1659,10 +1659,10 @@ input[type=file]{display:none;}
         <div style="background:var(--surf);border-radius:var(--r);padding:12px 6px;border:1px solid var(--bord);animation:quotoFadeIn .4s ease .7s both;"><i class="ti ti-heartbeat" style="font-size:20px;color:var(--acc);display:block;margin-bottom:4px;"></i><div style="font-size:10px;font-weight:600;color:var(--txt2);">Salute</div></div>
       </div>
 
-      <div style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:30px;margin-bottom:12px;box-shadow:0 4px 20px rgba(var(--acc-rgb),.4);">
+      <button onclick="window.location.href='https://francescotp93.github.io/QUOTE/'" style="display:inline-flex;align-items:center;gap:8px;padding:12px 32px;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:30px;margin-bottom:12px;box-shadow:0 4px 20px rgba(var(--acc-rgb),.4);cursor:pointer;">
         <div style="width:7px;height:7px;border-radius:50%;background:#fff;animation:quotoPulse 1s ease infinite;"></div>
-        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:1px;">COMING SOON</span>
-      </div>
+        <span style="font-size:13px;font-weight:700;color:#fff;letter-spacing:1px;">ENTRA IN QUOTO</span>
+      </button>
 
       <div style="font-size:12px;color:var(--txt3);max-width:260px;margin:8px auto 0;line-height:1.6;">
         Confronta, scegli e offri sempre la soluzione migliore.<br>
@@ -2760,7 +2760,30 @@ function goTab(t) {
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'quoto') {
-    apriQuoto();
+    // Splash screen fullscreen prima del redirect
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:linear-gradient(160deg,#2342e0 0%,#3b5bfd 50%,#6f8bff 100%);opacity:0;transition:opacity .3s ease;';
+    ov.innerHTML = `
+      <style>
+        @keyframes qspin{to{transform:rotate(360deg)}}
+        @keyframes qpop{0%{opacity:0;transform:scale(.5)}70%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+        @keyframes qbar{0%{width:0}100%{width:100%}}
+      </style>
+      <div style="animation:qpop .5s ease both;">
+        <div style="width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;box-shadow:0 0 60px rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.3);">
+          <i class="ti ti-bolt" style="font-size:42px;color:#fff;"></i>
+        </div>
+      </div>
+      <div style="text-align:center;animation:qpop .5s ease .1s both;">
+        <div style="font-size:52px;font-weight:900;letter-spacing:.1em;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.2);">QUOTO</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.7);letter-spacing:3px;text-transform:uppercase;margin-top:4px;">Quotatore Multi Compagnia</div>
+      </div>
+      <div style="width:180px;height:3px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;animation:qpop .4s ease .2s both;">
+        <div style="height:100%;background:#fff;border-radius:99px;animation:qbar 1s ease .3s both;"></div>
+      </div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(() => { ov.style.opacity = '1'; });
+    setTimeout(() => { window.location.href = 'https://francescotp93.github.io/QUOTE/?from=iam'; }, 1400);
     return;
   }
   if (t === 'utenti') {
@@ -3068,12 +3091,17 @@ function loadConto(inp, tipo) {
       });
     }
     if (!movs.length) { alert('Non sono riuscito a leggere i movimenti da questo file. Controlla che sia l\'estratto conto in Excel.'); return; }
-    APP.conto[tipo].movimenti = movs;
+    // merge senza sovrascrivere i movimenti esistenti + dedupe per id
+    const existingMovs = APP.conto[tipo].movimenti || [];
+    const existingIds = new Set(existingMovs.map(m => m.id));
+    const newMovs = movs.filter(m => !existingIds.has(m.id));
+    APP.conto[tipo].movimenti = [...existingMovs, ...newMovs];
     APP.conto[tipo].bonif = APP.conto[tipo].bonif || {}; // mantiene spunte/note già sincronizzate
     saveContoCache(tipo);
     saveContoDB(tipo); // condividi estratto + spunte/note sul database
+    const totalMovs = APP.conto[tipo].movimenti.length;
     const okEl = document.getElementById('ok-'+tipo);
-    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + movs.length + ' mov.)'; okEl.style.display = 'block'; }
+    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (+' + newMovs.length + ' nuovi, ' + totalMovs + ' tot.)'; okEl.style.display = 'block'; }
     renderConto();
     if (APP.loaded) buildDashboard();
   };
@@ -3972,10 +4000,10 @@ async function saveTeamDB(c) {
 }
 
 async function delTeamDB(id) {
-  if (!db) { loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); return; }
+  if (!db) { loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); renderTeam(); return; }
   try {
     await db.from('iam_team').delete().eq('id', id);
-    loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam();
+    TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); renderTeam();
   } catch(e) { console.warn('delTeamDB error:', e); }
 }
 
@@ -4043,7 +4071,10 @@ function renderTeam() {
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${rami.join('')}</div>
           ${compBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${compBadges}</div>`:''}
         </div>
-        <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
+          <button onclick="if(confirm('Eliminare ${c.nome} ${c.cogn}? Operazione non reversibile.')){delTeamDB('${c.id}')}" style="font-size:11px;padding:4px 10px;background:rgba(220,50,50,.25);color:#ff8080;border:.5px solid rgba(220,50,50,.35);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-trash"></i> Elimina</button>
+        </div>
       </div>
 
       <!-- Tab interne scheda -->
@@ -5545,7 +5576,7 @@ async function cambiaRuolo(userId, ruoloAttuale) {
   if (!nuovo || !['admin','operatore','collaboratore'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
   if (!confirm(`Cambiare ruolo in "${nuovo}"?`)) return;
   try {
-    const { error } = await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ ruolo: dbRuolo(nuovo) }).eq('id', userId);
     if (error) throw error;
     await renderUtenti();
   } catch(e) { alert('Errore: '+(e.message||e)); }

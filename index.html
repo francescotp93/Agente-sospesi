@@ -5138,7 +5138,11 @@ async function renderUtenti() {
       <div style="display:flex;flex-direction:column;gap:4px;">
         ${canEdit && !isSelf ? `
         <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>
-        ${PROFILO?.ruolo==='top_master'?`<button onclick="cambiaRuolo('${u.id}','${u.ruolo}')" style="font-size:11px;padding:4px 10px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Ruolo</button>`:''}
+        ${PROFILO?.ruolo==='top_master'?`<select onchange="cambiaRuolo('${u.id}',this.value);this.value='${u.ruolo}'" style="font-size:11px;padding:4px 8px;background:var(--surf2);color:var(--txt);border:1px solid var(--bord);border-radius:6px;cursor:pointer;font-family:inherit;">
+          <option value="top_master" ${u.ruolo==='top_master'?'selected':''}>TOP Master</option>
+          <option value="master" ${u.ruolo==='master'?'selected':''}>Master</option>
+          <option value="operativo" ${u.ruolo==='operativo'?'selected':''}>Operativo</option>
+        </select>`:''}
         ` : ''}
         ${canEdit ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
         ${canEdit ? `<button onclick="toggleQuotoAccess('${u.id}',${quotoOn})" style="font-size:11px;padding:4px 10px;border-radius:20px;border:none;cursor:pointer;font-family:inherit;font-weight:600;background:${quotoOn?'linear-gradient(135deg,var(--acc),var(--acc2))':'var(--surf3)'};color:${quotoOn?'#fff':'var(--txt3)'};">Quoto ${quotoOn?'ON':'OFF'}</button>` : ''}
@@ -5231,12 +5235,11 @@ async function toggleSospendi(userId, attivo) {
   } catch(e) { alert('Errore: '+e.message); }
 }
 
-async function cambiaRuolo(userId, ruoloAttuale) {
-  const nuovo = prompt(`Ruolo attuale: ${ruoloAttuale}\nNuovo ruolo (top_master / master / operativo):`);
-  if (!nuovo || !['top_master','master','operativo'].includes(nuovo)) { alert('Ruolo non valido.'); return; }
-  if (!confirm(`Cambiare ruolo in "${nuovo}"?`)) return;
+async function cambiaRuolo(userId, nuovoRuolo) {
+  if (!['top_master','master','operativo'].includes(nuovoRuolo)) return;
+  if (!confirm(`Cambiare ruolo in "${nuovoRuolo}"?`)) return;
   try {
-    await db.from('iam_utenti').update({ ruolo: nuovo }).eq('id', userId);
+    await db.from('iam_utenti').update({ ruolo: nuovoRuolo }).eq('id', userId);
     await renderUtenti();
   } catch(e) { alert('Errore: '+e.message); }
 }

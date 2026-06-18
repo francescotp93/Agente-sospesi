@@ -5888,7 +5888,7 @@ async function mfaCleanupUnverified(){
 }
 // Gate al login: chiede il codice se la 2FA è attiva e il dispositivo non è ricordato.
 async function mfaLoginGate(uid){
-  const dbg = location.search.indexOf('mfadebug') !== -1 || (ME && (ME.email||'').toLowerCase() === SUPER_ADMIN_EMAIL);
+  const dbg = location.search.indexOf('mfadebug') !== -1;
   const factor = await mfaVerifiedFactor();           // l'utente ha un TOTP verificato? (query al server)
   let lvl = '?';
   try { const aal = (await db.auth.mfa.getAuthenticatorAssuranceLevel()).data; if (aal) lvl = aal.currentLevel; } catch(e){ lvl = 'err'; }

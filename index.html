@@ -21,6 +21,7 @@
 <style>
 @keyframes wdBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.7)}}
 .wd-blink-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#8b5cf6;vertical-align:middle;animation:wdBlink 1s infinite;box-shadow:0 0 5px #8b5cf6;}
+.wd-blink-red{display:inline-block;width:10px;height:10px;border-radius:50%;background:#ef4444;vertical-align:middle;animation:wdBlink .8s infinite;box-shadow:0 0 6px #ef4444;}
 /* ── TEMA DARK (default) ── */
 body, body.theme-dark {
   --bg:#0A0A0F;--surf:#13131A;--surf2:#1C1C26;--surf3:#252533;
@@ -1058,6 +1059,11 @@ input[type=file]{display:none;}
             <option value="alta">Alta</option>
             <option value="urgente">Urgente</option>
           </select>
+        </div>
+        <div class="fld"><label>Importante</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--txt2);cursor:pointer;padding:7px 0;">
+            <input type="checkbox" id="wd-import" style="width:18px;height:18px;accent-color:var(--red);cursor:pointer;"> Segna come importante <span class="wd-blink-red" style="margin-left:2px;"></span>
+          </label>
         </div>
         <div class="fld"><label>Condividi con (lascia vuoto = solo tu)</label>
           <select id="wd-condividi-sel" multiple size="4" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;font-size:13px;color:var(--txt);font-family:inherit;">
@@ -6004,6 +6010,7 @@ async function loadWD_DB() {
         tipo:       w.tipo       || 'altro',
         stato:      w.stato      || 'aperto',
         prior:      w.prior      || 'normale',
+        importante: !!w.importante,
         data:       w.data       || '',
         ora:        w.ora        || '09:00',
         note:       w.note       || '',
@@ -6019,22 +6026,29 @@ async function loadWD_DB() {
 
 async function saveWD_DB(w) {
   if (!db || !ME) { saveWD_store(); return; }
+  const payload = {
+    id:            w.id,
+    utente_id:     ME.id,
+    titolo:        w.titolo,
+    tipo:          w.tipo,
+    stato:         w.stato,
+    prior:         w.prior,
+    data:          w.data || null,
+    ora:           w.ora,
+    note:          w.note,
+    condivisi_con: w.condivisi || [],
+    file_nome:     w.file_nome || null,
+    file_data:     w.file_data || null,
+    importante:    !!w.importante,
+    aggiornato_il: new Date().toISOString(),
+  };
   try {
-    await db.from('iam_workdiary').upsert({
-      id:            w.id,
-      utente_id:     ME.id,
-      titolo:        w.titolo,
-      tipo:          w.tipo,
-      stato:         w.stato,
-      prior:         w.prior,
-      data:          w.data || null,
-      ora:           w.ora,
-      note:          w.note,
-      condivisi_con: w.condivisi || [],
-      file_nome:     w.file_nome || null,
-      file_data:     w.file_data || null,
-      aggiornato_il: new Date().toISOString(),
-    });
+    let { error } = await db.from('iam_workdiary').upsert(payload);
+    if (error && String(error.message||'').includes('importante')) { // colonna non ancora creata
+      delete payload.importante;
+      ({ error } = await db.from('iam_workdiary').upsert(payload));
+    }
+    if (error) throw error;
   } catch(e) { console.warn('saveWD_DB error:', e); }
 }
 
@@ -6140,7 +6154,7 @@ function renderWD() {
         </div>
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="font-size:13px;font-weight:600;${w.stato==='completato'?'text-decoration:line-through;opacity:.65;':''}">${esc(w.titolo)||'—'}</span>
+            <span style="font-size:13px;font-weight:600;${w.stato==='completato'?'text-decoration:line-through;opacity:.65;':''}">${esc(w.titolo)||'—'}</span>${w.importante?'<span class="wd-blink-red" title="Importante"></span>':''}
             <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${tc.bg};color:${tc.c};font-weight:600;">${tc.lbl}</span>${w.tipo==='preventivi'?'<span class="wd-blink-dot" title="Preventivi"></span>':''}
             ${w.stato==='completato'?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--grn-bg);color:var(--grn-txt);font-weight:600;">✓</span>':''}
             ${inRitardo?'<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--red-bg);color:var(--red-txt);font-weight:700;">IN RITARDO</span>':''}
@@ -6315,6 +6329,7 @@ async function openWDModal(id) {
   sv('wd-titolo', w?.titolo); sv('wd-note', w?.note); sv('wd-data', w?.data);
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
+  { const impEl = document.getElementById('wd-import'); if (impEl) impEl.checked = !!w?.importante; }
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
   const luogoEl = document.getElementById('wd-luogo');
   if (luogoEl) { luogoEl.value = w?.luogo || ''; delete luogoEl.dataset.lat; delete luogoEl.dataset.lng; }
@@ -6362,6 +6377,7 @@ function saveWD() {
     id:        WD_ID||Date.now().toString(),
     titolo:    gv('wd-titolo'), tipo:  gv('wd-tipo-m'),
     stato:     gv('wd-stato-m'), prior: gv('wd-prior'),
+    importante: document.getElementById('wd-import')?.checked || false,
     data:      gv('wd-data'), ora: gv('wd-ora'), note: gv('wd-note'),
     condivisi,
     file_nome: WD_FILE?.nome  || existing?.file_nome || '',
@@ -6445,7 +6461,7 @@ function showWDDay(ds) {
     return `<div style="background:${tc.bg};border-radius:var(--rs);padding:10px 12px;margin-bottom:6px;display:flex;gap:8px;align-items:center;cursor:pointer;${isComp?'opacity:.5;':''}" onclick="openWDModal('${w.id}')">
       <i class="ti ${tc.ic}" style="color:${tc.c};font-size:16px;flex-shrink:0;"></i>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${esc(w.titolo)}${w.tipo==='preventivi'?' <span class="wd-blink-dot" title="Preventivi"></span>':''}</div>
+        <div style="font-size:13px;font-weight:600;${isComp?'text-decoration:line-through;':''}">${esc(w.titolo)}${w.tipo==='preventivi'?' <span class="wd-blink-dot" title="Preventivi"></span>':''}${w.importante?' <span class="wd-blink-red" title="Importante"></span>':''}</div>
         <div style="font-size:11px;color:var(--txt2);">${w.ora||''}${w.prior==='urgente'?' · ⚡ Urgente':w.prior==='alta'?' · Alta':''}</div>
       </div>
       <i class="ti ti-chevron-right" style="font-size:14px;color:var(--txt3);"></i>

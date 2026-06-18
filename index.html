@@ -1833,6 +1833,7 @@ input[type=file]{display:none;}
     <div class="modal-hdr">
       <div class="modal-title" id="mc-title">Nuovo collaboratore</div>
       <div style="display:flex;gap:8px;">
+        <button class="mbtn" id="mc-del-btn" onclick="eliminaCollaboratore()" style="display:none;background:var(--red-bg);color:var(--red-txt);"><i class="ti ti-trash"></i> Elimina</button>
         <button class="mbtn prim" onclick="saveCollab()">Salva</button>
         <button class="mbtn sec" onclick="closeCollabModal()">✕</button>
       </div>
@@ -2912,12 +2913,12 @@ function loadIncassi(inp) {
 
 
 function contoMovId(row, i) {
-  const data = fmtDate(rowVal(row, ['Data']) || '');
-  const operazione = rowVal(row, ['Operazione']);
-  const desc = rowVal(row, ['Descrizione','Causale']) || operazione || '';
-  const importo = parseNum(rowVal(row, ['Importo']));
-  const dare = parseNum(rowVal(row, ['Dare','Uscita']));
-  const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata']));
+  const data = fmtDate(rowVal(row, ['Data','Data operazione','Data contabile','Data valuta']) || '');
+  const operazione = rowVal(row, ['Operazione','Tipo operazione','Tipo','Movimento','Causale ABI']);
+  const desc = rowVal(row, ['Descrizione','Descrizione operazione','Causale','Dettagli','Note operazione']) || operazione || '';
+  const importo = parseNum(rowVal(row, ['Importo','Importo EUR','Importo (EUR)','Importo €','Importo in EUR']));
+  const dare = parseNum(rowVal(row, ['Dare','Uscita','Uscite','Addebiti','Addebito']));
+  const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata','Entrate','Accrediti','Accredito']));
   const saldo = parseNum(rowVal(row, ['Saldo']));
   return `${data}|${operazione}|${desc}|${dare}|${avere}|${saldo}|${i}`;
 }
@@ -2941,6 +2942,37 @@ function loadContoCache() {
   });
 }
 
+// Sincronizzazione conto corrente sul database (estratto + spunte + note condivise tra tutti gli utenti)
+async function saveContoDB(tipo) {
+  if (!db) return;
+  try {
+    await db.from('iam_conto').upsert({
+      tipo,
+      movimenti: APP.conto[tipo].movimenti || [],
+      bonif:     APP.conto[tipo].bonif || {},
+      aggiornato_il: new Date().toISOString()
+    });
+  } catch(e) { console.warn('saveContoDB:', e.message||e); }
+}
+async function loadContoDB() {
+  if (!db) return;
+  try {
+    const { data, error } = await db.from('iam_conto').select('*');
+    if (error) throw error;
+    (data||[]).forEach(row => {
+      const tipo = row.tipo;
+      if (!APP.conto[tipo]) return;
+      if (Array.isArray(row.movimenti) && row.movimenti.length) APP.conto[tipo].movimenti = row.movimenti;
+      if (row.bonif && typeof row.bonif === 'object') APP.conto[tipo].bonif = row.bonif;
+      saveContoCache(tipo); // aggiorna cache locale
+      const okEl = document.getElementById('ok-'+tipo);
+      if (okEl && APP.conto[tipo].movimenti.length) { okEl.textContent = 'Estratto conto condiviso (' + APP.conto[tipo].movimenti.length + ' mov.)'; okEl.style.display = 'block'; }
+    });
+    if (typeof renderConto === 'function') renderConto();
+    if (APP.loaded) buildDashboard();
+  } catch(e) { console.warn('loadContoDB:', e.message||e); }
+}
+
 function loadConto(inp, tipo) {
   const file = inp.files[0]; if (!file) return;
   const r = new FileReader();
@@ -2949,15 +2981,15 @@ function loadConto(inp, tipo) {
     const ws = wb.Sheets[wb.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(ws, {defval:'', raw:true});
     APP.conto[tipo].movimenti = data.map((row, i) => {
-      const operazione = rowVal(row, ['Operazione']);
-      const importo = parseNum(rowVal(row, ['Importo']));
-      const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata']));
+      const operazione = rowVal(row, ['Operazione','Tipo operazione','Tipo','Movimento','Causale ABI']);
+      const importo = parseNum(rowVal(row, ['Importo','Importo EUR','Importo (EUR)','Importo €','Importo in EUR']));
+      const avere = importo > 0 ? importo : parseNum(rowVal(row, ['Avere','Entrata','Entrate','Accrediti','Accredito']));
       return {
         id: contoMovId(row, i),
-        data: fmtDate(rowVal(row, ['Data']) || ''),
+        data: fmtDate(rowVal(row, ['Data','Data operazione','Data contabile','Data valuta']) || ''),
         operazione,
-        desc: rowVal(row, ['Descrizione','Causale']) || operazione || '',
-        dare:  parseNum(rowVal(row, ['Dare','Uscita'])),
+        desc: rowVal(row, ['Descrizione','Descrizione operazione','Causale','Dettagli','Note operazione']) || operazione || '',
+        dare:  parseNum(rowVal(row, ['Dare','Uscita','Uscite','Addebiti','Addebito'])),
         avere,
         importo,
         saldo: parseNum(rowVal(row, ['Saldo'])),
@@ -2965,6 +2997,7 @@ function loadConto(inp, tipo) {
     });
     try { APP.conto[tipo].bonif = JSON.parse(localStorage.getItem('iam_bonif_'+tipo)||'{}'); } catch(e){ APP.conto[tipo].bonif = {}; }
     saveContoCache(tipo);
+    saveContoDB(tipo); // condividi estratto + spunte/note sul database
     const okEl = document.getElementById('ok-'+tipo);
     if (okEl) { okEl.textContent = '✓ ' + file.name + ' (' + data.length + ' mov.)'; okEl.style.display = 'block'; }
     renderConto();
@@ -3666,6 +3699,7 @@ function toggleBonif(id, checked) {
   const note = typeof prev === 'object' ? (prev.note || '') : '';
   c.bonif[id] = { checked, note };
   saveContoCache(tipo);
+  saveContoDB(tipo);
   renderConto();
   if (APP.loaded) buildDashboard();
 }
@@ -3677,6 +3711,7 @@ function updateBonifNota(id, note) {
   const prev = c.bonif[id];
   c.bonif[id] = { checked: prev === true || !!prev?.checked, note: note || '' };
   saveContoCache(tipo);
+  saveContoDB(tipo);
   if (APP.loaded) buildDashboard();
 }
 
@@ -4017,6 +4052,7 @@ async function openCollabModal(id) {
       HUB_LIST.map(h=>`<option value="${h.id}" ${c?.hub_id==h.id?'selected':''}>${h.nome}</option>`).join('');
   }
   document.getElementById('mc-title').textContent = c ? c.nome+' '+c.cogn : 'Nuovo collaboratore';
+  const delBtn = document.getElementById('mc-del-btn'); if (delBtn) delBtn.style.display = c ? 'inline-flex' : 'none';
   const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
   if (c) {
     sv('mc-nome',c.nome); sv('mc-cogn',c.cogn); sv('mc-email',c.email); sv('mc-tel',c.tel);
@@ -4060,6 +4096,19 @@ function closeCollabModal() {
   document.getElementById('modal-collab').classList.remove('show');
   TEAM_DOCS = {};
   TEAM_FATTURA_FILE = null;
+}
+
+async function eliminaCollaboratore() {
+  if (!TEAM_ID) return;
+  loadTeam();
+  const c = TEAM.find(x => x.id === TEAM_ID);
+  const nome = c ? ((c.nome||'')+' '+(c.cogn||'')).trim() : 'questo collaboratore';
+  if (!confirm('Eliminare definitivamente ' + (nome||'questo collaboratore') + '?\nVerranno rimossi anche i suoi dati (fatture, provvigioni, documenti). Operazione non reversibile.')) return;
+  await delTeamDB(TEAM_ID);
+  try { const store = loadFattureStore(); delete store[String(TEAM_ID)]; saveFattureStore(store); } catch(e) {}
+  closeCollabModal();
+  renderTeam();
+  if (APP.loaded) buildDashboard();
 }
 
 // ── VARIABILI TAB REPORT / GARE / STORICO ──
@@ -8967,6 +9016,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDB();
   loadTeam(); loadPipe(); loadWD(); loadPerf(); loadAzienda();
   loadContoCache();
+  loadContoDB(); // carica estratto + note condivise dal database
   ['hdi','pluri'].forEach(t => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });

@@ -2676,22 +2676,7 @@ function goTab(t) {
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'quoto') {
-    const app = document.getElementById('app');
-    if (app) {
-      app.style.transition = 'all .3s ease';
-      app.style.filter = 'brightness(2) saturate(3)';
-      app.style.transform = 'scale(1.02)';
-      setTimeout(() => {
-        app.style.filter = 'invert(1) hue-rotate(180deg)';
-        app.style.transform = 'scale(.98)';
-      }, 150);
-      setTimeout(() => {
-        window.location.href = 'https://francescotp93.github.io/QUOTE/?from=iam';
-      }, 400);
-    } else {
-      window.location.href = 'https://francescotp93.github.io/QUOTE/?from=iam';
-      // unused fallback
-    }
+    window.location.href = 'https://francescotp93.github.io/QUOTE/?from=iam';
     return;
   }
   if (t === 'utenti') {

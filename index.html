@@ -3085,7 +3085,7 @@ function confermaBonifici() {
   saveContoCache(tipo);
   saveContoDB(tipo);
   const msg = document.getElementById('co-save-msg');
-  if (msg) { msg.style.display = 'inline'; setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500); }
+  if (msg) { msg.style.display = 'block'; setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500); }
 }
 
 async function resetConto(tipo) {
@@ -3728,10 +3728,12 @@ function renderConto() {
           <option value="0">Da abbinare</option>
           <option value="1">Flaggati</option>
         </select>
-        <button onclick="confermaBonifici()" style="padding:9px 14px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;"><i class="ti ti-device-floppy" style="vertical-align:-2px;"></i> Salva</button>
-        <span id="co-save-msg" style="font-size:12px;font-weight:700;color:var(--grn-txt);display:none;white-space:nowrap;">✓ Salvato</span>
       </div>
-      <div class="card"><div id="co-list"></div></div>`;
+      <div class="card"><div id="co-list"></div></div>
+      <div id="co-save-msg" style="text-align:center;font-size:13px;font-weight:700;color:var(--grn-txt);display:none;margin:10px 12px 0;">✓ Modifiche salvate</div>
+      <div style="padding:10px 12px 16px;">
+        <button class="btn" onclick="confermaBonifici()"><i class="ti ti-device-floppy"></i> Salva modifiche bonifici</button>
+      </div>`;
   }
   const bonificiEntrata = movs.filter(isBonificoInEntrata);
   const totE = bonificiEntrata.reduce((a,m)=>a+(Number(m.importo !== undefined ? m.importo : m.avere)||0),0);
@@ -3755,13 +3757,13 @@ function renderConto() {
   if (ft==='1') lista = lista.filter(m=>isBonifFlaggato(m.id));
   if (ft==='0') lista = lista.filter(m=>!isBonifFlaggato(m.id));
   if (q) lista = lista.filter(m=>m.desc.toLowerCase().includes(q)||String(m.avere||m.dare).includes(q));
-  document.getElementById('co-list').innerHTML = lista.map(m=>{
-    const id = JSON.stringify(String(m.id));
+  CONTO_LISTA = lista;
+  document.getElementById('co-list').innerHTML = lista.map((m,i)=>{
     const confermato = isBonifFlaggato(m.id);
     const nota = getBonifNota(m.id);
     const importoBonifico = Number(m.importo !== undefined ? m.importo : m.avere) || 0;
     return `<div class="row" style="border-left:4px solid ${confermato?'var(--grn)':'var(--red)'};background:${confermato?'var(--grn-bg)':'var(--red-bg)'};">
-      <input type="checkbox" ${confermato?'checked':''} onchange="toggleBonif(${id},this.checked)" style="width:18px;height:18px;accent-color:var(--grn);cursor:pointer;flex-shrink:0;margin-top:3px;" title="Conferma bonifico ricevuto">
+      <input type="checkbox" ${confermato?'checked':''} onchange="toggleBonif(${i},this.checked)" style="width:18px;height:18px;accent-color:var(--grn);cursor:pointer;flex-shrink:0;margin-top:3px;" title="Conferma bonifico ricevuto">
       <div class="rmain" style="display:grid;gap:6px;">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
           <div style="min-width:0;">
@@ -3770,7 +3772,7 @@ function renderConto() {
           </div>
           <div class="ramt" style="color:var(--grn);font-size:16px;white-space:nowrap;">+€${fmt(importoBonifico)}</div>
         </div>
-        <input type="text" value="${nota.replace(/"/g,'&quot;')}" placeholder="Nota bonifico..." onchange="updateBonifNota(${id},this.value)" style="width:100%;padding:8px 10px;background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-size:12px;font-family:inherit;">
+        <input type="text" value="${nota.replace(/"/g,'&quot;')}" placeholder="Nota bonifico..." onchange="updateBonifNota(${i},this.value)" style="width:100%;padding:8px 10px;background:var(--surf);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-size:12px;font-family:inherit;">
       </div>
       <div class="rright" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
         <div class="rbadge ${confermato?'bgrn':'bred'}">${confermato?'Confermato':'Da abbinare'}</div>
@@ -3789,7 +3791,10 @@ function toggleAbb(id, checked) {
   renderConto();
 }
 
-function toggleBonif(id, checked) {
+let CONTO_LISTA = [];
+function toggleBonif(idx, checked) {
+  const m = CONTO_LISTA[idx]; if (!m) return;
+  const id = String(m.id);
   const tipo = APP.conto.att;
   const c = APP.conto[tipo];
   if (!c.bonif) c.bonif = {};
@@ -3802,7 +3807,9 @@ function toggleBonif(id, checked) {
   if (APP.loaded) buildDashboard();
 }
 
-function updateBonifNota(id, note) {
+function updateBonifNota(idx, note) {
+  const m = CONTO_LISTA[idx]; if (!m) return;
+  const id = String(m.id);
   const tipo = APP.conto.att;
   const c = APP.conto[tipo];
   if (!c.bonif) c.bonif = {};

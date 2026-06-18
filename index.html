@@ -6157,7 +6157,13 @@ async function openMessage(uid, folder){
     const content = m.html
       ? `<iframe sandbox="" style="width:100%;border:none;background:#fff;border-radius:8px;min-height:55vh;" srcdoc="${esc(m.html)}"></iframe>`
       : `<pre style="white-space:pre-wrap;font-family:inherit;font-size:14px;color:var(--txt);margin:0;">${esc(m.text)}</pre>`;
-    const att = (m.attachments && m.attachments.length) ? `<div style="font-size:12px;color:var(--txt2);margin-bottom:10px;"><i class="ti ti-paperclip"></i> ${m.attachments.length} allegato/i: ${m.attachments.map(a => esc(a.filename || 'file')).join(', ')}</div>` : '';
+    const att = (m.attachments && m.attachments.length) ? (`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">` + m.attachments.map((a,i) => {
+        const isImg = (a.contentType || '').indexOf('image/') === 0;
+        return `<div onclick="mailDownloadAttach(${uid},'${folder}',${i})" title="Scarica ${esc(a.filename || '')}" style="display:flex;align-items:center;gap:10px;border:1px solid var(--bord2);border-radius:10px;padding:8px 10px;cursor:pointer;background:var(--surf2);max-width:250px;">
+          <div id="att-th-${i}" style="width:40px;height:40px;border-radius:8px;background:rgba(var(--acc-rgb),.12);display:flex;align-items:center;justify-content:center;color:var(--acc);flex-shrink:0;overflow:hidden;"><i class="ti ${isImg ? 'ti-photo' : 'ti-file'}" style="font-size:20px;"></i></div>
+          <div style="min-width:0;"><div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.filename || 'file')}</div><div style="font-size:11px;color:var(--txt3);">${a.size ? mailFmtSize(a.size) : ''} · <i class="ti ti-download"></i> scarica</div></div>
+        </div>`;
+      }).join('') + `</div>`) : '';
     body.innerHTML = `
       <div style="padding:14px 16px;max-width:840px;margin:0 auto;">
         <button onclick="mailLoad('${folder}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;margin-bottom:12px;"><i class="ti ti-arrow-left"></i> Indietro</button>
@@ -6171,10 +6177,36 @@ async function openMessage(uid, folder){
       </div>`;
     const rb = document.getElementById('msg-reply');
     if (rb) rb.onclick = () => composeMail({ to: from.address || '', subject: 'Re: ' + (m.subject || '') });
+    (m.attachments || []).forEach((a,i) => { if ((a.contentType || '').indexOf('image/') === 0) mailLoadThumb(uid, folder, i); });
   } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
 }
+const MAIL_ATT_CACHE = {};
+async function mailGetAttach(uid, folder, index){
+  const k = uid + '|' + folder + '|' + index + '|' + MAIL_CASELLA;
+  if (MAIL_ATT_CACHE[k]) return MAIL_ATT_CACHE[k];
+  const a = await mailFetch('/mail/attachment?uid=' + uid + '&folder=' + encodeURIComponent(folder) + '&index=' + index + '&casella=' + encodeURIComponent(MAIL_CASELLA));
+  MAIL_ATT_CACHE[k] = a; return a;
+}
+async function mailDownloadAttach(uid, folder, index){
+  try {
+    const a = await mailGetAttach(uid, folder, index);
+    const bytes = Uint8Array.from(atob(a.content), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: a.contentType || 'application/octet-stream' }));
+    const el = document.createElement('a'); el.href = url; el.download = a.filename || 'allegato'; document.body.appendChild(el); el.click(); el.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  } catch(e){ alert('Errore nel download: ' + (e.message || e)); }
+}
+async function mailLoadThumb(uid, folder, index){
+  try {
+    const a = await mailGetAttach(uid, folder, index);
+    const el = document.getElementById('att-th-' + index); if (!el) return;
+    el.innerHTML = `<img src="data:${a.contentType};base64,${a.content}" style="width:100%;height:100%;object-fit:cover;">`;
+  } catch(e){}
+}
+let MAIL_ATTACH = [];
 function composeMail(prefill){
   prefill = prefill || {};
+  MAIL_ATTACH = [];
   const firma = mailFirma();
   const id = 'compose-ov'; document.getElementById(id)?.remove();
   const ov = document.createElement('div'); ov.id = id;
@@ -6184,12 +6216,15 @@ function composeMail(prefill){
     <div style="padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px;">
       <div class="fld"><label>A</label><input id="cm-to" type="email" placeholder="destinatario@email.com" value="${esc(prefill.to || '')}"></div>
       <div class="fld"><label>Oggetto</label><input id="cm-sub" type="text" value="${esc(prefill.subject || '')}"></div>
-      <div class="fld"><label>Messaggio</label><textarea id="cm-body" rows="11" style="resize:vertical;font-family:inherit;"></textarea></div>
+      <div class="fld"><label>Messaggio</label><textarea id="cm-body" rows="10" style="resize:vertical;font-family:inherit;"></textarea></div>
+      <div id="cm-attach" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       <div id="cm-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
+      <input type="file" id="cm-file" multiple style="display:none;" onchange="mailAttachAdd(this.files); this.value='';">
     </div>
     <div style="padding:12px 16px;border-top:1px solid var(--bord2);display:flex;gap:8px;align-items:center;">
       <button id="cm-send" style="display:inline-flex;align-items:center;gap:6px;padding:11px 20px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-send"></i> Invia</button>
-      <button onclick="modificaFirma()" style="padding:11px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;font-size:13px;">Modifica firma</button>
+      <button onclick="document.getElementById('cm-file').click()" title="Allega file" style="padding:11px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-paperclip"></i></button>
+      <button onclick="modificaFirma()" title="Modifica firma" style="padding:11px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-signature"></i></button>
       <div style="flex:1;"></div>
       <button onclick="document.getElementById('${id}').remove()" style="padding:11px 16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;">Annulla</button>
     </div></div>`;
@@ -6203,9 +6238,31 @@ function composeMail(prefill){
     const err = document.getElementById('cm-err');
     if (!to || !subject) { err.textContent = 'Inserisci destinatario e oggetto.'; return; }
     err.textContent = 'Invio in corso…';
-    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
-    catch(e) { err.textContent = 'Errore invio: ' + e.message; }
+    try {
+      await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined, attachments: MAIL_ATTACH.map(a => ({ name: a.name, content: a.content })) }) });
+      document.getElementById(id)?.remove(); alert('Messaggio inviato.');
+    } catch(e) { err.textContent = 'Errore invio: ' + e.message; }
   };
+}
+function mailFmtSize(n){ return n > 1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1, Math.round(n/1024))+' KB'; }
+function mailRenderAttach(){
+  const c = document.getElementById('cm-attach'); if (!c) return;
+  c.innerHTML = MAIL_ATTACH.map((a,i) => `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bord2);border-radius:16px;padding:4px 10px;font-size:12px;color:var(--txt2);"><i class="ti ti-paperclip"></i> ${esc(a.name)} <span style="color:var(--txt3);">${mailFmtSize(a.size)}</span> <i class="ti ti-x" style="cursor:pointer;" onclick="mailRemoveAttach(${i})"></i></span>`).join('');
+}
+function mailRemoveAttach(i){ MAIL_ATTACH.splice(i, 1); mailRenderAttach(); }
+function mailAttachAdd(files){
+  const err = document.getElementById('cm-err');
+  Array.from(files || []).forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const b64 = String(reader.result).split(',')[1] || '';
+      MAIL_ATTACH.push({ name: f.name, size: f.size, content: b64 });
+      const tot = MAIL_ATTACH.reduce((s,a) => s + a.size, 0);
+      if (err) err.textContent = (tot > 9 * 1024 * 1024) ? 'Attenzione: allegati oltre ~9 MB totali, l’invio potrebbe fallire.' : '';
+      mailRenderAttach();
+    };
+    reader.readAsDataURL(f);
+  });
 }
 async function modificaFirma(){
   const nuova = prompt('La tua firma (nome, mansione, ecc.):', mailFirma());

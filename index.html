@@ -5760,7 +5760,7 @@ async function renderPannelloPersonale() {
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
           <button onclick="apriCambioEmail()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"> Cambia email di accesso</button>
           <button onclick="apriCambioPassword()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"> Cambia password</button>
-          <button onclick="apri2FA()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;">🔐 Verifica in due passaggi (2FA)</button>
+          <button onclick="apri2FA()" style="padding:10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;cursor:pointer;font-family:inherit;text-align:left;"><i class="ti ti-shield-lock" style="margin-right:5px;color:var(--acc);"></i> Verifica in due passaggi (2FA)</button>
         </div>
       </div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);margin-bottom:8px;">Widget dashboard</div>
@@ -5897,10 +5897,11 @@ function mfaPromptCode(factorId, uid, allowTrust){
   return new Promise((resolve) => {
     const id = 'mfa-code-ov';
     document.getElementById(id)?.remove();
-    document.body.insertAdjacentHTML('beforeend', `<div id="${id}" style="background:rgba(0,0,0,.65);position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;">
-      <div style="background:var(--surf);border-radius:16px;width:100%;max-width:340px;padding:22px 18px;text-align:center;">
-        <div style="font-size:34px;margin-bottom:6px;">🔐</div>
-        <div style="font-size:16px;font-weight:800;margin-bottom:4px;">Verifica in due passaggi</div>
+    document.body.insertAdjacentHTML('beforeend', `<div id="${id}" style="background:var(--bg,var(--surf));position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;">
+      <div style="background:var(--surf);border-radius:16px;width:100%;max-width:340px;padding:26px 20px;text-align:center;box-shadow:var(--shd);">
+        <div style="width:60px;height:60px;border-radius:50%;background:rgba(var(--acc-rgb),.12);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="ti ti-shield-lock" style="font-size:28px;color:var(--acc);"></i></div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);margin-bottom:4px;">Accesso sicuro</div>
+        <div style="font-size:17px;font-weight:800;margin-bottom:4px;">Verifica in due passaggi</div>
         <div style="font-size:13px;color:var(--txt2);margin-bottom:14px;">Inserisci il codice a 6 cifre dell'app Authenticator.</div>
         <input id="mfa-code-in" inputmode="numeric" maxlength="6" placeholder="000000" style="width:100%;text-align:center;letter-spacing:8px;font-size:26px;font-weight:700;padding:10px;border:1px solid var(--bord2);border-radius:10px;background:var(--surf2);color:var(--txt);font-family:inherit;">
         <div id="mfa-code-err" style="font-size:12px;color:var(--red);min-height:16px;margin:8px 0;"></div>
@@ -5936,8 +5937,8 @@ async function apri2FA(){
   if (factor){
     document.body.insertAdjacentHTML('beforeend', `<div id="${id}" style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" onclick="if(event.target.id==='${id}')this.remove()">
       <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
-        <div style="font-size:15px;font-weight:700;margin-bottom:6px;">🔐 Verifica in due passaggi</div>
-        <div style="font-size:13px;color:#1a8a5a;font-weight:700;margin-bottom:12px;">✓ Attiva su questo account</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:6px;"><i class="ti ti-shield-lock" style="color:var(--acc);margin-right:4px;"></i> Verifica in due passaggi</div>
+        <div style="font-size:13px;color:#1a8a5a;font-weight:700;margin-bottom:12px;"><i class="ti ti-shield-check" style="margin-right:3px;"></i> Attiva su questo account</div>
         <div style="font-size:12px;color:var(--txt3);line-height:1.4;margin-bottom:14px;">Al login ti verrà chiesto il codice dell'app Authenticator (tranne sui dispositivi ricordati per 30 giorni).</div>
         <div style="display:flex;gap:8px;">
           <button onclick="disattiva2FA('${factor.id}')" style="flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Disattiva 2FA</button>
@@ -5954,7 +5955,7 @@ async function apri2FA(){
   const { id: factorId, totp } = enroll.data;
   document.body.insertAdjacentHTML('beforeend', `<div id="${id}" style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;overflow:auto;" onclick="if(event.target.id==='${id}'){db.auth.mfa.unenroll({factorId:'${factorId}'}).catch(()=>{});this.remove();}">
     <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
-      <div style="font-size:15px;font-weight:700;margin-bottom:10px;">🔐 Attiva verifica in due passaggi</div>
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px;"><i class="ti ti-shield-lock" style="color:var(--acc);margin-right:4px;"></i> Attiva verifica in due passaggi</div>
       <div style="font-size:13px;color:var(--txt2);line-height:1.45;margin-bottom:12px;">1. Apri <b>Google Authenticator</b> (o Authy) sul telefono.<br>2. Tocca <b>+</b> e scansiona questo QR code.</div>
       <div style="display:flex;justify-content:center;margin-bottom:12px;"><img src="${totp.qr_code}" alt="QR 2FA" style="width:190px;height:190px;background:#fff;border-radius:10px;padding:6px;"></div>
       <div style="font-size:11px;color:var(--txt3);text-align:center;margin-bottom:14px;">Non puoi scansionare? Inserisci a mano questo codice nell'app:<br><code style="font-size:12px;word-break:break-all;">${totp.secret}</code></div>
@@ -5974,7 +5975,7 @@ async function apri2FA(){
       const { error } = await db.auth.mfa.challengeAndVerify({ factorId, code });
       if (error){ err.textContent='Codice non valido. Riprova.'; return; }
       document.getElementById(id)?.remove();
-      alert('✓ Verifica in due passaggi attivata!');
+      alert('Verifica in due passaggi attivata.');
     } catch(e){ err.textContent='Errore. Riprova.'; }
   };
 }

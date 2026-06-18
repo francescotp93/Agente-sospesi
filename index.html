@@ -583,6 +583,10 @@ input[type=file]{display:none;}
     <i class="ti ti-bolt"></i>
     <span>Quoto</span>
   </button>
+  <button class="nbtn" id="nb-posta" onclick="openPosta()" style="display:none;">
+    <i class="ti ti-mail"></i>
+    <span>Posta</span>
+  </button>
 </div>
 
 <!-- ── AI FAB (bottone flottante) ── -->
@@ -5297,6 +5301,8 @@ function applicaPermessi(ruolo) {
   if (labBtn) labBtn.style.display = PROFILO?.lab_abilitato ? 'flex' : 'none';
   const btnQuoto = document.getElementById('nb-quoto');
   if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
+  const btnPosta = document.getElementById('nb-posta');
+  if (btnPosta) btnPosta.style.display = (PROFILO?.accesso_mail === true || isSuperAdmin()) ? 'flex' : 'none';
 }
 
 function mostraBadgeRuolo() {
@@ -5992,6 +5998,137 @@ async function disattiva2FA(factorId){
   if (!confirm('Disattivare la verifica in due passaggi?')) return;
   try { await db.auth.mfa.unenroll({ factorId }); mfaForgetDevice(ME?.id); document.getElementById('mfa-setup-ov')?.remove(); alert('2FA disattivata.'); }
   catch(e){ alert('Errore: '+(e.message||e)); }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  POSTA — client di posta dentro IAM (usa il backend withus-backend)
+// ═══════════════════════════════════════════════════════════════════════════════
+const MAIL_API = 'https://withus-backend-o0ux.onrender.com';
+const MAIL_CASELLA = 'amministrazione@withusassicurazioni.it';
+async function mailToken(){ try { const { data } = await db.auth.getSession(); return (data && data.session && data.session.access_token) || null; } catch(e){ return null; } }
+async function mailFetch(path, opts){
+  opts = opts || {};
+  const tok = await mailToken();
+  const res = await fetch(MAIL_API + path, Object.assign({}, opts, {
+    headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (tok || '') }, opts.headers || {})
+  }));
+  let body = null; try { body = await res.json(); } catch(_) {}
+  if (!res.ok) throw new Error((body && body.error) || ('Errore ' + res.status));
+  return body;
+}
+function mailFirma(){
+  if (PROFILO && PROFILO.firma && PROFILO.firma.trim()) return PROFILO.firma;
+  const ls = localStorage.getItem('iam_firma'); if (ls) return ls;
+  const nome = [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || (ME && ME.email) || '';
+  const ruolo = isSuperAdmin() ? 'CEO With Us' : ((RUOLI[PROFILO && PROFILO.ruolo] || {}).label || '');
+  return nome + (ruolo ? '\n' + ruolo : '') + '\nWith Us';
+}
+function openPosta(){
+  document.getElementById('posta-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'posta-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg,var(--surf));display:flex;flex-direction:column;font-family:inherit;';
+  ov.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--bord2);background:var(--surf);">
+      <i class="ti ti-mail" style="font-size:22px;color:var(--acc);"></i>
+      <div style="font-weight:800;font-size:16px;">Posta</div>
+      <div style="font-size:12px;color:var(--txt3);" class="posta-hide-sm">${MAIL_CASELLA}</div>
+      <div style="flex:1;"></div>
+      <button onclick="composeMail()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Scrivi</button>
+      <button onclick="mailLoadInbox()" title="Aggiorna" style="padding:9px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-refresh"></i></button>
+      <button onclick="document.getElementById('posta-ov').remove()" title="Chiudi" style="padding:9px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="posta-body" style="flex:1;overflow:auto;"></div>`;
+  document.body.appendChild(ov);
+  mailLoadInbox();
+}
+async function mailLoadInbox(){
+  const body = document.getElementById('posta-body'); if (!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Carico la posta…<br><span style="font-size:12px;">(al primo accesso il server può metterci qualche secondo a svegliarsi)</span></div>';
+  try {
+    const { messages } = await mailFetch('/mail/inbox?limit=40');
+    if (!messages.length) { body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Nessun messaggio.</div>'; return; }
+    body.innerHTML = messages.map(m => {
+      const from = (m.from && m.from[0]) || {};
+      const d = m.date ? new Date(m.date).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+      const ini = esc(((from.name || from.address || '?')[0] || '?').toUpperCase());
+      return `<div onclick="openMessage(${m.uid})" style="display:flex;gap:10px;padding:12px 16px;border-bottom:1px solid var(--bord);cursor:pointer;${m.seen ? '' : 'background:rgba(var(--acc-rgb),.05);'}">
+        <div style="width:36px;height:36px;border-radius:50%;background:rgba(var(--acc-rgb),.12);color:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">${ini}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;gap:8px;"><div style="font-weight:${m.seen?'600':'800'};font-size:13px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(from.name || from.address || '')}</div><div style="font-size:11px;color:var(--txt3);flex-shrink:0;">${d}</div></div>
+          <div style="font-size:13px;font-weight:${m.seen?'500':'700'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.subject)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore nel caricare la posta: ' + esc(e.message) + '</div>'; }
+}
+async function openMessage(uid){
+  const body = document.getElementById('posta-body'); if (!body) return;
+  body.innerHTML = '<div style="text-align:center;color:var(--txt3);padding:40px;">Apro il messaggio…</div>';
+  try {
+    const m = await mailFetch('/mail/message/' + uid);
+    const from = (m.from && m.from[0]) || {};
+    const d = m.date ? new Date(m.date).toLocaleString('it-IT') : '';
+    const content = m.html
+      ? `<iframe sandbox="" style="width:100%;border:none;background:#fff;border-radius:8px;min-height:55vh;" srcdoc="${esc(m.html)}"></iframe>`
+      : `<pre style="white-space:pre-wrap;font-family:inherit;font-size:14px;color:var(--txt);margin:0;">${esc(m.text)}</pre>`;
+    const att = (m.attachments && m.attachments.length) ? `<div style="font-size:12px;color:var(--txt2);margin-bottom:10px;"><i class="ti ti-paperclip"></i> ${m.attachments.length} allegato/i: ${m.attachments.map(a => esc(a.filename || 'file')).join(', ')}</div>` : '';
+    body.innerHTML = `
+      <div style="padding:14px 16px;max-width:840px;margin:0 auto;">
+        <button onclick="mailLoadInbox()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;margin-bottom:12px;"><i class="ti ti-arrow-left"></i> Posta in arrivo</button>
+        <div style="font-size:18px;font-weight:800;margin-bottom:6px;">${esc(m.subject)}</div>
+        <div style="font-size:13px;color:var(--txt2);">Da: <b>${esc(from.name || '')}</b> &lt;${esc(from.address || '')}&gt;</div>
+        <div style="font-size:12px;color:var(--txt3);margin-bottom:14px;">${d}</div>
+        ${att}
+        <div style="border-top:1px solid var(--bord);padding-top:12px;">${content}</div>
+        <button id="msg-reply" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-arrow-back-up"></i> Rispondi</button>
+      </div>`;
+    const rb = document.getElementById('msg-reply');
+    if (rb) rb.onclick = () => composeMail({ to: from.address || '', subject: 'Re: ' + (m.subject || '') });
+  } catch(e) { body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore: ' + esc(e.message) + '</div>'; }
+}
+function composeMail(prefill){
+  prefill = prefill || {};
+  const firma = mailFirma();
+  const id = 'compose-ov'; document.getElementById(id)?.remove();
+  const ov = document.createElement('div'); ov.id = id;
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;';
+  ov.innerHTML = `<div style="background:var(--surf);border-radius:14px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--bord2);font-weight:800;display:flex;align-items:center;gap:8px;"><i class="ti ti-pencil" style="color:var(--acc);"></i> Nuovo messaggio</div>
+    <div style="padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:10px;">
+      <div class="fld"><label>A</label><input id="cm-to" type="email" placeholder="destinatario@email.com" value="${esc(prefill.to || '')}"></div>
+      <div class="fld"><label>Oggetto</label><input id="cm-sub" type="text" value="${esc(prefill.subject || '')}"></div>
+      <div class="fld"><label>Messaggio</label><textarea id="cm-body" rows="11" style="resize:vertical;font-family:inherit;"></textarea></div>
+      <div id="cm-err" style="font-size:12px;color:var(--red);min-height:14px;"></div>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--bord2);display:flex;gap:8px;align-items:center;">
+      <button id="cm-send" style="display:inline-flex;align-items:center;gap:6px;padding:11px 20px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-send"></i> Invia</button>
+      <button onclick="modificaFirma()" style="padding:11px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;font-size:13px;">Modifica firma</button>
+      <div style="flex:1;"></div>
+      <button onclick="document.getElementById('${id}').remove()" style="padding:11px 16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);font-family:inherit;">Annulla</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  document.getElementById('cm-body').value = '\n\n-- \n' + firma;
+  setTimeout(() => document.getElementById('cm-to')?.focus(), 80);
+  document.getElementById('cm-send').onclick = async () => {
+    const to = document.getElementById('cm-to').value.trim();
+    const subject = document.getElementById('cm-sub').value.trim();
+    const text = document.getElementById('cm-body').value;
+    const err = document.getElementById('cm-err');
+    if (!to || !subject) { err.textContent = 'Inserisci destinatario e oggetto.'; return; }
+    err.textContent = 'Invio in corso…';
+    try { await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, subject, text }) }); document.getElementById(id)?.remove(); alert('Messaggio inviato.'); }
+    catch(e) { err.textContent = 'Errore invio: ' + e.message; }
+  };
+}
+async function modificaFirma(){
+  const nuova = prompt('La tua firma (nome, mansione, ecc.):', mailFirma());
+  if (nuova == null) return;
+  localStorage.setItem('iam_firma', nuova);
+  if (PROFILO) PROFILO.firma = nuova;
+  try { await db.from('iam_utenti').update({ firma: nuova }).eq('id', ME.id); } catch(e) {}
+  const ta = document.getElementById('cm-body');
+  if (ta) { const i = ta.value.indexOf('-- \n'); ta.value = (i >= 0 ? ta.value.slice(0, i) : ta.value) + '-- \n' + nuova; }
 }
 
 // Aggiorna openGCal per rispettare preferenza calendario

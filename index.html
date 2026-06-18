@@ -5302,7 +5302,7 @@ function applicaPermessi(ruolo) {
   const btnQuoto = document.getElementById('nb-quoto');
   if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
   const btnPosta = document.getElementById('nb-posta');
-  if (btnPosta) btnPosta.style.display = (PROFILO?.accesso_mail === true || isSuperAdmin()) ? 'flex' : 'none';
+  if (btnPosta) btnPosta.style.display = (isSuperAdmin() || (PROFILO?.mail_caselle && String(PROFILO.mail_caselle).trim())) ? 'flex' : 'none';
 }
 
 function mostraBadgeRuolo() {
@@ -5502,6 +5502,7 @@ async function renderUtenti() {
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<label class="sw-row" title="Accesso a IAM">IAM <span class="sw"><input type="checkbox" ${iamOn?'checked':''} onchange="toggleIamAccess('${u.id}',${iamOn})"><span class="sl"></span></span></label>` : ''}
         ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">QUOTO <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="setRui('${u.id}')" title="N. iscrizione RUI (usato da Quoto per la rimessa)" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">RUI ${u.rui?esc(u.rui):'—'}</button>` : ''}
+        ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriPermessiMail('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Caselle email che questo utente può vedere" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-mail"></i> Posta</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5664,6 +5665,44 @@ async function toggleIamAccess(userId, attuale) {
     if (error) throw error;
     await renderUtenti();
   } catch(e) { alert('Errore salvataggio accesso IAM: '+(e.message||e)); await renderUtenti(); }
+}
+
+// ── Permessi Posta per-utente (quali caselle può vedere) ────────────────────────
+async function apriPermessiMail(userId, nome){
+  let caselle = [];
+  try { const r = await mailFetch('/mail/accounts'); caselle = r.accounts || []; } catch(e){}
+  let cur = '';
+  try { const { data } = await db.from('iam_utenti').select('mail_caselle').eq('id', userId).single(); cur = (data && data.mail_caselle) || ''; } catch(e){}
+  const all = String(cur).trim() === '*';
+  const sel = all ? [] : String(cur).split(',').map(s => s.trim()).filter(Boolean);
+  const id = 'pm-ov'; document.getElementById(id)?.remove();
+  const rows = caselle.length
+    ? caselle.map(c => `<label class="sw-row" style="cursor:pointer;"><span class="sw-lbl">${esc(c)}</span><input type="checkbox" class="pm-c" value="${esc(c)}" ${sel.includes(c) ? 'checked' : ''} ${all ? 'disabled' : ''} style="width:18px;height:18px;"></label>`).join('')
+    : '<div style="font-size:12px;color:var(--txt3);">Nessuna casella configurata sul server (oppure il backend non è ancora pronto).</div>';
+  const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:600;display:flex;align-items:flex-end;" id="${id}" onclick="if(event.target.id==='${id}')this.remove()">
+    <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;max-height:80vh;overflow:auto;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;"><i class="ti ti-mail" style="color:var(--acc);"></i> Posta — ${esc(nome)}</div>
+      <div style="font-size:12px;color:var(--txt3);margin-bottom:14px;">Scegli quali caselle questo utente può leggere e usare.</div>
+      <label class="sw-row" style="cursor:pointer;border-bottom:1px solid var(--bord);padding-bottom:8px;margin-bottom:8px;"><span class="sw-lbl" style="font-weight:700;">Tutte le caselle</span><input type="checkbox" id="pm-all" ${all ? 'checked' : ''} onchange="document.querySelectorAll('.pm-c').forEach(c=>{c.disabled=this.checked; if(this.checked)c.checked=false;})" style="width:18px;height:18px;"></label>
+      ${rows}
+      <div style="font-size:11px;color:var(--txt3);margin-top:12px;">Nessuna selezione = l'utente non vede la Posta.</div>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="salvaPermessiMail('${userId}')" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="document.getElementById('${id}').remove()" style="padding:12px 16px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Annulla</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+async function salvaPermessiMail(userId){
+  let val;
+  if (document.getElementById('pm-all')?.checked) val = '*';
+  else val = [...document.querySelectorAll('.pm-c:checked')].map(c => c.value).join(',');
+  try {
+    const { error } = await db.from('iam_utenti').update({ mail_caselle: val }).eq('id', userId);
+    if (error) throw error;
+    document.getElementById('pm-ov')?.remove();
+    alert('Permessi posta aggiornati.');
+  } catch(e) { alert('Errore: ' + (e.message || e) + '\\n(Se manca la colonna mail_caselle, esegui prima la riga SQL su Supabase.)'); }
 }
 
 async function openLab() {

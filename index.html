@@ -3760,10 +3760,10 @@ async function saveTeamDB(c) {
 }
 
 async function delTeamDB(id) {
-  if (!db) { loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); return; }
+  if (!db) { loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); renderTeam(); return; }
   try {
     await db.from('iam_team').delete().eq('id', id);
-    loadTeam(); TEAM=TEAM.filter(x=>x.id!==id); saveTeam();
+    TEAM=TEAM.filter(x=>x.id!==id); saveTeam(); renderTeam();
   } catch(e) { console.warn('delTeamDB error:', e); }
 }
 
@@ -3831,7 +3831,10 @@ function renderTeam() {
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;">${rami.join('')}</div>
           ${compBadges?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">${compBadges}</div>`:''}
         </div>
-        <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+          <button onclick="openCollabModal('${c.id}')" style="font-size:11px;padding:4px 10px;background:rgba(255,255,255,.12);color:#fff;border:.5px solid rgba(255,255,255,.2);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-pencil"></i> Modifica</button>
+          <button onclick="if(confirm('Eliminare ${c.nome} ${c.cogn}? Operazione non reversibile.')){delTeamDB('${c.id}')}" style="font-size:11px;padding:4px 10px;background:rgba(220,50,50,.25);color:#ff8080;border:.5px solid rgba(220,50,50,.35);border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-trash"></i> Elimina</button>
+        </div>
       </div>
 
       <!-- Tab interne scheda -->

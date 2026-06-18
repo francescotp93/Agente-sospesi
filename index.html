@@ -3076,6 +3076,14 @@ function loadConto(inp, tipo) {
   r.readAsArrayBuffer(file);
 }
 
+function confermaBonifici() {
+  const tipo = APP.conto.att;
+  saveContoCache(tipo);
+  saveContoDB(tipo);
+  const msg = document.getElementById('co-save-msg');
+  if (msg) { msg.style.display = 'inline'; setTimeout(() => { if (msg) msg.style.display = 'none'; }, 2500); }
+}
+
 async function resetConto(tipo) {
   const lbl = tipo === 'hdi' ? 'HDI' : 'Plurimandato';
   if (!confirm('Svuotare l\'estratto ' + lbl + '?\nVerranno rimossi movimenti, spunte e note caricati (anche per gli altri utenti).')) return;
@@ -3716,6 +3724,8 @@ function renderConto() {
           <option value="0">Da abbinare</option>
           <option value="1">Flaggati</option>
         </select>
+        <button onclick="confermaBonifici()" style="padding:9px 14px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;"><i class="ti ti-device-floppy" style="vertical-align:-2px;"></i> Salva</button>
+        <span id="co-save-msg" style="font-size:12px;font-weight:700;color:var(--grn-txt);display:none;white-space:nowrap;">✓ Salvato</span>
       </div>
       <div class="card"><div id="co-list"></div></div>`;
   }

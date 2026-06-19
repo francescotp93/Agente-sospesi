@@ -543,6 +543,7 @@ input[type=file]{display:none;}
   </div>
   <button class="umenu-item" onclick="goTab('profilo');document.getElementById('umenu').style.display='none';"><i class="ti ti-user-circle" style="font-size:16px;color:var(--txt3);"></i> Il mio profilo</button>
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
+  <button class="umenu-item" id="um-btn-estratto" onclick="openEstrattoConto();document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-file-invoice" style="font-size:16px;color:var(--txt3);"></i> Estratto conto</button>
   <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
   <div class="umenu-sep"></div>
   <div class="umenu-section-title"> Aspetto</div>
@@ -5347,6 +5348,8 @@ function mostraBadgeRuolo() {
   // Mostra/nasconde pulsante gestione utenti nel menu
   const btnUtenti = document.getElementById('um-btn-utenti');
   if (btnUtenti) btnUtenti.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
+  const btnEstr = document.getElementById('um-btn-estratto');
+  if (btnEstr) btnEstr.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
   // Aggiorna avatar nel menu
   const av2 = document.getElementById('um-av2');
   if (av2) av2.textContent = (PROFILO.nome||ME?.email||'?')[0].toUpperCase();
@@ -5762,6 +5765,102 @@ async function salvaModalitaPagamento(userId){
     document.getElementById('mp-ov')?.remove();
     alert('Modalità di pagamento aggiornate.');
   } catch(e) { alert('Errore: ' + (e.message || e) + '\\n(Se manca la colonna modalita_pagamento, esegui prima la riga SQL su Supabase.)'); }
+}
+
+// ── ESTRATTO CONTO — polizze emesse dai collaboratori ───────────────────────────
+let EC_ROWS = [];
+function ecMetodoLabel(m){ return ({ rimessa:'Rimessa', virtual_pos:'Virtual POS', paypal:'PayPal', bonifico:'Bonifico' })[m] || (m || 'n/d'); }
+function ecEuro(n){ return '€ ' + (Number(n)||0).toLocaleString('it-IT',{ minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function ecDataFmt(dt){ try{ return new Date(dt).toLocaleDateString('it-IT'); }catch(e){ return ''; } }
+async function openEstrattoConto(){
+  document.getElementById('ec-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'ec-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:var(--bg,var(--surf));display:flex;flex-direction:column;font-family:inherit;';
+  const lbl = 'font-size:11px;color:var(--txt3);display:block;margin-bottom:3px;';
+  const inp = 'background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--txt);font-family:inherit;cursor:pointer;';
+  ov.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--bord2);background:var(--surf);">
+      <i class="ti ti-file-invoice" style="font-size:24px;color:var(--acc);"></i>
+      <div style="font-weight:800;font-size:17px;flex:1;">Estratto conto</div>
+      <button onclick="document.getElementById('ec-ov').remove()" title="Chiudi" style="padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i> Chiudi</button>
+    </div>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--bord);background:var(--surf);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div><label style="${lbl}">Collaboratore</label><select id="ec-coll" onchange="ecRender()" style="${inp}"><option value="">Tutti i collaboratori</option></select></div>
+      <div><label style="${lbl}">Periodo</label><select id="ec-per" onchange="ecPerChange()" style="${inp}">
+        <option value="today">Oggi</option><option value="month" selected>Questo mese</option><option value="year">Quest'anno</option><option value="all">Tutto</option><option value="custom">Personalizzato…</option>
+      </select></div>
+      <div id="ec-range" style="display:none;gap:8px;">
+        <div><label style="${lbl}">Da</label><input id="ec-da" type="date" onchange="ecRender()" style="${inp}"></div>
+        <div><label style="${lbl}">A</label><input id="ec-a" type="date" onchange="ecRender()" style="${inp}"></div>
+      </div>
+    </div>
+    <div id="ec-summary" style="padding:12px 16px;border-bottom:1px solid var(--bord);background:var(--surf);display:flex;gap:10px;flex-wrap:wrap;"></div>
+    <div id="ec-body" style="flex:1;overflow:auto;"><div style="padding:40px;text-align:center;color:var(--txt3);">Carico le polizze…</div></div>`;
+  document.body.appendChild(ov);
+  await ecLoad();
+}
+async function ecLoad(){
+  const body = document.getElementById('ec-body');
+  let data = [];
+  try {
+    const r = await db.from('quote_preventivi').select('id,prodotto,compagnia,premio,cliente,dati,polizza_emessa,polizza_il,creato_nome,creato_da,creato_il').order('creato_il',{ ascending:false });
+    if (r.error) throw r.error; data = r.data || [];
+  } catch(e){ if (body) body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore nel caricamento: ' + esc(e.message||e) + '</div>'; return; }
+  EC_ROWS = data.map(r => {
+    const pg = (r.dati && r.dati.pagamento) || null;
+    const emessa = r.polizza_emessa === true || (r.dati && r.dati.stato === 'emessa') || !!pg;
+    const importo = (pg && pg.importo != null) ? Number(pg.importo) : (r.premio != null ? Number(r.premio) : 0);
+    const dataRif = (pg && pg.data) || r.polizza_il || r.creato_il;
+    return { id:r.id, emessa, metodo:(pg && pg.metodo) || null, importo, data:dataRif, coll:r.creato_nome || '—', cliente:r.cliente || '—', prodotto:r.prodotto || '—', compagnia:r.compagnia || '' };
+  }).filter(r => r.emessa);
+  const colls = [...new Set(EC_ROWS.map(r => r.coll).filter(Boolean))].sort();
+  const sel = document.getElementById('ec-coll');
+  if (sel) sel.innerHTML = '<option value="">Tutti i collaboratori</option>' + colls.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  ecRender();
+}
+function ecPerChange(){ const v = document.getElementById('ec-per')?.value; const r = document.getElementById('ec-range'); if (r) r.style.display = (v === 'custom') ? 'flex' : 'none'; ecRender(); }
+function ecInPeriodo(dt, per){
+  if (per === 'all') return true;
+  const d = new Date(dt); if (isNaN(d)) return false; const now = new Date();
+  if (per === 'today') return d.toDateString() === now.toDateString();
+  if (per === 'month') return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  if (per === 'year') return d.getFullYear() === now.getFullYear();
+  if (per === 'custom'){ const da = document.getElementById('ec-da')?.value, a = document.getElementById('ec-a')?.value; if (da && d < new Date(da+'T00:00:00')) return false; if (a && d > new Date(a+'T23:59:59')) return false; return true; }
+  return true;
+}
+function ecRender(){
+  const coll = document.getElementById('ec-coll')?.value || '';
+  const per = document.getElementById('ec-per')?.value || 'month';
+  let rows = EC_ROWS.filter(r => ecInPeriodo(r.data, per));
+  if (coll) rows = rows.filter(r => r.coll === coll);
+  let totDaPagare = 0, totPagato = 0, nDaPagare = 0, nPagato = 0;
+  rows.forEach(r => { if (r.metodo === 'rimessa'){ totDaPagare += r.importo; nDaPagare++; } else { totPagato += r.importo; nPagato++; } });
+  const sum = document.getElementById('ec-summary');
+  if (sum) sum.innerHTML = `
+    <div style="flex:1;min-width:130px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;padding:10px 12px;"><div style="font-size:11px;color:var(--txt3);">Polizze nel periodo</div><div style="font-size:20px;font-weight:800;">${rows.length}</div></div>
+    <div style="flex:1;min-width:130px;background:rgba(46,193,106,.10);border:1px solid rgba(46,193,106,.35);border-radius:10px;padding:10px 12px;"><div style="font-size:11px;color:var(--txt3);">Già pagate (${nPagato})</div><div style="font-size:20px;font-weight:800;color:#1c8a52;">${ecEuro(totPagato)}</div><div style="font-size:10px;color:var(--txt3);">non conteggiate</div></div>
+    <div style="flex:1;min-width:150px;background:rgba(229,57,53,.10);border:1px solid rgba(229,57,53,.40);border-radius:10px;padding:10px 12px;"><div style="font-size:11px;color:var(--txt3);">Da incassare · rimesse (${nDaPagare})</div><div style="font-size:22px;font-weight:900;color:#e53935;">${ecEuro(totDaPagare)}</div><div style="font-size:10px;color:var(--txt3);">totale estratto</div></div>`;
+  const body = document.getElementById('ec-body');
+  if (!body) return;
+  if (!rows.length){ body.innerHTML = '<div style="padding:50px;text-align:center;color:var(--txt3);">Nessuna polizza emessa nel periodo selezionato.</div>'; return; }
+  body.innerHTML = rows.map(r => {
+    const daPagare = (r.metodo === 'rimessa');
+    const badge = daPagare
+      ? '<span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(229,57,53,.14);color:#e53935;">Da pagare</span>'
+      : '<span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:rgba(46,193,106,.16);color:#1c8a52;">Pagato</span>';
+    return `<div style="padding:11px 16px;border-bottom:1px solid var(--bord);display:flex;gap:12px;align-items:center;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.cliente)}</div>
+        <div style="font-size:12px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(r.prodotto)}${r.compagnia ? ' · ' + esc(r.compagnia) : ''}</div>
+        <div style="font-size:11px;color:var(--txt3);">${ecDataFmt(r.data)} · ${esc(r.coll)} · ${esc(ecMetodoLabel(r.metodo))}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-weight:800;font-size:15px;margin-bottom:4px;">${ecEuro(r.importo)}</div>
+        ${badge}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 async function openLab() {

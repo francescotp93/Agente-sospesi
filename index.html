@@ -6364,9 +6364,15 @@ async function openMessage(uid, folder){
       : `<pre style="white-space:pre-wrap;font-family:inherit;font-size:14px;color:var(--txt);margin:0;">${esc(m.text)}</pre>`;
     const att = (m.attachments && m.attachments.length) ? (`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;">` + m.attachments.map((a,i) => {
         const isImg = (a.contentType || '').indexOf('image/') === 0;
-        return `<div onclick="mailDownloadAttach(${uid},'${folder}',${i})" title="Scarica ${esc(a.filename || '')}" style="display:flex;align-items:center;gap:10px;border:1px solid var(--bord2);border-radius:10px;padding:8px 10px;cursor:pointer;background:var(--surf2);max-width:250px;">
-          <div id="att-th-${i}" style="width:40px;height:40px;border-radius:8px;background:rgba(var(--acc-rgb),.12);display:flex;align-items:center;justify-content:center;color:var(--acc);flex-shrink:0;overflow:hidden;"><i class="ti ${isImg ? 'ti-photo' : 'ti-file'}" style="font-size:20px;"></i></div>
-          <div style="min-width:0;"><div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.filename || 'file')}</div><div style="font-size:11px;color:var(--txt3);">${a.size ? mailFmtSize(a.size) : ''} · <i class="ti ti-download"></i> scarica</div></div>
+        return `<div style="display:flex;flex-direction:column;gap:8px;border:1px solid var(--bord2);border-radius:10px;padding:10px;background:var(--surf2);width:210px;">
+          <div onclick="mailPreviewAttach(${uid},'${folder}',${i})" title="Anteprima ${esc(a.filename || '')}" style="display:flex;align-items:center;gap:10px;cursor:pointer;min-width:0;">
+            <div id="att-th-${i}" style="width:40px;height:40px;border-radius:8px;background:rgba(var(--acc-rgb),.12);display:flex;align-items:center;justify-content:center;color:var(--acc);flex-shrink:0;overflow:hidden;"><i class="ti ${isImg ? 'ti-photo' : 'ti-file'}" style="font-size:20px;"></i></div>
+            <div style="min-width:0;"><div style="font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.filename || 'file')}</div><div style="font-size:11px;color:var(--txt3);">${a.size ? mailFmtSize(a.size) : ''}</div></div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="mailPreviewAttach(${uid},'${folder}',${i})" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;"><i class="ti ti-eye"></i> Anteprima</button>
+            <button onclick="mailDownloadAttach(${uid},'${folder}',${i})" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 8px;background:var(--surf3);color:var(--txt);border:.5px solid var(--bord2);border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;font-family:inherit;"><i class="ti ti-download"></i> Scarica</button>
+          </div>
         </div>`;
       }).join('') + `</div>`) : '';
     body.innerHTML = `
@@ -6409,6 +6415,49 @@ async function mailDownloadAttach(uid, folder, index){
     const el = document.createElement('a'); el.href = url; el.download = a.filename || 'allegato'; document.body.appendChild(el); el.click(); el.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   } catch(e){ alert('Errore nel download: ' + (e.message || e)); }
+}
+// Anteprima a schermo intero di un allegato (immagini, PDF, testo; gli altri tipi rimandano allo scarico)
+async function mailPreviewAttach(uid, folder, index){
+  document.getElementById('att-prev-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'att-prev-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,.88);display:flex;flex-direction:column;font-family:inherit;';
+  ov.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;">
+      <div id="att-prev-name" style="flex:1;color:#fff;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Carico…</div>
+      <button id="att-prev-dl" style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:rgba(255,255,255,.16);border:none;border-radius:9px;color:#fff;font-weight:600;cursor:pointer;font-family:inherit;font-size:13px;"><i class="ti ti-download"></i> Scarica</button>
+      <button onclick="document.getElementById('att-prev-ov').remove()" title="Chiudi" style="display:inline-flex;align-items:center;padding:9px 12px;background:rgba(255,255,255,.16);border:none;border-radius:9px;color:#fff;cursor:pointer;"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="att-prev-body" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:0 12px 14px;">
+      <div style="color:#fff;opacity:.8;">Carico l'anteprima…</div>
+    </div>`;
+  document.body.appendChild(ov);
+  document.getElementById('att-prev-dl').onclick = () => mailDownloadAttach(uid, folder, index);
+  try {
+    const a = await mailGetAttach(uid, folder, index);
+    const nameEl = document.getElementById('att-prev-name'); if (nameEl) nameEl.textContent = a.filename || 'allegato';
+    const ct = (a.contentType || '').toLowerCase();
+    const bytes = Uint8Array.from(atob(a.content), c => c.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: a.contentType || 'application/octet-stream' }));
+    const bodyEl = document.getElementById('att-prev-body'); if (!bodyEl) return;
+    if (ct.indexOf('image/') === 0) {
+      bodyEl.innerHTML = `<img src="${url}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">`;
+    } else if (ct === 'application/pdf') {
+      bodyEl.innerHTML = `<iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff;border-radius:8px;"></iframe>`;
+    } else if (ct.indexOf('text/') === 0) {
+      const pre = document.createElement('pre');
+      pre.style.cssText = 'white-space:pre-wrap;word-break:break-word;color:#fff;font-size:13px;max-width:860px;width:100%;background:rgba(255,255,255,.07);padding:16px;border-radius:8px;overflow:auto;max-height:100%;margin:0;';
+      pre.textContent = new TextDecoder().decode(bytes);
+      bodyEl.innerHTML = ''; bodyEl.appendChild(pre);
+    } else {
+      bodyEl.innerHTML = `<div style="text-align:center;color:#fff;"><i class="ti ti-file" style="font-size:54px;opacity:.7;"></i><div style="margin-top:12px;opacity:.85;max-width:300px;line-height:1.5;">Anteprima non disponibile per questo tipo di file.<br>Premi <b>Scarica</b> in alto per aprirlo.</div></div>`;
+    }
+    const obs = new MutationObserver(() => { if (!document.body.contains(ov)) { URL.revokeObjectURL(url); obs.disconnect(); } });
+    obs.observe(document.body, { childList: true });
+  } catch(e){
+    const bodyEl = document.getElementById('att-prev-body');
+    if (bodyEl) bodyEl.innerHTML = `<div style="color:#fff;">Errore nel caricamento: ${esc(e.message || e)}</div>`;
+  }
 }
 async function mailLoadThumb(uid, folder, index){
   try {

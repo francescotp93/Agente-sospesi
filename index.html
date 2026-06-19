@@ -5831,7 +5831,8 @@ async function ecLoad(){
   } catch(e){ if (body) body.innerHTML = '<div style="padding:30px;color:var(--red);">Errore nel caricamento: ' + esc(e.message||e) + '</div>'; return; }
   EC_ROWS = data.map(r => {
     const pg = (r.dati && r.dati.pagamento) || null;
-    const emessa = r.polizza_emessa === true || (r.dati && r.dati.stato === 'emessa') || !!pg;
+    // Emessa davvero: polizza_emessa o stato 'emessa'. (Un bonifico in attesa di sblocco operatore è 'in_esame' → escluso.)
+    const emessa = r.polizza_emessa === true || (r.dati && r.dati.stato === 'emessa');
     const importo = (pg && pg.importo != null) ? Number(pg.importo) : (r.premio != null ? Number(r.premio) : 0);
     const dataRif = (pg && pg.data) || r.polizza_il || r.creato_il;
     return { id:r.id, emessa, metodo:(pg && pg.metodo) || null, importo, data:dataRif, coll:r.creato_nome || '—', cliente:r.cliente || '—', prodotto:r.prodotto || '—', compagnia:r.compagnia || '' };

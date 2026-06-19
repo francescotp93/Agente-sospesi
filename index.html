@@ -6307,13 +6307,20 @@ function renderMailList(filter){
 // Segna una mail come letta (seen=true) o da leggere (seen=false)
 async function mailMarkSeen(uid, folder, seen){
   folder = folder || MAIL_FOLDER || 'inbox';
+  const it = MAIL_MSGS.find(m => m.uid === uid);
+  const prev = it ? it.seen : undefined;
+  if (it) it.seen = seen;                       // cambia subito a schermo (istantaneo)
+  const si = document.getElementById('mail-search');
+  renderMailList(si ? si.value : '');
+  if (folder === 'inbox') mailRefreshBadge();
   try {
     await mailFetch('/mail/flag', { method: 'POST', body: JSON.stringify({ uid, folder, casella: MAIL_CASELLA, seen }) });
-    const it = MAIL_MSGS.find(m => m.uid === uid); if (it) it.seen = seen;
-    const si = document.getElementById('mail-search');
+  } catch(e){
+    if (it) it.seen = prev;                     // se fallisce, ripristina
     renderMailList(si ? si.value : '');
     if (folder === 'inbox') mailRefreshBadge();
-  } catch(e){ alert('Errore: ' + e.message); }
+    alert('Non riesco a cambiare lo stato: ' + e.message);
+  }
 }
 // Elimina una mail: nel Cestino se possibile, definitiva se sei già nel Cestino.
 async function mailDelete(uid, folder){

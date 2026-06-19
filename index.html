@@ -8210,7 +8210,11 @@ async function loadGareData() {
     if (db && ME) {
       const { data: cfgDB } = await db.from('iam_gare_config').select('*');
       if (cfgDB) { GARE_CONFIG = {}; cfgDB.forEach(r => { GARE_CONFIG[r.tipo] = r; }); localStorage.setItem('iam_gare_config', JSON.stringify(GARE_CONFIG)); }
-      const { data: posDB } = await db.from('iam_gare_posizioni').select('*').eq('utente_id', ME.id).order('creato_il', {ascending:false});
+      // Collaboratore: solo le proprie posizioni. Admin/Operatore (e super-admin): tutte.
+      const vedeTutti = isSuperAdmin() || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
+      let pq = db.from('iam_gare_posizioni').select('*').order('creato_il', {ascending:false});
+      if (!vedeTutti) pq = pq.eq('utente_id', ME.id);
+      const { data: posDB } = await pq;
       if (posDB) {
         GARE_POS = {};
         posDB.forEach(p => { const k = p.tipo||p.tipo_gara; if(!GARE_POS[k]) GARE_POS[k]=[]; GARE_POS[k].push(p); });
@@ -8236,6 +8240,8 @@ function renderGara(tipo) {
   loadGareData().then(() => {
     const cfg  = GARE_CONFIG[tipo] || {};
     const pos  = (GARE_POS[tipo]  || []);
+    const vedeAutore = isSuperAdmin() || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
+    const autoreTag = p => (vedeAutore && p.utente_nome) ? ` · <span style="color:var(--acc);font-weight:600;">${esc(p.utente_nome)}</span>` : '';
     const kpiKey = tipo === 'rinnovi' ? 'gara_rinnovi' : tipo === 're_pezzi' ? 'gara_re_pezzi' : tipo === 'rca' ? 'gara_rca' : tipo === 'finanziati' ? 'gara_finanziati' : 'gara_cross';
     const kpiAbil = PROFILO?.kpi_flags?.[kpiKey] !== false; // default true se non configurato
     if (!kpiAbil && PROFILO?.ruolo === 'collaboratore') {
@@ -8261,7 +8267,7 @@ function renderGara(tipo) {
       const listEl = document.getElementById(listIds[tipo]);
       if (listEl) listEl.innerHTML = pos.length
         ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
-            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
+            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}${autoreTag(p)}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
             <button onclick="delGaraPos('${tipo}','${p.id||i}')" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;">✕</button>
           </div>`).join('')
         : '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna posizione</div>';
@@ -8277,7 +8283,7 @@ function renderGara(tipo) {
       const listEl = document.getElementById('gara-fin-list');
       if (listEl) listEl.innerHTML = pos.length
         ? pos.map((p,i)=>`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-top:.5px solid var(--bord);font-size:12px;">
-            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
+            <div style="flex:1;"><b>${p.cliente||p.nome||'—'}</b>${p.prodotto?' · '+p.prodotto:''}${autoreTag(p)}<br><span style="color:var(--txt3);">${p.note||''}</span></div>
             <button onclick="delGaraPos('finanziati','${p.id||i}')" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;flex-shrink:0;">✕</button>
           </div>`).join('')
         : '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Nessuna posizione</div>';

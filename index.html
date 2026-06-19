@@ -3055,6 +3055,14 @@ async function loadContoDB() {
 
 // Trova automaticamente la riga di intestazione (le banche mettono metadati sopra)
 // e mappa le colonne dei formati più comuni (HDI, Plurimandato, ecc.)
+// Estrae il numero COD. DISP. (codice disposizione) da un testo di movimento bancario.
+// Serve a riconoscere lo stesso bonifico se ricaricato: due bonifici con lo stesso
+// COD. DISP. sono lo stesso movimento e non vanno caricati due volte.
+function contoCodDisp(text){
+  if (!text) return '';
+  const m = String(text).match(/cod[\.\s]*disp[a-z\.]*[\s:n°.\-]*([0-9A-Za-z\/]{4,})/i);
+  return m ? m[1].toUpperCase() : '';
+}
 function parseContoSheet(ws) {
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
   const nk = s => normKey(s);
@@ -3096,13 +3104,14 @@ function parseContoSheet(ws) {
     }
     if (!operazione && !importo) continue;
     const data = fmtDate(dataRaw);
+    const codDisp = contoCodDisp(r.map(x => x == null ? '' : String(x)).join(' '));
     movs.push({
       id: `${data}|${importo}|${i}`, // id senza testo: evita caratteri speciali che rompono le caselle di spunta
       data, operazione,
       desc: dettagli || operazione,
       dare:  importo < 0 ? -importo : 0,
       avere: importo > 0 ?  importo : 0,
-      importo,
+      importo, codDisp,
       saldo: parseNum(get(r, c.saldo)),
     });
   }
@@ -3130,22 +3139,35 @@ function loadConto(inp, tipo) {
           desc: rowVal(row, ['Descrizione','Descrizione operazione','Causale','Dettagli','Note operazione']) || operazione || '',
           dare:  parseNum(rowVal(row, ['Dare','Uscita','Uscite','Addebiti','Addebito'])),
           avere, importo,
+          codDisp: contoCodDisp(Object.values(row).map(x => x == null ? '' : String(x)).join(' ')),
           saldo: parseNum(rowVal(row, ['Saldo'])),
         };
       });
     }
     if (!movs.length) { alert('Non sono riuscito a leggere i movimenti da questo file. Controlla che sia l\'estratto conto in Excel.'); return; }
-    // merge senza sovrascrivere i movimenti esistenti + dedupe per id
+    // merge senza sovrascrivere i movimenti esistenti.
+    // Bonifici: dedup per COD. DISP. (stesso codice = stesso bonifico, non ricaricarlo).
+    // Altri movimenti: dedup per id come prima.
     const existingMovs = APP.conto[tipo].movimenti || [];
     const existingIds = new Set(existingMovs.map(m => m.id));
-    const newMovs = movs.filter(m => !existingIds.has(m.id));
+    const existingCods = new Set(existingMovs.map(m => m.codDisp).filter(Boolean));
+    const seenCods = new Set();
+    let dupCod = 0;
+    const newMovs = movs.filter(m => {
+      if (m.codDisp) {
+        if (existingCods.has(m.codDisp) || seenCods.has(m.codDisp)) { dupCod++; return false; }
+        seenCods.add(m.codDisp);
+        return true;
+      }
+      return !existingIds.has(m.id);
+    });
     APP.conto[tipo].movimenti = [...existingMovs, ...newMovs];
     APP.conto[tipo].bonif = APP.conto[tipo].bonif || {}; // mantiene spunte/note già sincronizzate
     saveContoCache(tipo);
     saveContoDB(tipo); // condividi estratto + spunte/note sul database
     const totalMovs = APP.conto[tipo].movimenti.length;
     const okEl = document.getElementById('ok-'+tipo);
-    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (+' + newMovs.length + ' nuovi, ' + totalMovs + ' tot.)'; okEl.style.display = 'block'; }
+    if (okEl) { okEl.textContent = '✓ ' + file.name + ' (+' + newMovs.length + ' nuovi, ' + totalMovs + ' tot.' + (dupCod ? ', ' + dupCod + ' bonifici già presenti saltati' : '') + ')'; okEl.style.display = 'block'; }
     renderConto();
     if (APP.loaded) buildDashboard();
   };

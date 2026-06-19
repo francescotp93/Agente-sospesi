@@ -2224,6 +2224,10 @@ async function onLogin(user) {
     PROFILO = profilo;
     // Instradamento per accesso: utente "solo QUOTO" -> va dritto a QUOTO; nessun accesso -> stop
     if (PROFILO && !isSuperAdmin()) {
+      if (PROFILO.attivo === false) {
+        alert('Il tuo account è disabilitato. Contatta un amministratore.');
+        onLogout(); return;
+      }
       if (PROFILO.accesso_iam === false) {
         if (PROFILO.accesso_quoto === true) { apriQuoto(); return; }
         alert('Il tuo account non ha accesso a IAM. Contatta un amministratore.');
@@ -5300,6 +5304,19 @@ const PERMESSI = {
   operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
   collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
+// Etichette leggibili delle sezioni controllabili (per il pannello permessi per-utente)
+const PERMESSI_LABELS = {
+  carica:'Contabilità (inserimento)', dashboard:'Dashboard', conto:'Conto', anomalie:'Anomalie',
+  sospesi:'Sospesi', storico:'Storico', team:'Team', pipeline:'Pipeline', workdiary:'Diary',
+  performance:'KPI / Performance', utenti:'Gestione utenti', modifica:'Può modificare'
+};
+// Permessi effettivi = default del ruolo + override per-utente (colonna jsonb iam_utenti.permessi)
+function permessiEffettivi(profilo){
+  const base = PERMESSI[canonRuolo(profilo?.ruolo)] || PERMESSI.collaboratore;
+  let ov = profilo?.permessi;
+  if (ov && typeof ov === 'string') { try { ov = JSON.parse(ov); } catch(e){ ov = null; } }
+  return Object.assign({}, base, (ov && typeof ov === 'object') ? ov : {});
+}
 
 async function caricaProfilo(userId) {
   if (!db) return null;
@@ -5322,7 +5339,7 @@ async function caricaProfilo(userId) {
 }
 
 function applicaPermessi(ruolo) {
-  const perm = PERMESSI[ruolo] || PERMESSI.collaboratore;
+  const perm = isSuperAdmin() ? PERMESSI.admin : permessiEffettivi(PROFILO);
   const tabs = {
     'nb-carica':      perm.carica,
     'nb-dashboard':   perm.dashboard,
@@ -5510,7 +5527,7 @@ async function renderUtenti() {
   await caricaUtenti();
   const el = document.getElementById('utenti-list');
   if (!el) return;
-  const perm = PERMESSI[PROFILO?.ruolo] || {};
+  const perm = permessiEffettivi(PROFILO);
 
   // Aggiorna solo il pulsante "+ Nuovo utente" nell'header statico
   const btnWrap = document.getElementById('utenti-btn-wrap');
@@ -5553,6 +5570,7 @@ async function renderUtenti() {
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="setRui('${u.id}')" title="N. iscrizione RUI (usato da Quoto per la rimessa)" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">RUI ${u.rui?esc(u.rui):'—'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriPermessiMail('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Caselle email che questo utente può vedere" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-mail"></i> Posta</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriModalitaPagamento('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Modalità di pagamento consentite per questo collaboratore" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-credit-card"></i> Pagamenti</button>` : ''}
+        ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<button onclick="apriPermessiUtente('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Permessi su ogni sezione di IAM" style="font-size:11px;padding:4px 10px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;"><i class="ti ti-adjustments"></i> Permessi</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -5788,6 +5806,56 @@ async function salvaModalitaPagamento(userId){
     document.getElementById('mp-ov')?.remove();
     alert('Modalità di pagamento aggiornate.');
   } catch(e) { alert('Errore: ' + (e.message || e) + '\\n(Se manca la colonna modalita_pagamento, esegui prima la riga SQL su Supabase.)'); }
+}
+
+// ── Pannello permessi per singolo utente (override del ruolo, sezione per sezione) ──
+async function apriPermessiUtente(userId, nome){
+  let u = (UTENTI_LISTA||[]).find(x=>x.id===userId);
+  if(!u){ try{ const {data}=await db.from('iam_utenti').select('ruolo,attivo,permessi').eq('id',userId).single(); u=data; }catch(e){} }
+  const ruolo = canonRuolo(u?.ruolo); const attivo = (u?.attivo!==false);
+  let ov = u?.permessi; if(ov && typeof ov==='string'){ try{ ov=JSON.parse(ov); }catch(e){ ov=null; } }
+  const base = PERMESSI[ruolo] || PERMESSI.collaboratore;
+  const eff = Object.assign({}, base, (ov&&typeof ov==='object')?ov:{});
+  const id='pu-ov'; document.getElementById(id)?.remove();
+  const rows = Object.keys(PERMESSI_LABELS).map(k=>{
+    const def = !!base[k];
+    return `<label class="sw-row" style="cursor:pointer;"><span class="sw-lbl">${esc(PERMESSI_LABELS[k])} <span style="font-size:10px;color:var(--txt3);font-weight:400;">(ruolo: ${def?'sì':'no'})</span></span><span class="sw"><input type="checkbox" class="pu-c" data-k="${k}" ${eff[k]?'checked':''}><span class="sl"></span></span></label>`;
+  }).join('');
+  const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:600;display:flex;align-items:flex-end;" id="${id}" onclick="if(event.target.id==='${id}')this.remove()">
+    <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;max-height:85vh;overflow:auto;">
+      <div style="font-size:15px;font-weight:700;margin-bottom:4px;"><i class="ti ti-adjustments" style="color:var(--acc);"></i> Permessi — ${esc(nome)}</div>
+      <div style="font-size:12px;color:var(--txt3);margin-bottom:12px;">Ruolo: <b>${esc((RUOLI[ruolo]||{}).label||ruolo)}</b>. Abilita/disabilita l'utente e ogni sezione di IAM. Le modifiche qui hanno priorità sul ruolo.</div>
+      <label class="sw-row" style="cursor:pointer;border-bottom:1px solid var(--bord);padding-bottom:10px;margin-bottom:6px;"><span class="sw-lbl" style="font-weight:700;">Account abilitato (può accedere)</span><span class="sw"><input type="checkbox" id="pu-attivo" ${attivo?'checked':''}><span class="sl"></span></span></label>
+      ${rows}
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="salvaPermessiUtente('${userId}')" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="resetPermessiUtente('${userId}')" title="Torna ai permessi del ruolo" style="padding:12px 12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Reset ruolo</button>
+        <button onclick="document.getElementById('${id}').remove()" style="padding:12px 12px;background:var(--surf2);color:var(--txt);border:.5px solid var(--bord2);border-radius:var(--rs);cursor:pointer;font-family:inherit;">Chiudi</button>
+      </div>
+    </div></div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+async function salvaPermessiUtente(userId){
+  const permessi = {};
+  document.querySelectorAll('.pu-c').forEach(c=>{ permessi[c.dataset.k] = c.checked; });
+  const attivo = document.getElementById('pu-attivo')?.checked !== false;
+  try{
+    const { error } = await db.from('iam_utenti').update({ permessi, attivo }).eq('id', userId);
+    if(error) throw error;
+    document.getElementById('pu-ov')?.remove();
+    await renderUtenti();
+    alert('Permessi aggiornati.');
+  }catch(e){ alert('Errore: '+(e.message||e)+'\\n(Se manca la colonna permessi, esegui prima la riga SQL su Supabase: alter table iam_utenti add column if not exists permessi jsonb;)'); }
+}
+async function resetPermessiUtente(userId){
+  if(!confirm('Riportare i permessi di questo utente ai valori predefiniti del suo ruolo?')) return;
+  try{
+    const { error } = await db.from('iam_utenti').update({ permessi: null }).eq('id', userId);
+    if(error) throw error;
+    document.getElementById('pu-ov')?.remove();
+    await renderUtenti();
+    alert('Permessi riportati al ruolo.');
+  }catch(e){ alert('Errore: '+(e.message||e)); }
 }
 
 // ── ESTRATTO CONTO — polizze emesse dai collaboratori ───────────────────────────

@@ -4890,6 +4890,7 @@ function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (!ME) return [];
+  if (isSuperAdmin() || isPipelineAdmin()) return list; // admin/operatore: vedono tutte le trattative
   return list.filter(t => isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 

@@ -6299,9 +6299,21 @@ function renderMailList(filter){
         <div style="font-size:13px;font-weight:${m.seen?'400':'700'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${m.seen?'var(--txt2)':'var(--txt)'};">${esc(m.subject)}</div>
       </div>
       ${m.seen ? '' : '<div style="width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0;"></div>'}
+      <button onclick="event.stopPropagation();mailMarkSeen(${m.uid},'${folder}',${m.seen ? 'false' : 'true'})" title="${m.seen ? 'Segna come da leggere' : 'Segna come letto'}" style="background:transparent;border:none;color:var(--txt3);cursor:pointer;padding:6px;flex-shrink:0;border-radius:8px;" onmouseover="this.style.color='var(--acc)'" onmouseout="this.style.color='var(--txt3)'"><i class="ti ${m.seen ? 'ti-mail' : 'ti-mail-opened'}" style="font-size:17px;"></i></button>
       <button onclick="event.stopPropagation();mailDelete(${m.uid},'${folder}')" title="Elimina" style="background:transparent;border:none;color:var(--txt3);cursor:pointer;padding:6px;flex-shrink:0;border-radius:8px;" onmouseover="this.style.color='#e53935'" onmouseout="this.style.color='var(--txt3)'"><i class="ti ti-trash" style="font-size:17px;"></i></button>
     </div>`;
   }).join('');
+}
+// Segna una mail come letta (seen=true) o da leggere (seen=false)
+async function mailMarkSeen(uid, folder, seen){
+  folder = folder || MAIL_FOLDER || 'inbox';
+  try {
+    await mailFetch('/mail/flag', { method: 'POST', body: JSON.stringify({ uid, folder, casella: MAIL_CASELLA, seen }) });
+    const it = MAIL_MSGS.find(m => m.uid === uid); if (it) it.seen = seen;
+    const si = document.getElementById('mail-search');
+    renderMailList(si ? si.value : '');
+    if (folder === 'inbox') mailRefreshBadge();
+  } catch(e){ alert('Errore: ' + e.message); }
 }
 // Elimina una mail: nel Cestino se possibile, definitiva se sei già nel Cestino.
 async function mailDelete(uid, folder){
@@ -6363,6 +6375,7 @@ async function openMessage(uid, folder){
       <div style="position:sticky;bottom:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;background:var(--surf);border-top:1px solid var(--bord2);box-shadow:0 -4px 14px rgba(0,0,0,.08);">
         ${mailNavBtn(prevUid, folder, 'ti-chevron-up', 'Prec.')}
         ${mailNavBtn(nextUid, folder, 'ti-chevron-down', 'Succ.')}
+        <button onclick="mailMarkSeen(${uid},'${folder}',false)" title="Segna come da leggere" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt);font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-mail"></i> Da leggere</button>
         <button onclick="mailDelete(${uid},'${folder}')" title="Elimina" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:#e53935;font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-trash"></i> Elimina</button>
         <div style="flex:1;min-width:8px;"></div>
         <button id="msg-reply" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-arrow-back-up"></i> Rispondi</button>

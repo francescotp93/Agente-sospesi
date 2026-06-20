@@ -5565,9 +5565,9 @@ async function renderUtenti() {
           <option value="operatore" ${ruoloApp==='operatore'?'selected':''}>Operatore</option>
           <option value="collaboratore" ${ruoloApp==='collaboratore'?'selected':''}>Collaboratore</option>
         </select>` : ''}
-        ${canEdit && !isSA ? `<button onclick="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})" style="font-size:11px;padding:4px 10px;background:${u.lab_abilitato?'linear-gradient(135deg,#00D4FF,#1A7AE8)':'var(--surf3)'};color:${u.lab_abilitato?'#fff':'var(--txt3)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;">Lab ${u.lab_abilitato?'ON':'OFF'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<label class="sw-row" title="Accesso a IAM">IAM <span class="sw"><input type="checkbox" ${iamOn?'checked':''} onchange="toggleIamAccess('${u.id}',${iamOn})"><span class="sl"></span></span></label>` : ''}
         ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a QUOTO">QUOTO <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
+        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso al Lab (marketing & integrazioni)">Lab <span class="sw"><input type="checkbox" ${u.lab_abilitato?'checked':''} onchange="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})"><span class="sl"></span></span></label>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="setRui('${u.id}')" title="N. iscrizione RUI (usato da Quoto per la rimessa)" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">RUI ${u.rui?esc(u.rui):'—'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriPermessiMail('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Caselle email che questo utente può vedere" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-mail"></i> Posta</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriModalitaPagamento('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Modalità di pagamento consentite per questo collaboratore" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-credit-card"></i> Pagamenti</button>` : ''}
@@ -5628,7 +5628,7 @@ async function creaNuovoUtente() {
     const profiloNuovo = {
       id: userId, email, nome, cognome: cogn, rui,
       ruolo: dbRuolo(ruolo), attivo: true, creato_da: ME?.id,
-      accesso_iam: true, accesso_quoto: false
+      accesso_iam: true, accesso_quoto: false, lab_abilitato: false
     };
     const { error: e2 } = await db.from('iam_utenti').upsert(profiloNuovo, { onConflict: 'id' });
 
@@ -5968,14 +5968,18 @@ async function openLab() {
   back.style.display = 'flex';
 
   const { data } = await db.auth.getSession();
-  const token = data?.session?.access_token || '';
+  const token   = data?.session?.access_token || '';
+  const refresh = data?.session?.refresh_token || '';
   const email = encodeURIComponent(ME?.email || '');
   const nome  = encodeURIComponent(((PROFILO?.nome || '') + ' ' + (PROFILO?.cognome || '')).trim());
 
   iframe.style.opacity = '1';
   iframe.style.display = 'block';
   iframe.style.animation = '';
-  iframe.src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}&token=${token}`;
+  // SSO completo via hash #at/#rt (sessione persistente nel Lab, come per QUOTO)
+  let src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}&token=${token}`;
+  if (token && refresh) src += `#at=${encodeURIComponent(token)}&rt=${encodeURIComponent(refresh)}`;
+  iframe.src = src;
 
   iframe.addEventListener('load', () => {
     iframe.contentWindow?.postMessage({
@@ -5983,7 +5987,9 @@ async function openLab() {
       email: ME?.email || '',
       nome: decodeURIComponent(nome),
       ruolo: PROFILO?.ruolo || '',
-      token
+      token,
+      access_token: token,
+      refresh_token: refresh
     }, 'https://quoto.withusassicurazioni.it');
   }, { once: true });
 }

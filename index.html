@@ -4154,6 +4154,7 @@ function renderTeam() {
         <button onclick="selCardTab('${c.id}','int')" id="ct-${c.id}-int" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Dati intermediario</button>
         <button onclick="selCardTab('${c.id}','fatture')" id="ct-${c.id}-fatture" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Fatture</button>
         <button onclick="selCardTab('${c.id}','doc')" id="ct-${c.id}-doc" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Documenti</button>
+        ${currentUser?.role==='admin'?`<button onclick="selCardTab('${c.id}','firme')" id="ct-${c.id}-firme" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Firme</button>`:''}
       </div>
 
       <!-- TAB: Dati utente -->
@@ -4231,12 +4232,24 @@ function renderTeam() {
         </button>
       </div>
 
+      <!-- TAB: Firme -->
+      ${currentUser?.role==='admin'?`
+      <div id="cb-${c.id}-firme" style="padding:12px 14px;display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);"><i class="ti ti-signature" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:var(--acc);"></i>Documenti da firmare</div>
+          <button onclick="apriInviaFirmaCollab('${c.id}')" style="font-size:11px;padding:4px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-send" style="font-size:12px;vertical-align:-1px;"></i> Invia documento da firmare</button>
+        </div>
+        <div id="firme-list-${c.id}" style="display:flex;flex-direction:column;gap:6px;">
+          <div style="color:var(--txt3);font-size:12px;text-align:center;padding:10px 0;">Caricamento…</div>
+        </div>
+      </div>`:''}
+
     </div>`;
   }).join('');
 }
 
 function selCardTab(collabId, tab) {
-  ['dati','int','fatture','doc'].forEach(t => {
+  ['dati','int','fatture','doc','firme'].forEach(t => {
     const btn = document.getElementById(`ct-${collabId}-${t}`);
     const body = document.getElementById(`cb-${collabId}-${t}`);
     if (btn) {
@@ -4246,6 +4259,187 @@ function selCardTab(collabId, tab) {
     }
     if (body) body.style.display = t===tab ? 'block' : 'none';
   });
+  if (tab === 'firme') caricaFirmeCollab(collabId);
+}
+
+// ── Firma documenti collaboratore ───────────────────────────────────────────
+const FIRMA_TIPI = [
+  { value:'privacy_intermediario',     label:'Informativa Privacy Intermediario', pdf:false },
+  { value:'autocertificazione',        label:'Autocertificazione',                pdf:false },
+  { value:'mandato',                   label:'Mandato di collaborazione',         pdf:true  },
+  { value:'tabella_provvigionale',     label:'Tabella provvigionale',             pdf:true  },
+  { value:'appendice_mandato',         label:'Appendice al mandato',              pdf:true  },
+  { value:'provvigioni_supplementari', label:'Provvigioni supplementari',         pdf:true  },
+];
+function firmaTipoInfo(v){ return FIRMA_TIPI.find(t=>t.value===v) || null; }
+
+function apriInviaFirmaCollab(collabId) {
+  loadTeam();
+  const c = TEAM.find(x=>x.id===collabId);
+  if (!c) { alert('Collaboratore non trovato'); return; }
+  const old = document.getElementById('modal-firma-collab');
+  if (old) old.remove();
+  const ov = document.createElement('div');
+  ov.id = 'modal-firma-collab';
+  ov.className = 'modal-ov';
+  ov.innerHTML = `
+    <div style="background:var(--surf,#fff);border-radius:14px;width:420px;max-width:96vw;max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:.5px solid var(--bord,#eee);">
+        <div style="font-size:15px;font-weight:700;">Invia documento da firmare</div>
+        <button onclick="document.getElementById('modal-firma-collab').remove()" style="background:none;border:none;font-size:20px;color:var(--txt3);cursor:pointer;line-height:1;">&times;</button>
+      </div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:12px;color:var(--txt3);">Destinatario: <b style="color:var(--txt);">${esc((c.nome||'')+' '+(c.cogn||''))}</b></div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Tipo documento</label>
+          <select id="fc-tipo" onchange="onFirmaTipoChange()" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);">
+            ${FIRMA_TIPI.map(t=>`<option value="${t.value}">${t.label}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Email destinatario</label>
+          <input id="fc-email" type="email" value="${esc(c.email||'')}" placeholder="email@esempio.it" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;">
+        </div>
+        <div id="fc-file-wrap" style="display:none;">
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Carica PDF</label>
+          <input id="fc-file" type="file" accept="application/pdf" style="width:100%;font-size:12px;color:var(--txt2);">
+        </div>
+        <div id="fc-msg" style="font-size:12px;display:none;"></div>
+        <button id="fc-send" onclick="inviaFirmaCollab('${c.id}')" style="margin-top:4px;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Invia</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+  onFirmaTipoChange();
+}
+
+function onFirmaTipoChange() {
+  const tipo = document.getElementById('fc-tipo')?.value;
+  const info = firmaTipoInfo(tipo);
+  const wrap = document.getElementById('fc-file-wrap');
+  if (wrap) wrap.style.display = (info && info.pdf) ? 'block' : 'none';
+}
+
+function fcMsg(text, color) {
+  const m = document.getElementById('fc-msg');
+  if (!m) return;
+  m.style.display = 'block';
+  m.style.color = color || 'var(--txt2)';
+  m.textContent = text;
+}
+
+async function inviaFirmaCollab(collabId) {
+  const tipo  = document.getElementById('fc-tipo')?.value;
+  const email = (document.getElementById('fc-email')?.value||'').trim();
+  const info  = firmaTipoInfo(tipo);
+  const btn   = document.getElementById('fc-send');
+  if (!info) { fcMsg('Seleziona un tipo di documento.', 'var(--red,#c0392b)'); return; }
+  if (!email || !/.+@.+\..+/.test(email)) { fcMsg('Inserisci un indirizzo email valido.', 'var(--red,#c0392b)'); return; }
+  let docUrl = null;
+  if (info.pdf) {
+    const fileInput = document.getElementById('fc-file');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    if (!file) { fcMsg('Carica il PDF del documento.', 'var(--red,#c0392b)'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Caricamento PDF…'; }
+    fcMsg('Caricamento del PDF in corso…');
+    try {
+      const safeName = (file.name||'doc.pdf').replace(/[^a-zA-Z0-9._-]/g,'_');
+      const path = 'collab/' + collabId + '_' + Date.now() + '_' + safeName;
+      const up = await db.storage.from('documenti').upload(path, file, { contentType: file.type || 'application/pdf' });
+      if (up.error) throw up.error;
+      docUrl = db.storage.from('documenti').getPublicUrl(path).data.publicUrl;
+    } catch (e) {
+      console.error('upload PDF firma:', e);
+      fcMsg('Errore nel caricamento del PDF: ' + (e.message||e), 'var(--red,#c0392b)');
+      if (btn) { btn.disabled = false; btn.textContent = 'Invia'; }
+      return;
+    }
+  }
+  if (btn) { btn.disabled = true; btn.textContent = 'Invio…'; }
+  fcMsg('Invio del documento in corso…');
+  try {
+    await mailFetch('/firma-collab/request', {
+      method: 'POST',
+      body: JSON.stringify({ teamId: collabId, tipo, titolo: info.label, email, docUrl })
+    });
+    const ov = document.getElementById('modal-firma-collab');
+    if (ov) ov.remove();
+    alert('Documento inviato a ' + email);
+    caricaFirmeCollab(collabId);
+  } catch (e) {
+    console.error('inviaFirmaCollab:', e);
+    fcMsg('Errore nell\'invio: ' + (e.message||e), 'var(--red,#c0392b)');
+    if (btn) { btn.disabled = false; btn.textContent = 'Invia'; }
+  }
+}
+
+function firmaDocUrl(f) {
+  return 'https://withus-backend-o0ux.onrender.com/firma-collab/doc?id=' + encodeURIComponent(f.id) + '&t=' + encodeURIComponent(f.token||'');
+}
+
+async function caricaFirmeCollab(collabId) {
+  const box = document.getElementById('firme-list-' + collabId);
+  if (!box) return;
+  box.innerHTML = '<div style="color:var(--txt3);font-size:12px;text-align:center;padding:10px 0;">Caricamento…</div>';
+  let firme = [];
+  try {
+    const r = await mailFetch('/firma-collab/list?teamId=' + encodeURIComponent(collabId));
+    firme = (r && r.firme) || [];
+  } catch (e) {
+    console.error('caricaFirmeCollab:', e);
+    box.innerHTML = '<div style="color:var(--red,#c0392b);font-size:12px;text-align:center;padding:10px 0;">Errore nel caricamento delle firme.</div>';
+    return;
+  }
+  if (!firme.length) {
+    box.innerHTML = '<div style="color:var(--txt3);font-size:12px;text-align:center;padding:14px 0;"><i class="ti ti-signature" style="font-size:22px;display:block;margin-bottom:6px;opacity:.3;"></i>Nessun documento da firmare</div>';
+    return;
+  }
+  const STATI = {
+    inviata:        { label:'In attesa di firma del collaboratore', bg:'var(--amb-bg,#fff5e0)', col:'var(--amb,#b8860b)', bord:'var(--amb,#b8860b)' },
+    firmata_collab: { label:'Firmato dal collaboratore · da controfirmare', bg:'var(--blu-bg,#e6efff)', col:'var(--blu-txt,#2a5db0)', bord:'var(--blu-txt,#2a5db0)' },
+    completata:     { label:'Completato ✓', bg:'var(--grn-bg,#e6f7ec)', col:'var(--grn,#1c9c4c)', bord:'var(--grn,#1c9c4c)' },
+  };
+  box.innerHTML = firme.map(f => {
+    const st = STATI[f.stato] || { label:f.stato||'—', bg:'var(--surf2)', col:'var(--txt2)', bord:'var(--bord2)' };
+    const data = (f.firmato_agente_il || f.firmato_collab_il || f.creato_il || '').toString().slice(0,10);
+    const showDoc = (f.stato === 'firmata_collab' || f.stato === 'completata') && f.token;
+    return `<div style="padding:9px 11px;background:${st.bg};border-left:3px solid ${st.bord};border-radius:8px;">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(f.titolo||'Documento')}</div>
+          ${data?`<div style="font-size:11px;color:var(--txt3);margin-top:1px;">${esc(data)}</div>`:''}
+          <span style="display:inline-block;margin-top:5px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:${st.col};color:#fff;">${esc(st.label)}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+          ${f.stato==='firmata_collab'?`<button onclick="controfirmaDoc('${esc(f.id)}','${esc(collabId)}')" style="font-size:11px;padding:4px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">Controfirma</button>`:''}
+          ${showDoc?`<a href="${firmaDocUrl(f)}" target="_blank" rel="noopener" style="font-size:11px;padding:4px 10px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:6px;text-decoration:none;white-space:nowrap;">Apri documento</a>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function controfirmaDoc(id, collabId) {
+  if (!confirm('Avviare la controfirma? Verrà inviato un codice OTP allo staff via email.')) return;
+  try {
+    await mailFetch('/firma-collab/countersign/request', { method:'POST', body: JSON.stringify({ id }) });
+  } catch (e) {
+    console.error('countersign request:', e);
+    alert('Errore nell\'invio del codice OTP: ' + (e.message||e));
+    return;
+  }
+  const otp = prompt('È stato inviato un codice OTP allo staff via email.\nInserisci il codice per completare la controfirma:');
+  if (otp == null) return;
+  const code = otp.trim();
+  if (!code) { alert('Codice OTP non inserito.'); return; }
+  try {
+    await mailFetch('/firma-collab/countersign/verify', { method:'POST', body: JSON.stringify({ id, otp: code }) });
+    alert('Controfirma completata.');
+    caricaFirmeCollab(collabId);
+  } catch (e) {
+    console.error('countersign verify:', e);
+    alert('Errore nella controfirma: ' + (e.message||e));
+  }
 }
 
 async function openCollabModal(id) {

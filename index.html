@@ -7125,12 +7125,11 @@ function saveWD_store() { localStorage.setItem('iam_wd', JSON.stringify(WD)); }
 async function loadWD_DB() {
   if (!db || !ME) { loadWD(); return; }
   try {
-    let q = db.from('iam_workdiary').select('*').order('data', { ascending: false });
-    // Collaboratore: solo le proprie voci + quelle condivise. Admin/Operatore (e super-admin): tutte.
-    if (PROFILO?.ruolo === 'collaboratore' && !isSuperAdmin()) {
-      q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
-    }
-    const { data, error } = await q;
+    // Diary personale: ognuno vede SOLO le proprie voci + quelle esplicitamente condivise con lui (vale anche per admin).
+    const { data, error } = await db.from('iam_workdiary')
+      .select('*')
+      .or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`)
+      .order('data', { ascending: false });
     if (error) throw error;
     if (data) {
       WD = data.map(w => ({

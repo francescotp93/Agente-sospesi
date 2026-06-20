@@ -6005,7 +6005,7 @@ async function openLab() {
   iframe.style.opacity = '0';
   iframe.style.display = 'block';
   iframe.style.animation = 'iframe-in .45s ease-out forwards';
-  iframe.src = `https://lab-insurance-marketing.vercel.app?sso=true&email=${email}&nome=${nome}&token=${token}`;
+  iframe.src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}&token=${token}`;
 
   iframe.addEventListener('load', () => {
     iframe.contentWindow?.postMessage({
@@ -6014,7 +6014,7 @@ async function openLab() {
       nome: decodeURIComponent(nome),
       ruolo: PROFILO?.ruolo || '',
       token
-    }, 'https://lab-insurance-marketing.vercel.app');
+    }, 'https://quoto.withusassicurazioni.it');
   }, { once: true });
 
   stage.style.transition = 'opacity .3s';

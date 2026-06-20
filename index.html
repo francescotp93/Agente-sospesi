@@ -5957,54 +5957,24 @@ function ecRender(){
 }
 
 async function openLab() {
+  // Nessuna animazione "vecchia" (ampolla): il Lab ha il suo splash interno (stile QUOTO).
   const ov    = document.getElementById('lab-overlay');
   const stage = document.getElementById('lab-stage');
-  const flask = document.getElementById('lab-flask');
-  const flash = document.getElementById('lab-flash');
-  const shards= document.getElementById('lab-shards');
-  const logo  = document.getElementById('lab-logo');
-  const title = document.getElementById('lab-logo-title');
   const iframe= document.getElementById('lab-iframe');
   const back  = document.getElementById('btn-back-iam');
 
-  // reset state
   ov.style.opacity = '1'; ov.style.animation = ''; ov.style.display = 'block';
-  stage.style.opacity = '1'; stage.style.display = 'flex';
-  flask.style.animation = ''; flash.style.animation = '';
-  logo.style.opacity = '0'; logo.style.animation = '';
-  title.style.animation = '';
-  iframe.style.display = 'none'; iframe.src = '';
-  back.style.display = 'none';
-  shards.querySelectorAll('.lab-shard').forEach(s => { s.style.animation = ''; s.style.opacity = '0'; });
+  if (stage) stage.style.display = 'none';
+  back.style.display = 'flex';
 
-  const wait = ms => new Promise(r => setTimeout(r, ms));
-
-  // Fase 1 — ampolla cade (900ms)
-  flask.style.animation = 'flask-drop .9s cubic-bezier(.22,.61,.36,1) forwards';
-  await wait(960);
-
-  // Fase 2 — si frantuma (550ms)
-  flask.style.animation = 'flask-shatter .35s ease-in forwards';
-  flash.style.animation = 'flash-pop .5s ease-out forwards';
-  shards.querySelectorAll('.lab-shard').forEach((s, i) => {
-    s.style.animation = `shard-go .55s ease-out ${i * 25}ms forwards`;
-  });
-  await wait(550);
-
-  // Fase 3 — logo emerge (950ms)
-  logo.style.animation = 'logo-up .85s cubic-bezier(.34,1.56,.64,1) forwards';
-  title.style.animation = 'logo-txt .6s ease-out .35s both';
-  await wait(950);
-
-  // Fase 4 — carica iframe con SSO
   const { data } = await db.auth.getSession();
   const token = data?.session?.access_token || '';
   const email = encodeURIComponent(ME?.email || '');
   const nome  = encodeURIComponent(((PROFILO?.nome || '') + ' ' + (PROFILO?.cognome || '')).trim());
 
-  iframe.style.opacity = '0';
+  iframe.style.opacity = '1';
   iframe.style.display = 'block';
-  iframe.style.animation = 'iframe-in .45s ease-out forwards';
+  iframe.style.animation = '';
   iframe.src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}&token=${token}`;
 
   iframe.addEventListener('load', () => {
@@ -6016,13 +5986,6 @@ async function openLab() {
       token
     }, 'https://quoto.withusassicurazioni.it');
   }, { once: true });
-
-  stage.style.transition = 'opacity .3s';
-  stage.style.opacity = '0';
-  setTimeout(() => { stage.style.display = 'none'; }, 300);
-
-  back.style.display = 'flex';
-  back.style.animation = 'back-in .4s ease-out .15s both';
 }
 
 async function chiudiLab() {

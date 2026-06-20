@@ -5359,7 +5359,7 @@ function applicaPermessi(ruolo) {
     if (el) el.style.display = visibile ? 'flex' : 'none';
   });
   const labBtn = document.getElementById('nb-lab');
-  if (labBtn) labBtn.style.display = PROFILO?.lab_abilitato ? 'flex' : 'none';
+  if (labBtn) labBtn.style.display = (isSuperAdmin() || PROFILO?.lab_abilitato) ? 'flex' : 'none';
   const btnQuoto = document.getElementById('nb-quoto');
   if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
   const btnPosta = document.getElementById('nb-posta');

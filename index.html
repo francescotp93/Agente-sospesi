@@ -4374,7 +4374,7 @@ async function inviaFirmaCollab(collabId) {
 }
 
 function firmaDocUrl(f) {
-  return 'https://withus-backend-o0ux.onrender.com/firma-collab/doc?id=' + encodeURIComponent(f.id) + '&t=' + encodeURIComponent(f.token||'');
+  return 'https://api.withusassicurazioni.it/firma-collab/doc?id=' + encodeURIComponent(f.id) + '&t=' + encodeURIComponent(f.token||'');
 }
 
 async function caricaFirmeCollab(collabId) {
@@ -6456,7 +6456,7 @@ async function disattiva2FA(factorId){
 // ═══════════════════════════════════════════════════════════════════════════════
 //  POSTA — client di posta dentro IAM (usa il backend withus-backend)
 // ═══════════════════════════════════════════════════════════════════════════════
-const MAIL_API = 'https://withus-backend-o0ux.onrender.com';
+const MAIL_API = 'https://api.withusassicurazioni.it';
 let MAIL_CASELLA = 'amministrazione@withusassicurazioni.it';
 let MAIL_ACCOUNTS_LIST = [];
 // Logo aziendale (carica withus-logo.png nella root del repo Agente-sospesi → servito da iam.withusassicurazioni.it)

@@ -4154,7 +4154,7 @@ function renderTeam() {
         <button onclick="selCardTab('${c.id}','int')" id="ct-${c.id}-int" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Dati intermediario</button>
         <button onclick="selCardTab('${c.id}','fatture')" id="ct-${c.id}-fatture" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Fatture</button>
         <button onclick="selCardTab('${c.id}','doc')" id="ct-${c.id}-doc" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Documenti</button>
-        ${currentUser?.role==='admin'?`<button onclick="selCardTab('${c.id}','firme')" id="ct-${c.id}-firme" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Firme</button>`:''}
+        ${PROFILO?.ruolo==='admin'?`<button onclick="selCardTab('${c.id}','firme')" id="ct-${c.id}-firme" style="flex:1;padding:8px 6px;font-size:11px;font-weight:500;border:none;background:none;color:var(--txt3);border-bottom:2px solid transparent;cursor:pointer;font-family:inherit;">Firme</button>`:''}
       </div>
 
       <!-- TAB: Dati utente -->
@@ -4233,7 +4233,7 @@ function renderTeam() {
       </div>
 
       <!-- TAB: Firme -->
-      ${currentUser?.role==='admin'?`
+      ${PROFILO?.ruolo==='admin'?`
       <div id="cb-${c.id}-firme" style="padding:12px 14px;display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);"><i class="ti ti-signature" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:var(--acc);"></i>Documenti da firmare</div>

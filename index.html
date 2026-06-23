@@ -5084,8 +5084,8 @@ function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (!ME) return [];
-  if (isSuperAdmin() || isPipelineAdmin()) return list; // admin/operatore: vedono tutte le trattative
-  return list.filter(t => isPipelineMine(t) || isPipelineSharedWithMe(t));
+  // Pipeline personale: ognuno vede SOLO le proprie trattative + quelle condivise con lui (vale anche per admin/super-admin), come il Diary.
+  return list.filter(t => !t.utente_id || isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 
 function selPTab(t) {

@@ -6783,7 +6783,7 @@ async function openMessage(uid, folder){
         <button onclick="mailDelete(${uid},'${folder}')" title="Elimina" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:#e53935;font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-trash"></i> Elimina</button>
         <div style="flex:1;min-width:8px;"></div>
         <button id="msg-reply" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-arrow-back-up"></i> Rispondi</button>
-        <button onclick="document.getElementById('posta-ov')?.remove()" title="Chiudi e torna a IAM" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt);font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-x"></i> Chiudi</button>
+        <button onclick="mailLoad('${folder}')" title="Chiudi la mail e torna alla lista" style="display:inline-flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:10px;color:var(--txt);font-weight:600;cursor:pointer;font-family:inherit;font-size:13.5px;"><i class="ti ti-x"></i> Chiudi</button>
       </div>`;
     const rb = document.getElementById('msg-reply');
     if (rb) rb.onclick = () => composeMail({ to: from.address || '', subject: 'Re: ' + (m.subject || '') });

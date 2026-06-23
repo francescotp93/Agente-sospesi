@@ -7280,7 +7280,7 @@ async function salvaModificaStorico(dataRif) {
 }
 
 
-let WD = [], WD_ID = null, WD_FILE = null, WD_CAL_DATE = new Date();
+let WD = [], WD_ID = null, WD_FILE = null, WD_CAL_DATE = new Date(), WD_CAL_DAY = null;
 
 function loadWD() { try { WD = JSON.parse(localStorage.getItem('iam_wd')||'[]'); } catch(e){ WD=[]; } }
 function saveWD_store() { localStorage.setItem('iam_wd', JSON.stringify(WD)); }
@@ -7724,11 +7724,16 @@ function renderWDCal() {
     </div>`;
   }
   document.getElementById('wd-cal-grid').innerHTML = html;
-  document.getElementById('wd-cal-eventi').innerHTML = '';
+  // Mantieni il giorno aperto se appartiene al mese visualizzato, altrimenti svuota
+  if (WD_CAL_DAY && WD_CAL_DAY.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)) {
+    showWDDay(WD_CAL_DAY);
+  } else {
+    document.getElementById('wd-cal-eventi').innerHTML = '';
+  }
 }
 
-function wdCalPrev() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()-1, 1); renderWDCal(); }
-function wdCalNext() { WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()+1, 1); renderWDCal(); }
+function wdCalPrev() { WD_CAL_DAY = null; WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()-1, 1); renderWDCal(); }
+function wdCalNext() { WD_CAL_DAY = null; WD_CAL_DATE = new Date(WD_CAL_DATE.getFullYear(), WD_CAL_DATE.getMonth()+1, 1); renderWDCal(); }
 
 function toggleCompletatiDay(ds, n) {
   var d = document.getElementById('list-comp-'+ds);
@@ -7741,6 +7746,7 @@ function toggleCompletatiDay(ds, n) {
     : '<i class="ti ti-eye-off"></i> Nascondi completati (' + n + ')';
 }
 function showWDDay(ds) {
+  WD_CAL_DAY = ds;
   const allEv = WD.filter(w => w.data === ds);
   const daFare = allEv.filter(w => w.stato !== 'completato');
   const completati = allEv.filter(w => w.stato === 'completato');

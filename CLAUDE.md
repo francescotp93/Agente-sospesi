@@ -5,9 +5,11 @@
 ### Transizione IAM → Quoto
 **File:** `index.html` — funzione `goTab(t)`, blocco `if (t === 'quoto')`
 
-La transizione è BLOCCATA. Non modificare il codice della splash screen Quoto (overlay blu fullscreen con logo bolt, scritta QUOTO, barra di caricamento) né il redirect a `https://francescotp93.github.io/QUOTE/?from=iam`.
+La **grafica** della splash screen Quoto (overlay blu fullscreen con logo bolt, scritta QUOTO, barra di caricamento) è BLOCCATA: non modificarla senza richiesta esplicita dell'utente.
 
-Questa sezione funziona esattamente come voluto dall'utente. Non toccarla.
+La **destinazione** del redirect è ora `https://quoto.withusassicurazioni.it/?from=iam` ed è costruita dalla helper `quotoUrl()`, che allega anche la sessione (`#at`/`#rt`) per il login automatico tra i sottodomini. Aggiornata su richiesta esplicita dell'utente (giugno 2026) per il passaggio ai domini personalizzati — vedi `INTERFACCIA-QUOTO-IAM.md` sez. 2-3.
+
+La grafica di questa sezione funziona esattamente come voluto dall'utente. Non toccarla.
 
 ---
 

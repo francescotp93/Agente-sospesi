@@ -253,7 +253,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-alert-tile:before{content:'';width:11px;height:11px;border-radius:50%;background:var(--amb);box-shadow:0 0 0 0 rgba(245,158,11,.42);animation:alertPulse 1.25s ease-out infinite;flex-shrink:0;}
 .dash-alert-tile.crit:before{background:var(--red);box-shadow:0 0 0 0 rgba(239,68,68,.46);}
 .dash-alert-tile.ok{cursor:default;}
-.dash-alert-tile.ok:before{background:var(--grn);animation:none;box-shadow:0 0 0 5px rgba(34,197,94,.14);}
+.dash-alert-tile.ok:before{background:var(--grn);color:var(--grn);animation:alertPulse 1.25s ease-out infinite;}
 .dash-alert-main{flex:1;min-width:0;}
 .dash-alert-title{font-size:13px;font-weight:850;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dash-alert-sub{font-size:11px;color:var(--txt3);margin-top:2px;}

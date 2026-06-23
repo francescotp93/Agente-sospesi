@@ -587,6 +587,7 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-dashboard" onclick="goTab('dashboard')"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
+  <button class="nbtn" id="nb-lead" onclick="goTab('lead')"><i class="ti ti-target-arrow"></i><span>Lead</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
 
@@ -948,6 +949,44 @@ input[type=file]{display:none;}
     <div class="card" style="margin-top:10px;"><div id="ag-list"></div></div>
     <div style="height:16px;"></div>
   </div>
+</div>
+
+<!-- LEAD -->
+<div class="panel" id="panel-lead">
+  <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
+    <input type="search" id="ld-search" placeholder="Cerca nome, telefono, email..." style="flex:1;padding:8px 12px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderLead()">
+    <button onclick="openLeadModal(null)" style="width:36px;height:36px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:17px;"></i></button>
+  </div>
+  <div style="display:flex;gap:8px;padding:0 12px 4px;overflow-x:auto;scrollbar-width:none;">
+    <select id="ld-filt-stato" onchange="renderLead()" style="flex:1;min-width:110px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+      <option value="">Tutti gli stati</option>
+      <option value="nuovo">Nuovo</option>
+      <option value="contattato">Contattato</option>
+      <option value="trattativa">In trattativa</option>
+      <option value="recuperato">Recuperato ✓</option>
+      <option value="perso">Perso ✗</option>
+    </select>
+    <select id="ld-filt-fonte" onchange="renderLead()" style="flex:1;min-width:110px;padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;">
+      <option value="">Tutte le fonti</option>
+      <option value="Campagna Facebook">Campagna Facebook</option>
+      <option value="Instagram">Instagram</option>
+      <option value="Sito web">Sito web</option>
+      <option value="Passaparola">Passaparola</option>
+      <option value="WhatsApp">WhatsApp</option>
+      <option value="Telefonata">Telefonata</option>
+      <option value="Fiera-Evento">Fiera-Evento</option>
+      <option value="Altro">Altro</option>
+    </select>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:4px 12px 8px;">
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;" id="kld-tot">0</div><div style="font-size:9px;color:var(--txt3);">Totale</div></div>
+    <div style="background:var(--surf2);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;" id="kld-nuovo">0</div><div style="font-size:9px;color:var(--txt3);">Nuovi</div></div>
+    <div style="background:var(--amb-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--amb-txt);" id="kld-cont">0</div><div style="font-size:9px;color:var(--amb-txt);">Contattati</div></div>
+    <div style="background:var(--grn-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--grn);" id="kld-rec">0</div><div style="font-size:9px;color:var(--grn-txt);">Recuperati</div></div>
+    <div style="background:var(--red-bg);border-radius:var(--rs);padding:8px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--red);" id="kld-perso">0</div><div style="font-size:9px;color:var(--red-txt);">Persi</div></div>
+  </div>
+  <div class="card"><div id="ld-list"></div></div>
+  <div style="height:16px;"></div>
 </div>
 
 <!-- UTENTI -->
@@ -2121,6 +2160,35 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- MODAL LEAD -->
+<div class="modal" id="modal-lead">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title" id="ml-title">Nuovo lead</div>
+      <div style="display:flex;gap:8px;">
+        <button class="mbtn prim" onclick="saveLead()">Salva</button>
+        <button class="mbtn sec" onclick="closeModal('modal-lead')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fld"><label>Nome</label><input type="text" id="ml-nome" placeholder="Nome"></div>
+        <div class="fld"><label>Cognome</label><input type="text" id="ml-cognome" placeholder="Cognome"></div>
+        <div class="fld"><label>Telefono</label><input type="tel" id="ml-telefono" placeholder="es. 333 1234567"></div>
+        <div class="fld"><label>Email</label><input type="email" id="ml-email" placeholder="email@esempio.it"></div>
+        <div class="fld"><label>Fonte</label><select id="ml-fonte"><option value="Campagna Facebook">Campagna Facebook</option><option value="Instagram">Instagram</option><option value="Sito web">Sito web</option><option value="Passaparola">Passaparola</option><option value="WhatsApp">WhatsApp</option><option value="Telefonata">Telefonata</option><option value="Fiera-Evento">Fiera-Evento</option><option value="Altro">Altro</option></select></div>
+        <div class="fld"><label>Campagna</label><input type="text" id="ml-campagna" placeholder="Nome campagna"></div>
+        <div class="fld"><label>Prodotto</label><select id="ml-prodotto"><option value="Auto">Auto</option><option value="Moto">Moto</option><option value="Casa">Casa</option><option value="Vita">Vita</option><option value="Infortuni">Infortuni</option><option value="Salute">Salute</option><option value="Altro">Altro</option></select></div>
+        <div class="fld"><label>Stato</label><select id="ml-stato"><option value="nuovo">Nuovo</option><option value="contattato">Contattato</option><option value="trattativa">In trattativa</option><option value="recuperato">Recuperato ✓</option><option value="perso">Perso ✗</option></select></div>
+        <div class="fld"><label>Valore stimato (€)</label><input type="number" id="ml-valore" placeholder="0.00" step="0.01" inputmode="decimal"></div>
+        <div class="fld"><label>Agente assegnato</label><select id="ml-agente"><option value="">— nessuno —</option></select></div>
+      </div>
+      <div class="fld"><label>Note</label><textarea id="ml-note" rows="3" placeholder="Storico contatti, note..."></textarea></div>
+      <label class="sw-row" style="cursor:pointer;margin-top:6px;"><span class="sw-lbl">Consenso al contatto/marketing</span><span class="sw"><input type="checkbox" id="ml-consenso"><span class="sl"></span></span></label>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL AGENDA -->
 <div class="modal" id="modal-agenda">
   <div class="modal-box">
@@ -2799,6 +2867,10 @@ function goTab(t) {
   if (t === 'pipeline') {
     renderTratt();
     loadTrattDB().then(() => renderTratt());
+  }
+  if (t === 'lead') {
+    renderLead();
+    loadLeadDB().then(() => renderLead());
   }
   sessionStorage.setItem('iam_last_tab', t);
   // FAB AI sempre visibile tranne quando l'overlay è aperto
@@ -5075,6 +5147,157 @@ function viewDoc(collabId, tipo) {
 // ─── PIPELINE ─────────────────────────────────────────────────────────────────
 let PIPE = [], AGENDA = [], PIPE_ID = null;
 const SC = { prospect:{lbl:'Prospect',c:'var(--txt3)',bg:'var(--surf2)'}, preventivo:{lbl:'Preventivo',c:'var(--blu-txt)',bg:'var(--blu-bg)'}, trattativa:{lbl:'In trattativa',c:'var(--amb-txt)',bg:'var(--amb-bg)'}, chiusa:{lbl:'Chiusa ✓',c:'var(--grn-txt)',bg:'var(--grn-bg)'}, persa:{lbl:'Persa ✗',c:'var(--red-txt)',bg:'var(--red-bg)'} };
+// ─── LEAD (contatti marketing) ────────────────────────────────────────────────
+let LEAD = [], LEAD_ID = null;
+const SLC = { nuovo:{lbl:'Nuovo',c:'var(--blu-txt)',bg:'var(--blu-bg)'}, contattato:{lbl:'Contattato',c:'var(--amb-txt)',bg:'var(--amb-bg)'}, trattativa:{lbl:'In trattativa',c:'var(--blu-txt)',bg:'var(--blu-bg)'}, recuperato:{lbl:'Recuperato ✓',c:'var(--grn-txt)',bg:'var(--grn-bg)'}, perso:{lbl:'Perso ✗',c:'var(--red-txt)',bg:'var(--red-bg)'} };
+
+async function loadLeadDB() {
+  if (!db || !ME) { LEAD = []; return; }
+  try {
+    const { data, error } = await db.from('iam_lead').select('*').order('data_ins', { ascending:false });
+    if (error) { console.warn('loadLeadDB:', error.message); LEAD = []; return; }
+    LEAD = data || [];
+  } catch(e) {
+    console.warn('loadLeadDB error:', e);
+    LEAD = [];
+  }
+}
+
+function renderLead() {
+  const fs = document.getElementById('ld-filt-stato')?.value || '';
+  const ff = document.getElementById('ld-filt-fonte')?.value || '';
+  const q  = (document.getElementById('ld-search')?.value || '').toLowerCase();
+  let lista = (LEAD || []).filter(l => !fs || l.stato === fs).filter(l => !ff || l.fonte === ff);
+  if (q) lista = lista.filter(l => ((l.nome||'')+' '+(l.cognome||'')+' '+(l.telefono||'')+' '+(l.email||'')).toLowerCase().includes(q));
+  // KPI per stato
+  const setK = (id,v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setK('kld-tot', (LEAD||[]).length);
+  setK('kld-nuovo', (LEAD||[]).filter(l=>l.stato==='nuovo').length);
+  setK('kld-cont', (LEAD||[]).filter(l=>l.stato==='contattato').length);
+  setK('kld-rec', (LEAD||[]).filter(l=>l.stato==='recuperato').length);
+  setK('kld-perso', (LEAD||[]).filter(l=>l.stato==='perso').length);
+  const cont = document.getElementById('ld-list');
+  if (!cont) return;
+  cont.innerHTML = lista.length ? lista.map(l => {
+    const sc = SLC[l.stato] || SLC.nuovo;
+    const nomeCompleto = ((l.nome||'')+' '+(l.cognome||'')).trim() || '—';
+    const canEdit = isSuperAdmin() || l.utente_id === ME?.id;
+    const fonteLbl = [l.fonte, l.campagna].filter(Boolean).join(' · ');
+    return `<div class="tcard">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:13px;font-weight:600;">${esc(nomeCompleto)}</span>
+            <span class="tstatus" style="background:${sc.bg};color:${sc.c};">${sc.lbl}</span>
+          </div>
+          ${fonteLbl?`<div style="display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);margin-bottom:3px;"><i class="ti ti-target-arrow" style="font-size:11px;vertical-align:-1px;"></i> ${esc(fonteLbl)}</div>`:''}
+          <div style="font-size:12px;color:var(--txt2);">${esc(l.prodotto||'—')}${l.agente_nome?' · '+esc(l.agente_nome):''}</div>
+          ${(l.telefono||l.email)?`<div style="font-size:11px;color:var(--txt3);margin-top:2px;">${l.telefono?esc(l.telefono):''}${l.telefono&&l.email?' · ':''}${l.email?esc(l.email):''}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          ${l.valore?`<div style="font-size:14px;font-weight:700;color:var(--acc);">€${fmt(parseNum(l.valore)||0)}</div>`:''}
+          ${canEdit?`<div class="tact-btns">
+            <button class="tact-btn" style="background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);" onclick="openLeadModal('${l.id}')"><i class="ti ti-pencil"></i></button>
+            <button class="tact-btn" style="background:var(--red-bg);color:var(--red-txt);border:.5px solid var(--red);" onclick="delLead('${l.id}')">✕</button>
+          </div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:24px;"><i class="ti ti-target-arrow" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessun lead.</p></div>';
+}
+
+function openLeadModal(id) {
+  LEAD_ID = id;
+  const l = id ? (LEAD || []).find(x => String(x.id) === String(id)) : null;
+  document.getElementById('ml-title').textContent = l ? (((l.nome||'')+' '+(l.cognome||'')).trim() || 'Lead') : 'Nuovo lead';
+  const sv = (fid,val) => { const el = document.getElementById(fid); if (el) el.value = val == null ? '' : val; };
+  if (l) {
+    sv('ml-nome', l.nome); sv('ml-cognome', l.cognome); sv('ml-telefono', l.telefono);
+    sv('ml-email', l.email); sv('ml-fonte', l.fonte||'Campagna Facebook'); sv('ml-campagna', l.campagna);
+    sv('ml-prodotto', l.prodotto||'Auto'); sv('ml-stato', l.stato||'nuovo'); sv('ml-valore', l.valore);
+    sv('ml-note', l.note);
+    const cc = document.getElementById('ml-consenso'); if (cc) cc.checked = !!l.consenso;
+  } else {
+    ['ml-nome','ml-cognome','ml-telefono','ml-email','ml-campagna','ml-valore','ml-note'].forEach(f=>sv(f,''));
+    sv('ml-fonte','Campagna Facebook'); sv('ml-prodotto','Auto'); sv('ml-stato','nuovo');
+    const cc = document.getElementById('ml-consenso'); if (cc) cc.checked = false;
+  }
+  // Popola select agente con utenti IAM registrati
+  const sel = document.getElementById('ml-agente');
+  if (sel && db) {
+    sel.innerHTML = '<option value="">— nessuno —</option>';
+    db.from('iam_utenti').select('id,nome,cognome,email').eq('attivo', true)
+      .then(({data}) => {
+        if (data) {
+          data.forEach(u => {
+            const nome = ((u.nome||'')+' '+(u.cognome||'')).trim() || u.email;
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            opt.textContent = nome;
+            opt.dataset.nome = nome;
+            if (l?.agente_id === u.id) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        }
+      });
+  } else if (sel) {
+    sel.innerHTML = '<option value="">— nessuno —</option>';
+  }
+  document.getElementById('modal-lead').classList.add('show');
+}
+
+async function saveLead() {
+  const gv = id => (document.getElementById(id)?.value || '').trim();
+  const nome = gv('ml-nome'), cognome = gv('ml-cognome');
+  if (!nome && !cognome) { alert('Inserisci almeno nome o cognome del lead.'); return; }
+  const selAg = document.getElementById('ml-agente');
+  const agente_id = selAg?.value || null;
+  const agente_nome = (agente_id && selAg?.selectedOptions?.[0]) ? (selAg.selectedOptions[0].dataset.nome || selAg.selectedOptions[0].textContent) : null;
+  const valStr = gv('ml-valore');
+  const obj = {
+    nome: nome || null,
+    cognome: cognome || null,
+    telefono: gv('ml-telefono') || null,
+    email: gv('ml-email') || null,
+    fonte: gv('ml-fonte') || null,
+    campagna: gv('ml-campagna') || null,
+    prodotto: gv('ml-prodotto') || null,
+    stato: gv('ml-stato') || 'nuovo',
+    valore: valStr ? (parseNum(valStr) || 0) : null,
+    agente_id: agente_id,
+    agente_nome: agente_nome,
+    note: gv('ml-note') || null,
+    consenso: !!document.getElementById('ml-consenso')?.checked,
+    utente_id: ME?.id,
+    aggiornato_il: new Date().toISOString()
+  };
+  const btn = document.querySelector('#modal-lead .mbtn.prim');
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+  try {
+    if (LEAD_ID) {
+      const { error } = await db.from('iam_lead').update(obj).eq('id', LEAD_ID);
+      if (error) throw error;
+    } else {
+      const { error } = await db.from('iam_lead').insert(obj);
+      if (error) throw error;
+    }
+    closeModal('modal-lead');
+    await loadLeadDB();
+    renderLead();
+  } catch(e) {
+    alert('Errore: ' + (e.message || e));
+  } finally {
+    if (btn) { btn.textContent = 'Salva'; btn.disabled = false; }
+  }
+}
+
+function delLead(id) {
+  if (!confirm('Eliminare questo lead? L\'operazione non è reversibile.')) return;
+  db.from('iam_lead').delete().eq('id', id).then(({error}) => {
+    if (error) { alert('Errore eliminazione: ' + error.message); return; }
+    loadLeadDB().then(renderLead);
+  });
+}
 
 function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[]'); } catch(e){PIPE=[];} try { AGENDA=JSON.parse(localStorage.getItem('iam_agenda')||'[]'); } catch(e){AGENDA=[];} }
 function savePipe() { localStorage.setItem('iam_pipe', JSON.stringify(PIPE)); }
@@ -5495,14 +5718,14 @@ const RUOLI = {
 
 // Permessi per ruolo
 const PERMESSI = {
-  admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
-  operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
-  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
+  admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
+  operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
+  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, lead:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
 // Etichette leggibili delle sezioni controllabili (per il pannello permessi per-utente)
 const PERMESSI_LABELS = {
   carica:'Contabilità (inserimento)', dashboard:'Dashboard', conto:'Conto', anomalie:'Anomalie',
-  sospesi:'Sospesi', storico:'Storico', team:'Team', pipeline:'Pipeline', workdiary:'Diary',
+  sospesi:'Sospesi', storico:'Storico', team:'Team', pipeline:'Pipeline', lead:'Lead', workdiary:'Diary',
   performance:'KPI / Performance', utenti:'Gestione utenti', modifica:'Può modificare'
 };
 // Permessi effettivi = default del ruolo + override per-utente (colonna jsonb iam_utenti.permessi)
@@ -5544,6 +5767,7 @@ function applicaPermessi(ruolo) {
     'ctab-conto':     perm.conto,
     'nb-team':        perm.team,
     'nb-pipeline':    perm.pipeline,
+    'nb-lead':        perm.lead,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
     'nb-ai':          false, // AI spostato su FAB flottante

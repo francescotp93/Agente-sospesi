@@ -587,11 +587,10 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-dashboard" onclick="goTab('dashboard')"><i class="ti ti-layout-dashboard"></i><span>Dashboard</span></button>
   <button class="nbtn" id="nb-team" onclick="goTab('team')"><i class="ti ti-users"></i><span>Team</span></button>
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
-  <button class="nbtn" id="nb-lead" onclick="goTab('lead')"><i class="ti ti-target-arrow"></i><span>Lead</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
 
-  <button class="nbtn" id="nb-lab" onclick="openLab()" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
+  <button class="nbtn" id="nb-lab" onclick="goTab('lab')" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5l-4-8V3"/><line x1="6.5" y1="13" x2="17.5" y2="13"/></svg>
     <span>Lab</span>
   </button>
@@ -948,6 +947,24 @@ input[type=file]{display:none;}
     </div>
     <div class="card" style="margin-top:10px;"><div id="ag-list"></div></div>
     <div style="height:16px;"></div>
+  </div>
+</div>
+
+<!-- LAB · hub marketing (Lead + Dashboard esterna) -->
+<div class="panel" id="panel-lab">
+  <div style="padding:18px 14px 8px;">
+    <div style="font-size:22px;font-weight:850;background:linear-gradient(135deg,#00D4FF,#1A7AE8);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;">Lab · Marketing</div>
+    <div style="font-size:13px;color:var(--txt3);margin-top:2px;">Gestione lead, campagne e strumenti marketing.</div>
+  </div>
+  <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));padding:6px 14px 18px;">
+    <button onclick="goTab('lead')" style="text-align:left;display:flex;gap:13px;align-items:center;padding:16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:14px;cursor:pointer;color:var(--txt);font-family:inherit;">
+      <div style="width:42px;height:42px;border-radius:11px;background:rgba(var(--acc-rgb),.14);display:flex;align-items:center;justify-content:center;color:var(--acc);flex-shrink:0;"><i class="ti ti-target-arrow" style="font-size:22px;"></i></div>
+      <div><div style="font-size:15px;font-weight:800;">Lead</div><div style="font-size:12px;color:var(--txt3);margin-top:2px;">Contatti recuperati · fonte/campagna · stato</div></div>
+    </button>
+    <button onclick="openLab()" style="text-align:left;display:flex;gap:13px;align-items:center;padding:16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:14px;cursor:pointer;color:var(--txt);font-family:inherit;">
+      <div style="width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#00D4FF,#1A7AE8);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;"><i class="ti ti-rocket" style="font-size:22px;"></i></div>
+      <div><div style="font-size:15px;font-weight:800;">Dashboard Marketing</div><div style="font-size:12px;color:var(--txt3);margin-top:2px;">Apri la dashboard Lab Insurance</div></div>
+    </button>
   </div>
 </div>
 
@@ -2869,6 +2886,7 @@ function goTab(t) {
     loadTrattDB().then(() => renderTratt());
   }
   if (t === 'lead') {
+    document.getElementById('nb-lab')?.classList.add('act'); // Lead vive nel tab Lab: tieni Lab evidenziato
     renderLead();
     loadLeadDB().then(() => renderLead());
   }
@@ -5767,7 +5785,6 @@ function applicaPermessi(ruolo) {
     'ctab-conto':     perm.conto,
     'nb-team':        perm.team,
     'nb-pipeline':    perm.pipeline,
-    'nb-lead':        perm.lead,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
     'nb-ai':          false, // AI spostato su FAB flottante

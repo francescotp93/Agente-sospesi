@@ -152,7 +152,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 @keyframes overlay-out{0%{opacity:1}100%{opacity:0}}
 @keyframes back-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:translateX(0)}}
 /* ── Caricamento futuristico di ritorno a IAM ── */
-#iam-return{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 42%,#06183a 0%,#030c1f 68%,#01060f 100%);overflow:hidden;}
+#iam-return{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,#16264d 0%,#0f1b3d 60%,#0a1430 100%);overflow:hidden;}
+.hdr-mark{width:90px;height:30px;border-radius:7px;background:#0f1b3d url('assets/iam-logo.png') center/350% no-repeat;flex:0 0 auto;}
+.ir-mark{background:url('assets/iam-logo.png') center/250% no-repeat;}
 #iam-return.show{display:flex;}
 #iam-return:before{content:'';position:absolute;inset:-2px;background-image:linear-gradient(rgba(8,170,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(8,170,255,.08) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);animation:irGrid 7s linear infinite;}
 @keyframes irGrid{to{background-position:40px 40px,40px 40px;}}
@@ -162,7 +164,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .ir-ring.r2{inset:26px;border-bottom-color:#1450FF;border-left-color:rgba(20,80,255,.45);animation:irSpinRev 3.4s linear infinite;}
 .ir-ring.r3{inset:54px;border:1px dashed rgba(24,221,255,.45);animation:irSpin 9s linear infinite;}
 .ir-scan{position:absolute;inset:6px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,rgba(32,238,232,.22) 42deg,transparent 84deg);animation:irSpin 1.9s linear infinite;}
-.ir-logo{position:relative;z-index:2;width:118px;height:118px;animation:irLogoIn .7s cubic-bezier(.2,.8,.2,1) both,irGlow 2.1s ease-in-out .7s infinite;}
+.ir-logo{position:relative;z-index:2;width:150px;height:150px;animation:irLogoIn .7s cubic-bezier(.2,.8,.2,1) both;}
 .ir-title{margin-top:30px;font-family:'Share Tech Mono',monospace;font-size:23px;font-weight:700;letter-spacing:.42em;text-indent:.42em;background:linear-gradient(90deg,#20EEE8,#1450FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .ir-sub{margin-top:11px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.22em;color:rgba(32,238,232,.82);min-height:14px;}
 .ir-sub:after{content:'_';margin-left:2px;animation:irBlink 1s steps(1) infinite;}
@@ -539,11 +541,9 @@ input[type=file]{display:none;}
 <div class="hdr">
   <div class="hdr-in">
     <div class="hdr-logo">
-<svg width="36" height="36" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hexH" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22EFE8"/><stop offset="52%" stop-color="#10A6FF"/><stop offset="100%" stop-color="#1A4BFF"/></linearGradient><linearGradient id="txtH" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6CF4EF"/><stop offset="55%" stop-color="#26BBFF"/><stop offset="100%" stop-color="#356BFF"/></linearGradient></defs><path d="M340 70 L574 205 L574 475 L340 610 L106 475 L106 205 Z" fill="#040E22" stroke="url(#hexH)" stroke-width="20" stroke-linejoin="round"/><path d="M340 134 L518 237 L518 443 L340 546 L162 443 L162 237 Z" fill="none" stroke="#1FB8FF" stroke-opacity="0.18" stroke-width="4"/><circle cx="340" cy="70" r="20" fill="#040E22" stroke="url(#hexH)" stroke-width="10"/><circle cx="340" cy="70" r="7" fill="#6CF4EF"/><text x="340" y="406" font-family="Arial,Helvetica,sans-serif" font-size="172" font-weight="800" text-anchor="middle" fill="url(#txtH)" letter-spacing="4">IAM</text></svg>
+<div class="hdr-mark" title="IAM"></div>
 <div style="width:1px;height:28px;background:#0a1e3c;margin:0 10px;"></div>
-<div>
-<div style="font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;color:var(--txt);letter-spacing:2px;">IAM</div>
-<div class="hdr-sub" id="hdr-sub" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:2px;">INSURANCE AGENCY MANAGEMENT</div>
+<div><div class="hdr-sub" id="hdr-sub" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:2px;">INSURANCE AGENCY MANAGEMENT</div>
 </div>
     </div>
     <div class="hdr-right">
@@ -10673,9 +10673,8 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="ir-ring r1"></div>
     <div class="ir-ring r2"></div>
     <div class="ir-ring r3"></div>
-    <svg class="ir-logo" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="hexR" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22EFE8"/><stop offset="52%" stop-color="#10A6FF"/><stop offset="100%" stop-color="#1A4BFF"/></linearGradient><linearGradient id="txtR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6CF4EF"/><stop offset="55%" stop-color="#26BBFF"/><stop offset="100%" stop-color="#356BFF"/></linearGradient></defs><path d="M340 70 L574 205 L574 475 L340 610 L106 475 L106 205 Z" fill="#040E22" stroke="url(#hexR)" stroke-width="20" stroke-linejoin="round"/><path d="M340 134 L518 237 L518 443 L340 546 L162 443 L162 237 Z" fill="none" stroke="#1FB8FF" stroke-opacity="0.18" stroke-width="4"/><circle cx="340" cy="70" r="20" fill="#040E22" stroke="url(#hexR)" stroke-width="10"/><circle cx="340" cy="70" r="7" fill="#6CF4EF"/><text x="340" y="406" font-family="Arial,Helvetica,sans-serif" font-size="172" font-weight="800" text-anchor="middle" fill="url(#txtR)" letter-spacing="4">IAM</text></svg>
+    <div class="ir-logo ir-mark"></div>
   </div>
-  <div class="ir-title">IAM</div>
   <div class="ir-sub">CONNESSIONE SICURA</div>
   <div class="ir-bar"><i></i></div>
 </div>

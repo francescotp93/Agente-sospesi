@@ -153,8 +153,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 @keyframes back-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:translateX(0)}}
 /* ── Caricamento futuristico di ritorno a IAM ── */
 #iam-return{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,#16264d 0%,#0f1b3d 60%,#0a1430 100%);overflow:hidden;}
-.hdr-mark{width:90px;height:30px;border-radius:7px;background:#0f1b3d url('assets/iam-logo.svg') center/350% no-repeat;flex:0 0 auto;}
-.ir-mark{background:url('assets/iam-logo.svg') center/250% no-repeat;}
+.hdr-mark{width:92px;height:30px;-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:var(--txt);flex:0 0 auto;}
+.ir-mark{-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:#fff;}
 #iam-return.show{display:flex;}
 #iam-return:before{content:'';position:absolute;inset:-2px;background-image:linear-gradient(rgba(8,170,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(8,170,255,.08) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);animation:irGrid 7s linear infinite;}
 @keyframes irGrid{to{background-position:40px 40px,40px 40px;}}
@@ -255,8 +255,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .dash-stat[onclick]{cursor:pointer;}
 .dash-stat[onclick]:hover{background:rgba(var(--acc-rgb),.06);border-color:rgba(var(--acc-rgb),.28);transform:translateY(-1px);}
 .dash-stat-left{display:flex;align-items:center;gap:8px;min-width:0;width:100%;}
-.dash-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px rgba(var(--acc-rgb),.12);flex-shrink:0;animation:dashDotBlink 1.15s ease-in-out infinite;}
-@keyframes dashDotBlink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.32;transform:scale(.72)}}
+.dash-dot{width:11px;height:11px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px rgba(var(--acc-rgb),.12);flex-shrink:0;animation:dashDotBlink 1s ease-in-out infinite;}
+@keyframes dashDotBlink{0%,100%{opacity:1;transform:scale(1.12)}50%{opacity:.1;transform:scale(.5)}}
 .dash-stat-label{font-size:11px;font-weight:800;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.3px;}
 .dash-stat-value{font-size:18px;font-weight:850;color:var(--acc);white-space:nowrap;letter-spacing:0;}
 .dash-stat-sub{font-size:11px;color:var(--txt3);line-height:1.25;min-height:14px;}
@@ -489,20 +489,10 @@ input[type=file]{display:none;}
 <!-- ═══ LOGIN ═══ -->
 <div class="ls" id="login-screen">
   <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;">
-<svg width="200" height="200" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
-<defs><linearGradient id="gLl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#20EEE8"/><stop offset="45%" stop-color="#08AAFF"/><stop offset="100%" stop-color="#1450FF"/></linearGradient><linearGradient id="gSl" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#18DDFF"/><stop offset="100%" stop-color="#1040EE"/></linearGradient><linearGradient id="gS2l" x1="1" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#18DDFF"/><stop offset="100%" stop-color="#1040EE"/></linearGradient></defs>
-<rect width="680" height="680" fill="#020B22"/><circle cx="340" cy="340" r="265" fill="#060F2E" opacity="0.35"/>
-<path d="M340 58 L540 134 L540 338 Q540 498 340 578 Q140 498 140 338 L140 134 Z" fill="none" stroke="#18DDFF" stroke-width="2" opacity="0.18"/>
-<path d="M340 74 L524 148 L524 338 Q524 482 340 558 Q156 482 156 338 L156 148 Z" fill="#030C1F" stroke="url(#gSl)" stroke-width="8.5"/>
-<path d="M340 94 L504 164 L504 338 Q504 466 340 536 Q176 466 176 338 L176 164 Z" fill="none" stroke="url(#gS2l)" stroke-width="1.8" opacity="0.55"/>
-<line x1="238" y1="188" x2="284" y2="163" stroke="#18DDFF" stroke-width="2" opacity="0.7"/><line x1="284" y1="163" x2="340" y2="146" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><line x1="340" y1="146" x2="396" y2="163" stroke="#18DDFF" stroke-width="2.5" opacity="0.9"/><line x1="396" y1="163" x2="442" y2="188" stroke="#18DDFF" stroke-width="2" opacity="0.7"/>
-<circle cx="340" cy="146" r="11" fill="#040D20" stroke="#20EEE8" stroke-width="3"/><circle cx="340" cy="146" r="4" fill="#20EEE8"/><circle cx="284" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="163" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="238" cy="188" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.7"/><circle cx="442" cy="188" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.7"/>
-<line x1="238" y1="480" x2="284" y2="502" stroke="#18DDFF" stroke-width="2" opacity="0.6"/><line x1="284" y1="502" x2="340" y2="518" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><line x1="340" y1="518" x2="396" y2="502" stroke="#18DDFF" stroke-width="2.5" opacity="0.8"/><line x1="396" y1="502" x2="442" y2="480" stroke="#18DDFF" stroke-width="2" opacity="0.6"/>
-<circle cx="340" cy="518" r="12" fill="#040D20" stroke="#40F060" stroke-width="3.5"/><circle cx="340" cy="518" r="4.5" fill="#40F060"/><line x1="340" y1="530" x2="340" y2="550" stroke="#20BB50" stroke-width="2.5" opacity="0.35"/><circle cx="284" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="396" cy="502" r="8" fill="#040D20" stroke="#08AAFF" stroke-width="2.5"/><circle cx="238" cy="480" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.6"/><circle cx="442" cy="480" r="5.5" fill="#040D20" stroke="#0870FF" stroke-width="2" opacity="0.6"/>
-<text x="340" y="400" font-family="Arial Narrow,Arial,sans-serif" font-size="148" font-weight="700" text-anchor="middle" fill="url(#gLl)" letter-spacing="8">IAM</text>
-<text x="340" y="444" font-family="Arial,sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#020B22" letter-spacing="4" stroke="#020B22" stroke-width="6" stroke-linejoin="round">INSURANCE AGENCY MANAGEMENT</text>
-<text x="340" y="444" font-family="Arial,sans-serif" font-size="13" font-weight="400" text-anchor="middle" fill="#ffffff" letter-spacing="4">INSURANCE AGENCY MANAGEMENT</text>
-</svg>
+<div style="display:flex;flex-direction:column;align-items:center;gap:11px;">
+  <div style="width:236px;height:78px;-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:#0f1b3d;"></div>
+  <div style="font-family:Arial,sans-serif;font-size:11.5px;font-weight:600;color:#5a6275;letter-spacing:4px;">INSURANCE AGENCY MANAGEMENT</div>
+</div>
   </div>
   <div style="width:40px;height:2px;background:#1450FF;border-radius:1px;margin-bottom:24px;"></div>
   <div style="font-size:13px;color:#5a6275;margin-bottom:20px;text-align:center;">Accesso riservato alla tua agenzia</div>

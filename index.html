@@ -5343,7 +5343,9 @@ function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (!ME) return [];
-  // Pipeline personale: ognuno vede SOLO le proprie trattative + quelle condivise con lui (vale anche per admin/super-admin), come il Diary.
+  // Il Super Admin vede i movimenti di TUTTI gli utenti.
+  if (isSuperAdmin()) return list;
+  // Pipeline personale: ognuno vede SOLO le proprie trattative + quelle condivise con lui, come il Diary.
   return list.filter(t => !t.utente_id || isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 
@@ -5854,7 +5856,7 @@ async function loadTrattDB() {
   if (!db || !ME) { PIPE = []; return; }
   const mapT = t => ({ id:String(t.id), cliente:t.cliente||'', prodotto:t.prodotto||'', importo:t.importo||0, status:t.status||'prospect', recall:t.recall||'', prob:t.prob||30, prior:t.prior||'normale', collab:t.collab||'', note:t.note||'', data_ins:t.data_ins||'', utente_id:t.utente_id||'', condivisi_con:t.condivisi_con||[] });
   try {
-    const isAdmin = isPipelineAdmin();
+    const isAdmin = isPipelineAdmin() || isSuperAdmin(); // il Super Admin carica TUTTE le trattative
     if (!isAdmin) {
       // Tentativo 1: array nativo PostgreSQL
       let { data, error } = await db.from('iam_trattative').select('*').order('data_ins',{ascending:false})

@@ -20,6 +20,11 @@ La grafica di questa sezione funziona esattamente come voluto dall'utente. Non t
 - **Supabase:** tabella principale utenti `iam_utenti` con colonne: `ruolo` (top_master/master/operativo), `quoto` (bool), `accesso_quoto` (bool)
 - **Quoto:** app separata su `francescotp93/QUOTE`, stessa istanza Supabase, accede a `iam_utenti`
 
+## Visibilità dati tra utenti (REGOLA)
+- **La Contabilità è l'UNICO dato condiviso tra tutti gli utenti.** Tabella `sessioni_giornaliere` (cassa, contanti, versamenti, spese, fondo, POS, sospesi/incassi) + estratto conto/note del sotto-tab "Conto": si leggono e scrivono SENZA filtro per utente (chiave per `data_riferimento`). Non aggiungere mai filtri `utente_id`/`creato_da` su queste query.
+- **Tutto il resto è per-utente.** Es. Pipeline `iam_trattative`: ogni utente vede solo le proprie trattative + quelle esplicitamente condivise (`utente_id` / `condivisi_con`). Stesso principio per diary, ecc.
+- Nota: se in pratica la contabilità NON risultasse condivisa, il problema è la RLS su `sessioni_giornaliere` lato Supabase (deve permettere SELECT/INSERT/UPDATE a tutti gli utenti autenticati), non il codice frontend.
+
 ## Ruoli IAM
 - `top_master` = admin completo
 - `master` = manager

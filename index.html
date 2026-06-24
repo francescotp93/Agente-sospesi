@@ -153,8 +153,8 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 @keyframes back-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:translateX(0)}}
 /* ── Caricamento futuristico di ritorno a IAM ── */
 #iam-return{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,#16264d 0%,#0f1b3d 60%,#0a1430 100%);overflow:hidden;}
-.hdr-mark{width:90px;height:30px;border-radius:7px;background:#0f1b3d url('assets/iam-logo.png') center/350% no-repeat;flex:0 0 auto;}
-.ir-mark{background:url('assets/iam-logo.png') center/250% no-repeat;}
+.hdr-mark{width:90px;height:30px;border-radius:7px;background:#0f1b3d url('assets/iam-logo.svg') center/350% no-repeat;flex:0 0 auto;}
+.ir-mark{background:url('assets/iam-logo.svg') center/250% no-repeat;}
 #iam-return.show{display:flex;}
 #iam-return:before{content:'';position:absolute;inset:-2px;background-image:linear-gradient(rgba(8,170,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(8,170,255,.08) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);animation:irGrid 7s linear infinite;}
 @keyframes irGrid{to{background-position:40px 40px,40px 40px;}}

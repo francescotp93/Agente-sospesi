@@ -2596,11 +2596,15 @@ async function saveSession(sospesi, incassi, dati) {
     aggiornato_il:   new Date().toISOString()
   };
   try {
-    // Controlla se esiste già una sessione per questa data
-    const { data: existing } = await db.from('sessioni_giornaliere')
-      .select('id').eq('data_riferimento', dati.data).maybeSingle();
+    // Contabilità CONDIVISA: più utenti possono aver scritto sulla stessa data.
+    // Prendo TUTTE le righe della data (non .maybeSingle, che andrebbe in errore
+    // con più di una riga) e aggiorno la più recente, senza creare doppioni.
+    const { data: existRows } = await db.from('sessioni_giornaliere')
+      .select('id').eq('data_riferimento', dati.data)
+      .order('aggiornato_il', { ascending: false });
+    const existing = existRows && existRows.length ? existRows[0] : null;
     if (existing?.id) {
-      // UPDATE
+      // UPDATE della riga più recente per quella data
       const { error } = await db.from('sessioni_giornaliere')
         .update(payload).eq('id', existing.id);
       if (error) throw error;

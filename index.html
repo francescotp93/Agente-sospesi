@@ -6027,9 +6027,53 @@ async function renderUtenti() {
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriPermessiMail('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Caselle email che questo utente può vedere" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-mail"></i> Posta</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriModalitaPagamento('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Modalità di pagamento consentite per questo collaboratore" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-credit-card"></i> Pagamenti</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<button onclick="apriPermessiUtente('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Permessi su ogni sezione di IAM" style="font-size:11px;padding:4px 10px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;"><i class="ti ti-adjustments"></i> Permessi</button>` : ''}
+        ${(isSuperAdmin() || PROFILO?.ruolo==='admin') ? `<button onclick="apriMovimentiUtente('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim()||u.email||'utente')}')" title="Trattative/movimenti di questo utente" style="font-size:11px;padding:4px 10px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:600;"><i class="ti ti-timeline-event-text"></i> Movimenti</button>` : ''}
       </div>
     </div>`;
   }).join('');
+}
+
+// ─── MOVIMENTI DI UN UTENTE (Super Admin / Admin) ──────────────────────────────
+async function apriMovimentiUtente(uid, nome) {
+  if (!(isSuperAdmin() || PROFILO?.ruolo === 'admin')) return;
+  let ov = document.getElementById('mov-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'mov-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(8,12,28,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.onclick = e => { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML = `<div style="background:var(--surf);border-radius:14px;max-width:560px;width:100%;max-height:88vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:.5px solid var(--bord2);position:sticky;top:0;background:var(--surf);">
+      <div style="font-size:15px;font-weight:800;">Movimenti · ${esc(nome)}</div>
+      <button onclick="document.getElementById('mov-overlay').remove()" style="background:var(--surf2);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--txt2);font-size:15px;">✕</button>
+    </div>
+    <div id="mov-body" style="padding:14px 16px;"><div style="color:var(--txt3);font-size:13px;">Caricamento movimenti…</div></div>
+  </div>`;
+  try { await loadTrattDB(); } catch (e) {}
+  const movs = (PIPE || []).filter(t => String(t.utente_id || '') === String(uid));
+  const body = document.getElementById('mov-body');
+  if (!body) return;
+  if (!movs.length) { body.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:6px;">Nessuna trattativa per questo utente.</div>'; return; }
+  const tot = movs.reduce((a, t) => a + (parseNum(t.importo) || 0), 0);
+  const SC = { prospect:'#8b93a7', contatto:'#3b82f6', appuntamento:'#a855f7', trattativa:'#f59e0b', vinta:'#22c55e', persa:'#ef4444' };
+  body.innerHTML = `<div style="display:flex;gap:8px;margin-bottom:12px;">
+      <div style="flex:1;background:var(--surf2);border-radius:9px;padding:9px 11px;"><div style="font-size:11px;color:var(--txt3);">Trattative</div><div style="font-size:18px;font-weight:800;">${movs.length}</div></div>
+      <div style="flex:1;background:var(--surf2);border-radius:9px;padding:9px 11px;"><div style="font-size:11px;color:var(--txt3);">Valore totale</div><div style="font-size:18px;font-weight:800;">€${fmt(tot)}</div></div>
+    </div>` + movs.map(t => `<div style="background:var(--surf2);border-radius:9px;padding:10px 12px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+        <div style="font-size:13px;font-weight:700;min-width:0;">${esc(t.cliente||'—')}</div>
+        <div style="font-size:13px;font-weight:800;white-space:nowrap;">€${fmt(parseNum(t.importo)||0)}</div>
+      </div>
+      <div style="font-size:12px;color:var(--txt2);margin-top:2px;">${esc(t.prodotto||'—')}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
+        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${(SC[t.status]||'#8b93a7')}22;color:${SC[t.status]||'#8b93a7'};">${esc((t.status||'').toUpperCase()||'—')}</span>
+        ${t.data_ins?`<span style="font-size:11px;color:var(--txt3);">${esc(t.data_ins)}</span>`:''}
+        ${t.recall?`<span style="font-size:11px;color:var(--amb-txt);"><i class="ti ti-bell"></i> ${esc(t.recall)}</span>`:''}
+      </div>
+      ${t.note?`<div style="font-size:11.5px;color:var(--txt3);margin-top:6px;">${esc(t.note)}</div>`:''}
+    </div>`).join('');
 }
 
 function apriNuovoUtente() {

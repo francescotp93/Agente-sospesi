@@ -603,7 +603,6 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-pipeline" onclick="goTab('pipeline')"><i class="ti ti-timeline"></i><span>Pipeline</span></button>
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
-  <button class="nbtn" id="nb-compliance" onclick="goTab('compliance')"><i class="ti ti-shield-check"></i><span>Compliance</span></button>
 
   <button class="nbtn" id="nb-lab" onclick="goTab('lab')" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5l-4-8V3"/><line x1="6.5" y1="13" x2="17.5" y2="13"/></svg>
@@ -1716,41 +1715,6 @@ input[type=file]{display:none;}
 </div>
 
 <!-- QUOTO -->
-<style>
-.cmp-head h2{font-size:20px;font-weight:800;color:var(--txt);margin:0}
-.cmp-head p{font-size:13px;color:var(--txt3);margin:4px 0 0}
-.cmp-warn{display:flex;gap:10px;align-items:flex-start;background:var(--amb-bg);color:var(--amb-txt);border-radius:12px;padding:12px 14px;font-size:13px;margin:14px 0;line-height:1.45}
-.cmp-warn i{font-size:18px;flex-shrink:0;margin-top:1px}
-.cmp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:18px}
-.cmp-card{display:flex;align-items:center;gap:12px;background:var(--surf2);border:1px solid var(--bord);border-radius:14px;padding:14px;cursor:pointer;transition:.15s}
-.cmp-card:hover{border-color:var(--blu-txt);transform:translateY(-1px)}
-.cmp-ic{width:40px;height:40px;border-radius:10px;background:var(--blu-bg);color:var(--blu-txt);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.cmp-t{font-weight:700;font-size:14px;color:var(--txt)}
-.cmp-d{font-size:12px;color:var(--txt3);margin-top:2px}
-.cmp-prog{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--txt);margin:6px 0 10px}
-.cmp-prog span{color:var(--blu-txt);font-weight:700}
-.cmp-bar{flex:1;height:7px;background:var(--surf3);border-radius:99px;overflow:hidden}
-.cmp-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px;transition:width .25s}
-.cmp-checks{display:flex;flex-direction:column;gap:8px}
-.cmp-chk{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--txt);cursor:pointer;padding:8px 11px;border:1px solid var(--bord);border-radius:10px;background:var(--surf2)}
-.cmp-chk.on{background:var(--grn-bg);border-color:transparent}
-.cmp-chk input{margin-top:2px;width:16px;height:16px;accent-color:#1A7AE8;flex-shrink:0}
-.cmp-modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:20px}
-.cmp-sheet{background:var(--surf,#fff);width:min(820px,100%);max-height:90vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
-.cmp-sheet-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--bord)}
-.cmp-btn{font-size:13px;padding:6px 10px;border:1px solid var(--bord);background:var(--surf2);color:var(--txt);border-radius:8px;cursor:pointer;font-family:inherit}
-.cmp-body{padding:18px 22px;overflow:auto;font-size:14px;line-height:1.55;color:var(--txt)}
-.cmp-body h1{font-size:21px}.cmp-body h2{font-size:18px;margin-top:1.1em}.cmp-body h3{font-size:15px}
-.cmp-body table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13px}
-.cmp-body th,.cmp-body td{border:1px solid var(--bord);padding:6px 9px;text-align:left;vertical-align:top}
-.cmp-body th{background:var(--surf2)}
-.cmp-body blockquote{border-left:3px solid var(--amb-txt);background:var(--amb-bg);margin:10px 0;padding:8px 12px;border-radius:0 8px 8px 0}
-.cmp-body code{background:var(--surf3);padding:1px 5px;border-radius:5px;font-size:12px}
-.cmp-body hr{border:none;border-top:1px solid var(--bord);margin:14px 0}
-.cmp-body ul,.cmp-body ol{padding-left:20px}
-@media print{body>*:not(#cmp-modal){display:none!important}.cmp-modal{position:static;background:#fff;padding:0}.cmp-sheet{max-height:none;width:100%}.cmp-sheet-h{display:none}}
-</style>
-<div class="panel" id="panel-compliance"></div>
 <div class="panel" id="panel-quoto">
   <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:40px 24px;text-align:center;background:var(--bg);position:relative;overflow:hidden;">
 
@@ -2952,7 +2916,6 @@ function goTab(t) {
   if (t === 'performance') { loadPerf(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
-  if (t === 'compliance') renderCompliance();
   if (t === 'quoto') {
     // Splash screen fullscreen prima del redirect
     const ov = document.createElement('div');
@@ -5380,9 +5343,9 @@ function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (!ME) return [];
-  // Il Super Admin vede i movimenti di TUTTI gli utenti.
-  if (isSuperAdmin()) return list;
-  // Pipeline personale: ognuno vede SOLO le proprie trattative + quelle condivise con lui, come il Diary.
+  // Pipeline PERSONALE per tutti (incluso il Super Admin): ognuno vede SOLO le proprie
+  // trattative + quelle condivise con lui. Il Super Admin/Admin consultano le trattative
+  // altrui dal modale "Movimenti" (apriMovimentiUtente), non qui.
   return list.filter(t => !t.utente_id || isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 
@@ -5793,9 +5756,9 @@ const RUOLI = {
 
 // Permessi per ruolo
 const PERMESSI = {
-  admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true,  compliance:true },
-  operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false, compliance:true },
-  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, lead:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true, compliance:false }
+  admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
+  operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
+  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, lead:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
 // Etichette leggibili delle sezioni controllabili (per il pannello permessi per-utente)
 const PERMESSI_LABELS = {
@@ -5844,7 +5807,6 @@ function applicaPermessi(ruolo) {
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
-    'nb-compliance':  perm.compliance,
     'nb-ai':          false, // AI spostato su FAB flottante
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
@@ -5894,7 +5856,7 @@ async function loadTrattDB() {
   if (!db || !ME) { PIPE = []; return; }
   const mapT = t => ({ id:String(t.id), cliente:t.cliente||'', prodotto:t.prodotto||'', importo:t.importo||0, status:t.status||'prospect', recall:t.recall||'', prob:t.prob||30, prior:t.prior||'normale', collab:t.collab||'', note:t.note||'', data_ins:t.data_ins||'', utente_id:t.utente_id||'', condivisi_con:t.condivisi_con||[] });
   try {
-    const isAdmin = isPipelineAdmin() || isSuperAdmin(); // il Super Admin carica TUTTE le trattative
+    const isAdmin = false; // Pipeline PER-UTENTE per tutti: ognuno carica solo le proprie + condivise. Le trattative altrui (Super Admin/Admin) si consultano dal modale "Movimenti".
     if (!isAdmin) {
       // Tentativo 1: array nativo PostgreSQL
       let { data, error } = await db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
@@ -6089,8 +6051,12 @@ async function apriMovimentiUtente(uid, nome) {
     </div>
     <div id="mov-body" style="padding:14px 16px;"><div style="color:var(--txt3);font-size:13px;">Caricamento movimenti…</div></div>
   </div>`;
-  try { await loadTrattDB(); } catch (e) {}
-  const movs = (PIPE || []).filter(t => String(t.utente_id || '') === String(uid));
+  // Query dedicata: le trattative dell'utente selezionato (NON tocca la pipeline personale).
+  let movs = [];
+  try {
+    const { data } = await db.from('iam_trattative').select('*').order('data_ins', { ascending: false }).eq('utente_id', uid);
+    movs = data || [];
+  } catch (e) {}
   const body = document.getElementById('mov-body');
   if (!body) return;
   if (!movs.length) { body.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:6px;">Nessuna trattativa per questo utente.</div>'; return; }
@@ -10698,77 +10664,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try { APP.conto[t].abb = JSON.parse(localStorage.getItem('iam_abb_'+t)||'{}'); } catch(e){}
   });
 });
-
-/* ── COMPLIANCE · Vendita a distanza ── */
-const COMPLIANCE_DOCS = [
-  {file:'00_GUIDA_e_CHECKLIST.md',              t:'Guida operativa + checklist',           d:'Quadro normativo, percorso autorizzativo e adempimenti', ic:'ti-map-2'},
-  {file:'01_Relazione_descrittiva.md',          t:'Relazione descrittiva del processo',    d:'Documento cardine per la richiesta di autorizzazione',   ic:'ti-file-description'},
-  {file:'02_Script_primo_contatto.md',          t:'Script primo contatto + registrazione', d:'Informativa al primo contatto (telefono)',               ic:'ti-phone'},
-  {file:'03_Informativa_procedura_acquisto.md', t:"Informativa procedura d'acquisto",      d:"Le fasi dell'acquisto a distanza",                       ic:'ti-list-check'},
-  {file:'04_Termini_Condizioni_Recesso.md',     t:'Termini & Condizioni + recesso',        d:'Consumatori: recesso 14/30 gg, anche online',            ic:'ti-gavel'},
-  {file:'05_Comunicazione_IVASS_sito.md',       t:'Comunicazione IVASS attivazione sito',  d:'Fac-simile art. 78 (dominio/sito)',                      ic:'ti-world'},
-];
-const COMPLIANCE_BASE = 'compliance/vendita-a-distanza/';
-const COMPLIANCE_CHECKLIST = [
-  'Mappato il mandato/accordo: ambito territoriale e prodotti ammessi',
-  'Richiesta alla compagnia la procedura autorizzativa per la vendita a distanza',
-  'Identificati i canali (telefono / sito / social / e-mail)',
-  'Redatta la Relazione descrittiva del processo',
-  'Predisposti script primo contatto + avviso registrazione',
-  "Predisposta informativa procedura d'acquisto",
-  'Predisposti Termini & Condizioni + diritto di recesso (consumatori)',
-  'Predisposta informativa privacy dedicata + fac-simile (email/web/social)',
-  'Inviata richiesta scritta di autorizzazione alla compagnia',
-  'Autorizzazione ottenuta e archiviata (scritta per IBIP)',
-  'Comunicato a IVASS il sito/dominio (se sito/social)',
-  'Verificata conformità D.lgs 209/2025 (supporto durevole, recesso online, no dark pattern)',
-];
-function complianceCheckState(){ try{ return JSON.parse(localStorage.getItem('iam_compliance_check')||'{}'); }catch(e){ return {}; } }
-function toggleComplianceCheck(i){ const s=complianceCheckState(); s[i]=!s[i]; localStorage.setItem('iam_compliance_check', JSON.stringify(s)); renderCompliance(); }
-function renderCompliance(){
-  const p=document.getElementById('panel-compliance'); if(!p) return;
-  const st=complianceCheckState();
-  const done=COMPLIANCE_CHECKLIST.filter((_,i)=>st[i]).length;
-  const pct=Math.round(done/COMPLIANCE_CHECKLIST.length*100);
-  const cards=COMPLIANCE_DOCS.map((d,i)=>`<div class="cmp-card" onclick="openComplianceDoc(${i})"><div class="cmp-ic"><i class="ti ${d.ic}"></i></div><div><div class="cmp-t">${d.t}</div><div class="cmp-d">${d.d}</div></div><i class="ti ti-chevron-right" style="margin-left:auto;color:var(--txt3)"></i></div>`).join('');
-  const checks=COMPLIANCE_CHECKLIST.map((c,i)=>`<label class="cmp-chk ${st[i]?'on':''}"><input type="checkbox" ${st[i]?'checked':''} onchange="toggleComplianceCheck(${i})"><span>${c}</span></label>`).join('');
-  p.innerHTML=`
-    <div class="cmp-head"><h2>Vendita a distanza &amp; Compliance</h2><p>Strumenti e documenti per operare in regola — Reg. IVASS 40/2018 (art. 74/78) · D.lgs 209/2025</p></div>
-    <div class="cmp-warn"><i class="ti ti-alert-triangle"></i><div>Documenti in <b>bozza</b>: vanno validati dal consulente compliance (K&nbsp;Partners) e adattati alla procedura della compagnia. <b>Non richiedere l'autorizzazione</b> prima di avere la Relazione descrittiva e di conoscere la procedura autorizzativa della compagnia.</div></div>
-    <div class="cmp-grid">${cards}</div>
-    <div class="cmp-prog"><b>Stato adempimenti</b><span>${done}/${COMPLIANCE_CHECKLIST.length}</span><div class="cmp-bar"><i style="width:${pct}%"></i></div></div>
-    <div class="cmp-checks">${checks}</div>`;
-}
-async function openComplianceDoc(i){
-  const d=COMPLIANCE_DOCS[i]; if(!d) return;
-  let ov=document.getElementById('cmp-modal');
-  if(!ov){ ov=document.createElement('div'); ov.id='cmp-modal'; ov.className='cmp-modal'; ov.addEventListener('click',e=>{ if(e.target===ov) closeComplianceDoc(); }); document.body.appendChild(ov); }
-  ov.innerHTML=`<div class="cmp-sheet"><div class="cmp-sheet-h"><b>${d.t}</b><div><button onclick="window.print()" class="cmp-btn"><i class="ti ti-printer"></i> Stampa</button> <button onclick="closeComplianceDoc()" class="cmp-btn"><i class="ti ti-x"></i></button></div></div><div class="cmp-body" id="cmp-body"><div style="padding:30px;text-align:center;color:var(--txt3)">Caricamento…</div></div></div>`;
-  ov.style.display='flex';
-  try{
-    const r=await fetch(COMPLIANCE_BASE+d.file);
-    if(!r.ok) throw new Error('http');
-    document.getElementById('cmp-body').innerHTML=mdToHtml(await r.text());
-  }catch(e){ const b=document.getElementById('cmp-body'); if(b) b.innerHTML='<div style="padding:20px;color:#c0392b">Documento non ancora disponibile online (sarà leggibile dopo la pubblicazione). È comunque presente nel repository in <code>compliance/vendita-a-distanza/</code>.</div>'; }
-}
-function closeComplianceDoc(){ const ov=document.getElementById('cmp-modal'); if(ov) ov.style.display='none'; }
-function mdToHtml(md){
-  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const inl=s=>esc(s).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
-  const lines=md.split('\n'); const out=[]; let i=0;
-  while(i<lines.length){
-    const l=lines[i];
-    if(/^\s*$/.test(l)){ i++; continue; }
-    if(/^#{1,6}\s/.test(l)){ const n=l.match(/^#+/)[0].length; out.push(`<h${n}>${inl(l.replace(/^#+\s/,''))}</h${n}>`); i++; continue; }
-    if(/^---+\s*$/.test(l)){ out.push('<hr>'); i++; continue; }
-    if(/^>\s?/.test(l)){ const b=[]; while(i<lines.length&&/^>\s?/.test(lines[i])){ b.push(inl(lines[i].replace(/^>\s?/,''))); i++; } out.push('<blockquote>'+b.join('<br>')+'</blockquote>'); continue; }
-    if(/^\|/.test(l)){ const rows=[]; while(i<lines.length&&/^\|/.test(lines[i])){ rows.push(lines[i]); i++; } const cells=r=>r.split('|').slice(1,-1).map(c=>c.trim()); const head=cells(rows[0]); const body=rows.slice(2).map(cells); out.push('<table><thead><tr>'+head.map(h=>`<th>${inl(h)}</th>`).join('')+'</tr></thead><tbody>'+body.map(r=>'<tr>'+r.map(c=>`<td>${inl(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table>'); continue; }
-    if(/^\s*[-*]\s/.test(l)){ const it=[]; while(i<lines.length&&/^\s*[-*]\s/.test(lines[i])){ let t=lines[i].replace(/^\s*[-*]\s/,''); t=t.replace(/^\[ \]\s/,'☐ ').replace(/^\[[xX]\]\s/,'☑ '); it.push('<li>'+inl(t)+'</li>'); i++; } out.push('<ul>'+it.join('')+'</ul>'); continue; }
-    if(/^\s*\d+\.\s/.test(l)){ const it=[]; while(i<lines.length&&/^\s*\d+\.\s/.test(lines[i])){ it.push('<li>'+inl(lines[i].replace(/^\s*\d+\.\s/,''))+'</li>'); i++; } out.push('<ol>'+it.join('')+'</ol>'); continue; }
-    out.push('<p>'+inl(l)+'</p>'); i++;
-  }
-  return out.join('\n');
-}
 </script>
 
 <!-- ── LAB OVERLAY ───────────────────────────────────────────────────── -->

@@ -5343,9 +5343,9 @@ function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
 function visiblePipelineItems(list) {
   if (!ME) return [];
-  // Il Super Admin vede i movimenti di TUTTI gli utenti.
-  if (isSuperAdmin()) return list;
-  // Pipeline personale: ognuno vede SOLO le proprie trattative + quelle condivise con lui, come il Diary.
+  // Pipeline PERSONALE per tutti (incluso il Super Admin): ognuno vede SOLO le proprie
+  // trattative + quelle condivise con lui. Il Super Admin/Admin consultano le trattative
+  // altrui dal modale "Movimenti" (apriMovimentiUtente), non qui.
   return list.filter(t => !t.utente_id || isPipelineMine(t) || isPipelineSharedWithMe(t));
 }
 
@@ -5856,7 +5856,7 @@ async function loadTrattDB() {
   if (!db || !ME) { PIPE = []; return; }
   const mapT = t => ({ id:String(t.id), cliente:t.cliente||'', prodotto:t.prodotto||'', importo:t.importo||0, status:t.status||'prospect', recall:t.recall||'', prob:t.prob||30, prior:t.prior||'normale', collab:t.collab||'', note:t.note||'', data_ins:t.data_ins||'', utente_id:t.utente_id||'', condivisi_con:t.condivisi_con||[] });
   try {
-    const isAdmin = isPipelineAdmin() || isSuperAdmin(); // il Super Admin carica TUTTE le trattative
+    const isAdmin = false; // Pipeline PER-UTENTE per tutti: ognuno carica solo le proprie + condivise. Le trattative altrui (Super Admin/Admin) si consultano dal modale "Movimenti".
     if (!isAdmin) {
       // Tentativo 1: array nativo PostgreSQL
       let { data, error } = await db.from('iam_trattative').select('*').order('data_ins',{ascending:false})
@@ -6051,8 +6051,12 @@ async function apriMovimentiUtente(uid, nome) {
     </div>
     <div id="mov-body" style="padding:14px 16px;"><div style="color:var(--txt3);font-size:13px;">Caricamento movimenti…</div></div>
   </div>`;
-  try { await loadTrattDB(); } catch (e) {}
-  const movs = (PIPE || []).filter(t => String(t.utente_id || '') === String(uid));
+  // Query dedicata: le trattative dell'utente selezionato (NON tocca la pipeline personale).
+  let movs = [];
+  try {
+    const { data } = await db.from('iam_trattative').select('*').order('data_ins', { ascending: false }).eq('utente_id', uid);
+    movs = data || [];
+  } catch (e) {}
   const body = document.getElementById('mov-body');
   if (!body) return;
   if (!movs.length) { body.innerHTML = '<div style="color:var(--txt3);font-size:13px;padding:6px;">Nessuna trattativa per questo utente.</div>'; return; }

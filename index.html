@@ -59,13 +59,13 @@ html,body{height:100%;overflow:hidden;}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--txt);display:flex;flex-direction:column;transition:background .25s,color .25s;}
 
 /* ── LOGIN ── */
-.ls{position:fixed;inset:0;background:linear-gradient(135deg,#eef2fb 0%,#dde6f5 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
-.lcard{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;border:1px solid rgba(20,80,255,.10);box-shadow:0 12px 40px rgba(20,64,200,.14);}
+.ls{position:fixed;inset:0;background:linear-gradient(135deg,#eef4f0 0%,#e2ede7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
+.lcard{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;border:1px solid rgba(2,152,78,.12);box-shadow:0 12px 40px rgba(45,60,110,.12);}
 .lf{display:flex;flex-direction:column;gap:5px;}
 .lf label{font-size:10px;font-weight:700;color:#5a6275;text-transform:uppercase;letter-spacing:1px;}
 .lf input{padding:12px 15px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#f5f7fc;color:#16203a;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s;}
-.lf input:focus{border-color:#1450FF;background:#fff;}
-.lbtn{padding:14px;background:linear-gradient(135deg,#2E7BFF,#1450FF);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(20,80,255,.35);}
+.lf input:focus{border-color:#02984e;background:#fff;}
+.lbtn{padding:14px;background:linear-gradient(135deg,#02984e,#01c061);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(2,152,78,.30);}
 .lbtn:active{transform:scale(.98);opacity:.9;}
 .lbtn:disabled{opacity:.5;cursor:not-allowed;}
 .lerr{font-size:12px;text-align:center;min-height:16px;}
@@ -491,11 +491,11 @@ input[type=file]{display:none;}
 <div class="ls" id="login-screen">
   <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:8px;">
 <div style="display:flex;flex-direction:column;align-items:center;gap:11px;">
-  <div style="width:236px;height:78px;-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:#0f1b3d;"></div>
-  <div style="font-family:Arial,sans-serif;font-size:11.5px;font-weight:600;color:#5a6275;letter-spacing:4px;">INSURANCE AGENCY MANAGEMENT</div>
+  <img src="withus-logo.png" alt="With Us" style="height:66px;width:auto;display:block;mix-blend-mode:multiply;">
+  <div style="font-family:Arial,sans-serif;font-size:11.5px;font-weight:600;color:#5a6275;letter-spacing:4px;">PIATTAFORMA IAM</div>
 </div>
   </div>
-  <div style="width:40px;height:2px;background:#1450FF;border-radius:1px;margin-bottom:24px;"></div>
+  <div style="width:40px;height:2px;background:#02984e;border-radius:1px;margin-bottom:24px;"></div>
   <div style="font-size:13px;color:#5a6275;margin-bottom:20px;text-align:center;">Accesso riservato alla tua agenzia</div>
   <div class="lcard">
     <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="la-tua@email.com" autocomplete="email"></div>
@@ -535,7 +535,7 @@ input[type=file]{display:none;}
     <div class="hdr-logo">
 <div class="hdr-mark" title="IAM"></div>
 <div style="width:1px;height:28px;background:#0a1e3c;margin:0 10px;"></div>
-<div><div class="hdr-sub" id="hdr-sub" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:2px;">INSURANCE AGENCY MANAGEMENT</div>
+<div><div class="hdr-sub" id="hdr-sub" style="font-family:'Share Tech Mono',monospace;font-size:7px;color:var(--txt3);letter-spacing:2px;">PIATTAFORMA IAM</div>
 </div>
     </div>
     <div class="hdr-right">

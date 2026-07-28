@@ -483,6 +483,7 @@ input[type=file]{display:none;}
 .sw input:checked + .sl:before{transform:translateX(18px);}
 .sw-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--txt2);}
 </style>
+<link rel="stylesheet" href="withus-one.css?v=2">
 </head>
 <body>
 
@@ -1032,6 +1033,9 @@ input[type=file]{display:none;}
       <div class="slbl" style="padding:0;">Gestione utenti</div>
       <div id="utenti-btn-wrap"></div>
     </div>
+    <!-- Inviti a cui manca ancora qualcosa: riempito da mostraInvitiInSospeso(),
+         vuoto quando non c'e' niente in sospeso. -->
+    <div id="utenti-inviti" style="padding:0 16px;"></div>
     <div class="card" style="padding:12px;"><div id="utenti-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
   </div>
   <!-- Pannello Controllo KPI (solo admin) -->
@@ -1039,7 +1043,11 @@ input[type=file]{display:none;}
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 6px;">
       <div class="slbl" style="padding:0;">Pannello Controllo KPI</div>
     </div>
-    <div class="card" style="padding:12px;"><div id="kpi-ctrl-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div></div>
+    <div class="card" style="padding:12px;">
+      <!-- Spunte rimaste nella memoria di questo browser: riempito da mostraSpunteKpiRimaste() -->
+      <div id="kpi-ctrl-residui"></div>
+      <div id="kpi-ctrl-list"><div style="color:var(--txt3);font-size:13px;padding:8px;">Caricamento...</div></div>
+    </div>
   </div>
   <!-- Sezione Obiettivi -->
   <div style="margin-top:16px;">
@@ -1211,6 +1219,10 @@ input[type=file]{display:none;}
     <button class="ptab" id="pt-re" onclick="selPerfTab('re')">RE</button>
     <button class="ptab" id="pt-tcm" onclick="selPerfTab('tcm')">TCM</button>
   </div>
+
+  <!-- Avviso: posizioni rimaste nella memoria di questo browser da una vecchia
+       versione. Riempito da mostraResiduiKPI(); vuoto quando non c'e' niente. -->
+  <div id="perf-residui" style="padding:0 14px;"></div>
 
   <!-- GARE INTERNE -->
   <div id="pp-gare">
@@ -1559,45 +1571,11 @@ input[type=file]{display:none;}
 </div>
 
 
-<!-- MODAL POSIZIONE HDI/CONSAP/RE -->
-<div class="modal" id="modal-pos">
-  <div class="modal-box">
-    <div class="modal-hdr">
-      <div class="modal-title" id="pos-title">Nuova posizione</div>
-      <div style="display:flex;gap:8px;">
-        <button class="mbtn prim" onclick="savePos()">Salva</button>
-        <button class="mbtn sec" onclick="closeModal('modal-pos')">✕</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div class="fgrid">
-        <div class="fld"><label>Nominativo</label><input type="text" id="pos-nome" placeholder="Nome cliente"></div>
-        <div class="fld"><label>Data</label><input type="date" id="pos-data"></div>
-        <div class="fld"><label>Importo (€)</label><input type="number" id="pos-importo" placeholder="0.00" step="0.01" inputmode="decimal"></div>
-        <div class="fld"><label>Produttore</label><select id="pos-prod"><option value="">— nessuno —</option></select></div>
-        <div class="fld ffull" id="pos-frz-wrap" style="display:none;">
-          <label>Frazionamento</label>
-          <select id="pos-frz">
-            <option value="1">Annuale (x1)</option>
-            <option value="2">Semestrale (x2)</option>
-            <option value="3">Quadrimestrale (x3)</option>
-            <option value="4">Trimestrale (x4)</option>
-            <option value="12">Mensile (x12)</option>
-          </select>
-        </div>
-        <div class="fld ffull" id="pos-tipo-wrap" style="display:none;">
-          <label>Tipo operazione</label>
-          <select id="pos-tipo-cs">
-            <option value="Riscattato">Riscattato</option>
-            <option value="Nuovo">Nuovo</option>
-            <option value="Aggiornato">Aggiornato</option>
-          </select>
-        </div>
-      </div>
-      <div class="fld"><label>Note</label><textarea id="pos-note" rows="2" placeholder="Note..."></textarea></div>
-    </div>
-  </div>
-</div>
+<!-- Qui stava il modulo "Nuova posizione" della vecchia versione (modal-pos):
+     scriveva nella memoria del browser e non era piu' aperto da nessun pulsante.
+     Le posizioni CONSAP e RE si inseriscono da modal-cs-pos e modal-re-pos, che
+     salvano nell'archivio dell'agenzia. Tolto per non lasciare due moduli uguali
+     con due destinazioni diverse. -->
 
 <!-- MODAL RE -->
 <div class="modal" id="modal-re-pos">
@@ -2239,7 +2217,7 @@ input[type=file]{display:none;}
     <div class="modal-hdr">
       <div class="modal-title">Nuovo appuntamento</div>
       <div style="display:flex;gap:8px;">
-        <button class="mbtn prim" onclick="saveAgenda()">Salva</button>
+        <button class="mbtn prim" id="ag-salva" onclick="saveAgenda()">Salva</button>
         <button class="mbtn sec" onclick="closeModal('modal-agenda')">✕</button>
       </div>
     </div>
@@ -2351,14 +2329,10 @@ async function onLogin(user) {
       mostraBadgeRuolo();
       await syncThemeFromDB();
     }
-    // Controlla se ci sono profili pendenti da inserire
-    try {
-      const pendenti = JSON.parse(localStorage.getItem('iam_utenti_pendenti')||'[]');
-      for (const p of pendenti) {
-        await db.from('iam_utenti').upsert(p, { onConflict: 'id' });
-      }
-      if (pendenti.length) localStorage.removeItem('iam_utenti_pendenti');
-    } catch(e) {}
+    // Inviti in sospeso: ruolo e accessi scelti al momento dell'invito, che
+    // aspettano che la scheda della persona esista. Si applica quello che si
+    // riesce; quello che non passa resta in elenco e si vede nel pannello Utenti.
+    try { await applicaInvitiInSospeso(); } catch(e) {}
     // Precarica trattative, agenda e team in background
     // Carica direttamente senza aspettare PROFILO
     if (db) {
@@ -2845,12 +2819,14 @@ async function caricaDatiPerData(dataSelezionata) {
 }
 
 // ─── PONTE IAM → QUOTO ────────────────────────────────────────────────────────
-// URL pubblico di QUOTO. Modificare qui se l'indirizzo cambia.
-const QUOTO_URL = 'https://quoto.withusassicurazioni.it/';
-// Costruisce l'URL di QUOTO includendo, se disponibile, la sessione corrente
-// (token nell'hash #at/#rt). I sottodomini iam. e quoto. NON condividono il login
-// del browser, quindi lo "passiamo" qui: così l'utente entra in QUOTO senza
-// doversi ri-autenticare.
+// INDIRIZZO UNICO: il preventivatore non è più un sito separato. È un percorso
+// dello stesso dominio (iam.withusassicurazioni.it/nuovo-preventivo/) che
+// vercel.json riscrive verso il server OVH. Per tornare indietro basta rimettere
+// qui 'https://quoto.withusassicurazioni.it/' e togliere le righe da vercel.json.
+const QUOTO_URL = '/nuovo-preventivo/';
+// Il passaggio della sessione nell'hash (#at/#rt) resta com'era: ora che il
+// dominio è uno solo il login sarebbe già condiviso, ma lasciarlo garantisce che
+// tutto continui a funzionare anche se la riscrittura viene disattivata.
 async function quotoUrl() {
   let url = QUOTO_URL + '?from=iam' + (ME?.email ? ('&email=' + encodeURIComponent(ME.email)) : '');
   try {
@@ -2926,7 +2902,7 @@ function goTab(t) {
   const fab = document.getElementById('ai-fab');
   if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
-  if (t === 'performance') { loadPerf(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
+  if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); }
   if (t === 'agenti')    { loadAgentiAI(); }
@@ -4053,11 +4029,27 @@ function loadFattureStore() { try { return JSON.parse(localStorage.getItem('iam_
 function saveFattureStore(store) {
   try { localStorage.setItem('iam_fatture_collab', JSON.stringify(store)); return true; }
   catch(e) {
-    const light = {};
+    // La memoria di questo computer e' piena. Si tolgono i file dagli allegati,
+    // ma non in silenzio: quelli che hanno una copia in archivio (file.path) si
+    // riaprono da li' e non si perde niente; gli altri stavano solo qui.
+    const light = {}; let senzaArchivio = 0;
     Object.entries(store||{}).forEach(([id, fatture]) => {
-      light[id] = (fatture||[]).map(f => ({...f, file:null}));
+      light[id] = (fatture||[]).map(f => {
+        if (!f || !f.file) return f;
+        if (f.file.data && !f.file.path) senzaArchivio++;
+        return { ...f, file: { nome:f.file.nome||'', tipo:f.file.tipo||'', path:f.file.path||null } };
+      });
     });
-    try { localStorage.setItem('iam_fatture_collab', JSON.stringify(light)); return true; } catch(e2) { return false; }
+    try { localStorage.setItem('iam_fatture_collab', JSON.stringify(light)); }
+    catch(e2) { return false; }
+    if (senzaArchivio) {
+      try {
+        alert('La memoria di questo computer e\' piena: ' + senzaArchivio
+          + (senzaArchivio === 1 ? ' allegato non aveva' : ' allegati non avevano')
+          + ' una copia in archivio e da qui non si apre piu\'. Le fatture restano: va ricaricato solo il file.');
+      } catch(e3) {}
+    }
+    return true;
   }
 }
 function getFattureCollab(id) { return loadFattureStore()[String(id)] || []; }
@@ -4065,11 +4057,71 @@ function getFattureMerged(id, dbFatture) {
   const local = getFattureCollab(id);
   if (!dbFatture || !dbFatture.length) return local;
   const byId = {}; (local||[]).forEach(f => { byId[String(f.id)] = f; });
-  // Le note/importi/stato arrivano dal DB (sincronizzati ovunque); il file allegato resta locale se presente
+  // Note, importi e stato arrivano dall'archivio (uguali per tutti). Per
+  // l'allegato vince la copia in archivio (file.path), che si apre da qualunque
+  // computer; solo se non c'e' si ripiega sul file rimasto in questa memoria.
   return dbFatture.map(f => {
+    if (f && f.file && f.file.path) return { ...f };
     const lf = byId[String(f.id)];
-    return {...f, file: (lf && lf.file && lf.file.data) ? lf.file : (f.file || null)};
+    return {...f, file: (lf && lf.file && (lf.file.data || lf.file.path)) ? lf.file : (f.file || null)};
   });
+}
+
+// ── Allegati delle fatture ────────────────────────────────────────────────────
+// L'allegato vive nell'archivio condiviso (lo stesso gia' usato per i documenti
+// dei collaboratori). Sul computer resta solo il riferimento: cosi' la fattura
+// si apre da ogni postazione e la memoria del browser non si riempie.
+
+/** Riferimento salvabile: mai l'oggetto File del browser, che non si puo' scrivere. */
+function fatturaFileSalvabile(file) {
+  if (!file) return null;
+  const base = { nome: file.nome || '', tipo: file.tipo || 'application/octet-stream' };
+  if (file.path) base.path = file.path;
+  else if (file.data) base.data = file.data; // fatture vecchie: file solo su questo computer
+  return base;
+}
+/** Riferimento da scrivere sul database: mai il contenuto del file, solo dove trovarlo. */
+function fatturaFilePerDB(file) {
+  if (!file) return null;
+  return { nome: file.nome || '', tipo: file.tipo || '', path: file.path || null };
+}
+function nomeFileSicuro(nome) { return String(nome||'documento').replace(/[^a-zA-Z0-9._-]/g,'_').slice(-80); }
+function chiaveCasuale() {
+  try { if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID(); } catch(e) {}
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+}
+/** Carica l'allegato in archivio. Restituisce il percorso, o null se non e' riuscito. */
+async function caricaAllegatoFattura(collabId, file) {
+  if (!db || !file || !file.blob) return null;
+  try {
+    const path = 'fatture/' + String(collabId || 'nuovo') + '/' + chiaveCasuale() + '_' + nomeFileSicuro(file.nome);
+    const up = await db.storage.from('documenti').upload(path, file.blob, { contentType: file.tipo || 'application/octet-stream' });
+    if (up && up.error) { console.warn('caricaAllegatoFattura:', up.error.message); return null; }
+    return path;
+  } catch(e) { console.warn('caricaAllegatoFattura:', e); return null; }
+}
+/** Apre l'allegato: dall'archivio con un indirizzo a scadenza, o dal file locale. */
+async function apriAllegatoFattura(fileRef) {
+  if (!fileRef || (!fileRef.path && !fileRef.data)) { alert('Allegato non disponibile.'); return false; }
+  // La finestra si apre subito, prima di chiedere l'indirizzo all'archivio:
+  // aprendola dopo, il browser la blocca perche' non arriva piu' da un clic.
+  const w = window.open('', '_blank');
+  if (fileRef.path && db) {
+    let url = '';
+    try {
+      const { data, error } = await db.storage.from('documenti').createSignedUrl(fileRef.path, 300);
+      if (!error && data && data.signedUrl) url = data.signedUrl;
+    } catch(e) { console.warn('apriAllegatoFattura:', e); }
+    if (!url) { try { url = db.storage.from('documenti').getPublicUrl(fileRef.path)?.data?.publicUrl || ''; } catch(e) {} }
+    if (url) { if (w) w.location.href = url; else window.open(url, '_blank'); return true; }
+  }
+  if (fileRef.data) {
+    w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><iframe src="${fileRef.data}" style="width:100%;height:100vh;border:0;background:#fff;"></iframe></body>`);
+    return true;
+  }
+  try { w?.close(); } catch(e) {}
+  alert('Allegato non disponibile.');
+  return false;
 }
 function mergeTeamFatture(list) {
   const store = loadFattureStore();
@@ -4125,7 +4177,7 @@ async function loadTeamDB() {
             if (!local.some(f => !dbIds.has(String(f.id)))) continue; // niente di nuovo da sincronizzare
             const byId = {};
             (row.fatture || []).forEach(f => { byId[String(f.id)] = f; });
-            local.forEach(f => { byId[String(f.id)] = {...f, file: f.file ? { nome:f.file.nome, tipo:f.file.tipo } : null}; });
+            local.forEach(f => { byId[String(f.id)] = {...f, file: fatturaFilePerDB(f.file)}; });
             await db.from('iam_team').update({ fatture: Object.values(byId) }).eq('id', row.id);
           }
         } catch (e) { console.warn('sync fatture locali:', e); }
@@ -4224,7 +4276,7 @@ function renderFattureCardHTML(c) {
         <div style="font-size:12px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.desc||'Fattura collaboratore'}</div>
         <div style="font-size:11px;color:var(--txt3);">${f.data||''} · €${fmt(parseNum(f.importo))} · ${pagata?'Pagata':'Da pagare'}</div>
       </div>
-      ${f.file?.data?`<button onclick="viewFatturaCollab('${c.id}','${f.id}')" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
+      ${(f.file?.data||f.file?.path)?`<button onclick="viewFatturaCollab('${c.id}','${f.id}')" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
     </div>`;
   }).join('');
 }
@@ -4249,9 +4301,10 @@ function renderTeam() {
     if(c.rami?.re)   rami.push('<span class="rc rc-re">Rami El.</span>');
     if(c.rami?.cau)  rami.push('<span class="rc rc-cau">Cauzioni</span>');
     if(c.rami?.inf)  rami.push('<span class="rc rc-re">Infortuni</span>');
-    const compLabels = {hdi:'HDI',allianz:'Allianz',groupama:'Groupama',prima:'Prima',generali:'Generali',sara:'Sara',vittoria:'Vittoria',unipolsai:'UnipolSai'};
-    const compCustomMap = Object.fromEntries((getCompagnieCustom()||[]).map(x=>[x.key,x.label]));
-    const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${compLabels[k]||compCustomMap[k]||k}</span>`).join('');
+    // Il nome per esteso arriva da etichettaCompagnia(): prima, da un computer
+    // diverso da quello dove la voce era stata creata, si leggeva la sigla
+    // grezza (custom_studio_rossi) al posto del nome.
+    const compBadges = (c.compagnie||[]).map(k=>`<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.75);border:.5px solid rgba(255,255,255,.18);">${esc(etichettaCompagnia(k))}</span>`).join('');
 
     return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;">
 
@@ -4993,17 +5046,76 @@ function renderStoricoCollab() {
 }
 
 // ── COMPAGNIE OPERATIVE ──
+// Oltre alle otto compagnie fisse si possono aggiungere voci libere.
+//
+// Com'era, e cosa faceva. L'elenco delle voci libere stava soltanto nella
+// memoria di questo browser. Da un altro computer quelle voci non comparivano
+// fra le caselle da spuntare: il collaboratore le aveva registrate, ma la
+// casella non veniva disegnata, e siccome il salvataggio legge le caselle
+// presenti sullo schermo, al primo salvataggio della scheda — anche solo per
+// cambiare un numero di telefono — le compagnie in piu' sparivano dal
+// collaboratore senza che nessuno se ne accorgesse. Nell'elenco dei
+// collaboratori si vedeva intanto la sigla grezza (custom_studio_rossi) al
+// posto del nome.
+//
+// Com'e' adesso. L'elenco si ricava anche da quello che i collaboratori hanno
+// gia' registrato in archivio: una voce usata da qualcuno esiste per tutti,
+// su qualunque computer. Il nome per esteso resta salvato qui quando c'e';
+// quando manca si ricostruisce leggibile dalla sigla.
+const COMPAGNIE_BASE = {
+  hdi:'HDI', allianz:'Allianz', groupama:'Groupama', prima:'Prima',
+  generali:'Generali', sara:'Sara', vittoria:'Vittoria', unipolsai:'UnipolSai'
+};
+
+function etichettaDaChiave(key) {
+  return String(key||'').replace(/^custom_/, '').replace(/_/g, ' ')
+    .replace(/\b\p{L}/gu, c => c.toUpperCase()).trim() || String(key||'');
+}
+
+/** I nomi per esteso salvati su questo computer. */
+function compagnieCustomLocali() {
+  try {
+    const v = JSON.parse(localStorage.getItem('iam_comp_custom')||'[]');
+    return Array.isArray(v) ? v.filter(c => c && c.key) : [];
+  } catch(e){ return []; }
+}
+
+/** Il catalogo completo delle voci libere: quelle di qui piu' quelle in uso. */
 function getCompagnieCustom() {
-  try { return JSON.parse(localStorage.getItem('iam_comp_custom')||'[]'); } catch(e){ return []; }
+  const perChiave = new Map();
+  for (const c of compagnieCustomLocali()) perChiave.set(c.key, { key: c.key, label: c.label || etichettaDaChiave(c.key) });
+  for (const collab of (typeof TEAM !== 'undefined' && Array.isArray(TEAM) ? TEAM : [])) {
+    for (const k of (collab.compagnie || [])) {
+      if (COMPAGNIE_BASE[k] || perChiave.has(k)) continue;
+      perChiave.set(k, { key: k, label: etichettaDaChiave(k) });
+    }
+  }
+  return [...perChiave.values()].sort((a,b) => a.label.localeCompare(b.label));
+}
+
+/** Il nome da mostrare per una compagnia, fissa o libera che sia. */
+function etichettaCompagnia(key) {
+  if (COMPAGNIE_BASE[key]) return COMPAGNIE_BASE[key];
+  const c = getCompagnieCustom().find(x => x.key === key);
+  return c ? c.label : etichettaDaChiave(key);
 }
 
 function renderCompagnieCustom(selezionate) {
-  const custom = getCompagnieCustom();
+  // Le voci gia' spuntate su questa scheda entrano sempre nell'elenco: se la
+  // casella non venisse disegnata, il salvataggio non la vedrebbe e la voce
+  // andrebbe persa.
+  const catalogo = getCompagnieCustom();
+  const note = new Set(catalogo.map(c => c.key));
+  const custom = catalogo.concat(
+    (selezionate || [])
+      .filter(k => !COMPAGNIE_BASE[k] && !note.has(k))
+      .map(k => ({ key: k, label: etichettaDaChiave(k) }))
+  );
   const el = document.getElementById('mc-comp-custom-rows');
   if (!el) return;
   el.innerHTML = custom.map(c => `
     <div class="sw-row">
-      <span class="sw-lbl">${c.label}</span>
+      <span class="sw-lbl">${esc(c.label)}</span>
       <div style="display:flex;align-items:center;gap:8px;">
         <label class="sw">
           <input type="checkbox" id="mc-comp-${c.key}" ${(selezionate||[]).includes(c.key)?'checked':''}>
@@ -5021,10 +5133,10 @@ function aggiungiCompagniaCustom() {
   const nome = inp?.value.trim();
   if (!nome) return;
   const key = 'custom_' + nome.toLowerCase().replace(/\s+/g,'_');
-  const custom = getCompagnieCustom();
-  if (!custom.find(c=>c.key===key)) {
-    custom.push({key, label: nome});
-    localStorage.setItem('iam_comp_custom', JSON.stringify(custom));
+  const locali = compagnieCustomLocali();
+  if (!locali.find(c => c.key === key)) {
+    locali.push({ key, label: nome });
+    try { localStorage.setItem('iam_comp_custom', JSON.stringify(locali)); } catch(e) {}
   }
   inp.value = '';
   const sel = getCompagnieSelezionate();
@@ -5033,15 +5145,31 @@ function aggiungiCompagniaCustom() {
 }
 
 function rimuoviCompagniaCustom(key) {
-  const custom = getCompagnieCustom().filter(c=>c.key!==key);
-  localStorage.setItem('iam_comp_custom', JSON.stringify(custom));
-  renderCompagnieCustom([]);
+  // Prima si ridisegnavano le voci in piu' con "nessuna spuntata": togliendone
+  // una si perdeva la spunta di TUTTE le altre voci in piu' (le otto fisse, che
+  // stanno fuori da questo riquadro, non erano toccate). Al salvataggio della
+  // scheda restava solo quello che era rimasto spuntato. Adesso si toglie
+  // soltanto quella, e le altre spunte restano come sono.
+  const inUso = (typeof TEAM !== 'undefined' && Array.isArray(TEAM) ? TEAM : [])
+    .filter(c => (c.compagnie || []).includes(key));
+  const altri = inUso.filter(c => String(c.id) !== String(TEAM_ID));
+  if (altri.length && !confirm(
+        `"${etichettaCompagnia(key)}" e' registrata anche su ${altri.length} altr${altri.length === 1 ? 'o collaboratore' : 'i collaboratori'}. ` +
+        `La tolgo da questa scheda; sugli altri resta. Procedo?`)) return;
+  const locali = compagnieCustomLocali().filter(c => c.key !== key);
+  try { localStorage.setItem('iam_comp_custom', JSON.stringify(locali)); } catch(e) {}
+  renderCompagnieCustom(getCompagnieSelezionate().filter(k => k !== key));
 }
 
 function getCompagnieSelezionate() {
-  const base = ['hdi','allianz','groupama','prima','generali','sara','vittoria','unipolsai'];
-  const custom = getCompagnieCustom().map(c=>c.key);
-  return [...base,...custom].filter(k => document.getElementById('mc-comp-'+k)?.checked);
+  const chiavi = [...Object.keys(COMPAGNIE_BASE), ...getCompagnieCustom().map(c => c.key)];
+  const spuntate = chiavi.filter(k => document.getElementById('mc-comp-' + k)?.checked);
+  // Rete di sicurezza: se una compagnia registrata su questa scheda non ha una
+  // casella sullo schermo, non la si butta via — resta com'era.
+  const gia = ((typeof TEAM !== 'undefined' && Array.isArray(TEAM) ? TEAM : [])
+    .find(c => String(c.id) === String(TEAM_ID))?.compagnie) || [];
+  for (const k of gia) if (!spuntate.includes(k) && !document.getElementById('mc-comp-' + k)) spuntate.push(k);
+  return spuntate;
 }
 
 function saveCollab() {
@@ -5063,7 +5191,7 @@ function saveCollab() {
     retention: parseNum(document.getElementById('mc-retention')?.value||0),
     gare_collab: COLLAB_GARE.map(g=>({...g,posizioni:[...(g.posizioni||[])]})),
     storico_collab: [...COLLAB_STORICO],
-    fatture: TEAM_FATTURE.map(f=>({...f,file:f.file?{...f.file}:null})),
+    fatture: TEAM_FATTURE.map(f=>({...f,file:fatturaFilePerDB(f.file)})),
     docs: {}
   };
   if (!c.nome && !c.cogn) { alert('Inserisci almeno nome e cognome.'); return; }
@@ -5349,9 +5477,24 @@ function delLead(id) {
   });
 }
 
-function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[]'); } catch(e){PIPE=[];} try { AGENDA=JSON.parse(localStorage.getItem('iam_agenda')||'[]'); } catch(e){AGENDA=[];} }
+function loadPipe() { try { PIPE=JSON.parse(localStorage.getItem('iam_pipe')||'[]'); } catch(e){PIPE=[];} }
 function savePipe() { localStorage.setItem('iam_pipe', JSON.stringify(PIPE)); }
-function saveAg()   { localStorage.setItem('iam_agenda', JSON.stringify(AGENDA)); }
+
+// ─── AGENDA: dove vivono davvero gli appuntamenti ────────────────────────────
+// L'agenda vera sta nell'archivio (tabella iam_agenda). Nel browser resta solo
+// la CODA DEGLI APPUNTAMENTI CHE NON SONO ARRIVATI ALL'ARCHIVIO: quelli salvati
+// mentre il collegamento non c'era, piu' quelli rimasti dalle versioni
+// precedenti, quando l'agenda veniva scritta soltanto qui.
+// Prima questa copia locale veniva ricaricata a ogni apertura dell'agenda e
+// copriva i dati veri: l'appuntamento sembrava salvato, poi al login successivo
+// spariva. Da qui in avanti il browser non e' piu' una copia dell'agenda.
+function agendaLocale()     { try { const l = JSON.parse(localStorage.getItem('iam_agenda')||'[]'); return Array.isArray(l) ? l : []; } catch(e){ return []; } }
+function agendaLocaleSet(l) { try { if (l && l.length) localStorage.setItem('iam_agenda', JSON.stringify(l)); else localStorage.removeItem('iam_agenda'); } catch(e) {} }
+function agendaLocaleAdd(a) { const l = agendaLocale(); if (!l.some(x => String(x.id) === String(a.id))) l.push(a); agendaLocaleSet(l); }
+function agendaLocaleDel(id){ agendaLocaleSet(agendaLocale().filter(a => String(a.id) !== String(id))); }
+// Gli appuntamenti fermi sul browser sono marcati con _locale quando vengono
+// caricati: sono quelli che l'archivio non ha mai ricevuto.
+function agendaInSospeso()  { return AGENDA.filter(a => a._locale); }
 function isPipelineAdmin() { return PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore'; }
 function isPipelineMine(t) { return !!ME && t.utente_id === ME.id; }
 function isPipelineSharedWithMe(t) { return !!ME && (t.condivisi_con || t.condivisi || []).includes(ME.id); }
@@ -5543,21 +5686,39 @@ function exportRecalling() {
 
 // ─── AGENDA ───────────────────────────────────────────────────────────────────
 function renderAgenda() {
-  loadPipe();
   const oggi = new Date().toISOString().split('T')[0];
   const fut  = AGENDA.filter(a=>a.data>=oggi).sort((a,b)=>a.data.localeCompare(b.data));
   const past = AGENDA.filter(a=>a.data<oggi).sort((a,b)=>b.data.localeCompare(a.data));
   const mkList = (arr,label) => arr.length ? `<div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;">${label}</div>`+arr.map(a=>`
     <div class="row">
       <div class="rico ${a.data===oggi?'red':'blu'}"><i class="ti ti-calendar-event"></i></div>
-      <div class="rmain"><div class="rname">${a.titolo}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${esc(a.note)}</div>`:''}</div>
+      <div class="rmain"><div class="rname">${a.titolo}${a._locale?' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--gia-bg,#fffbeb);color:var(--gia-txt,#b7791f);vertical-align:middle;">SOLO SU QUESTO PC</span>':''}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${esc(a.note)}</div>`:''}</div>
       <div class="rright" style="display:flex;flex-direction:column;gap:4px;">
         <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
         <button onclick="delAgenda('${a.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('') : '';
-  document.getElementById('ag-list').innerHTML = mkList(fut,'Prossimi') + mkList(past,'Passati') ||
-    '<div class="empty" style="padding:24px;"><i class="ti ti-calendar" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessun appuntamento.</p></div>';
+  // Se sul browser sono rimasti appuntamenti mai arrivati all'archivio, non li
+  // nascondo: li mostro e offro un pulsante per portarli dentro. Nessun comando
+  // da lanciare, nessun file da toccare.
+  const sosp   = agendaInSospeso();
+  const avviso = sosp.length ? `
+    <div style="margin:10px 14px;padding:12px 14px;border:1px solid var(--gia-txt,#b7791f);border-radius:8px;background:var(--gia-bg,#fffbeb);">
+      <div style="font-size:12px;font-weight:700;color:var(--gia-txt,#b7791f);margin-bottom:4px;">
+        ${sosp.length} appuntament${sosp.length===1?'o':'i'} salvat${sosp.length===1?'o':'i'} solo su questo computer
+      </div>
+      <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px;">
+        Non sono nell'archivio dell'agenzia: da un altro computer non si vedono e si perderebbero
+        pulendo la cronologia del browser. Portali nell'archivio adesso.
+      </div>
+      <button onclick="agendaImportaLocali()" id="ag-imp-btn"
+        style="padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Salvali nell'archivio
+      </button>
+    </div>` : '';
+
+  document.getElementById('ag-list').innerHTML = avviso + (mkList(fut,'Prossimi') + mkList(past,'Passati') ||
+    '<div class="empty" style="padding:24px;"><i class="ti ti-calendar" style="font-size:28px;opacity:.3;display:block;margin-bottom:8px;text-align:center;"></i><p>Nessun appuntamento.</p></div>');
 }
 
 function openAgendaModal() {
@@ -5568,16 +5729,63 @@ function openAgendaModal() {
   document.getElementById('modal-agenda').classList.add('show');
 }
 
-function saveAgenda() {
+async function saveAgenda() {
   const a = { id:Date.now().toString(), titolo:g('ag-titolo'), data:g('ag-data'), ora:g('ag-ora'), note:g('ag-note') };
   if (!a.titolo||!a.data) { alert('Inserisci titolo e data.'); return; }
-  loadPipe(); AGENDA.push(a); saveAg(); closeModal('modal-agenda'); renderAgenda();
-  if (confirm('Aggiungere al calendario Google?')) openGCal(a.titolo, a.data, a.ora, a.note);
+  const btn = document.getElementById('ag-salva');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+  try {
+    // Prima l'archivio, poi la schermata: cosi' quello che si vede e' quello
+    // che e' stato scritto davvero.
+    const inArchivio = await saveAgendaDB(a);
+    if (!inArchivio) { a._locale = true; agendaLocaleAdd({ id:a.id, titolo:a.titolo, data:a.data, ora:a.ora, note:a.note }); }
+    AGENDA.push(a);
+    closeModal('modal-agenda');
+    renderAgenda();
+    if (!inArchivio) alert('Appuntamento salvato solo su questo computer: l\'archivio non ha risposto. Lo trovi segnalato in cima all\'agenda, con il pulsante per riprovare.');
+    if (confirm('Aggiungere al calendario Google?')) openGCal(a.titolo, a.data, a.ora, a.note);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Salva'; }
+  }
 }
 
-function delAgenda(id) {
+async function delAgenda(id) {
   if (!confirm('Eliminare questo appuntamento?')) return;
-  loadPipe(); AGENDA=AGENDA.filter(a=>a.id!==id); saveAg(); renderAgenda();
+  const inSospeso = AGENDA.some(a => String(a.id) === String(id) && a._locale);
+  // Se e' gia' nell'archivio va tolto di li', altrimenti al prossimo accesso
+  // ricompare. Se invece non c'e' mai arrivato, basta togliere la copia locale.
+  if (db && ME && !inSospeso) {
+    try {
+      const { error } = await db.from('iam_agenda').delete().eq('id', id);
+      if (error) throw error;
+    } catch(e) {
+      alert('Appuntamento non eliminato: ' + (e.message || e));
+      return;
+    }
+  }
+  agendaLocaleDel(id);
+  AGENDA = AGENDA.filter(a => String(a.id) !== String(id));
+  renderAgenda();
+}
+
+// Porta nell'archivio gli appuntamenti rimasti sul browser. Un pulsante,
+// nessun comando: e' il ricupero di quello che le versioni precedenti avevano
+// lasciato indietro.
+async function agendaImportaLocali() {
+  const sosp = agendaInSospeso();
+  if (!sosp.length) return;
+  if (!db || !ME) { alert('Archivio non raggiungibile in questo momento. Riprova fra poco.'); return; }
+  const btn = document.getElementById('ag-imp-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+  let ok = 0, ko = 0;
+  for (const a of sosp) {
+    const scritto = await saveAgendaDB({ id:String(a.id), titolo:a.titolo, data:a.data, ora:a.ora || '09:00', note:a.note || '' });
+    if (scritto) { ok++; agendaLocaleDel(a.id); delete a._locale; } else { ko++; }
+  }
+  renderAgenda();
+  alert(ko === 0
+    ? `${ok} appuntament${ok===1?'o':'i'} salvat${ok===1?'o':'i'} nell'archivio: ora si vedono da qualunque computer.`
+    : `${ok} salvati, ${ko} non riusciti. Quelli rimasti restano segnalati in cima all'agenda: riprova fra poco.`);
 }
 
 function exportICS(titolo, data, ora, note) {
@@ -5780,12 +5988,31 @@ const PERMESSI_LABELS = {
   sospesi:'Sospesi', storico:'Storico', team:'Team', pipeline:'Pipeline', lead:'Lead', workdiary:'Diary',
   performance:'KPI / Performance', utenti:'Gestione utenti', modifica:'Può modificare'
 };
+// ─── Abilitazioni KPI: dove vivono davvero ───────────────────────────────────
+// Le spunte "questo collaboratore vede la sezione CONSAP / RE / TCM / le gare"
+// stanno nell'archivio, dentro iam_utenti.permessi, sotto la voce "kpi".
+// Prima stavano soltanto nella memoria del browser dell'amministratore che le
+// aveva messe: dal computer del collaboratore non arrivavano, e la sezione
+// restava aperta lo stesso. Le spunte disattivate non facevano niente.
+// Nota: queste spunte servono a tenere in ordine la schermata, non a proteggere
+// i dati. Chi puo' vedere una posizione altrui lo decide l'archivio (le regole
+// RLS sulle tabelle iam_kpi_*), non questo pannello.
+function permessiJson(profilo){
+  let ov = profilo?.permessi;
+  if (ov && typeof ov === 'string') { try { ov = JSON.parse(ov); } catch(e){ ov = null; } }
+  return (ov && typeof ov === 'object') ? ov : {};
+}
+function kpiFlagsDi(profilo){
+  const k = permessiJson(profilo).kpi;
+  return (k && typeof k === 'object') ? k : {};
+}
+
 // Permessi effettivi = default del ruolo + override per-utente (colonna jsonb iam_utenti.permessi)
 function permessiEffettivi(profilo){
   const base = PERMESSI[canonRuolo(profilo?.ruolo)] || PERMESSI.collaboratore;
-  let ov = profilo?.permessi;
-  if (ov && typeof ov === 'string') { try { ov = JSON.parse(ov); } catch(e){ ov = null; } }
-  return Object.assign({}, base, (ov && typeof ov === 'object') ? ov : {});
+  const ov = { ...permessiJson(profilo) };
+  delete ov.kpi; // "kpi" non e' una sezione: e' il gruppo di spunte della scheda KPI
+  return Object.assign({}, base, ov);
 }
 
 async function caricaProfilo(userId) {
@@ -5793,15 +6020,28 @@ async function caricaProfilo(userId) {
   try {
     const { data, error } = await db.from('iam_utenti').select('*').eq('id', userId).single();
     if (error || !data) {
-      // Prima volta: crea profilo admin per il primo utente
-      const { data: cnt } = await db.from('iam_utenti').select('id', { count: 'exact', head: true });
-      const ruolo = (isSuperAdmin() || cnt === 0 || cnt === null) ? 'admin' : 'collaboratore';
-      const { data: nuovo } = await db.from('iam_utenti').insert({
+      // PRIMO ACCESSO — la scheda di questa persona non esiste ancora.
+      // Chi invita non puo' crearla al posto suo: l'archivio accetta la nuova
+      // scheda solo da chi sta entrando, e solo con il ruolo piu' basso. Quindi
+      // la scheda nasce qui, al primo ingresso, come collaboratore; ruolo,
+      // accessi e permessi li assegna poi l'amministratore dal pannello Utenti
+      // (o si applicano da soli, se l'invito li aveva gia' indicati).
+      //
+      // Cosa c'era prima, e perche' andava tolto: qui si chiedeva all'archivio
+      // "quante schede ci sono gia'?" per capire se questo fosse il primissimo
+      // utente e quindi l'amministratore. La domanda era posta male — la
+      // risposta arrivava sempre vuota — e la condizione risultava vera per
+      // TUTTI. Ogni nuovo utente veniva percio' creato come amministratore.
+      // Non e' mai accaduto per davvero solo perche' l'archivio rifiuta quella
+      // scrittura; l'effetto visibile era pero' che la scheda non nasceva
+      // affatto e la persona entrava senza che i permessi venissero applicati.
+      const { data: nuovo, error: errNuovo } = await db.from('iam_utenti').insert({
         id: userId, email: ME.email,
         nome: ME.user_metadata?.full_name?.split(' ')[0] || '',
         cognome: ME.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-        ruolo: dbRuolo(ruolo)
+        ruolo: dbRuolo('collaboratore')
       }).select().single();
+      if (errNuovo || !nuovo) { console.warn('Scheda utente non creata:', errNuovo?.message || 'nessuna riga'); return null; }
       return applicaSuperAdmin(normalizzaRuolo(nuovo));
     }
     return applicaSuperAdmin(normalizzaRuolo(data));
@@ -5962,26 +6202,169 @@ async function delTrattDB(id) {
 
 // ─── CARICA AGENDA DA SUPABASE ────────────────────────────────────────────────
 async function loadAgendaDB() {
-  if (!db || !ME) return;
+  // Senza archivio si lavora con quello che c'e' sul browser, ma resta marcato
+  // come "non ancora salvato": non voglio che sembri al sicuro quando non lo e'.
+  if (!db || !ME) { AGENDA = agendaLocale().map(a => ({...a, id: String(a.id), _locale: true})); renderAgendaSePresente(); return; }
   try {
     let q = db.from('iam_agenda').select('*').order('data', { ascending: true });
     if (PROFILO?.ruolo === 'collaboratore') {
       q = q.or(`utente_id.eq.${ME.id},condivisi_con.cs.{${ME.id}}`);
     }
-    const { data } = await q;
-    if (data) AGENDA = data.map(a => ({...a, id: String(a.id)}));
+    const { data, error } = await q;
+    if (error) throw error;
+    const daArchivio = (data || []).map(a => ({...a, id: String(a.id)}));
+    const idsArchivio = new Set(daArchivio.map(a => a.id));
+    // La coda locale si svuota da sola di cio' che ormai e' nell'archivio.
+    const restano = agendaLocale().filter(a => !idsArchivio.has(String(a.id)));
+    agendaLocaleSet(restano);
+    AGENDA = daArchivio.concat(restano.map(a => ({...a, id: String(a.id), _locale: true})));
+    renderAgendaSePresente();
   } catch(e) { console.warn('Errore load agenda:', e); }
 }
 
+// L'agenda viene caricata a inizio sessione, prima che la sua scheda sia aperta:
+// ridisegno solo se la scheda c'e' gia'.
+function renderAgendaSePresente() { if (document.getElementById('ag-list')) { try { renderAgenda(); } catch(e) {} } }
+
+// Ritorna true solo se la riga e' finita davvero nell'archivio.
 async function saveAgendaDB(a) {
-  if (!db || !ME) { saveAg(); return; }
+  if (!db || !ME) return false;
   try {
-    await db.from('iam_agenda').upsert({...a, utente_id: ME.id, creato_il: new Date().toISOString()});
-  } catch(e) { console.warn('Errore save agenda:', e); saveAg(); }
+    const riga = { id: String(a.id), titolo: a.titolo, data: a.data, ora: a.ora || '09:00', note: a.note || '', utente_id: ME.id };
+    const { error } = await db.from('iam_agenda').upsert(riga, { onConflict: 'id' });
+    if (error) throw error;
+    return true;
+  } catch(e) { console.warn('Errore save agenda:', e); return false; }
 }
 
 // ─── GESTIONE UTENTI ──────────────────────────────────────────────────────────
 let UTENTI_LISTA = [];
+
+// ─── INVITI IN SOSPESO ────────────────────────────────────────────────────────
+// Quando si invita qualcuno si scelgono subito ruolo, accessi ed eventuale
+// numero RUI. La sua scheda pero' non esiste ancora: l'archivio permette di
+// crearla solo alla persona stessa, al suo primo ingresso. Quelle scelte
+// restano quindi in attesa qui, sul computer di chi ha fatto l'invito, e
+// vengono applicate appena la scheda compare.
+//
+// Perche' e' scritto cosi'. Prima le stesse informazioni finivano nella memoria
+// del browser e venivano ricancellate al primo accesso successivo, riuscita o
+// meno la scrittura: si tentava di CREARE la scheda (cosa che l'archivio non
+// consente a nessun amministratore) e l'esito non veniva mai guardato. Il ruolo
+// scelto all'invito spariva in silenzio e la persona restava collaboratore
+// senza che nessuno se ne accorgesse. Adesso si MODIFICA la scheda esistente —
+// cosa che un amministratore puo' fare — e si toglie dall'elenco solo cio' che
+// e' andato a buon fine davvero.
+function invitiInSospeso() {
+  try {
+    const v = JSON.parse(localStorage.getItem('iam_utenti_pendenti') || '[]');
+    return Array.isArray(v) ? v.filter(x => x && x.id) : [];
+  } catch(e) { return []; }
+}
+
+function scriviInviti(lista) {
+  try {
+    if (!lista || !lista.length) localStorage.removeItem('iam_utenti_pendenti');
+    else localStorage.setItem('iam_utenti_pendenti', JSON.stringify(lista));
+  } catch(e) {}
+}
+
+function aggiungiInvito(invito) {
+  const lista = invitiInSospeso().filter(x => x.id !== invito.id);
+  lista.push(invito);
+  scriviInviti(lista);
+}
+
+function scartaInvito(id) {
+  if (!confirm('Tolgo questo invito dall\'elenco. Le impostazioni gia\' applicate restano; quelle non applicate andranno messe a mano dal pannello. Procedo?')) return;
+  scriviInviti(invitiInSospeso().filter(x => x.id !== id));
+  renderUtenti();
+}
+
+// Applica quello che si riesce ad applicare. Non cancella mai un invito che non
+// e' stato messo in pratica: se la scheda non c'e' ancora, o se l'archivio
+// rifiuta, l'invito resta in elenco e si riprova al prossimo giro.
+async function applicaInvitiInSospeso() {
+  const inviti = invitiInSospeso();
+  if (!inviti.length || !db) return { applicati: 0, inSospeso: inviti.length };
+  const restano = [];
+  let applicati = 0;
+  for (const p of inviti) {
+    const campi = {
+      ruolo: p.ruolo,
+      attivo: p.attivo !== false,
+      accesso_iam: p.accesso_iam !== false,
+      accesso_quoto: p.accesso_quoto === true,
+      lab_abilitato: p.lab_abilitato === true,
+    };
+    if (p.nome)    campi.nome    = p.nome;
+    if (p.cognome) campi.cognome = p.cognome;
+    let baseOk = false;
+    try {
+      // .select() serve a sapere se la riga c'era davvero: senza, una modifica
+      // "a vuoto" su una scheda inesistente non segnala nessun errore.
+      const { data, error } = await db.from('iam_utenti').update(campi).eq('id', p.id).select('id');
+      baseOk = !error && Array.isArray(data) && data.length > 0;
+    } catch(e) { baseOk = false; }
+    if (!baseOk) { restano.push(p); continue; }
+    if (p.rui) {
+      let ruiOk = false;
+      try {
+        const { error } = await db.from('iam_utenti').update({ rui: p.rui }).eq('id', p.id);
+        ruiOk = !error;
+      } catch(e) { ruiOk = false; }
+      // Oggi questa scrittura non passa: la casella "rui" su iam_utenti non
+      // esiste ancora (c'e' su iam_team). L'invito resta segnato, con il resto
+      // gia' applicato, e si completa da solo quando la casella verra' aggiunta.
+      if (!ruiOk) { restano.push({ ...p, base_applicata: true }); continue; }
+    }
+    applicati++;
+  }
+  scriviInviti(restano);
+  return { applicati, inSospeso: restano.length };
+}
+
+function mostraInvitiInSospeso() {
+  const box = document.getElementById('utenti-inviti');
+  if (!box) return;
+  const inviti = invitiInSospeso();
+  if (!inviti.length) { box.innerHTML = ''; return; }
+  const righe = inviti.map(p => {
+    const nome = ((p.nome || '') + ' ' + (p.cognome || '')).trim() || p.email || 'utente';
+    const esiste = (UTENTI_LISTA || []).some(u => u.id === p.id);
+    const cosaManca = p.base_applicata
+      ? 'ruolo e accessi applicati; resta da registrare il numero RUI ' + esc(p.rui || '')
+      : (esiste
+          ? 'la scheda esiste: ruolo e accessi si applicano premendo il pulsante qui sotto'
+          : 'in attesa del primo ingresso della persona');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:.5px solid var(--bord2);">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;font-weight:600;">${esc(nome)}</div>
+        <div style="font-size:11px;color:var(--txt2);">${esc(p.email || '')} · ruolo previsto: ${esc(RUOLI[canonRuolo(p.ruolo)]?.label || p.ruolo || '—')}</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${cosaManca}</div>
+      </div>
+      <button onclick="scartaInvito('${p.id}')" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;flex-shrink:0;">Togli</button>
+    </div>`;
+  }).join('');
+  box.innerHTML = `<div class="card" style="padding:12px;margin-bottom:10px;border-left:3px solid var(--amb-txt);">
+    <div style="font-size:12.5px;font-weight:700;margin-bottom:4px;">Inviti da completare (${inviti.length})</div>
+    <div style="font-size:11.5px;color:var(--txt2);line-height:1.45;">
+      Ruolo e accessi scelti al momento dell'invito. La scheda della persona nasce al suo primo ingresso: da quel momento queste impostazioni si applicano da sole. Questo elenco e' segnato su questo computer.
+    </div>
+    ${righe}
+    <button onclick="applicaInvitiOra()" id="inv-app-btn" style="margin-top:10px;font-size:12px;padding:7px 14px;background:var(--acc);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;">Applica adesso quello che si puo'</button>
+  </div>`;
+}
+
+async function applicaInvitiOra() {
+  const btn = document.getElementById('inv-app-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Applico...'; }
+  const r = await applicaInvitiInSospeso();
+  await renderUtenti();
+  alert(r.applicati
+    ? `${r.applicati} invit${r.applicati === 1 ? 'o completato' : 'i completati'}.` + (r.inSospeso ? ` Ne restano ${r.inSospeso} in attesa.` : '')
+    : (r.inSospeso ? `Niente da applicare per ora: ${r.inSospeso} in attesa che la scheda della persona esista.` : 'Nessun invito in sospeso.'));
+}
 
 async function caricaUtenti() {
   if (!db) return;
@@ -5998,6 +6381,7 @@ async function caricaUtenti() {
 
 async function renderUtenti() {
   await caricaUtenti();
+  mostraInvitiInSospeso();
   const el = document.getElementById('utenti-list');
   if (!el) return;
   const perm = permessiEffettivi(PROFILO);
@@ -6143,32 +6527,41 @@ async function creaNuovoUtente() {
     const userId = data.user?.id;
     if (!userId) throw new Error('Utente non creato.');
 
-    // Pre-inserisci profilo in iam_utenti con ruolo corretto
-    // Quando l'utente conferma l'email e fa login, il profilo esiste già
+    // La scheda in iam_utenti la crea la persona stessa al primo ingresso:
+    // l'archivio non permette a un amministratore di crearla per conto d'altri.
+    // Qui ci proviamo lo stesso (se un giorno la regola cambiera', funzionera'
+    // subito) e in ogni caso mettiamo da parte le scelte fatte adesso — ruolo,
+    // accessi, numero RUI — come "invito in sospeso". Vengono applicate da sole
+    // appena la scheda esiste, e nel frattempo restano in vista nel pannello
+    // Utenti. Prima finivano nella memoria di questo browser e venivano
+    // cancellate al primo accesso successivo anche quando non erano state
+    // scritte da nessuna parte: il ruolo scelto all'invito andava perduto in
+    // silenzio e la persona entrava come semplice collaboratore senza che
+    // nessuno lo sapesse.
     const profiloNuovo = {
-      id: userId, email, nome, cognome: cogn, rui,
+      id: userId, email, nome, cognome: cogn,
       ruolo: dbRuolo(ruolo), attivo: true, creato_da: ME?.id,
       accesso_iam: true, accesso_quoto: false, lab_abilitato: false
     };
+    // Il numero RUI viaggia a parte: oggi l'archivio non ha la casella dove
+    // metterlo su questa scheda (c'e' su iam_team, non su iam_utenti). Resta
+    // segnato nell'invito e si applica da solo quando la casella ci sara'.
     const { error: e2 } = await db.from('iam_utenti').upsert(profiloNuovo, { onConflict: 'id' });
 
-    if (e2) {
-      // Se non riusciamo a inserire ora (RLS), salviamo in localStorage
-      // e lo inseriremo al primo login dell'utente
-      const pendenti = JSON.parse(localStorage.getItem('iam_utenti_pendenti')||'[]');
-      pendenti.push(profiloNuovo);
-      localStorage.setItem('iam_utenti_pendenti', JSON.stringify(pendenti));
-    }
+    if (e2 || rui) aggiungiInvito({ ...profiloNuovo, rui: rui || null, invitato_il: new Date().toISOString() });
 
     document.getElementById('nu-overlay')?.remove();
     await renderUtenti();
     alert(
-      `✓ Invito inviato a ${email}\n\n` +
+      `Invito inviato a ${email}\n\n` +
       `L'utente riceverà un'email di conferma da Supabase.\n` +
       `Dopo aver confermato potrà accedere con:\n\n` +
       ` Email: ${email}\n` +
       ` Password: ${pass}\n\n` +
-      `Comunica la password in modo sicuro (non via email).`
+      `Comunica la password in modo sicuro (non via email).\n\n` +
+      (e2
+        ? `La scheda in IAM comparirà al primo ingresso della persona: ruolo e accessi che hai scelto vengono applicati in automatico in quel momento. Fino ad allora l'invito resta indicato qui nel pannello Utenti.`
+        : `Scheda creata: ruolo e accessi sono già impostati.`)
     );
   } catch(e) {
     if(err) err.textContent = e.message?.includes('already registered')
@@ -6357,7 +6750,11 @@ async function apriPermessiUtente(userId, nome){
   document.body.insertAdjacentHTML('beforeend', html);
 }
 async function salvaPermessiUtente(userId){
-  const permessi = {};
+  // Si riscrivono solo le spunte di sezione mostrate qui: quello che c'e' gia'
+  // sotto altre voci (per esempio "kpi", le abilitazioni della scheda KPI) resta
+  // dov'e'. Prima veniva sovrascritto tutto e le altre impostazioni sparivano.
+  const u = (UTENTI_LISTA||[]).find(x=>x.id===userId);
+  const permessi = { ...permessiJson(u) };
   document.querySelectorAll('.pu-c').forEach(c=>{ permessi[c.dataset.k] = c.checked; });
   const attivo = document.getElementById('pu-attivo')?.checked !== false;
   try{
@@ -7015,6 +7412,10 @@ function openPosta(){
   if (window.innerWidth <= 760) ov.classList.add('side-closed'); // su smartphone parte richiusa
   mailLoad('inbox');
   mailFetch('/mail/accounts').then(r => { MAIL_ACCOUNTS_LIST = r.accounts || []; mailRenderCaselle(); }).catch(() => {});
+  // I gruppi si leggono subito, cosi' il menu "Gruppi..." della finestra di
+  // scrittura e' gia' pieno quando serve. Se la vista Gruppi e' aperta, si
+  // ridisegna appena l'archivio risponde.
+  mailGruppiCarica().then(() => { if (document.getElementById('mail-gruppi-vista')) mailRenderGruppi(); });
 }
 // Apre/chiude la barra laterale (a scomparsa su smartphone). open omesso = inverte.
 function mailToggleSide(open){
@@ -7041,26 +7442,137 @@ function mailFolderTabs(active){
   if (gb) { const on = active === 'gruppi'; gb.style.background = on ? 'rgba(var(--acc-rgb),.14)' : 'transparent'; gb.style.color = on ? 'var(--acc)' : 'var(--txt2)'; gb.style.fontWeight = on ? '800' : '600'; }
 }
 // ── Gruppi email (gestione dalla barra laterale) ────────────────────────────────
-function mailOpenGruppi(){ mailFolderTabs('gruppi'); mailRenderGruppi(); mailAutoCloseSide(); }
+// I gruppi di destinatari stavano SOLO nella memoria del browser di chi li
+// creava: da un altro computer il menu "Gruppi..." era vuoto, e chi puliva la
+// cronologia li perdeva senza avviso. Adesso vivono nella tabella
+// iam_mail_gruppi. Finche' quella tabella non esiste — la migrazione e' in
+// sql/DA-APPROVARE-gruppi-posta.sql e non e' ancora stata eseguita — tutto
+// continua a funzionare esattamente come prima, sulla memoria del browser:
+// nessuna funzione si ferma e non c'e' un ordine da rispettare fra il rilascio
+// del codice e l'esecuzione della migrazione.
+let MAIL_GRUPPI = null;       // null = non letti dall'archivio: si usa il browser
+let MAIL_GRUPPI_DB = false;   // true = l'archivio risponde
+
+function gruppiLocali(){
+  try { const v = JSON.parse(localStorage.getItem('iam_mail_gruppi') || '[]');
+        return Array.isArray(v) ? v.filter(g => g && g.nome) : []; }
+  catch(e){ return []; }
+}
+function gruppiLocaliSet(v){ try { localStorage.setItem('iam_mail_gruppi', JSON.stringify(v)); } catch(e){} }
+function gruppoUguale(a, b){ return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase(); }
+// Segna che il travaso dal browser all'archivio e' gia' stato fatto su questo
+// computer. Serve a non rifarlo mai piu': senza questo segno, un gruppo
+// cancellato tornerebbe su dalla copia rimasta sul browser e sembrerebbe
+// impossibile eliminarlo.
+function gruppiGiaPortati(){ try { return localStorage.getItem('iam_mail_gruppi_portati') === '1'; } catch(e){ return false; } }
+function gruppiGiaPortatiSet(){ try { localStorage.setItem('iam_mail_gruppi_portati', '1'); } catch(e){} }
+
+/** Legge i gruppi dall'archivio. Al primo giro porta su quelli gia' sul browser. */
+async function mailGruppiCarica(){
+  if (!db || !ME) { MAIL_GRUPPI = null; MAIL_GRUPPI_DB = false; return; }
+  try {
+    const { data, error } = await db.from('iam_mail_gruppi').select('id,nome,indirizzi');
+    if (error) throw error;
+    let righe = data || [];
+    // Primo accesso dopo la migrazione: quello che c'e' sul browser sale, senza
+    // che nessuno debba rifare niente. I nomi gia' presenti non si toccano.
+    // Il travaso si fa UNA volta sola per computer: dopo, la copia sul browser
+    // e' solo una comodita' per lavorare offline, non piu' l'originale, e non
+    // deve poter far ricomparire quello che e' stato cancellato.
+    if (!gruppiGiaPortati()) {
+      const presenti = new Set(righe.map(g => String(g.nome || '').trim().toLowerCase()));
+      const daPortare = gruppiLocali().filter(g => !presenti.has(String(g.nome || '').trim().toLowerCase()));
+      if (!daPortare.length) gruppiGiaPortatiSet();
+      else {
+        const { data: nuovi, error: e2 } = await db.from('iam_mail_gruppi')
+          .insert(daPortare.map(g => ({ utente_id: ME.id, nome: String(g.nome).trim(), indirizzi: g.indirizzi || '' })))
+          .select('id,nome,indirizzi');
+        if (!e2) { righe = righe.concat(nuovi || []); gruppiGiaPortatiSet(); }
+        else console.warn('Gruppi posta: non sono riuscito a portare in archivio quelli del browser.', e2.message);
+      }
+    }
+    MAIL_GRUPPI = righe.slice().sort((a, b) => String(a.nome || '').localeCompare(String(b.nome || '')));
+    MAIL_GRUPPI_DB = true;
+    gruppiLocaliSet(MAIL_GRUPPI); // da qui in poi e' una copia di comodo, non l'originale
+  } catch(e) {
+    MAIL_GRUPPI = null; MAIL_GRUPPI_DB = false;
+    console.warn('Gruppi posta: uso la memoria del browser.', e && e.message);
+  }
+}
+
+/** Crea o rinomina un gruppo. Ritorna true se e' finito davvero in archivio. */
+async function mailGruppoScrivi(oldNome, nome, indirizzi){
+  if (MAIL_GRUPPI_DB && db && ME) {
+    try {
+      const g = (MAIL_GRUPPI || []).find(x => gruppoUguale(x.nome, oldNome || nome));
+      if (g && g.id) {
+        const { error } = await db.from('iam_mail_gruppi')
+          .update({ nome, indirizzi, updated_at: new Date().toISOString() }).eq('id', g.id);
+        if (error) throw error;
+      } else {
+        const { error } = await db.from('iam_mail_gruppi').insert({ utente_id: ME.id, nome, indirizzi });
+        if (error) throw error;
+      }
+      await mailGruppiCarica();
+      return true;
+    } catch(e) { console.warn('Gruppi posta, salvataggio in archivio non riuscito:', e && e.message); }
+  }
+  const gruppi = gruppiLocali();
+  const g = gruppi.find(x => gruppoUguale(x.nome, oldNome || nome));
+  if (g) { g.nome = nome; g.indirizzi = indirizzi; } else gruppi.push({ nome, indirizzi });
+  gruppiLocaliSet(gruppi);
+  MAIL_GRUPPI = null; // l'elenco buono torna a essere quello del browser
+  return false;
+}
+
+/** Toglie un gruppo. Ritorna true se e' stato tolto dall'archivio. */
+async function mailGruppoRimuovi(nome){
+  if (MAIL_GRUPPI_DB && db) {
+    const g = (MAIL_GRUPPI || []).find(x => gruppoUguale(x.nome, nome));
+    if (g && g.id) {
+      try {
+        const { error } = await db.from('iam_mail_gruppi').delete().eq('id', g.id);
+        if (error) throw error;
+        await mailGruppiCarica();
+        return true;
+      } catch(e) { console.warn('Gruppi posta, cancellazione in archivio non riuscita:', e && e.message); }
+    }
+  }
+  gruppiLocaliSet(gruppiLocali().filter(g => !gruppoUguale(g.nome, nome)));
+  MAIL_GRUPPI = null;
+  return false;
+}
+
+async function mailOpenGruppi(){
+  mailFolderTabs('gruppi'); mailRenderGruppi(); mailAutoCloseSide();
+  if (MAIL_GRUPPI === null && !MAIL_GRUPPI_DB) {
+    await mailGruppiCarica();
+    if (document.getElementById('mail-gruppi-vista')) mailRenderGruppi();
+  }
+}
 function mailRenderGruppi(){
   const body = document.getElementById('posta-body'); if (!body) return;
   const gruppi = cmGruppi();
-  body.innerHTML = `<div style="max-width:740px;margin:0 auto;padding:18px 16px;">
+  body.innerHTML = `<div id="mail-gruppi-vista" style="max-width:740px;margin:0 auto;padding:18px 16px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <i class="ti ti-users-group" style="font-size:22px;color:var(--acc);"></i>
       <div style="font-size:18px;font-weight:800;">Gruppi email</div>
       <div style="flex:1;"></div>
       <button onclick="mailGruppoForm()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;"><i class="ti ti-plus"></i> Nuovo gruppo</button>
     </div>
+    ${MAIL_GRUPPI_DB ? '' : `<div style="display:flex;align-items:flex-start;gap:8px;border:1px solid var(--bord);border-radius:10px;padding:10px 12px;margin-bottom:14px;background:var(--surf2);font-size:12.5px;color:var(--txt2);">
+      <i class="ti ti-device-desktop" style="color:var(--txt3);margin-top:1px;"></i>
+      <div>Questi gruppi sono salvati <b>solo su questo computer</b>: da un altro dispositivo non compaiono, e si perdono pulendo la cronologia del browser. Diventeranno definitivi quando l'archivio dei gruppi sara' attivato.</div>
+    </div>`}
     ${gruppi.length ? gruppi.map(g => `<div style="border:1px solid var(--bord);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surf);">
       <div style="display:flex;align-items:center;gap:8px;">
         <i class="ti ti-users-group" style="color:var(--acc);"></i>
         <div style="font-weight:700;">${esc(g.nome)}</div>
         <div style="font-size:12px;color:var(--txt3);">${(g.indirizzi||'').split(',').filter(Boolean).length} indirizzi</div>
         <div style="flex:1;"></div>
-        <button onclick='composeMail({to:${JSON.stringify(g.indirizzi||'')}})' title="Scrivi al gruppo" style="padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;"><i class="ti ti-pencil"></i></button>
-        <button onclick='mailGruppoForm(${JSON.stringify(g.nome)})' title="Modifica" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);"><i class="ti ti-edit"></i></button>
-        <button onclick='mailGruppoDelete(${JSON.stringify(g.nome)})' title="Elimina" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--red);"><i class="ti ti-trash"></i></button>
+        <button onclick="composeMail({to:${esc(JSON.stringify(g.indirizzi||''))}})" title="Scrivi al gruppo" style="padding:7px 12px;background:var(--acc);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;"><i class="ti ti-pencil"></i></button>
+        <button onclick="mailGruppoForm(${esc(JSON.stringify(g.nome))})" title="Modifica" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);"><i class="ti ti-edit"></i></button>
+        <button onclick="mailGruppoDelete(${esc(JSON.stringify(g.nome))})" title="Elimina" style="padding:7px 10px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--red);"><i class="ti ti-trash"></i></button>
       </div>
       <div style="font-size:12px;color:var(--txt2);margin-top:8px;word-break:break-word;">${esc(g.indirizzi||'')}</div>
     </div>`).join('') : '<div style="text-align:center;color:var(--txt3);padding:40px;">Nessun gruppo ancora. Crea il primo con "Nuovo gruppo".</div>'}
@@ -7083,24 +7595,23 @@ function mailGruppoForm(nome){
   document.body.appendChild(ov);
   setTimeout(() => document.getElementById('gr-nome')?.focus(), 80);
 }
-function mailGruppoSave(oldNome){
+async function mailGruppoSave(oldNome){
   const nome = (document.getElementById('gr-nome')?.value || '').trim();
   let ind = (document.getElementById('gr-ind')?.value || '').trim();
   const err = document.getElementById('gr-err');
   if (!nome) { if (err) err.textContent = 'Inserisci un nome.'; return; }
   ind = ind.split(/[\n,;]+/).map(s => s.trim()).filter(Boolean).join(', ');
   if (!ind) { if (err) err.textContent = 'Inserisci almeno un indirizzo.'; return; }
-  const gruppi = cmGruppi();
-  const g = gruppi.find(x => x.nome === (oldNome || nome));
-  if (g) { g.nome = nome; g.indirizzi = ind; } else gruppi.push({ nome, indirizzi: ind });
-  localStorage.setItem('iam_mail_gruppi', JSON.stringify(gruppi));
+  await mailGruppoScrivi(oldNome, nome, ind);
   document.getElementById('gruppo-ov')?.remove();
   mailRenderGruppi();
+  cmGruppiAggiornaSelect();
 }
-function mailGruppoDelete(nome){
+async function mailGruppoDelete(nome){
   if (!confirm('Eliminare il gruppo "' + nome + '"?')) return;
-  localStorage.setItem('iam_mail_gruppi', JSON.stringify(cmGruppi().filter(g => g.nome !== nome)));
+  await mailGruppoRimuovi(nome);
   mailRenderGruppi();
+  cmGruppiAggiornaSelect();
 }
 function mailAvatarColor(s){
   const colors = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#0ea5e9'];
@@ -7317,20 +7828,21 @@ async function mailLoadThumb(uid, folder, index){
 }
 let MAIL_ATTACH = [];
 function cmToggle(which){ const w = document.getElementById('cm-' + which + '-wrap'); if (!w) return; w.style.display = w.style.display === 'none' ? '' : 'none'; const inp = w.querySelector('input'); if (inp && w.style.display !== 'none') inp.focus(); }
-function cmGruppi(){ try { return JSON.parse(localStorage.getItem('iam_mail_gruppi') || '[]'); } catch(e){ return []; } }
+// Sincrona di proposito: la usa il codice che disegna la finestra di scrittura.
+// Se l'archivio ha gia' risposto si legge quello, altrimenti il browser.
+function cmGruppi(){ return MAIL_GRUPPI || gruppiLocali(); }
 function cmGruppiOptions(){ return cmGruppi().map(g => `<option value="${esc(g.nome)}">${esc(g.nome)} (${(g.indirizzi||'').split(',').filter(Boolean).length})</option>`).join(''); }
-function cmInsertGruppo(nome){ if (!nome) return; const g = cmGruppi().find(x => x.nome === nome); if (!g) return; const to = document.getElementById('cm-to'); const cur = to.value.trim().replace(/,\s*$/, ''); to.value = cur ? (cur + ', ' + g.indirizzi) : g.indirizzi; }
-function cmSalvaGruppo(){
+function cmGruppiAggiornaSelect(){ const sel = document.getElementById('cm-gruppi'); if (sel) sel.innerHTML = '<option value="">Gruppi…</option>' + cmGruppiOptions(); }
+function cmInsertGruppo(nome){ if (!nome) return; const g = cmGruppi().find(x => gruppoUguale(x.nome, nome)); if (!g) return; const to = document.getElementById('cm-to'); const cur = to.value.trim().replace(/,\s*$/, ''); to.value = cur ? (cur + ', ' + g.indirizzi) : g.indirizzi; }
+async function cmSalvaGruppo(){
   const to = (document.getElementById('cm-to')?.value || '').trim();
   const cc = (document.getElementById('cm-cc')?.value || '').trim();
   const indirizzi = [to, cc].filter(Boolean).join(', ').replace(/\s+/g, ' ').trim();
   if (!indirizzi) { alert('Inserisci prima i destinatari da salvare nel gruppo.'); return; }
-  const nome = prompt('Nome del gruppo (es. Collaboratori):'); if (!nome) return;
-  const gruppi = cmGruppi(); const ex = gruppi.find(g => g.nome === nome);
-  if (ex) ex.indirizzi = indirizzi; else gruppi.push({ nome, indirizzi });
-  localStorage.setItem('iam_mail_gruppi', JSON.stringify(gruppi));
-  const sel = document.getElementById('cm-gruppi'); if (sel) sel.innerHTML = '<option value="">Gruppi…</option>' + cmGruppiOptions();
-  alert('Gruppo "' + nome + '" salvato.');
+  const nome = (prompt('Nome del gruppo (es. Collaboratori):') || '').trim(); if (!nome) return;
+  const inArchivio = await mailGruppoScrivi(nome, nome, indirizzi);
+  cmGruppiAggiornaSelect();
+  alert('Gruppo "' + nome + '" salvato.' + (inArchivio ? '' : '\n\nAttenzione: e\' salvato solo su questo computer. Da un altro dispositivo non comparira\'.'));
 }
 function cmSchedLabel(){ const b = document.getElementById('cm-send'); const v = document.getElementById('cm-sched')?.value; if (b) b.innerHTML = v ? '<i class="ti ti-clock"></i> Programma' : '<i class="ti ti-send"></i> Invia'; }
 function composeMail(prefill){
@@ -7461,25 +7973,34 @@ function loadFatturaFile(inp) {
   if (!file) return;
   const r = new FileReader();
   r.onload = e => {
-    TEAM_FATTURA_FILE = { nome:file.name, tipo:file.type || 'application/octet-stream', data:e.target.result };
+    // Si tiene anche il file vero (blob): e' quello che va caricato in archivio.
+    TEAM_FATTURA_FILE = { nome:file.name, tipo:file.type || 'application/octet-stream', data:e.target.result, blob:file };
     renderFattureCollab();
   };
   r.readAsDataURL(file);
 }
 
-function aggiungiFatturaCollab() {
+async function aggiungiFatturaCollab() {
   const desc = (document.getElementById('mc-fat-desc')?.value || '').trim();
   const importo = parseNum(document.getElementById('mc-fat-importo')?.value || 0);
   const pagata = !!document.getElementById('mc-fat-pagata')?.checked;
   if (!desc) { alert('Inserisci la descrizione della fattura.'); return; }
   if (!importo) { alert('Inserisci l importo della fattura.'); return; }
+  // L'allegato va prima in archivio: cosi' si apre da ogni computer, non solo da questo.
+  let allegato = TEAM_FATTURA_FILE ? { ...TEAM_FATTURA_FILE } : null;
+  let avviso = '';
+  if (allegato && allegato.blob) {
+    const path = await caricaAllegatoFattura(TEAM_ID, allegato);
+    if (path) allegato = { nome: allegato.nome, tipo: allegato.tipo, path };
+    else avviso = 'L\'allegato non e\' stato caricato in archivio: resta solo su questo computer e dagli altri non si vedra\'.';
+  }
   TEAM_FATTURE.push({
     id: Date.now().toString(),
     desc,
     importo,
     pagata,
     data: new Date().toLocaleDateString('it-IT'),
-    file: TEAM_FATTURA_FILE ? { ...TEAM_FATTURA_FILE } : null
+    file: fatturaFileSalvabile(allegato)
   });
   ['mc-fat-desc','mc-fat-importo'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   const chk = document.getElementById('mc-fat-pagata'); if (chk) chk.checked = false;
@@ -7488,6 +8009,7 @@ function aggiungiFatturaCollab() {
   persistFattureCollaboratore();
   renderFattureCollab();
   if (APP.loaded) buildDashboard();
+  if (avviso) alert(avviso);
 }
 
 function toggleFatturaPagata(id, checked) {
@@ -7507,18 +8029,20 @@ function eliminaFatturaCollab(id) {
 
 function persistFattureCollaboratore() {
   if (!TEAM_ID) return;
-  const fatture = TEAM_FATTURE.map(f => ({...f, file:f.file?{...f.file}:null}));
+  const fatture = TEAM_FATTURE.map(f => ({...f, file: fatturaFileSalvabile(f.file)}));
   const store = loadFattureStore();
   store[String(TEAM_ID)] = fatture;
   saveFattureStore(store);
   loadTeam();
   const idx = TEAM.findIndex(c => String(c.id) === String(TEAM_ID));
-  if (idx < 0) return;
-  TEAM[idx].fatture = fatture;
-  saveTeam();
-  // Sincronizza le note/dati delle fatture sul database (il file allegato resta locale)
+  // Se la copia locale dell'elenco collaboratori non c'e' ancora (primo accesso
+  // da questo computer) si aggiorna solo l'archivio: prima si usciva qui, e la
+  // fattura non veniva mai scritta sul database.
+  if (idx >= 0) { TEAM[idx].fatture = fatture; saveTeam(); }
+  // Sincronizza le fatture sul database. Del file va salvato il percorso in
+  // archivio (file.path): e' quello che permette di aprirlo dagli altri computer.
   if (db) {
-    const dbFatture = fatture.map(f => ({...f, file: f.file ? { nome:f.file.nome, tipo:f.file.tipo } : null}));
+    const dbFatture = fatture.map(f => ({...f, file: fatturaFilePerDB(f.file)}));
     db.from('iam_team').update({ fatture: dbFatture, aggiornato_il: new Date().toISOString() }).eq('id', TEAM_ID)
       .then(({ error }) => { if (error) console.warn('persistFattureCollaboratore DB:', error.message); });
   }
@@ -7539,7 +8063,7 @@ function renderFattureCollab() {
           <span style="display:block;font-size:11px;color:var(--txt3);">${f.data||''} · €${fmt(parseNum(f.importo))} · ${pagata?'Pagata':'Da pagare'}</span>
         </span>
       </label>
-      ${f.file?.data?`<button onclick="viewFatturaTemp(${idx})" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
+      ${(f.file?.data||f.file?.path)?`<button onclick="viewFatturaTemp(${idx})" style="font-size:11px;padding:4px 8px;background:var(--surf);color:var(--txt2);border:.5px solid var(--bord2);border-radius:5px;cursor:pointer;">Apri</button>`:''}
       <button onclick="eliminaFatturaCollab('${f.id}')" style="font-size:11px;padding:4px 8px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:5px;cursor:pointer;">Elimina</button>
     </div>`;
   }).join('') : '<div style="font-size:12px;color:var(--txt3);padding:8px 0;">Nessuna fattura inserita.</div>');
@@ -7547,18 +8071,14 @@ function renderFattureCollab() {
 
 function viewFatturaTemp(idx) {
   const f = TEAM_FATTURE[idx];
-  if (!f?.file?.data) { alert('Allegato non disponibile.'); return; }
-  const w = window.open('', '_blank');
-  w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><iframe src="${f.file.data}" style="width:100%;height:100vh;border:0;background:#fff;"></iframe></body>`);
+  return apriAllegatoFattura(f?.file);
 }
 
 function viewFatturaCollab(collabId, fatturaId) {
   loadTeam();
   const c = TEAM.find(x => String(x.id) === String(collabId));
   const f = (c?.fatture || []).find(x => String(x.id) === String(fatturaId));
-  if (!f?.file?.data) { alert('Allegato non disponibile.'); return; }
-  const w = window.open('', '_blank');
-  w?.document.write(`<body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><iframe src="${f.file.data}" style="width:100%;height:100vh;border:0;background:#fff;"></iframe></body>`);
+  return apriAllegatoFattura(f?.file);
 }
 
 function aggiungiProvv() {
@@ -8737,12 +9257,72 @@ function aggiungiSezioneAz() {
 }
 
 
-let PERF = { gare_re_pezzi:[], gare_rca:[], gare_finanziati:[], gare_cross:[], gare_rinnovi:[], cs:[], re:[] };
 let PERF_CUR = localStorage.getItem('iam_perf_tab') || 'gare';
 let GARA_CUR = localStorage.getItem('iam_gara_tab') || 're_pezzi';
 
-function loadPerf() { try { PERF = JSON.parse(localStorage.getItem('iam_perf')||'{"gare_re_pezzi":[],"gare_rca":[],"gare_finanziati":[],"gare_cross":[],"gare_rinnovi":[],"cs":[],"re":[]}'); } catch(e){ PERF={gare_re_pezzi:[],gare_rca:[],gare_finanziati:[],gare_cross:[],gare_rinnovi:[],cs:[],re:[]}; } }
-function savePerf() { localStorage.setItem('iam_perf', JSON.stringify(PERF)); }
+// ─── KPI: residui di una vecchia versione ────────────────────────────────────
+// Le posizioni CONSAP, RE e Gare oggi stanno nell'archivio (iam_kpi_*). Esisteva
+// pero' un modulo piu' vecchio che le scriveva nella memoria del browser, sotto
+// la voce "iam_perf". Quel modulo non e' piu' raggiungibile da nessun pulsante
+// ed e' stato tolto, ma su un computer che l'aveva usato quei dati sono ancora
+// li' e nessuno li vede piu'. Qui non li importo da solo: sono numeri che
+// pesano sui premi di produzione e sul bonus crescita, e una conversione fatta a
+// occhio da campi che non combaciano falserebbe i conti. Li mostro, e chi di
+// dovere decide se ricopiarli.
+function kpiResiduiLocali() {
+  try {
+    const p = JSON.parse(localStorage.getItem('iam_perf') || 'null');
+    if (!p || typeof p !== 'object') return [];
+    const etichette = { cs:'CONSAP', re:'RE', gare_re_pezzi:'Gare · RE pezzi', gare_rca:'Gare · RCA', gare_finanziati:'Gare · Finanziati', gare_cross:'Gare · Cross', gare_rinnovi:'Gare · Rinnovi' };
+    const out = [];
+    for (const [k, v] of Object.entries(p)) {
+      if (!Array.isArray(v) || !v.length) continue;
+      for (const r of v) out.push({ sezione: etichette[k] || k, ...r });
+    }
+    return out;
+  } catch(e) { return []; }
+}
+
+function mostraResiduiKPI() {
+  const box = document.getElementById('perf-residui');
+  if (!box) return;
+  const r = kpiResiduiLocali();
+  if (!r.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div style="margin:10px 0;padding:12px 14px;border:1px solid var(--gia-txt,#b7791f);border-radius:8px;background:var(--gia-bg,#fffbeb);">
+      <div style="font-size:12px;font-weight:700;color:var(--gia-txt,#b7791f);margin-bottom:4px;">
+        ${r.length} posizion${r.length===1?'e':'i'} rimast${r.length===1?'a':'e'} su questo computer da una versione precedente
+      </div>
+      <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px;">
+        Non sono nei conteggi qui sopra, perche' non sono mai arrivate all'archivio. Non le sposto da solo:
+        incidono su premi di produzione e bonus, e i campi di allora non corrispondono uno a uno a quelli di oggi.
+        Ricopiale a mano dove servono, poi archivia l'avviso.
+      </div>
+      <div style="max-height:180px;overflow:auto;border:1px solid var(--bord);border-radius:6px;background:var(--surf);margin-bottom:8px;">
+        ${r.map(x => `<div style="display:flex;gap:10px;padding:6px 10px;border-bottom:.5px solid var(--bord);font-size:11px;">
+            <span style="font-weight:700;min-width:110px;color:var(--txt2);">${esc(x.sezione)}</span>
+            <span style="flex:1;">${esc(x.nome || '—')}</span>
+            <span style="color:var(--txt3);">${esc(x.data || '')}</span>
+            <span style="font-weight:600;">${x.importo ? esc(x.importo) + ' €' : ''}</span>
+          </div>`).join('')}
+      </div>
+      <button onclick="archiviaResiduiKPI()"
+        style="padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Ho ricopiato tutto, archivia l'avviso
+      </button>
+    </div>`;
+}
+
+// Non cancella niente: sposta i residui sotto un'altra voce, cosi' l'avviso
+// smette di comparire ma il dato resta recuperabile.
+function archiviaResiduiKPI() {
+  if (!confirm("L'avviso sparira'. Le posizioni non vengono cancellate, restano da parte. Procedo?")) return;
+  try {
+    const p = localStorage.getItem('iam_perf');
+    if (p) { localStorage.setItem('iam_perf_archiviato_' + new Date().toISOString().slice(0,10), p); localStorage.removeItem('iam_perf'); }
+  } catch(e) {}
+  mostraResiduiKPI();
+}
 
 function selPerfTab(t) {
   ['gare','consap','re','tcm'].forEach(x => {
@@ -8754,9 +9334,8 @@ function selPerfTab(t) {
 
   // Controllo permessi per operativi
   if (PROFILO?.ruolo === 'collaboratore') {
-    const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-    const mieFlags = flags[ME?.id] || {};
-    const LOCKED_MSG = '<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;"><i class="ti ti-lock" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>Sezione non abilitata.<br>Contatta il tuo responsabile.</div>';
+    const mieFlags = kpiFlagsDi(PROFILO);
+    const LOCKED_MSG ='<div style="padding:40px;text-align:center;color:var(--txt3);font-size:13px;"><i class="ti ti-lock" style="font-size:32px;display:block;margin-bottom:12px;opacity:.3;"></i>Sezione non abilitata.<br>Contatta il tuo responsabile.</div>';
 
     if (t === 'tcm'    && mieFlags['kpi_tcm']    === false) { document.getElementById('pp-tcm').innerHTML    = LOCKED_MSG; return; }
     if (t === 're'     && mieFlags['kpi_re']     === false) { document.getElementById('pp-re').innerHTML     = LOCKED_MSG; return; }
@@ -8784,8 +9363,7 @@ function selGaraTab(g) {
 
   // Controllo permessi gare per operativi
   if (PROFILO?.ruolo === 'collaboratore') {
-    const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-    const mieFlags = flags[ME?.id] || {};
+    const mieFlags = kpiFlagsDi(PROFILO);
     const flagKey = { re_pezzi:'gara_re_pezzi', rca:'gara_rca', finanziati:'gara_finanziati', cross:'gara_cross', rinnovi:'gara_rinnovi' }[g];
     if (flagKey && mieFlags[flagKey] === false) {
       const el = document.getElementById('gp-'+g);
@@ -8870,7 +9448,7 @@ function renderGara(tipo) {
     const vedeAutore = isSuperAdmin() || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
     const autoreTag = p => (vedeAutore && p.utente_nome) ? ` · <span style="color:var(--acc);font-weight:600;">${esc(p.utente_nome)}</span>` : '';
     const kpiKey = tipo === 'rinnovi' ? 'gara_rinnovi' : tipo === 're_pezzi' ? 'gara_re_pezzi' : tipo === 'rca' ? 'gara_rca' : tipo === 'finanziati' ? 'gara_finanziati' : 'gara_cross';
-    const kpiAbil = PROFILO?.kpi_flags?.[kpiKey] !== false; // default true se non configurato
+    const kpiAbil = kpiFlagsDi(PROFILO)[kpiKey] !== false; // default true se non configurato
     if (!kpiAbil && PROFILO?.ruolo === 'collaboratore') {
       ['re_pezzi','rca','finanziati','cross','rinnovi'].forEach(t => {
         const gp = document.getElementById('gp-'+t); if(gp) gp.innerHTML = '<div style="padding:24px;text-align:center;color:var(--txt3);font-size:13px;">Sezione non abilitata.</div>';
@@ -9138,9 +9716,9 @@ async function renderKpiCtrl() {
   const el = document.getElementById('kpi-ctrl-list');
   if (!el) return;
   await caricaUtenti();
-  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
+  mostraSpunteKpiRimaste();
   el.innerHTML = UTENTI_LISTA.map(u => {
-    const uFlags = flags[u.id] || {};
+    const uFlags = kpiFlagsDi(u);
     return `<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:.5px solid var(--bord);">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px;">${u.nome||''} ${u.cognome||''} <span style="font-size:10px;color:var(--txt3);">${u.email}</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
@@ -9154,17 +9732,92 @@ async function renderKpiCtrl() {
   }).join('') || '<div style="color:var(--txt3);font-size:13px;">Nessun utente.</div>';
 }
 
+// La spunta va nell'archivio, dentro iam_utenti.permessi -> kpi. Prima finiva
+// solo nella memoria di questo computer (e, nell'archivio, su colonne che non
+// esistono: l'errore veniva ingoiato). Risultato: la spunta sembrava messa e
+// non aveva effetto su nessun altro computer.
 async function toggleKpiFlag(userId, flag, val) {
-  const flags = JSON.parse(localStorage.getItem('iam_kpi_flags')||'{}');
-  if(!flags[userId]) flags[userId]={};
-  flags[userId][flag] = val;
-  localStorage.setItem('iam_kpi_flags', JSON.stringify(flags));
+  if (!db) { alert('Archivio non raggiungibile: la spunta non e\' stata salvata.'); return; }
+  const u = (UTENTI_LISTA || []).find(x => x.id === userId);
+  const permessi = { ...permessiJson(u) };
+  permessi.kpi = { ...(permessi.kpi && typeof permessi.kpi === 'object' ? permessi.kpi : {}), [flag]: val };
   try {
-    if (db) {
-      const col = flag; const update = {}; update[col] = val;
-      await db.from('iam_utenti').update(update).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update({ permessi }).eq('id', userId);
+    if (error) throw error;
+    if (u) u.permessi = permessi;                       // tiene allineata la lista in pagina
+    if (PROFILO && PROFILO.id === userId) PROFILO.permessi = permessi;
+  } catch(e) {
+    alert('Spunta non salvata: ' + (e.message || e));
+    renderKpiCtrl();                                    // rimette la spunta com'era davvero
+  }
+}
+
+// ─── Spunte KPI rimaste sul vecchio computer ─────────────────────────────────
+// Chi aveva usato il pannello prima di questa correzione ha le spunte solo nel
+// proprio browser. Non le sposto da solo: sono decisioni su chi vede cosa.
+// Le mostro e le porto nell'archivio con un pulsante.
+function spunteKpiRimaste() {
+  try {
+    const f = JSON.parse(localStorage.getItem('iam_kpi_flags') || 'null');
+    if (!f || typeof f !== 'object') return [];
+    return Object.entries(f)
+      .map(([uid, flags]) => {
+        const spente = Object.entries(flags || {}).filter(([, v]) => v === false).map(([k]) => k);
+        const u = (UTENTI_LISTA || []).find(x => x.id === uid);
+        return { uid, flags: flags || {}, spente, nome: u ? ((u.nome || '') + ' ' + (u.cognome || '')).trim() || u.email : null };
+      })
+      .filter(x => x.spente.length);
+  } catch(e) { return []; }
+}
+
+function mostraSpunteKpiRimaste() {
+  const box = document.getElementById('kpi-ctrl-residui');
+  if (!box) return;
+  const r = spunteKpiRimaste();
+  if (!r.length) { box.innerHTML = ''; return; }
+  box.innerHTML = `
+    <div style="margin:0 0 14px;padding:12px 14px;border:1px solid var(--gia-txt,#b7791f);border-radius:8px;background:var(--gia-bg,#fffbeb);">
+      <div style="font-size:12px;font-weight:700;color:var(--gia-txt,#b7791f);margin-bottom:4px;">
+        Impostazioni rimaste solo su questo computer
+      </div>
+      <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px;">
+        Queste sezioni erano state disattivate qui, ma non sono mai arrivate all'archivio: sul computer
+        del collaboratore risultano ancora aperte. Portale nell'archivio per renderle valide ovunque.
+      </div>
+      <div style="font-size:11px;margin-bottom:8px;">
+        ${r.map(x => `<div style="padding:3px 0;"><b>${esc(x.nome || 'utente non piu\' in elenco')}</b> — sezioni disattivate: ${esc(x.spente.join(', '))}</div>`).join('')}
+      </div>
+      <button onclick="importaSpunteKpi()" id="kpi-imp-btn"
+        style="padding:6px 14px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Portale nell'archivio
+      </button>
+    </div>`;
+}
+
+async function importaSpunteKpi() {
+  const r = spunteKpiRimaste().filter(x => x.nome); // solo utenti ancora in elenco
+  if (!r.length) { alert('Nessuna impostazione da portare: gli utenti indicati non sono piu\' in elenco.'); return; }
+  const btn = document.getElementById('kpi-imp-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
+  let ok = 0, ko = 0;
+  for (const x of r) {
+    for (const flag of x.spente) {
+      const prima = (UTENTI_LISTA || []).find(u => u.id === x.uid);
+      const permessi = { ...permessiJson(prima) };
+      permessi.kpi = { ...(permessi.kpi && typeof permessi.kpi === 'object' ? permessi.kpi : {}), [flag]: false };
+      try {
+        const { error } = await db.from('iam_utenti').update({ permessi }).eq('id', x.uid);
+        if (error) throw error;
+        if (prima) prima.permessi = permessi;
+        ok++;
+      } catch(e) { ko++; }
     }
-  } catch(e) { console.warn('toggleKpiFlag DB:', e); }
+  }
+  if (ko === 0) { try { localStorage.removeItem('iam_kpi_flags'); } catch(e) {} }
+  await renderKpiCtrl();
+  alert(ko === 0
+    ? `${ok} impostazioni portate nell'archivio: ora valgono da qualunque computer.`
+    : `${ok} portate, ${ko} non riuscite. Quelle non riuscite restano qui: riprova fra poco.`);
 }
 
 // ─── CONSAP (Supabase) ────────────────────────────────────────────────────────
@@ -9414,6 +10067,8 @@ async function delCSPos(id) {
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
+// Vecchio nome tenuto per sicurezza: se da qualche parte resta un richiamo a
+// openCSPos, finisce sul modulo giusto — quello che salva nell'archivio.
 function openCSPos() { openCSPosModal(); }
 
 // ─── RE — Rami Elementari (Supabase) ─────────────────────────────────────────
@@ -9873,48 +10528,13 @@ async function delREPos(id) {
   } catch(e) { alert('Errore: '+(e.message||e)); }
 }
 
-function openHDIPos() { /* HDI rimosso — rimpiazzato da Gare Interne */ }
-function openCSPos()  { openPosModal('cs', 'Aggiornamento CONSAP', false, true); }
-function openREPos()  { openREPosModal(); }
-
-function openPosModal(tipo, titolo, showFrz, showTipoCS) {
-  PERF_CUR = tipo;
-  document.getElementById('pos-title').textContent = titolo;
-  ['pos-nome','pos-importo','pos-note'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('pos-data').value = new Date().toISOString().split('T')[0];
-  document.getElementById('pos-frz-wrap').style.display  = showFrz ?'block':'none';
-  document.getElementById('pos-tipo-wrap').style.display = showTipoCS?'block':'none';
-  loadTeam();
-  const sel = document.getElementById('pos-prod');
-  if(sel) sel.innerHTML = '<option value="">— nessuno —</option>'+TEAM.map(c=>`<option value="${esc(c.nome)} ${esc(c.cogn)}">${esc(c.nome)} ${esc(c.cogn)}</option>`).join('');
-  document.getElementById('modal-pos').classList.add('show');
-}
-
-function savePos() {
-  const gv = id => (document.getElementById(id)?.value||'').trim();
-  const p = {
-    nome:   gv('pos-nome'), data: gv('pos-data'), importo: gv('pos-importo'),
-    prod:   gv('pos-prod'), note: gv('pos-note'),
-    frz:    gv('pos-frz')  || '1',
-    tipoCS: gv('pos-tipo-cs') || '',
-  };
-  if (!p.nome) { alert('Inserisci il nominativo.'); return; }
-  loadPerf();
-  if (!PERF[PERF_CUR]) PERF[PERF_CUR] = [];
-  PERF[PERF_CUR].push(p);
-  savePerf(); closeModal('modal-pos');
-  if(PERF_CUR==='cs')     renderCONSAP();
-  if(PERF_CUR==='re')     renderRE();
-}
-
-function delPos(tipo, idx) {
-  if (!confirm('Eliminare questa posizione?')) return;
-  loadPerf();
-  if(PERF[tipo]) PERF[tipo].splice(idx,1);
-  savePerf();
-  if(tipo==='cs')   renderCONSAP();
-  if(tipo==='re')   renderRE();
-}
+// Qui stavano openHDIPos / openCSPos / openREPos / openPosModal / savePos /
+// delPos: il vecchio modulo "posizione" che scriveva nella memoria del browser.
+// Nessun pulsante lo apriva piu' — le sezioni CONSAP e RE chiamano da tempo
+// openCSPosModal() e openREPosModal(), che scrivono nell'archivio. Restava li'
+// come doppione silenzioso, pronto a essere ricollegato per sbaglio e a far
+// sparire di nuovo i dati. Tolto. Cio' che qualcuno vi aveva scritto in passato
+// non e' perduto: viene segnalato in cima alla scheda KPI (mostraResiduiKPI).
 
 // ─── TICKET ───────────────────────────────────────────────────────────────────
 let TK_LIST   = [];
@@ -10741,17 +11361,17 @@ function setTheme(mode) {
   document.body.classList.add('theme-'+mode);
   localStorage.setItem('iam-theme', mode);
   updateThemeButtons();
-  saveThemeToDB(mode, localStorage.getItem('iam-accent')||'orange');
+  saveThemeToDB(mode, localStorage.getItem('iam-accent')||'green');
 }
 function setAccent(color) {
   document.body.className = document.body.className.replace(/accent-\S+/g,'').trim();
   document.body.classList.add('accent-'+color);
   localStorage.setItem('iam-accent', color);
   updateAccentButtons();
-  saveThemeToDB(localStorage.getItem('iam-theme')||'dark', color);
+  saveThemeToDB(localStorage.getItem('iam-theme')||'light', color);
 }
 function updateThemeButtons() {
-  const cur = localStorage.getItem('iam-theme')||'dark';
+  const cur = localStorage.getItem('iam-theme')||'light';
   ['dark','light'].forEach(m => {
     const btn = document.getElementById('theme-btn-'+m);
     if (btn) { btn.style.background = cur===m ? 'var(--acc)' : 'var(--surf3)'; btn.style.color = cur===m ? '#fff' : 'var(--txt2)'; btn.style.borderColor = cur===m ? 'var(--acc)' : 'var(--bord2)'; }
@@ -10765,8 +11385,10 @@ function updateAccentButtons() {
   });
 }
 async function applyStoredTheme() {
-  const theme  = localStorage.getItem('iam-theme')  || 'dark';
-  const accent = localStorage.getItem('iam-accent') || 'orange';
+  // WITH US ONE: chi non ha mai scelto parte con il tema chiaro e il verde With Us.
+  // Resta cambiabile in un clic dal menu utente (Aspetto).
+  const theme  = localStorage.getItem('iam-theme')  || 'light';
+  const accent = localStorage.getItem('iam-accent') || 'green';
   document.body.classList.add('theme-'+theme);
   document.body.classList.add('accent-'+accent);
 }
@@ -10791,7 +11413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyStoredTheme();
   document.getElementById('i-data').value = new Date().toISOString().split('T')[0];
   initDB();
-  loadTeam(); loadPipe(); loadWD(); loadPerf(); loadAzienda();
+  loadTeam(); loadPipe(); loadWD(); loadAzienda();
   loadContoCache();
   loadContoDB(); // carica estratto + note condivise dal database
   ['hdi','pluri'].forEach(t => {
@@ -10858,5 +11480,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
+<script src="withus-one.js?v=2"></script>
+  <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

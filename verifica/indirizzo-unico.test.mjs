@@ -82,12 +82,12 @@ prova('le intestazioni di sicurezza non sono state toccate', () => {
   return chiavi.join(', ');
 });
 
-prova('il ponte verso il preventivatore usa il dominio unico', () => {
+prova('il ponte verso il preventivatore usa l indirizzo di QUOTO', () => {
   const one = leggi('withus-one.js');
   const idx = leggi('index.html');
-  deve(/var QUOTO = '\/nuovo-preventivo\/';/.test(one), 'withus-one.js punta ancora fuori dominio');
-  deve(/const QUOTO_URL = '\/nuovo-preventivo\/';/.test(idx), 'index.html punta ancora fuori dominio');
-  return 'entrambi su /nuovo-preventivo/';
+  deve(/var QUOTO = 'https:\/\/quoto\.withusassicurazioni\.it\/';/.test(one), 'withus-one.js: ponte non punta a QUOTO');
+  deve(/const QUOTO_URL = 'https:\/\/quoto\.withusassicurazioni\.it\/';/.test(idx), 'index.html: ponte non punta a QUOTO');
+  return 'entrambi su quoto.withusassicurazioni.it';
 });
 
 console.log('INDIRIZZO UNICO');

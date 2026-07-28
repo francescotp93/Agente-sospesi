@@ -22,7 +22,7 @@
   /* Il preventivatore vive sotto lo stesso indirizzo di IAM: la riscrittura
      in vercel.json manda /nuovo-preventivo/ al server delle quotazioni.
      Stessa origine significa sessione condivisa e pagina ospitabile. */
-  var QUOTO = '/nuovo-preventivo/';
+  var QUOTO = 'https://quoto.withusassicurazioni.it/';
 
   var ANIA = 'https://amlogin.allianz.it/nidp/idff/sso?id=6&sid=8&option=credential&sid=8&target=https%3A%2F%2Fportaleagenzie.allianz.it%2FAuto%2FInquiryAnia%2FRicerca.aspx';
   var ASSIEASY = 'https://withus.assieasy.com/assieasy/';

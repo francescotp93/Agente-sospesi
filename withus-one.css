@@ -1,0 +1,209 @@
+/* ═══════════════════════════════════════════════════════════════════
+   WITH US ONE — Shell unificata (stile Plurima)
+   Scaglione 1: barra superiore + menu laterale ad accordion.
+   Non tocca nessun pannello esistente: si limita a sostituire la
+   navigazione. Rimuovendo questo file e il suo script, IAM torna
+   esattamente com'era.
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root{
+  --w1-side: 246px;
+  --w1-top: 56px;
+  --w1-verde: #02984e;
+  --w1-verde2: #01c061;
+  --w1-verde-scuro: #016b38;
+  --w1-scuro: #1b2733;
+  --w1-scuro2: #243342;
+  --w1-scuro3: #2f4055;
+  --w1-r: 4px;
+}
+
+/* Il verde della tavolozza diventa il verde With Us: chi sceglie "Verde"
+   dal menu Aspetto ottiene l'identità dell'agenzia, non un verde generico. */
+body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
+
+/* ── Barra superiore ───────────────────────────────────────────── */
+#app.w1 > .hdr { display:none; }
+
+.w1-top{
+  flex:0 0 auto; height:var(--w1-top);
+  background:var(--w1-scuro);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex; align-items:center; gap:14px;
+  padding:0 16px 0 0;
+  position:relative; z-index:220;
+}
+.w1-brand{
+  width:var(--w1-side); height:100%;
+  display:flex; align-items:center; gap:10px;
+  padding-left:18px; flex:0 0 auto;
+  border-right:1px solid rgba(255,255,255,.07);
+  box-sizing:border-box;
+}
+.w1-brand img{ height:26px; width:auto; display:block; }
+.w1-brand-txt{
+  font-size:11px; font-weight:700; letter-spacing:2.4px;
+  color:rgba(255,255,255,.5); text-transform:uppercase; line-height:1;
+}
+.w1-burger{
+  display:none; background:none; border:none; color:#fff;
+  font-size:20px; cursor:pointer; padding:6px; border-radius:var(--w1-r);
+}
+.w1-burger:hover{ background:rgba(255,255,255,.08); }
+
+.w1-search{
+  flex:1 1 auto; max-width:420px; position:relative;
+}
+.w1-search i{
+  position:absolute; left:10px; top:50%; transform:translateY(-50%);
+  font-size:15px; color:rgba(255,255,255,.35); pointer-events:none;
+}
+.w1-search input{
+  width:100%; height:32px; box-sizing:border-box;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:var(--w1-r);
+  color:#fff; font-family:inherit; font-size:12.5px;
+  padding:0 10px 0 30px; outline:none;
+  transition:border-color .15s, background .15s;
+}
+.w1-search input::placeholder{ color:rgba(255,255,255,.35); }
+.w1-search input:focus{
+  background:rgba(255,255,255,.11);
+  border-color:var(--w1-verde2);
+}
+
+.w1-top-right{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+
+.w1-cta{
+  height:32px; padding:0 14px; border:none; border-radius:var(--w1-r);
+  background:var(--w1-verde); color:#fff; cursor:pointer;
+  font-family:inherit; font-size:12px; font-weight:700; letter-spacing:.2px;
+  display:flex; align-items:center; gap:7px; white-space:nowrap;
+  transition:background .15s;
+}
+.w1-cta:hover{ background:var(--w1-verde-scuro); }
+.w1-cta i{ font-size:15px; }
+
+.w1-ico{
+  background:none; border:none; color:rgba(255,255,255,.6);
+  cursor:pointer; padding:6px; display:flex; align-items:center;
+  border-radius:var(--w1-r); position:relative; transition:background .15s,color .15s;
+}
+.w1-ico:hover{ background:rgba(255,255,255,.08); color:#fff; }
+.w1-ico i{ font-size:18px; }
+.w1-ico .w1-dot{
+  position:absolute; top:3px; right:3px;
+  min-width:15px; height:15px; padding:0 4px; box-sizing:border-box;
+  border-radius:8px; background:#e03131; color:#fff;
+  font-size:9px; font-weight:700; line-height:15px; text-align:center;
+}
+.w1-pill{
+  font-size:10.5px; font-weight:700; letter-spacing:.3px;
+  padding:4px 9px; border-radius:var(--w1-r);
+  background:rgba(255,255,255,.08); color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.1); white-space:nowrap;
+}
+.w1-pill.ok{ background:rgba(2,152,78,.2); color:#4ade80; border-color:rgba(2,152,78,.45); }
+.w1-pill.warn{ background:rgba(201,42,42,.2); color:#ff8787; border-color:rgba(201,42,42,.45); }
+
+/* ── Menu laterale ─────────────────────────────────────────────── */
+#app.w1 > .nav { display:none; }
+
+.w1-side{
+  position:fixed; top:var(--w1-top); left:0; bottom:0;
+  width:var(--w1-side); box-sizing:border-box;
+  background:var(--w1-scuro2);
+  border-right:1px solid rgba(255,255,255,.06);
+  overflow-y:auto; overflow-x:hidden;
+  z-index:210; padding:8px 0 24px;
+  scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.15) transparent;
+}
+.w1-side::-webkit-scrollbar{ width:6px; }
+.w1-side::-webkit-scrollbar-thumb{ background:rgba(255,255,255,.15); border-radius:3px; }
+
+.w1-cap{
+  font-size:9.5px; font-weight:700; letter-spacing:1.6px;
+  color:rgba(255,255,255,.28); text-transform:uppercase;
+  padding:14px 18px 6px;
+}
+
+.w1-grp{ border-bottom:1px solid rgba(255,255,255,.04); }
+
+.w1-item{
+  width:100%; box-sizing:border-box; background:none; border:none;
+  display:flex; align-items:center; gap:11px;
+  padding:9px 14px 9px 18px; cursor:pointer;
+  font-family:inherit; font-size:12.5px; font-weight:600;
+  color:rgba(255,255,255,.72); text-align:left;
+  position:relative; transition:background .13s, color .13s;
+  border-left:3px solid transparent;
+}
+.w1-item:hover{ background:rgba(255,255,255,.05); color:#fff; }
+.w1-item i.w1-i{ font-size:17px; width:18px; flex:0 0 auto; text-align:center; opacity:.85; }
+.w1-item .w1-lbl{ flex:1 1 auto; }
+.w1-item .w1-chev{ font-size:13px; opacity:.4; transition:transform .18s; }
+.w1-item.open .w1-chev{ transform:rotate(90deg); }
+.w1-item.act{
+  background:rgba(2,152,78,.16); color:#fff;
+  border-left-color:var(--w1-verde2);
+}
+.w1-item.act i.w1-i{ opacity:1; color:var(--w1-verde2); }
+.w1-item .w1-badge{
+  min-width:18px; height:18px; padding:0 5px; box-sizing:border-box;
+  border-radius:9px; background:#e03131; color:#fff;
+  font-size:9.5px; font-weight:700; line-height:18px; text-align:center;
+}
+.w1-item .w1-tag{
+  font-size:8.5px; font-weight:700; letter-spacing:.6px;
+  padding:2px 5px; border-radius:3px; text-transform:uppercase;
+  background:rgba(255,255,255,.1); color:rgba(255,255,255,.5);
+}
+
+.w1-sub{ display:none; padding:2px 0 6px; background:rgba(0,0,0,.16); }
+.w1-sub.open{ display:block; }
+.w1-sub button{
+  width:100%; box-sizing:border-box; background:none; border:none;
+  display:flex; align-items:center; gap:9px;
+  padding:7px 14px 7px 50px; cursor:pointer;
+  font-family:inherit; font-size:12px; font-weight:500;
+  color:rgba(255,255,255,.55); text-align:left;
+  transition:background .13s, color .13s;
+}
+.w1-sub button:hover{ background:rgba(255,255,255,.05); color:#fff; }
+.w1-sub button.act{ color:var(--w1-verde2); font-weight:700; }
+.w1-sub button .w1-tag{
+  margin-left:auto; flex:0 0 auto; white-space:nowrap;
+  font-size:8.5px; font-weight:700; letter-spacing:.6px;
+  padding:2px 5px; border-radius:3px; text-transform:uppercase;
+  background:rgba(255,255,255,.08); color:rgba(255,255,255,.4);
+}
+.w1-sub button span:first-child{ flex:1 1 auto; }
+.w1-item .w1-tag{ flex:0 0 auto; white-space:nowrap; }
+
+/* ── Area contenuti ────────────────────────────────────────────── */
+#app.w1 > .panels{ margin-left:var(--w1-side); }
+
+/* Il menu utente resta agganciato in alto a destra */
+#app.w1 ~ .umenu, #app.w1 .umenu{ top:calc(var(--w1-top) + 6px); right:12px; }
+
+/* ── Scrim mobile ──────────────────────────────────────────────── */
+.w1-scrim{
+  display:none; position:fixed; inset:0; z-index:205;
+  background:rgba(0,0,0,.5); backdrop-filter:blur(2px);
+}
+.w1-scrim.open{ display:block; }
+
+/* ── Mobile: torna la navigazione originale, il menu diventa drawer ── */
+@media (max-width: 900px){
+  .w1-brand{ width:auto; border-right:none; padding-left:6px; }
+  .w1-brand-txt{ display:none; }
+  .w1-burger{ display:flex; }
+  .w1-search{ display:none; }
+  .w1-cta .w1-cta-lbl{ display:none; }
+  .w1-cta{ padding:0 10px; }
+  .w1-side{ transform:translateX(-100%); transition:transform .22s ease; box-shadow:0 0 40px rgba(0,0,0,.5); }
+  .w1-side.open{ transform:translateX(0); }
+  #app.w1 > .panels{ margin-left:0; }
+  #app.w1 > .nav{ display:flex; }
+}

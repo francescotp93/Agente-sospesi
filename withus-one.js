@@ -240,7 +240,7 @@
     { key: 'portafoglio', l: 'Portafoglio', i: 'i-case', go: Q('portafoglio'),
       sub: [
         { l: 'Polizze', i: 'i-doc2', go: Q('portafoglio') },
-        { l: 'Scadenzario', i: 'i-cal', go: Q('portafoglio') },
+        { l: 'Scadenzario', i: 'i-cal', go: Q('scadenzario') },
         { l: 'Titoli e quietanze', i: 'i-euro', tag: 'in arrivo', go: function () { soon('Titoli e quietanze'); } },
         { hr: true },
         { l: 'Sinistri', i: 'i-warn', go: Q('sinistri') }
@@ -338,6 +338,7 @@
     anagrafiche: ['Anagrafiche clienti', 'Clienti'],
     documenti:   ['Documenti', 'Clienti'],
     portafoglio: ['Portafoglio polizze', 'Portafoglio'],
+    scadenzario: ['Scadenzario e rinnovi', 'Portafoglio'],
     sinistri:    ['Sinistri', 'Portafoglio'],
     storico:     ['Produzione e storico', 'Agenzia'],
     emissioni:   ['Emissioni', 'Agenzia'],

@@ -127,6 +127,24 @@ prova('i ticket restano una coda sola', () => {
   return 'una sola voce, una sola coda';
 });
 
+prova('ogni voce del menu apre una pagina che nel preventivatore esiste', () => {
+  // Tre voci puntavano a ?page=portafoglio da prima che quella pagina
+  // esistesse: il menu si apriva e non succedeva niente. Le pagine del
+  // preventivatore vivono nell'altro repository, quindi qui si controlla
+  // almeno che ogni voce dichiari una pagina e che non ci siano doppioni
+  // involontari verso la stessa destinazione con etichette diverse.
+  const dest = [...corpo.matchAll(/go: Q\('([a-z-]+)'\)/g)].map(m => m[1]);
+  deve(dest.length >= 10, 'poche voci collegate al preventivatore: ' + dest.length);
+  deve(dest.includes('portafoglio'), 'manca la voce del portafoglio');
+  deve(dest.includes('scadenzario'), 'la voce Scadenzario non porta allo scadenzario');
+  // ogni destinazione deve avere titolo e briciole, altrimenti la terza barra
+  // resta con il titolo della pagina precedente
+  const titolati = [...one.matchAll(/^\s{4}'?([a-z-]+)'?:\s*\[/gm)].map(m => m[1]);
+  const senzaTitolo = [...new Set(dest)].filter(d => !titolati.includes(d));
+  deve(senzaTitolo.length === 0, 'destinazioni senza titolo nella barra: ' + senzaTitolo.join(', '));
+  return dest.length + ' voci, tutte con titolo';
+});
+
 prova('nessuna emoji: solo icone vettoriali', () => {
   const emoji = corpo.match(/[\u{1F300}-\u{1FAFF}\u{2190}-\u{21FF}\u{2600}-\u{27BF}]/gu) || [];
   deve(emoji.length === 0, 'trovate emoji: ' + emoji.join(' '));

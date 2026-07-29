@@ -211,7 +211,6 @@
       ] }
     ],
     foot: [
-      { l: 'Tutti i prodotti', p: 'home', i: 'i-grid' },
       { l: 'Preventivi salvati', p: 'storico', i: 'i-list' },
       { l: 'Stato collegamenti compagnie', p: 'fonti', i: 'i-plug' }
     ]
@@ -226,7 +225,7 @@
       go: function () { vai('dashboard'); } },
 
     { key: 'quoto', l: 'Nuovo preventivo', i: 'i-plus', mirror: 'nb-quoto',
-      nuovo: true, mega: true, go: function () { aprireQuoto('home'); } },
+      nuovo: true, mega: true },
 
     { key: 'clienti', l: 'Clienti', i: 'i-users', go: function () { vai('pipeline'); },
       sub: [
@@ -529,7 +528,19 @@
       '<div><h1 id="w1-titolo">Scrivania</h1>' +
       '<div class="w1-crumb" id="w1-crumb">With Us One</div></div>' +
       '<div class="w1-az"><button class="w1-b p" id="w1-nuovo">' + ico('i-plus', 'sm') + ' Nuovo preventivo</button></div>';
-    p.querySelector('#w1-nuovo').onclick = function () { aprireQuoto('home'); };
+    /* Come Plurima: il tasto verde apre la TENDINA dei prodotti, non una griglia.
+       Se la voce di menu non e' visibile (permessi), si ripiega sull'elenco prodotti. */
+    p.querySelector('#w1-nuovo').onclick = function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var voce = document.querySelector('.w1-m[data-key="quoto"]');
+      if (voce && voce.querySelector('.w1-mega')) {
+        var aperta = voce.classList.contains('open');
+        chiudiTendine();
+        if (!aperta) voce.classList.add('open');
+        return;
+      }
+      aprireQuoto('home');
+    };
     return p;
   }
 

@@ -241,7 +241,7 @@
       sub: [
         { l: 'Polizze', i: 'i-doc2', go: Q('portafoglio') },
         { l: 'Scadenzario', i: 'i-cal', go: Q('scadenzario') },
-        { l: 'Titoli e quietanze', i: 'i-euro', tag: 'in arrivo', go: function () { soon('Titoli e quietanze'); } },
+        { l: 'Titoli e quietanze', i: 'i-euro', go: Q('titoli') },
         { hr: true },
         { l: 'Sinistri', i: 'i-warn', go: Q('sinistri') }
       ] },
@@ -339,6 +339,7 @@
     documenti:   ['Documenti', 'Clienti'],
     portafoglio: ['Portafoglio polizze', 'Portafoglio'],
     scadenzario: ['Scadenzario e rinnovi', 'Portafoglio'],
+    titoli:      ['Titoli e quietanze', 'Portafoglio'],
     sinistri:    ['Sinistri', 'Portafoglio'],
     storico:     ['Produzione e storico', 'Agenzia'],
     emissioni:   ['Emissioni', 'Agenzia'],

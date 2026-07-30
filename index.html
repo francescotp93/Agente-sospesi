@@ -482,6 +482,36 @@ input[type=file]{display:none;}
 .sw input:checked + .sl{background:linear-gradient(135deg,var(--acc),var(--acc2));}
 .sw input:checked + .sl:before{transform:translateX(18px);}
 .sw-row{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;color:var(--txt2);}
+
+/* ── DA FARE OGGI (Blocco B) ─────────────────────────────────────────────────
+   La prima cosa che si vede aprendo il programma. Verde With Us, squadrato,
+   denso: coerente con la pelle WITH US ONE. Le righe sono azioni, non numeri. */
+.oggi{margin:14px;background:var(--surf);border:1px solid var(--bord2);border-radius:4px;overflow:hidden;}
+.oggi-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 16px;background:rgba(0,0,0,.03);border-bottom:1px solid var(--bord2);}
+.oggi-t{font-size:14px;font-weight:700;color:var(--txt);}
+.oggi-t span{color:#02984e;}
+.oggi-ric{border:none;background:transparent;color:var(--txt3);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;}
+.oggi-ric:hover{color:#02984e;}
+/* I bordi stanno sulle voci, non sui vuoti della griglia: con il gap colorato,
+   la cella lasciata libera dall'ultima riga si vedeva come un riquadro grigio
+   rotto. */
+.oggi-corpo{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));background:var(--surf);}
+.oggi-attesa,.oggi-vuoto{grid-column:1/-1;padding:20px 16px;font-size:13px;color:var(--txt3);background:var(--surf);}
+.oggi-vuoto{color:#02984e;font-weight:600;}
+/* una voce = un'azione: conteggio grande, cosa fare, e dove porta */
+.oggi-v{display:flex;align-items:center;gap:12px;padding:13px 16px;background:var(--surf);
+  border:none;border-right:1px solid var(--bord2);border-bottom:1px solid var(--bord2);
+  cursor:pointer;text-align:left;font-family:inherit;color:var(--txt);width:100%;}
+.oggi-v:hover{background:rgba(2,152,78,.06);}
+.oggi-n{flex:0 0 auto;min-width:38px;font-size:22px;font-weight:800;line-height:1;color:#02984e;}
+.oggi-v.urg .oggi-n{color:#c0392b;}
+.oggi-v.avv .oggi-n{color:#c25a00;}
+.oggi-txt{flex:1 1 auto;min-width:0;}
+.oggi-l{display:block;font-size:13px;font-weight:600;line-height:1.25;}
+.oggi-s{display:block;font-size:11.5px;color:var(--txt3);margin-top:2px;}
+.oggi-fr{flex:0 0 auto;color:var(--txt3);font-size:15px;}
+.oggi-v:hover .oggi-fr{color:#02984e;}
 </style>
 <link rel="stylesheet" href="withus-one.css?v=2">
 </head>
@@ -801,7 +831,26 @@ input[type=file]{display:none;}
 
 <!-- DASHBOARD -->
 <div class="panel" id="panel-dashboard">
-  <div id="d-empty" class="empty" style="margin-top:50px;"><i class="ti ti-chart-bar"></i><p>Carica i file per vedere la dashboard</p></div>
+  <!-- ── DA FARE OGGI (Blocco B) ────────────────────────────────────────────
+       Sta FUORI dal blocco #d-content di proposito: quello resta nascosto
+       finché non si caricano i file di contabilità, e un agente che vive di
+       preventivi e rinnovi trovava la scrivania vuota. Il lavoro da fare non
+       dipende dalla contabilità, quindi si vede sempre.
+
+       Non mostra numeri: mostra AZIONI, ognuna con il suo conteggio e il
+       collegamento a un elenco già filtrato. Chi apre il programma la mattina
+       deve sapere cosa fare senza cercarlo. ──────────────────────────────── -->
+  <div class="oggi" id="oggi">
+    <div class="oggi-hd">
+      <div class="oggi-t">Da fare <span>oggi</span></div>
+      <button class="oggi-ric" onclick="caricaDaFareOggi(true)" title="Ricalcola"><i class="ti ti-refresh"></i></button>
+    </div>
+    <div class="oggi-corpo" id="oggi-corpo">
+      <div class="oggi-attesa">Calcolo il lavoro del giorno…</div>
+    </div>
+  </div>
+
+  <div id="d-empty" class="empty" style="margin-top:50px;"><i class="ti ti-chart-bar"></i><p>Carica i file per vedere il resto della scrivania (contabilità)</p></div>
   <div id="d-content" style="display:none;">
     <div class="dash-pro">
       <div class="dash-top">
@@ -2661,6 +2710,10 @@ async function loadLastSession() {
     await new Promise(r => setTimeout(r, 50));
     buildDashboard(); buildAnomalie(); buildSospesi(); updatePill();
     APP.loaded = true;
+    // Blocco B: il lavoro del giorno si calcola all'avvio, qualunque scheda
+    // venga ripristinata: così il numero è già pronto quando si apre la
+    // scrivania, e non si vede mai la fascia "sto calcolando".
+    caricaDaFareOggi();
     // Vai a dashboard solo al primo login fresco, non su ogni ricarica pagina
     const lastTab = sessionStorage.getItem('iam_last_tab');
     // Mostra FAB AI
@@ -2904,7 +2957,7 @@ function goTab(t) {
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
   if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
-  if (t === 'dashboard') { loadTickets(); }
+  if (t === 'dashboard') { loadTickets(); caricaDaFareOggi(); }   // Blocco B
   if (t === 'agenti')    { loadAgentiAI(); }
   if (t === 'quoto') {
     // Splash screen fullscreen prima del redirect
@@ -3396,6 +3449,157 @@ function getFattureCollaboratoriAperte() {
   );
 }
 
+/* ═══ BLOCCO B — DA FARE OGGI ════════════════════════════════════════════════
+   La scrivania non mostra numeri: mostra il lavoro. Ogni voce è un'azione con
+   il suo conteggio e porta a un elenco già filtrato.
+
+   I dati arrivano dalle tabelle del preventivatore (quote_*) che vivono nello
+   stesso database: la riservatezza è quella di sempre (RLS), quindi ognuno vede
+   il lavoro proprio e della sua rete, non quello degli altri.
+
+   Le voci con conteggio zero NON si mostrano: un elenco pieno di zeri è rumore,
+   e chi lo legge impara a non guardarlo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function oggiEuro(n) {
+  return '€ ' + (Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/* Apre una pagina del preventivatore. Dentro la scocca WITH US ONE si apre nel
+   riquadro senza uscire; se la scocca non c'è (IAM da solo) si ripiega sul
+   salto tradizionale invece di non fare niente. */
+function oggiApri(pagina) {
+  if (typeof window.withusOneApri === 'function') { window.withusOneApri(pagina); return; }
+  if (typeof quotoUrl === 'function') { quotoUrl().then(u => { window.location.href = u + (u.includes('?') ? '&' : '?') + 'page=' + pagina; }); return; }
+  if (typeof apriQuoto === 'function') apriQuoto();
+}
+
+/* La scrivania viene ricostruita da cinque punti diversi del programma (login,
+   caricamento file, cambio scheda…). Il richiamo sta dentro buildDashboard() per
+   coprirli tutti con un solo aggancio; questa guardia evita di rifare sei
+   interrogazioni ogni volta che la scrivania si ridisegna. Il tasto di ricalcolo
+   passa forza=true e non aspetta. */
+/* Il disegno sta separato dalla raccolta: così si può ridisegnare senza
+   reinterrogare, e si può verificare la resa senza un database. */
+function oggiDisegna(voci) {
+  const box = document.getElementById('oggi-corpo');
+  if (!box) return;
+  window.__OGGI = voci || [];
+  if (!window.__OGGI.length) {
+    box.innerHTML = '<div class="oggi-vuoto">Non c\'è niente in scadenza né in sospeso: il lavoro è in pari. 👌</div>';
+    return;
+  }
+  box.innerHTML = window.__OGGI.map((v, i) =>
+    `<button class="oggi-v ${v.cls || ''}" onclick="__OGGI[${i}].va && __OGGI[${i}].va()">
+       <span class="oggi-n">${v.n}</span>
+       <span class="oggi-txt"><span class="oggi-l">${v.l}</span><span class="oggi-s">${v.s}</span></span>
+       <span class="oggi-fr"><i class="ti ti-chevron-right"></i></span>
+     </button>`).join('');
+}
+
+let OGGI_ULTIMO = 0;
+async function caricaDaFareOggi(forza) {
+  const box = document.getElementById('oggi-corpo');
+  if (!box) return;
+  // si controlla `db`, non `window.db`: sono due cose diverse (db è una
+  // variabile di modulo e non finisce sull'oggetto window)
+  if (!db) { box.innerHTML = '<div class="oggi-attesa">Servizio dati non disponibile.</div>'; return; }
+  const ora = new Date().getTime();
+  if (!forza && OGGI_ULTIMO && (ora - OGGI_ULTIMO) < 30000) return;
+  OGGI_ULTIMO = ora;
+  if (!box.querySelector('.oggi-v')) box.innerHTML = '<div class="oggi-attesa">Calcolo il lavoro del giorno…</div>';
+
+  const oggi = new Date().toISOString().slice(0, 10);
+  const fra = g => new Date(Date.now() + g * 86400000).toISOString().slice(0, 10);
+  const voci = [];
+
+  /* Ogni conteggio è indipendente: se una tabella non risponde, le altre voci
+     si mostrano comunque. Una scrivania che si spegne tutta per un errore su un
+     conteggio è peggio di una scrivania incompleta. */
+  const conta = async (fn) => { try { return await fn(); } catch (e) { console.warn('Da fare oggi:', e.message || e); return null; } };
+
+  // 1. Insoluti — soldi già fuori. Sempre per primi.
+  await conta(async () => {
+    const { data, error } = await db.from('quote_titoli')
+      .select('importo_lordo').eq('stato', 'aperto').lt('data_scadenza', oggi);
+    if (error) throw error;
+    if (!data || !data.length) return;
+    const somma = data.reduce((s, t) => s + (Number(t.importo_lordo) || 0), 0);
+    voci.push({ n: data.length, cls: 'urg', l: data.length === 1 ? 'titolo insoluto' : 'titoli insoluti',
+                s: oggiEuro(somma) + ' da recuperare', va: () => oggiApri('titoli') });
+  });
+
+  // 2. Rinnovi da lavorare nei prossimi 30 giorni, non ancora riquotati
+  await conta(async () => {
+    const { data, error } = await db.from('quote_scadenzario')
+      .select('premio_annuo,sostituzioni').gte('data_scadenza', oggi).lte('data_scadenza', fra(30));
+    if (error) throw error;
+    const daFare = (data || []).filter(p => !Number(p.sostituzioni));
+    if (!daFare.length) return;
+    const somma = daFare.reduce((s, p) => s + (Number(p.premio_annuo) || 0), 0);
+    voci.push({ n: daFare.length, cls: 'avv', l: daFare.length === 1 ? 'rinnovo da lavorare' : 'rinnovi da lavorare',
+                s: 'entro 30 giorni · ' + oggiEuro(somma) + ' di premi', va: () => oggiApri('scadenzario') });
+  });
+
+  // 3. Polizze scadute e mai rinnovate: portafoglio che si sta perdendo
+  await conta(async () => {
+    const { data, error } = await db.from('quote_scadenzario')
+      .select('sostituzioni').lt('data_scadenza', oggi);
+    if (error) throw error;
+    const perse = (data || []).filter(p => !Number(p.sostituzioni));
+    if (!perse.length) return;
+    voci.push({ n: perse.length, cls: 'urg', l: perse.length === 1 ? 'polizza scaduta senza rinnovo' : 'polizze scadute senza rinnovo',
+                s: 'portafoglio da recuperare', va: () => oggiApri('scadenzario') });
+  });
+
+  // 4. Polizze da perfezionare: documenti mancanti
+  await conta(async () => {
+    const { data, error } = await db.from('quote_polizze')
+      .select('id').eq('perfezionata', false).neq('stato_pagamento', 'annullata');
+    if (error) throw error;
+    if (!data || !data.length) return;
+    voci.push({ n: data.length, cls: 'avv', l: data.length === 1 ? 'polizza da perfezionare' : 'polizze da perfezionare',
+                s: 'documenti da completare', va: () => oggiApri('portafoglio') });
+  });
+
+  // 5. Preventivi fermi da più di 5 giorni: il cliente sta aspettando
+  await conta(async () => {
+    const { data, error } = await db.from('quote_preventivi')
+      .select('id,dati,polizza_emessa,creato_il').lt('creato_il', fra(-5));
+    if (error) throw error;
+    const fermi = (data || []).filter(p => !p.polizza_emessa &&
+      ['richiesta', 'in_esame', 'quotato'].includes((p.dati && p.dati.stato) || 'richiesta'));
+    if (!fermi.length) return;
+    voci.push({ n: fermi.length, cls: '', l: fermi.length === 1 ? 'preventivo in attesa' : 'preventivi in attesa',
+                s: 'fermi da più di 5 giorni', va: () => oggiApri('storico') });
+  });
+
+  // 6. Compleanni della settimana: la telefonata che nessuno si aspetta
+  await conta(async () => {
+    const { data, error } = await db.from('quote_anagrafiche')
+      .select('data_nascita').not('data_nascita', 'is', null);
+    if (error) throw error;
+    const set = new Set();
+    for (let g = 0; g <= 7; g++) set.add(fra(g).slice(5)); // MM-GG dei prossimi 7 giorni
+    const n = (data || []).filter(a => set.has(String(a.data_nascita).slice(5, 10))).length;
+    if (!n) return;
+    voci.push({ n, cls: '', l: n === 1 ? 'compleanno questa settimana' : 'compleanni questa settimana',
+                s: 'una telefonata vale più di una campagna', va: () => oggiApri('anagrafiche') });
+  });
+
+  // 7. Sospesi della contabilità collaboratori: dato già in casa a IAM
+  await conta(async () => {
+    if (!window.APP || !Array.isArray(APP.sospesi)) return;
+    const aperti = APP.sospesi.filter(s => Number(s.importo) > 0);
+    if (!aperti.length) return;
+    const somma = aperti.reduce((s, x) => s + (Number(x.importo) || 0), 0);
+    voci.push({ n: aperti.length, cls: 'avv', l: aperti.length === 1 ? 'sospeso da sistemare' : 'sospesi da sistemare',
+                s: oggiEuro(somma) + ' in contabilità', va: () => goTab('sospesi') });
+  });
+
+  oggiDisegna(voci);
+}
+
 function renderDashboardAlerts() {
   const el = document.getElementById('d-suggerimenti');
   if (!el) return;
@@ -3557,6 +3761,7 @@ function buildDashboard() {
     : '<div class="row" style="color:var(--txt3);font-size:13px;">Nessun movimento inserito</div>';
   renderPlatformUpdates();
   renderDashboardAlerts();
+  caricaDaFareOggi();   // Blocco B — un solo aggancio copre tutti i percorsi
 
   document.getElementById('d-empty').style.display = 'none';
   document.getElementById('d-content').style.display = 'block';

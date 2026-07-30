@@ -24,6 +24,7 @@
     { "src": "/lead/(.*)",         "dest": "https://quoto.withusassicurazioni.it/lead/$1" },
     { "src": "/login/(.*)",        "dest": "https://quoto.withusassicurazioni.it/login/$1" },
     { "src": "/mail/(.*)",         "dest": "https://quoto.withusassicurazioni.it/mail/$1" },
+    { "src": "/marketing/(.*)",    "dest": "https://quoto.withusassicurazioni.it/marketing/$1" },
     { "src": "/moto/(.*)",         "dest": "https://quoto.withusassicurazioni.it/moto/$1" },
     { "src": "/notify/(.*)",       "dest": "https://quoto.withusassicurazioni.it/notify/$1" },
     { "src": "/pay/(.*)",          "dest": "https://quoto.withusassicurazioni.it/pay/$1" },

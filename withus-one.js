@@ -274,6 +274,7 @@
     { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: Q('fonti'),
       sub: [
         { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: Q('fonti') },
+        { l: 'Campagne email', i: 'i-mail', go: Q('campagne') },
         { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
         { hr: true },
         { l: 'Banca dati ANIA', i: 'i-db', ext: ANIA },
@@ -340,6 +341,7 @@
     portafoglio: ['Portafoglio polizze', 'Portafoglio'],
     scadenzario: ['Scadenzario e rinnovi', 'Portafoglio'],
     titoli:      ['Titoli e quietanze', 'Portafoglio'],
+    campagne:    ['Campagne email', 'Strumenti'],
     sinistri:    ['Sinistri', 'Portafoglio'],
     storico:     ['Produzione e storico', 'Agenzia'],
     emissioni:   ['Emissioni', 'Agenzia'],

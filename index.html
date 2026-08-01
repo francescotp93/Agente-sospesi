@@ -7687,11 +7687,11 @@ function mailFolderTabs(active){
 // I gruppi di destinatari stavano SOLO nella memoria del browser di chi li
 // creava: da un altro computer il menu "Gruppi..." era vuoto, e chi puliva la
 // cronologia li perdeva senza avviso. Adesso vivono nella tabella
-// iam_mail_gruppi. Finche' quella tabella non esiste — la migrazione e' in
-// sql/DA-APPROVARE-gruppi-posta.sql e non e' ancora stata eseguita — tutto
-// continua a funzionare esattamente come prima, sulla memoria del browser:
-// nessuna funzione si ferma e non c'e' un ordine da rispettare fra il rilascio
-// del codice e l'esecuzione della migrazione.
+// iam_mail_gruppi (migrazione sql/2026-07-30-gruppi-posta.sql, eseguita il
+// 30/07/2026). Il ripiego sulla memoria del browser resta comunque: se
+// l'archivio non risponde, nessuna funzione si ferma. I gruppi gia' presenti
+// sul browser di ciascuno vengono portati su da soli al primo accesso alla
+// Posta, una volta sola per computer.
 let MAIL_GRUPPI = null;       // null = non letti dall'archivio: si usa il browser
 let MAIL_GRUPPI_DB = false;   // true = l'archivio risponde
 

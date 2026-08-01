@@ -1,8 +1,10 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
---  DA APPROVARE — NON ESEGUITO
+--  ESEGUITA il 30/07/2026, con il via libera di Francesco.
 --
---  Questo file NON e' stato lanciato sull'archivio. Crea una tabella nuova in
---  produzione: lo esegue Francesco, o Leo dopo il suo via libera esplicito.
+--  Verificata dopo l'esecuzione: la tabella c'e', la riservatezza e' attiva e
+--  ha tutte e quattro le regole (lettura, inserimento, modifica, cancellazione).
+--  Il controllo di sicurezza di Supabase non segnala nulla su questa tabella.
+--  Si tiene qui per storia: rilanciarla non fa danni (e' tutta "if not exists").
 --
 --  A COSA SERVE
 --  A non perdere piu' i gruppi di destinatari della posta interna.

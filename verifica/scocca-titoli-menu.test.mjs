@@ -45,8 +45,11 @@ e.prova('le voci che non passano da vai() dichiarano il titolo da sole', () => {
     const riga = src.split('\n').find(r => r.includes("l: '" + l + "'"));
     deve(riga && /setActive\(/.test(riga), '«' + l + '» non aggiorna il titolo');
   });
-  const tk = src.split('\n').find(r => r.includes("key: 'ticket'"));
-  deve(tk && /setActive\(/.test(tk), 'Ticket non aggiorna il titolo');
+  /* Ticket non e' piu' una voce di menu (la coda vive nella scrivania): resta
+     il pulsante rapido in alto, che deve aggiornare il titolo come faceva la
+     voce, altrimenti in alto resta scritto il nome della schermata di prima. */
+  const tk = src.split('\n').find(r => r.includes("#w1-b-ticket').onclick"));
+  deve(tk && /setActive\('ticket'\)/.test(tk), 'il pulsante Ticket non aggiorna il titolo');
 });
 
 e.prova('senza titolo noto non si lascia quello vecchio', () => {

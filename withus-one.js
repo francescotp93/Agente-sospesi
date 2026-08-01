@@ -273,14 +273,14 @@
     { key: 'carica', l: 'Contabilità', i: 'i-calc', mirror: 'nb-carica',
       go: function () { vai('carica'); },
       sub: [
-        { l: 'Carica documenti', i: 'i-up', act: 'carica', go: function () { vai('carica'); } },
+        { l: 'Quadratura di giornata', i: 'i-check', act: 'carica', go: function () { vai('quadratura'); } },
         { l: 'Anomalie', i: 'i-warn', go: function () { vai('anomalie'); } },
         { l: 'Sospesi', i: 'i-hour', go: function () { vai('sospesi'); } },
         { l: 'Storico movimenti', i: 'i-list', go: function () { vai('storico'); } },
         { l: 'Conto', i: 'i-bank', go: function () { vai('conto'); } },
         { hr: true },
-        { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } },
-        { l: 'Quadratura di giornata', i: 'i-check', tag: 'in arrivo', go: function () { soon('Quadratura di giornata'); } }
+        { l: 'Carica documenti', i: 'i-up', go: function () { vai('caricafile'); } },
+        { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } }
       ] },
 
     { key: 'agenzia', l: 'Agenzia', i: 'i-build', go: function () { vai('team'); },
@@ -305,7 +305,9 @@
         { l: 'AssiEasy', i: 'i-ext', ext: ASSIEASY }
       ] },
 
-    { key: 'ticket', l: 'Ticket', i: 'i-tick', tick: true, go: function () { vai('dashboard'); setActive('ticket'); } },
+    /* I ticket non hanno piu' una voce di primo livello: la coda vive gia'
+       nella scrivania, e averla anche qui era la stessa cosa scritta due
+       volte. Resta il pulsante rapido nella barra in alto. */
 
     { spacer: true },
 
@@ -338,6 +340,8 @@
     /* Mancavano: senza la loro riga il titolo restava quello della schermata
        precedente, e la briciola diceva un posto in cui non eri più.
        (bug del 30/07/2026) */
+    quadratura:  ['Quadratura di giornata', 'Contabilità'],
+    caricafile:  ['Carica documenti', 'Contabilità'],
     anomalie:    ['Anomalie', 'Contabilità'],
     sospesi:     ['Sospesi', 'Contabilità'],
     storico:     ['Storico movimenti', 'Contabilità'],
@@ -388,6 +392,7 @@
   /* Da quale voce di menu dipende una scheda di IAM */
   var TAB2MENU = {
     dashboard: 'dashboard', carica: 'carica', anomalie: 'carica', sospesi: 'carica',
+    quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'clienti', lab: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
@@ -546,7 +551,7 @@
     };
     top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
-    top.querySelector('#w1-b-ticket').onclick = function () { vai('dashboard'); };
+    top.querySelector('#w1-b-ticket').onclick = function () { vai('dashboard'); setActive('ticket'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
        Serve fermare la propagazione, altrimenti il gestore di IAM che
        chiude il menu al click fuori lo richiuderebbe subito. */

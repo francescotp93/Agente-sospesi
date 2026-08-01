@@ -2516,6 +2516,10 @@ async function doReset() {
 }
 
 async function doLogout() {
+  /* «Esci» e' l'ultima voce del menu Amministrazione, subito sotto voci che si
+     aprono e basta: un dito che scorre la trova. Chiudere la sessione non si
+     annulla, e chi ci casca perde il lavoro non salvato. (bug del 30/07/2026) */
+  if (!confirm('Vuoi uscire dal tuo account?\n\nDovrai reinserire le credenziali per rientrare.')) return;
   if (db) await db.auth.signOut();
   try { Object.keys(sessionStorage).forEach(k => { if (k.indexOf('mfa_ok_') === 0) sessionStorage.removeItem(k); }); } catch(e){}
   document.getElementById('umenu').style.display = 'none';

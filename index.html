@@ -2339,7 +2339,18 @@ function showReset() {
   document.getElementById('app').style.display = 'none';
 }
 
+/* ═══ AVVIO — una volta sola ═══════════════════════════════════════════════
+   Supabase annuncia l'accesso PIÙ VOLTE: una da getSession() al caricamento
+   della pagina e una da onAuthStateChange('SIGNED_IN'). Senza questo blocco
+   l'intero giro di avvio partiva due volte: due letture per ogni tabella,
+   quattro scritture su iam_utenti, doppio rendering delle trattative — e
+   soprattutto DUE ripristini di scheda, che strappavano via l'operatore dalla
+   sezione appena aperta. (bug del 30/07/2026) */
+let ACCESSO_AVVIATO_PER = null;
+
 async function onLogin(user) {
+  if (ACCESSO_AVVIATO_PER === user.id) return;
+  ACCESSO_AVVIATO_PER = user.id;
   ME = user;
   // 2FA: se attiva e il dispositivo non è "ricordato", chiedi il codice prima di entrare.
   // (chi non ha attivato la 2FA passa oltre senza alcun effetto)
@@ -2395,6 +2406,7 @@ async function onLogin(user) {
 }
 
 function onLogout() {
+  ACCESSO_AVVIATO_PER = null;   // così al prossimo accesso l'avvio riparte
   ME = null;
   PIPE = [];
   CHAT_HISTORY = [];
@@ -2715,23 +2727,10 @@ async function loadLastSession() {
     // scrivania, e non si vede mai la fascia "sto calcolando".
     caricaDaFareOggi();
     // Vai a dashboard solo al primo login fresco, non su ogni ricarica pagina
-    const lastTab = sessionStorage.getItem('iam_last_tab');
     // Mostra FAB AI
     const fab = document.getElementById('ai-fab');
     if (fab) fab.style.display = 'flex';
-    if (!lastTab) {
-      goTab('dashboard');
-    } else {
-      // Ripristina l'ultimo tab visitato
-      const contabSub = ['anomalie','sospesi','storico','conto'];
-      if (contabSub.includes(lastTab)) {
-        goTab('carica'); selContabTab(lastTab);
-      } else if (lastTab === 'ai' || lastTab === 'quoto') {
-        goTab('dashboard'); // 'ai' è overlay; 'quoto' apre QUOTO → al rientro mostra la dashboard
-      } else {
-        goTab(lastTab);
-      }
-    }
+    ripristinaScheda();
     setTimeout(() => buildStorico(), 500);
 
   } catch(e) {
@@ -2925,7 +2924,41 @@ function apriQuoto() {
   setTimeout(() => { quotoUrl().then(u => { window.location.href = u; }); }, 1200);
 }
 
+/* ═══ RIPRISTINO DELLA SCHEDA ══════════════════════════════════════════════
+   Prima questo pezzo stava in fondo a loadLastSession(), che è lenta (legge
+   tutte le sessioni) e viene lanciata anche dal "tira per aggiornare". Ogni
+   volta che finiva rileggeva iam_last_tab e ci navigava sopra — ma iam_last_tab
+   lo riscrive goTab a ogni clic. Risultato: l'operatore cliccava una sezione e
+   qualche secondo dopo si ritrovava altrove, ripercorrendo le voci toccate
+   prima. Adesso il ripristino è una cosa sola, si fa una volta, e NON avviene
+   se nel frattempo la persona ha già scelto dove stare. (30/07/2026) */
+let RIPRISTINO_FATTO = false;
+let RIPRISTINO_IN_CORSO = false;
+let UTENTE_HA_SCELTO = false;
+
+function ripristinaScheda() {
+  if (RIPRISTINO_FATTO) return;
+  RIPRISTINO_FATTO = true;
+  /* Chi sta già lavorando non si sposta. Vale più il clic di una persona che
+     un valore rimasto in memoria dalla visita precedente. */
+  if (UTENTE_HA_SCELTO) return;
+  const lastTab = sessionStorage.getItem('iam_last_tab');
+  RIPRISTINO_IN_CORSO = true;
+  try {
+    if (!lastTab) { goTab('dashboard'); return; }
+    const contabSub = ['anomalie','sospesi','storico','conto'];
+    if (contabSub.includes(lastTab)) { goTab('carica'); selContabTab(lastTab); }
+    else if (lastTab === 'ai' || lastTab === 'quoto') goTab('dashboard');
+    else goTab(lastTab);
+  } finally {
+    RIPRISTINO_IN_CORSO = false;
+  }
+}
+
 function goTab(t) {
+  /* Se la navigazione non arriva dal ripristino, è una persona che ha cliccato:
+     da quel momento nessun caricamento in ritardo può più spostarla. */
+  if (!RIPRISTINO_IN_CORSO) UTENTE_HA_SCELTO = true;
   // Anomalie, sospesi, storico, conto → aprono Contabilità con sotto-tab
   const contabSub = ['anomalie','sospesi','storico','conto'];
   if (contabSub.includes(t)) {

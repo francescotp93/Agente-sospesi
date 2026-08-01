@@ -1,0 +1,98 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+//  SCOCCA — titoli, briciole e capi-menu
+//
+//  Punti 7, 8, 9 e 10 del collaudo esterno (30/07/2026):
+//   · la lente in alto apriva l'elenco clienti buttando via il testo digitato;
+//   · «Preventivi salvati» apriva una pagina la cui briciola diceva tutt'altro;
+//   · Posta restava «Documenti», Ticket e Agenda restavano «Scrivania», le
+//     sottovoci di Contabilità restavano «Contabilità»;
+//   · il capo-menu «Clienti» apriva Trattative invece di Anagrafiche.
+// ═══════════════════════════════════════════════════════════════════════════════
+import fs from 'fs';
+import path from 'path';
+import { RADICE, esiti, deve } from './banco.mjs';
+
+const src = fs.readFileSync(path.join(RADICE, 'withus-one.js'), 'utf8');
+const e = esiti('SCOCCA — titoli, briciole e capi-menu');
+
+/* Le tabelle si leggono dal sorgente: sono dichiarazioni, non logica. */
+function tabella(nome) {
+  const i = src.indexOf('var ' + nome + ' = {');
+  deve(i >= 0, 'tabella ' + nome + ' non trovata');
+  const fine = src.indexOf('\n  };', i);
+  const corpo = src.slice(i, fine);
+  const chiavi = [...corpo.matchAll(/^\s*'?([a-zA-Z-]+)'?:\s*\[/gm)].map(m => m[1]);
+  return chiavi;
+}
+
+// ── #9: ogni scheda raggiungibile ha il suo titolo ──────────────────────────
+e.prova('le sottovoci di Contabilità hanno un titolo proprio', () => {
+  const t = tabella('TITOLI');
+  ['anomalie', 'sospesi', 'storico', 'conto'].forEach(k =>
+    deve(t.includes(k), 'manca il titolo per «' + k + '»: resterebbe quello di prima'));
+});
+
+e.prova('Ticket, Posta e Agenda hanno il loro titolo', () => {
+  const t = tabella('TITOLI');
+  ['ticket', 'posta', 'agenda'].forEach(k =>
+    deve(t.includes(k), 'manca il titolo per «' + k + '»'));
+});
+
+e.prova('le voci che non passano da vai() dichiarano il titolo da sole', () => {
+  /* Posta apre un pannello senza cambiare scheda: se non chiamasse setActive,
+     in alto resterebbe scritto il nome della pagina precedente. */
+  ['Posta', 'Agenda'].forEach(l => {
+    const riga = src.split('\n').find(r => r.includes("l: '" + l + "'"));
+    deve(riga && /setActive\(/.test(riga), '«' + l + '» non aggiorna il titolo');
+  });
+  const tk = src.split('\n').find(r => r.includes("key: 'ticket'"));
+  deve(tk && /setActive\(/.test(tk), 'Ticket non aggiorna il titolo');
+});
+
+e.prova('senza titolo noto non si lascia quello vecchio', () => {
+  const i = src.indexOf('function setActive(');
+  const corpo = src.slice(i, i + 1600);
+  deve(!/if \(!voce\) return;/.test(corpo),
+    'esce senza scrivere niente: in alto resterebbe il titolo della schermata precedente');
+  deve(/voce = m \? \[m\.l, m\.l\]/.test(corpo), 'manca il ripiego sul nome della voce di menu');
+});
+
+// ── #8: la briciola non contraddice il menu ─────────────────────────────────
+e.prova('le scorciatoie del mega-menu portano con sé la loro briciola', () => {
+  ['Preventivi salvati', 'Stato collegamenti compagnie'].forEach(l => {
+    const riga = src.split('\n').find(r => r.includes("l: '" + l + "'"));
+    deve(riga && /titolo:\s*\[/.test(riga), '«' + l + '» non dichiara la briciola: ne mostrerebbe un\'altra');
+  });
+  deve(/data-t="/.test(src), 'la briciola dichiarata non arriva fino al clic');
+});
+
+e.prova('setActive accetta la briciola dichiarata, e ha la precedenza', () => {
+  const i = src.indexOf('function setActive(');
+  const corpo = src.slice(i, i + 900);
+  deve(/function setActive\(tab, page, titolo\)/.test(corpo), 'setActive non riceve il titolo');
+  deve(/var voce = titolo\s*\n?\s*\|\|/.test(corpo), 'il titolo dichiarato non ha la precedenza');
+});
+
+// ── #10: il capo-menu apre la sua prima voce ────────────────────────────────
+e.prova('«Clienti» apre Anagrafiche, non Trattative', () => {
+  const i = src.indexOf("key: 'clienti'");
+  const riga = src.slice(i, i + 200);
+  deve(/go:\s*Q\('anagrafiche'\)/.test(riga), 'apre ancora qualcos\'altro: ' + riga.slice(0, 90));
+});
+
+// ── #7: la ricerca porta con sé il testo ────────────────────────────────────
+e.prova('la lente in alto non butta via quello che hai digitato', () => {
+  const i = src.indexOf("w1-cerca'");
+  const corpo = src.slice(src.indexOf('q.addEventListener'), src.indexOf('q.addEventListener') + 420);
+  deve(/cerca:\s*testo/.test(corpo), 'apre l\'elenco senza passare il testo cercato');
+});
+
+e.prova('il testo cercato viaggia anche nell\'indirizzo', () => {
+  /* Il riquadro puo' stare su un altro dominio: da fuori non si puo' scrivere
+     dentro, quindi serve il parametro nell'indirizzo. */
+  deve(/'q=' \+ encodeURIComponent\(cerca\)/.test(src), 'manca il parametro q= nell\'indirizzo');
+  deve(/function applicaRicerca/.test(src), 'manca la scrittura diretta quando il dominio e\' lo stesso');
+});
+
+e.stampa();
+process.exit(e.ko === 0 ? 0 : 1);

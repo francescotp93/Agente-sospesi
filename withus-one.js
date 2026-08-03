@@ -199,7 +199,6 @@
         { l: 'RC Auto', p: 'rca', i: 'i-car' },
         { l: 'Moto e ciclomotori', p: 'rca', i: 'i-moto' },
         { l: 'Autocarri', p: 'rca', i: 'i-truck' },
-        { l: 'Voltura e recupero classe', p: 'rca', i: 'i-swap' },
         { l: 'CVT e ARD', p: 'cvtard', i: 'i-shield' },
         { l: "Auto d'epoca", p: 'saravintage', i: 'i-star' }
       ] },

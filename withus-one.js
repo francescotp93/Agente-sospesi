@@ -103,19 +103,36 @@
     } catch (e) { return false; }
   }
 
-  function vaiPagina(fr, page) {
+  function vaiPagina(fr, page, cerca) {
     if (!page) return;
     try {
       var w = fr.contentWindow;
       if (w && typeof w.showPage === 'function' && w.document.getElementById('page-' + page)) {
         w.showPage(page);
+        if (cerca) applicaRicerca(w, cerca);
         return;
       }
     } catch (e) { /* se non si può leggere dentro, si ricarica con il parametro */ }
-    caricaFrame(fr, page);
+    caricaFrame(fr, page, cerca);
   }
 
-  function caricaFrame(fr, page) {
+  /* Scrive il testo nel campo di ricerca del preventivatore e lancia la ricerca.
+     Prima la lente in alto apriva l'elenco clienti e buttava via quello che era
+     stato digitato: si ripartiva da capo. (bug del 30/07/2026) */
+  function applicaRicerca(w, testo) {
+    try {
+      var campo = w.document.getElementById('anag-q');
+      if (!campo) return;
+      /* La linguetta va aperta PRIMA: se la schermata era rimasta su «Nuovo
+         cliente», la ricerca partiva ma i risultati finivano in un riquadro
+         nascosto, e da fuori sembrava che la barra non facesse niente. */
+      if (typeof w.anagTab === 'function') w.anagTab('cerca');
+      campo.value = testo;
+      if (typeof w.cercaAnagrafica === 'function') w.cercaAnagrafica();
+    } catch (e) { /* riquadro su un altro dominio: ci pensa il parametro q= */ }
+  }
+
+  function caricaFrame(fr, page, cerca) {
     var load = document.getElementById('w1-qload');
     if (load) load.style.display = '';
     FRAME_PRONTO = false;
@@ -125,6 +142,10 @@
       var base = i < 0 ? u : u.slice(0, i);
       var hash = i < 0 ? '' : u.slice(i);
       if (page) base += (base.indexOf('?') < 0 ? '?' : '&') + 'page=' + encodeURIComponent(page);
+      /* Il testo cercato viaggia nell'indirizzo perche' il riquadro puo' stare
+         su un altro dominio: da fuori non si puo' scrivere dentro. Cosi'
+         funziona sia a dominio unico sia a domini separati. */
+      if (cerca) base += (base.indexOf('?') < 0 ? '?' : '&') + 'q=' + encodeURIComponent(cerca);
       fr.src = base + hash;
     };
 
@@ -139,9 +160,11 @@
     applica(QUOTO + '?from=iam');
   }
 
-  function aprireQuoto(page) {
+  /* opz = { titolo: ['Titolo','Area'], cerca: 'testo' } */
+  function aprireQuoto(page, opz) {
+    opz = opz || {};
     var p = riquadro();
-    if (!p) { setTimeout(function () { aprireQuoto(page); }, 200); return; }
+    if (!p) { setTimeout(function () { aprireQuoto(page, opz); }, 200); return; }
 
     var pan = document.querySelectorAll('#app .panel');
     for (var i = 0; i < pan.length; i++) pan[i].classList.remove('act');
@@ -160,16 +183,16 @@
         var l = document.getElementById('w1-qload');
         if (l) l.style.display = 'none';
       };
-      caricaFrame(fr, page);
+      caricaFrame(fr, page, opz.cerca);
     } else if (FRAME_PRONTO) {
       vestiFrame(fr);
-      vaiPagina(fr, page);
+      vaiPagina(fr, page, opz.cerca);
     }
 
-    setActive('quoto', page);
+    setActive('quoto', page, opz.titolo);
   }
 
-  function Q(page) { return function () { aprireQuoto(page); }; }
+  function Q(page, titolo) { return function () { aprireQuoto(page, { titolo: titolo }); }; }
 
   /* ═══ il mega-menu dei prodotti ═════════════════════════════════════
      Quattro colonne, come nel modello approvato. Ogni voce apre una
@@ -180,7 +203,6 @@
         { l: 'RC Auto', p: 'rca', i: 'i-car' },
         { l: 'Moto e ciclomotori', p: 'rca', i: 'i-moto' },
         { l: 'Autocarri', p: 'rca', i: 'i-truck' },
-        { l: 'Voltura e recupero classe', p: 'rca', i: 'i-swap' },
         { l: 'CVT e ARD', p: 'cvtard', i: 'i-shield' },
         { l: "Auto d'epoca", p: 'saravintage', i: 'i-star' }
       ] },
@@ -211,8 +233,11 @@
       ] }
     ],
     foot: [
-      { l: 'Preventivi salvati', p: 'storico', i: 'i-list' },
-      { l: 'Stato collegamenti compagnie', p: 'fonti', i: 'i-plug' }
+      /* Sono scorciatoie verso pagine che hanno un altro nome altrove: la
+         briciola deve dire da dove sei passato, non contraddire il menu che
+         hai appena usato. (bug del 30/07/2026) */
+      { l: 'Preventivi salvati', p: 'storico', i: 'i-list', titolo: ['Preventivi salvati', 'Preventivatore'] },
+      { l: 'Stato collegamenti compagnie', p: 'fonti', i: 'i-plug', titolo: ['Stato collegamenti compagnie', 'Preventivatore'] }
     ]
   };
 
@@ -227,14 +252,16 @@
     { key: 'quoto', l: 'Nuovo preventivo', i: 'i-plus', mirror: 'nb-quoto',
       nuovo: true, mega: true },
 
-    { key: 'clienti', l: 'Clienti', i: 'i-users', go: function () { vai('pipeline'); },
+    /* Il capo-menu apre la PRIMA voce del suo elenco, non una a caso in mezzo:
+       prima «Clienti» portava alle Trattative. (bug del 30/07/2026) */
+    { key: 'clienti', l: 'Clienti', i: 'i-users', go: Q('anagrafiche'),
       sub: [
         { l: 'Anagrafiche', i: 'i-user', go: Q('anagrafiche') },
         { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } },
         { l: 'Lead', i: 'i-bolt', act: 'lead', go: function () { vai('lead'); } },
         { l: 'Documenti', i: 'i-file', go: Q('documenti') },
         { hr: true },
-        { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); } }
+        { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); setActive('posta'); } }
       ] },
 
     { key: 'portafoglio', l: 'Portafoglio', i: 'i-case', go: Q('portafoglio'),
@@ -249,20 +276,19 @@
     { key: 'carica', l: 'Contabilità', i: 'i-calc', mirror: 'nb-carica',
       go: function () { vai('carica'); },
       sub: [
-        { l: 'Carica documenti', i: 'i-up', act: 'carica', go: function () { vai('carica'); } },
+        { l: 'Quadratura di giornata', i: 'i-check', act: 'carica', go: function () { vai('quadratura'); } },   // ha sostituito «Carica documenti» (03/08/2026)
         { l: 'Anomalie', i: 'i-warn', go: function () { vai('anomalie'); } },
         { l: 'Sospesi', i: 'i-hour', go: function () { vai('sospesi'); } },
         { l: 'Storico movimenti', i: 'i-list', go: function () { vai('storico'); } },
         { l: 'Conto', i: 'i-bank', go: function () { vai('conto'); } },
         { hr: true },
-        { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } },
-        { l: 'Quadratura di giornata', i: 'i-check', tag: 'in arrivo', go: function () { soon('Quadratura di giornata'); } }
+        { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } }
       ] },
 
     { key: 'agenzia', l: 'Agenzia', i: 'i-build', go: function () { vai('team'); },
       sub: [
         { l: 'Collaboratori', i: 'i-users', act: 'team', mirror: 'nb-team', go: function () { vai('team'); } },
-        { l: 'Agenda', i: 'i-cal', go: function () { vai('dashboard'); tryCall('openAgendaModal'); } },
+        { l: 'Agenda', i: 'i-cal', go: function () { vai('dashboard'); tryCall('openAgendaModal'); setActive('agenda'); } },
         { l: 'Diario di lavoro', i: 'i-note', act: 'workdiary', mirror: 'nb-workdiary', go: function () { vai('workdiary'); } },
         { l: 'KPI e gare', i: 'i-chart', act: 'performance', mirror: 'nb-performance', go: function () { vai('performance'); } },
         { hr: true },
@@ -281,7 +307,9 @@
         { l: 'AssiEasy', i: 'i-ext', ext: ASSIEASY }
       ] },
 
-    { key: 'ticket', l: 'Ticket', i: 'i-tick', tick: true, go: function () { vai('dashboard'); } },
+    /* I ticket non hanno piu' una voce di primo livello: la coda vive gia'
+       nella scrivania, e averla anche qui era la stessa cosa scritta due
+       volte. Resta il pulsante rapido nella barra in alto. */
 
     { spacer: true },
 
@@ -310,7 +338,19 @@
     azienda:     ['Azienda', 'Amministrazione'],
     agenti:      ['Agenti AI', 'Amministrazione'],
     profilo:     ['Il mio profilo', 'Account'],
-    quoto:       ['Nuovo preventivo', 'Preventivatore']
+    quoto:       ['Nuovo preventivo', 'Preventivatore'],
+    /* Mancavano: senza la loro riga il titolo restava quello della schermata
+       precedente, e la briciola diceva un posto in cui non eri più.
+       (bug del 30/07/2026) */
+    quadratura:  ['Quadratura di giornata', 'Contabilità'],
+    caricafile:  ['Carica documenti', 'Contabilità'],
+    anomalie:    ['Anomalie', 'Contabilità'],
+    sospesi:     ['Sospesi', 'Contabilità'],
+    storico:     ['Storico movimenti', 'Contabilità'],
+    conto:       ['Conto', 'Contabilità'],
+    ticket:      ['Ticket', 'Richieste'],
+    posta:       ['Posta', 'Clienti'],
+    agenda:      ['Agenda', 'Agenzia']
   };
 
   var TITOLI_QUOTO = {
@@ -354,6 +394,7 @@
   /* Da quale voce di menu dipende una scheda di IAM */
   var TAB2MENU = {
     dashboard: 'dashboard', carica: 'carica', anomalie: 'carica', sospesi: 'carica',
+    quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'clienti', lab: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
@@ -418,7 +459,8 @@
     }
     h += '</div><div class="w1-foot">';
     for (var f = 0; f < MEGA.foot.length; f++) {
-      h += '<a href="javascript:void(0)" data-p="' + MEGA.foot[f].p + '">' + ico(MEGA.foot[f].i, 'sm') + '<span>' + MEGA.foot[f].l + '</span></a>';
+      var ft = MEGA.foot[f].titolo ? ' data-t="' + MEGA.foot[f].titolo.join('|') + '"' : '';
+      h += '<a href="javascript:void(0)" data-p="' + MEGA.foot[f].p + '"' + ft + '>' + ico(MEGA.foot[f].i, 'sm') + '<span>' + MEGA.foot[f].l + '</span></a>';
     }
     h += '</div>';
     d.innerHTML = h;
@@ -427,7 +469,8 @@
       if (!a) return;
       e.preventDefault(); e.stopPropagation();
       chiudiTendine(); chiudiCassetto();
-      aprireQuoto(a.getAttribute('data-p'));
+      var t = a.getAttribute('data-t');
+      aprireQuoto(a.getAttribute('data-p'), { titolo: t ? t.split('|') : null });
     });
     return d;
   }
@@ -492,7 +535,6 @@
       '<div class="w1-tright">' +
         '<button class="w1-ibtn" id="w1-b-agenda" title="Agenda">' + ico('i-cal') + '</button>' +
         '<button class="w1-ibtn" id="w1-b-posta" title="Posta" data-mirror="nb-posta">' + ico('i-mail') + '</button>' +
-        '<button class="w1-ibtn" id="w1-b-ticket" title="Ticket">' + ico('i-tick') + '</button>' +
         '<span class="w1-pill" id="w1-pill">In attesa</span>' +
         '<div class="w1-user" id="w1-user">' +
           '<div class="w1-av" id="w1-av">?</div>' +
@@ -510,7 +552,6 @@
     };
     top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
-    top.querySelector('#w1-b-ticket').onclick = function () { vai('dashboard'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
        Serve fermare la propagazione, altrimenti il gestore di IAM che
        chiude il menu al click fuori lo richiuderebbe subito. */
@@ -520,7 +561,10 @@
     };
     var q = top.querySelector('#w1-cerca');
     q.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && q.value.trim()) aprireQuoto('anagrafiche');
+      if (e.key !== 'Enter') return;
+      var testo = q.value.trim();
+      if (!testo) return;
+      aprireQuoto('anagrafiche', { cerca: testo, titolo: ['Ricerca: ' + testo, 'Clienti'] });
     });
     return top;
   }
@@ -550,7 +594,7 @@
 
   /* ═══ evidenziazione, titolo e briciole ════════════════════════════ */
 
-  function setActive(tab, page) {
+  function setActive(tab, page, titolo) {
     var k = TAB2MENU[tab] || tab;
     var v = document.querySelectorAll('.w1-m');
     for (var i = 0; i < v.length; i++) {
@@ -559,8 +603,17 @@
     var t = document.getElementById('w1-titolo');
     var c = document.getElementById('w1-crumb');
     if (!t || !c) return;
-    var voce = (tab === 'quoto' && page && TITOLI_QUOTO[page]) ? TITOLI_QUOTO[page] : TITOLI[tab];
-    if (!voce) return;
+    /* Ordine: il titolo dichiarato dalla voce di menu (che sa da dove sei
+       passato), poi la pagina del preventivatore, poi la scheda di IAM. */
+    var voce = titolo
+      || ((tab === 'quoto' && page && TITOLI_QUOTO[page]) ? TITOLI_QUOTO[page] : TITOLI[tab]);
+    /* Se non si sa che titolo mettere si scrive almeno il nome della voce di
+       menu: lasciare quello di prima e' peggio, perche' dice il falso. */
+    if (!voce) {
+      var m = null;
+      for (var z = 0; z < MENU.length; z++) if (MENU[z].key === k) m = MENU[z];
+      voce = m ? [m.l, m.l] : ['With Us One', 'With Us One'];
+    }
     t.textContent = voce[0];
     c.innerHTML = 'With Us One <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[1] +
       (voce[1] !== voce[0] ? ' <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[0] : '');

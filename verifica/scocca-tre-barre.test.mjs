@@ -114,17 +114,20 @@ prova('ogni voce chiama una funzione che in IAM esiste', () => {
 
 prova('la barra scura ha le voci decise, nell ordine deciso', () => {
   const chiavi = [...corpo.matchAll(/\{ key: '([a-z]+)',/g)].map(m => m[1]);
-  const atteso = ['dashboard', 'quoto', 'clienti', 'portafoglio', 'carica', 'agenzia', 'strumenti', 'ticket', 'admin'];
+  const atteso = ['dashboard', 'quoto', 'clienti', 'portafoglio', 'carica', 'agenzia', 'strumenti', 'admin'];
   deve(chiavi.join(',') === atteso.join(','), 'menu cambiato: ' + chiavi.join(', '));
   return atteso.length + ' voci';
 });
 
-prova('i ticket restano una coda sola', () => {
-  const tick = corpo.match(/key: 'ticket'[\s\S]{0,200}/);
-  deve(tick && /vai\('dashboard'\)/.test(tick[0]), 'la voce Ticket non porta piu alla coda unica di IAM');
+prova('i ticket stanno solo nella scrivania', () => {
+  /* La coda ticket vive nella scrivania. Prima era scritta in tre posti: la
+     voce di menu (tolta il 01/08/2026) e il pulsante rapido in alto (tolto il
+     03/08/2026). Ne resta uno solo: quello dentro la scrivania. */
   const doppi = (corpo.match(/l: 'Ticket'/g) || []).length;
-  deve(doppi === 1, 'la voce Ticket compare ' + doppi + ' volte: doppione');
-  return 'una sola voce, una sola coda';
+  deve(doppi === 0, 'Ticket e tornato una voce di menu: la coda e gia nella scrivania');
+  deve(!/w1-b-ticket/.test(corpo),
+    'il pulsante Ticket e tornato nella barra in alto: la coda si apre dalla scrivania');
+  return 'una sola coda, nella scrivania';
 });
 
 prova('ogni voce del menu apre una pagina che nel preventivatore esiste', () => {

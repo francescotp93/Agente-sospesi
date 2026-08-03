@@ -49,6 +49,20 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
   display:block; font-size:13px; letter-spacing:.4px;
   color:var(--w1-txt); font-weight:700;
 }
+/* PIATTAFORMA IAM: le tre iniziali incolonnate, ognuna con la sua parola.
+   Le iniziali sono in grassetto e allineate a sinistra su una larghezza
+   fissa, cosi' leggendo dall'alto in basso si legge I-A-M. */
+.w1-appname-t{ display:block; }
+.w1-iam{ display:block; margin-top:2px; }
+.w1-iam-r{
+  display:flex; align-items:baseline; gap:1px;
+  font-size:10.5px; line-height:1.25; letter-spacing:.2px; text-transform:none;
+  color:var(--w1-txt3); font-weight:500;
+}
+.w1-iam-r b{
+  display:inline-block; width:8px; font-size:12px; font-weight:800;
+  color:var(--w1-txt); letter-spacing:0;
+}
 
 .w1-burger{
   display:none; background:none; border:none; color:var(--w1-txt2);

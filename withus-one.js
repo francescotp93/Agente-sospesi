@@ -526,7 +526,17 @@
       '<button class="w1-burger" id="w1-burger" aria-label="Menu">' + ico('i-list') + '</button>' +
       '<img class="w1-logo" src="withus-logo.png" alt="With Us">' +
       '<div class="w1-sep"></div>' +
-      '<div class="w1-appname">Piattaforma<b>WITH US ONE</b></div>' +
+            /* PIATTAFORMA IAM, con l'acronimo sciolto: le tre iniziali in colonna e
+         accanto a ognuna la parola per esteso. Prima diceva «WITH US ONE», che
+         e' il nome della scocca — non spiegava che cosa sia IAM. */
+      '<div class="w1-appname">' +
+        '<span class="w1-appname-t">Piattaforma</span>' +
+        '<span class="w1-iam">' +
+          '<span class="w1-iam-r"><b>I</b><span>nsurance</span></span>' +
+          '<span class="w1-iam-r"><b>A</b><span>gency</span></span>' +
+          '<span class="w1-iam-r"><b>M</b><span>anagement</span></span>' +
+        '</span>' +
+      '</div>' +
       '<div class="w1-gsearch">' +
         '<svg class="w1-i sm w1-si"><use href="#i-search"/></svg>' +
         '<input id="w1-cerca" type="text" autocomplete="off" placeholder="Cerca cliente, targa, polizza o preventivo">' +

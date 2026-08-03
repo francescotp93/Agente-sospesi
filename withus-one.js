@@ -103,17 +103,20 @@
     } catch (e) { return false; }
   }
 
-  function vaiPagina(fr, page, cerca) {
+  function vaiPagina(fr, page, cerca, prod) {
     if (!page) return;
     try {
       var w = fr.contentWindow;
       if (w && typeof w.showPage === 'function' && w.document.getElementById('page-' + page)) {
         w.showPage(page);
+        /* Il prodotto si apre DOPO la pagina: apriProdotto porta gia' dove
+           deve, e senza ricaricare il riquadro non si perde la sessione. */
+        if (prod && typeof w.apriProdotto === 'function') w.apriProdotto(prod);
         if (cerca) applicaRicerca(w, cerca);
         return;
       }
     } catch (e) { /* se non si può leggere dentro, si ricarica con il parametro */ }
-    caricaFrame(fr, page, cerca);
+    caricaFrame(fr, page, cerca, prod);
   }
 
   /* Scrive il testo nel campo di ricerca del preventivatore e lancia la ricerca.
@@ -132,7 +135,7 @@
     } catch (e) { /* riquadro su un altro dominio: ci pensa il parametro q= */ }
   }
 
-  function caricaFrame(fr, page, cerca) {
+  function caricaFrame(fr, page, cerca, prod) {
     var load = document.getElementById('w1-qload');
     if (load) load.style.display = '';
     FRAME_PRONTO = false;
@@ -146,6 +149,10 @@
          su un altro dominio: da fuori non si puo' scrivere dentro. Cosi'
          funziona sia a dominio unico sia a domini separati. */
       if (cerca) base += (base.indexOf('?') < 0 ? '?' : '&') + 'q=' + encodeURIComponent(cerca);
+      /* Il prodotto viaggia nell'indirizzo come il testo cercato: cosi' ogni
+         voce di menu porta al SUO prodotto invece che alla pagina che li
+         contiene tutti, e funziona sia a dominio unico sia a domini separati. */
+      if (prod) base += (base.indexOf('?') < 0 ? '?' : '&') + 'prod=' + encodeURIComponent(prod);
       fr.src = base + hash;
     };
 
@@ -183,10 +190,10 @@
         var l = document.getElementById('w1-qload');
         if (l) l.style.display = 'none';
       };
-      caricaFrame(fr, page, opz.cerca);
+      caricaFrame(fr, page, opz.cerca, opz.prod);
     } else if (FRAME_PRONTO) {
       vestiFrame(fr);
-      vaiPagina(fr, page, opz.cerca);
+      vaiPagina(fr, page, opz.cerca, opz.prod);
     }
 
     setActive('quoto', page, opz.titolo);
@@ -199,12 +206,18 @@
      pagina del preventivatore dentro la scocca.                        */
   var MEGA = {
     cols: [
+      /* Ogni voce porta al SUO prodotto (parametro `prod`). Prima erano cinque
+         etichette che aprivano tutte la stessa schermata, e la scelta andava
+         rifatta a mano dentro: il menu prometteva una strada e ne apriva
+         un'altra. (03/08/2026) */
       { t: 'Motor', v: [
-        { l: 'RC Auto', p: 'rca', i: 'i-car' },
-        { l: 'Moto e ciclomotori', p: 'rca', i: 'i-moto' },
-        { l: 'Autocarri', p: 'rca', i: 'i-truck' },
+        { l: 'Autovetture', p: 'rca', prod: 'autovetture', i: 'i-car' },
+        { l: 'Moto e ciclomotori', p: 'rca', prod: 'motocicli', i: 'i-moto' },
+        { l: 'Autocarri', p: 'rca', prod: 'autocarri', i: 'i-truck' },
+        { l: 'Imbarcazioni', p: 'rca', prod: 'imbarcazioni', i: 'i-swap' },
+        { l: 'Infortuni al conducente', p: 'rca', prod: 'conducente', i: 'i-user' },
         { l: 'CVT e ARD', p: 'cvtard', i: 'i-shield' },
-        { l: "Auto d'epoca", p: 'saravintage', i: 'i-star' }
+        { l: "Auto d'epoca", p: 'saravintage', prod: 'storici', i: 'i-star' }
       ] },
       { t: 'Persona', v: [
         { l: 'Infortuni', p: 'infortuni', i: 'i-heart' },
@@ -453,7 +466,7 @@
       h += '<div><h5>' + MEGA.cols[c].t + '</h5>';
       for (var v = 0; v < MEGA.cols[c].v.length; v++) {
         var x = MEGA.cols[c].v[v];
-        h += '<a href="javascript:void(0)" data-p="' + x.p + '">' + ico(x.i, 'sm') + '<span>' + x.l + '</span></a>';
+        h += '<a href="javascript:void(0)" data-p="' + x.p + '"' + (x.prod ? ' data-prod="' + x.prod + '"' : '') + ' data-t="' + x.l + '|Preventivatore">' + ico(x.i, 'sm') + '<span>' + x.l + '</span></a>';
       }
       h += '</div>';
     }
@@ -470,7 +483,7 @@
       e.preventDefault(); e.stopPropagation();
       chiudiTendine(); chiudiCassetto();
       var t = a.getAttribute('data-t');
-      aprireQuoto(a.getAttribute('data-p'), { titolo: t ? t.split('|') : null });
+      aprireQuoto(a.getAttribute('data-p'), { titolo: t ? t.split('|') : null, prod: a.getAttribute('data-prod') || null });
     });
     return d;
   }

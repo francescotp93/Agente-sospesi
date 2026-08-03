@@ -526,15 +526,14 @@
       '<button class="w1-burger" id="w1-burger" aria-label="Menu">' + ico('i-list') + '</button>' +
       '<img class="w1-logo" src="withus-logo.png" alt="With Us">' +
       '<div class="w1-sep"></div>' +
-            /* PIATTAFORMA IAM, con l'acronimo sciolto: le tre iniziali in colonna e
-         accanto a ognuna la parola per esteso. Prima diceva «WITH US ONE», che
-         e' il nome della scocca — non spiegava che cosa sia IAM. */
-      '<div class="w1-appname">' +
+            /* Sta in una barra alta 56 px: quattro righe impilate non ci stanno, e
+         il primo tentativo si leggeva male. Qui «IAM» resta grande come il
+         nome che e', e le tre parole gli stanno accanto su una riga sola, in
+         piccolo. Per esteso si legge anche passandoci sopra col mouse. */
+      '<div class="w1-appname" title="Insurance Agency Management">' +
         '<span class="w1-appname-t">Piattaforma</span>' +
-        '<span class="w1-iam">' +
-          '<span class="w1-iam-r"><b>I</b><span>nsurance</span></span>' +
-          '<span class="w1-iam-r"><b>A</b><span>gency</span></span>' +
-          '<span class="w1-iam-r"><b>M</b><span>anagement</span></span>' +
+        '<span class="w1-iam"><b>IAM</b>' +
+          '<span class="w1-iam-e">Insurance&#8202;·&#8202;Agency&#8202;·&#8202;Management</span>' +
         '</span>' +
       '</div>' +
       '<div class="w1-gsearch">' +

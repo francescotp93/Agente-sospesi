@@ -126,11 +126,14 @@ e.prova('chi aveva lasciato aperta la vecchia «Carica» non trova il vuoto', ()
 });
 
 // ── 3. Il menu di With Us One porta alle due schermate ──────────────────────
-e.prova('il menu Contabilità ha due voci distinte, non una sola', () => {
+e.prova('nel menu Contabilità la quadratura ha SOSTITUITO il caricamento', () => {
+  /* Il 01/08/2026 le voci erano diventate due, una accanto all'altra. Il
+     03/08/2026 la richiesta e' stata precisata: la quadratura di giornata non
+     si affianca al caricamento documenti, lo sostituisce. Due voci per lo
+     stesso momento di lavoro facevano scegliere ogni volta quale aprire. */
   const q = one.split('\n').find(r => r.includes("l: 'Quadratura di giornata'"));
-  const c = one.split('\n').find(r => r.includes("l: 'Carica documenti'"));
   deve(q && /vai\('quadratura'\)/.test(q), 'la quadratura non apre la sua schermata');
-  deve(c && /vai\('caricafile'\)/.test(c), '«Carica documenti» non apre la sua schermata');
+  deve(!/l: 'Carica documenti'/.test(one), '«Carica documenti» e tornato nel menu');
   deve(!/tag: 'in arrivo'[^\n]*Quadratura|Quadratura[^\n]*tag: 'in arrivo'/.test(one),
     'la quadratura è ancora annunciata come «in arrivo»');
 });
@@ -138,6 +141,8 @@ e.prova('il menu Contabilità ha due voci distinte, non una sola', () => {
 e.prova('le due schermate hanno il loro titolo in alto', () => {
   const i = one.indexOf('var TITOLI = {');
   const corpo = one.slice(i, one.indexOf('\n  };', i));
+  /* Il titolo di «caricafile» resta anche senza voce di menu: la schermata
+     esiste ancora e ci si puo' arrivare da un collegamento diretto. */
   ['quadratura', 'caricafile'].forEach(k =>
     deve(new RegExp('^\\s*' + k + ':', 'm').test(corpo),
       'manca il titolo per «' + k + '»: in alto resterebbe quello di prima'));

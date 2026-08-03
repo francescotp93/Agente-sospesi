@@ -123,6 +123,10 @@
     try {
       var campo = w.document.getElementById('anag-q');
       if (!campo) return;
+      /* La linguetta va aperta PRIMA: se la schermata era rimasta su «Nuovo
+         cliente», la ricerca partiva ma i risultati finivano in un riquadro
+         nascosto, e da fuori sembrava che la barra non facesse niente. */
+      if (typeof w.anagTab === 'function') w.anagTab('cerca');
       campo.value = testo;
       if (typeof w.cercaAnagrafica === 'function') w.cercaAnagrafica();
     } catch (e) { /* riquadro su un altro dominio: ci pensa il parametro q= */ }
@@ -272,13 +276,12 @@
     { key: 'carica', l: 'Contabilità', i: 'i-calc', mirror: 'nb-carica',
       go: function () { vai('carica'); },
       sub: [
-        { l: 'Quadratura di giornata', i: 'i-check', act: 'carica', go: function () { vai('quadratura'); } },
+        { l: 'Quadratura di giornata', i: 'i-check', act: 'carica', go: function () { vai('quadratura'); } },   // ha sostituito «Carica documenti» (03/08/2026)
         { l: 'Anomalie', i: 'i-warn', go: function () { vai('anomalie'); } },
         { l: 'Sospesi', i: 'i-hour', go: function () { vai('sospesi'); } },
         { l: 'Storico movimenti', i: 'i-list', go: function () { vai('storico'); } },
         { l: 'Conto', i: 'i-bank', go: function () { vai('conto'); } },
         { hr: true },
-        { l: 'Carica documenti', i: 'i-up', go: function () { vai('caricafile'); } },
         { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } }
       ] },
 

@@ -533,7 +533,6 @@
       '<div class="w1-tright">' +
         '<button class="w1-ibtn" id="w1-b-agenda" title="Agenda">' + ico('i-cal') + '</button>' +
         '<button class="w1-ibtn" id="w1-b-posta" title="Posta" data-mirror="nb-posta">' + ico('i-mail') + '</button>' +
-        '<button class="w1-ibtn" id="w1-b-ticket" title="Ticket">' + ico('i-tick') + '</button>' +
         '<span class="w1-pill" id="w1-pill">In attesa</span>' +
         '<div class="w1-user" id="w1-user">' +
           '<div class="w1-av" id="w1-av">?</div>' +
@@ -551,7 +550,6 @@
     };
     top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
-    top.querySelector('#w1-b-ticket').onclick = function () { vai('dashboard'); setActive('ticket'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
        Serve fermare la propagazione, altrimenti il gestore di IAM che
        chiude il menu al click fuori lo richiuderebbe subito. */

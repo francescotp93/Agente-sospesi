@@ -120,13 +120,13 @@ prova('la barra scura ha le voci decise, nell ordine deciso', () => {
 });
 
 prova('i ticket stanno solo nella scrivania', () => {
-  /* La coda ticket vive nella scrivania. Averla anche come voce di menu era
-     la stessa cosa scritta due volte: la voce e' stata tolta il 01/08/2026.
-     Resta il pulsante rapido nella barra in alto, che porta li'. */
+  /* La coda ticket vive nella scrivania. Prima era scritta in tre posti: la
+     voce di menu (tolta il 01/08/2026) e il pulsante rapido in alto (tolto il
+     03/08/2026). Ne resta uno solo: quello dentro la scrivania. */
   const doppi = (corpo.match(/l: 'Ticket'/g) || []).length;
   deve(doppi === 0, 'Ticket e tornato una voce di menu: la coda e gia nella scrivania');
-  deve(/#w1-b-ticket'\)\.onclick[^\n]*vai\('dashboard'\)/.test(corpo),
-    'il pulsante Ticket non porta piu alla coda unica di IAM');
+  deve(!/w1-b-ticket/.test(corpo),
+    'il pulsante Ticket e tornato nella barra in alto: la coda si apre dalla scrivania');
   return 'una sola coda, nella scrivania';
 });
 

@@ -8104,15 +8104,20 @@ async function leoToggle(on){
 
    Gli endpoint sono quelli che c'erano: /fonti, /fonti/:id/credenziali,
    /fonti/:id/verifica. Non sono stati rinominati. */
-let FONTI = [], FONTI_FILTRO = 'tutte', FONTI_APERTA = null, FONTI_ULTIMO = 0;
+let FONTI = [], FONTI_FILTRO = 'tutte', FONTI_APERTA = null, FONTI_ULTIMO = 0, FONTI_ATTESE = 0;
 
-function fontiPuoEntrare() {
-  /* isSuperAdmin() esiste gia' (riga ~6703) ed e' quello che usa il resto del
-     gestionale. Riscriverne una copia qui voleva dire che il giorno in cui
-     cambia la regola cambia in un posto solo, e questa schermata resta
-     indietro senza che nessuno se ne accorga. */
-  return typeof isSuperAdmin === 'function' ? isSuperAdmin() : false;
+/* Tre risposte, non due: 'si', 'no' e 'non lo so ancora'.
+   Il difetto era proprio qui. Il profilo arriva da Supabase in modo asincrono,
+   e chi apre le Fonti subito dopo l'ingresso ci arriva PRIMA che ME sia
+   popolato. Con una risposta secca la schermata rispondeva «no» a un Super
+   Admin, si chiudeva, e non riprovava mai piu': restava l'estetica e non
+   funzionava niente — senza un errore, perche' dal suo punto di vista non era
+   successo niente di sbagliato. */
+function fontiStatoAccesso() {
+  if (!ME || !ME.email) return 'attesa';
+  return (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? 'si' : 'no';
 }
+function fontiPuoEntrare() { return fontiStatoAccesso() === 'si'; }
 
 async function fontiCarica(forza) {
   const box = document.getElementById('f-lista');
@@ -8121,11 +8126,29 @@ async function fontiCarica(forza) {
      raggiunge comunque scrivendo l'indirizzo, e questa e' l'unica schermata
      dove entrare per sbaglio significa vedere con quali utenze l'agenzia
      entra nei portali. */
-  if (!fontiPuoEntrare()) {
-    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-lock"></i>Questa schermata è riservata al Super Admin.</div>';
+  const accesso = fontiStatoAccesso();
+  if (accesso === 'no') {
+    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-lock"></i><b>Riservata al Super Admin</b>'
+      + '<span>Sei entrato come ' + esc(ME.email) + '.</span></div>';
     const sm = document.getElementById('f-somma'); if (sm) sm.innerHTML = '';
     return;
   }
+  if (accesso === 'attesa') {
+    /* Non e' un rifiuto: e' che il profilo non e' ancora arrivato. Si aspetta
+       e si riprova, invece di chiudere la porta in faccia a chi ha le
+       chiavi. Dieci tentativi da mezzo secondo: se dopo cinque secondi il
+       profilo non c'e', il problema e' l'ingresso, e lo si dice. */
+    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-loader"></i>Attendo il profilo…</div>';
+    FONTI_ATTESE = (FONTI_ATTESE || 0) + 1;
+    if (FONTI_ATTESE > 10) {
+      box.innerHTML = '<div class="f-vuoto"><i class="ti ti-user-question"></i><b>Profilo non disponibile</b>'
+        + '<span>Il gestionale non sa ancora chi sei. Esci e rientra.</span></div>';
+      return;
+    }
+    setTimeout(() => fontiCarica(true), 500);
+    return;
+  }
+  FONTI_ATTESE = 0;
   const ora = Date.now();
   if (!forza && FONTI_ULTIMO && (ora - FONTI_ULTIMO) < 20000) { fontiDisegna(); return; }
   FONTI_ULTIMO = ora;

@@ -43,8 +43,8 @@ prova('le fonti sono una schermata di IAM, non un riquadro del preventivatore', 
 
 // ── 2. Solo Super Admin ──────────────────────────────────────────────────
 prova('il cancello sta nel codice, non solo nel menu', () => {
-  const g = ritaglia(html, 'fontiPuoEntrare');
-  deve(g, 'manca fontiPuoEntrare');
+  const g = (ritaglia(html, 'fontiPuoEntrare') || '') + (ritaglia(html, 'fontiStatoAccesso') || '');
+  deve(g, 'manca il controllo di accesso');
   /* Il controllo riusa isSuperAdmin(), che è l'helper del resto del
      gestionale. Una copia della regola qui dentro vorrebbe dire che il
      giorno in cui cambia, questa schermata resta indietro in silenzio. */
@@ -53,7 +53,7 @@ prova('il cancello sta nel codice, non solo nel menu', () => {
   /* Una voce di menu nascosta si raggiunge scrivendo l'indirizzo: il
      controllo deve stare dove i dati vengono chiesti. */
   const c = ritaglia(html, 'fontiCarica');
-  deve(c && /fontiPuoEntrare\(\)/.test(c), 'si possono caricare le fonti senza essere Super Admin');
+  deve(c && /fontiStatoAccesso\(\)/.test(c), 'si possono caricare le fonti senza controllare chi sei');
   for (const f of ['fontiSalva', 'fontiVerifica']) {
     const b = ritaglia(html, f);
     deve(b && /fontiPuoEntrare\(\)/.test(b), f + ' non controlla chi sta scrivendo');
@@ -185,6 +185,34 @@ prova('eliminare una fonte chiede conferma e dice cosa sparisce', () => {
   deve(e, 'manca fontiElimina');
   deve(/confirm\(/.test(e), 'una fonte si elimina senza chiedere niente');
   deve(/credenziali/.test(e), 'non viene detto che spariscono anche le credenziali');
+});
+
+// ── 9. Il profilo che arriva in ritardo non deve chiudere fuori ─────────
+prova('aprendo prima che arrivi il profilo si aspetta, non si viene respinti', () => {
+  /* Il guasto vero del 4/8/2026, e il piu' insidioso di tutti: il profilo
+     arriva da Supabase in modo asincrono, e chi apriva le Fonti subito dopo
+     l'ingresso ci arrivava PRIMA. Con una risposta secca si', no, la
+     schermata rispondeva «no» a un Super Admin, si chiudeva e non riprovava
+     mai piu'. Restava l'estetica e non funzionava niente — senza errore,
+     perche' dal suo punto di vista non era successo niente di sbagliato. */
+  const st = ritaglia(html, 'fontiStatoAccesso');
+  deve(st, 'manca fontiStatoAccesso: il controllo torna a essere sì/no');
+  deve(/'attesa'/.test(st), 'non esiste lo stato «non lo so ancora»');
+  deve(/!ME \|\| !ME\.email/.test(st), 'un profilo non ancora arrivato viene scambiato per un rifiuto');
+  const c = ritaglia(html, 'fontiCarica');
+  deve(c && /accesso === 'attesa'/.test(c), 'l\'attesa non viene distinta dal rifiuto');
+  deve(c && /setTimeout\(\(\) => fontiCarica\(true\)/.test(c), 'quando il profilo arriva non si riprova');
+  /* E non si aspetta per sempre: se dopo qualche secondo il profilo non c'e',
+     il problema e' l'ingresso, e va detto invece di girare in tondo. */
+  deve(c && /FONTI_ATTESE > \d+/.test(c), 'l\'attesa del profilo non ha una fine');
+  deve(c && /Esci e rientra/.test(c), 'scaduta l\'attesa non viene detto cosa fare');
+});
+
+prova('a chi non ha i permessi si dice con che utenza è entrato', () => {
+  /* «Riservata al Super Admin» senza dire con quale utenza si è entrati fa
+     perdere tempo a chi ha due account, ed è il caso normale qui. */
+  const c = ritaglia(html, 'fontiCarica');
+  deve(c && /ME\.email/.test(c), 'non viene detto con quale utenza si è entrati');
 });
 
 let ko = 0;

@@ -9,36 +9,46 @@ Data: 4 agosto 2026 · Pacchetto di riferimento: «Analisi dei bisogni With Us»
 
 ---
 
-## 0. Quello che manca prima di poter scrivere codice
+## 0. Stato della specifica
 
-Il pacchetto **non è arrivato**. Dei caricamenti ci sono solo i due indici,
-`00 LEGGIMI.md` e `01 PROMPT MASTER`, che però danno per letti undici documenti
-e tre file grafici che non esistono da nessuna parte nel sistema:
+Il pacchetto completo è arrivato il 4 agosto 2026 ed è conservato in
+`docs/analisi-bisogni/`: 28 file, **27 verificati contro `SHA256SUMS.txt`,
+zero discordanze**. Sta nel repository e non nella cartella dei caricamenti
+perché quella è temporanea, e senza copia la specifica di questa funzione
+sarebbe sparita col contenitore.
 
-| Manca | Cosa deciderebbe | Senza, cosa dovrei inventare |
-|---|---|---|
-| `02-SPEC-FUNZIONALE.md` | le domande dell'analisi | l'intero questionario |
-| `03-ARCHITETTURA-E-FLUSSI.md` | gli stati dell'invito | la macchina a stati |
-| `04-MODELLO-DATI.md` | tabelle, colonne, RLS | lo schema Supabase |
-| `05-API-CONTRATTI.md` | rotte, corpi, codici | ogni endpoint |
-| `06-MOTORE-RATING.md` | pesi e soglie | il punteggio, cioè il prodotto |
-| `07-PRIVACY-OTP-LINK.md` | testo privacy approvato, TTL, rate limit | il testo legale |
-| `08-REPORT-PDF.md` | contenuto dei due report | il layout |
-| `09`, `10`, `11` | prove, accettazione, rilascio | i criteri |
-| `assets/…premium-v4.html` | il disegno | la grafica |
-| i due PDF campione | l'aspetto dei report | idem |
+Oltre agli undici documenti c'è una cartella `reference/` che l'indice non
+annunciava e che contiene **codice funzionante**, non descrizioni:
 
-Cinque di queste voci non sono dettagli: il questionario, i pesi del rating e
-il testo privacy sono **il prodotto**. Inventarli produrrebbe una funzione che
-somiglia a quella chiesta e non lo è — e su un rating che il cliente firma con
-OTP, sbagliare i pesi non è un difetto estetico.
+| File | Cosa risolve |
+|---|---|
+| `analisi-bisogni-rating.mjs` | il motore completo: pesi, soglie, motivi, `VERSIONE_REGOLE = 'ABR-1.0.0'` |
+| `analisi-bisogni-rating.test.mjs` | le sue prove, già scritte |
+| `inviti-sicuri.mjs` + prove | token, hash, scadenza, revoca — con `timingSafeEqual` |
+| `genera-pdf-playwright.mjs` | il PDF lato server |
+| `analisi-bisogni-schema-proposta.sql` | lo schema Supabase |
+| `report-data.example.json` | la forma dello snapshot |
+| `pdf-visual-source-reportlab.py` | il sorgente dei PDF campione |
 
-Il prompt master lo prevede: fra i risultati attesi del passo 1 c'è
-«eventuali dati o contratti mancanti». Questo è l'elenco.
+Rispetto al solo prototipo grafico, il modulo di riferimento aggiunge due cose
+che nel browser non c'erano e che cambiano il risultato: lo stato **grigio**
+per dati insufficienti (`statoCategoria`, urgenza `-100`) e un indice
+complessivo che **esclude** le categorie grigie e ripesa su quelle rimaste
+(`calcolaIndiceComplessivo`). Il prototipo pesava sempre 50/30/20 sulle prime
+tre, comprese quelle senza dati: avrebbe stampato un numero anche quando non
+c'era niente su cui calcolarlo.
 
-**Serve il caricamento della cartella `withus-analisi-bisogni-claude-code/`
-completa più `assets/`.** Tutto il resto di questo documento è già fatto e non
-va rifatto.
+### L'unica cosa che manca ancora
+
+Il **testo privacy approvato**. Non è una dimenticanza del pacchetto: è una
+decisione dell'agenzia. Il prototipo lo marca alla riga 308
+(`privacyVersion: 'DA SOSTITUIRE CON VERSIONE APPROVATA'`) e `07-PRIVACY-OTP-LINK.md`
+§1 lo chiede esplicitamente prima del rilascio.
+
+Non blocca il lavoro. Si costruisce con il testo Mod. PR01 già usato in
+produzione (`QUOTE/server/sign.js:382`), versionato come provvisorio e
+sostituibile senza toccare il codice. Va sostituito **prima** che un cliente
+vero firmi.
 
 ---
 
@@ -116,9 +126,11 @@ produzione, non va cambiata per questa funzione.
 
 ## 3. Rischi trovati leggendo, non ipotizzati
 
-1. **Playwright non c'è nel motore.** La fase E dice «riusa Playwright già
-   presente». Playwright è nei dieci `scraper/*/package.json`, **non** in
-   `server/`: nessun `import` di playwright in tutto `server/`. Renderizzare i
+1. **Playwright non c'è nel motore.** `08-REPORT-PDF.md` §4 dice «Il backend
+   dispone già di Playwright» e la fase E ci costruisce sopra. Non è così:
+   Playwright è nei dieci `scraper/*/package.json`, **non** in `server/`, e in
+   tutto `server/` non esiste un solo `import` di playwright. È l'unico punto
+   in cui il pacchetto descrive un sistema diverso da quello vero. Renderizzare i
    PDF lato motore vuol dire aggiungere una dipendenza pesante (con Chromium)
    al processo che serve anche posta, firme e pagamenti. `sign.js` oggi risolve
    lo stesso problema **senza** Playwright: genera HTML stampabile

@@ -749,14 +749,12 @@ input[type=file]{display:none;}
 .wds-gh:hover{background:var(--d-green-soft)}
 .wds-gh b{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--d-muted)}
 .wds-gh span{font-size:14px;font-weight:700;color:var(--d-ink);margin-top:1px}
-/* Oggi ha la stessa scatola di tutti gli altri giorni: stessa altezza,
-   stesso fondo, stessi bordi. Prima la colonna era tinta di verde e
-   l'intestazione aveva un fondo suo, e la somma delle due faceva sembrare
-   quel giorno un blocco piu' alto e piu' stretto — la colonna di oggi si
-   leggeva peggio proprio di quelle che non servono.
-   Resta riconoscibile dal numero, come nel mese: e' un segnale, non una
-   sottolineatura di tutta la colonna. */
-.wds-col.oggi .wds-gh span{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 4px;border-radius:7px;background:var(--d-green);color:#fff}
+/* NESSUNO stile specifico per oggi nella settimana. Ci ho provato tre volte —
+   colonna tinta, intestazione col fondo, numero col badge — e ogni volta quel
+   giorno finiva per leggersi peggio degli altri: e' la colonna che si guarda
+   di piu', e qualsiasi cosa la renda diversa la rende anche piu' faticosa.
+   Oggi si trova gia' da solo: c'e' il tasto «Oggi» nella barra, e la
+   settimana mostrata e' scritta accanto. Un segnale in piu' non serviva. */
 /* Fascia oraria: stessa altezza a sinistra e dentro i giorni. */
 .wds-o,.wds-fascia{height:72px;flex:0 0 72px;border-top:1px solid var(--d-line)}
 .wds-o{font-size:9px;color:var(--d-muted);text-align:right;padding:5px 6px 0 0}

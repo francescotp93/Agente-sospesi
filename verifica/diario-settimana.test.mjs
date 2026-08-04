@@ -160,8 +160,10 @@ prova('oggi ha la stessa scatola degli altri giorni', () => {
   const css = html.replace(/\s+/g, ' ');
   deve(!/\.wds-col\.oggi\{background/.test(css), 'la colonna di oggi è ancora tinta');
   deve(!/\.wds-col\.oggi \.wds-gh\{background/.test(css), 'l\'intestazione di oggi ha ancora un fondo suo');
-  deve(/\.wds-col\.oggi \.wds-gh span\{[^}]*background:var\(--d-green\)/.test(css),
-    'oggi non è più riconoscibile dal numero');
+  /* Nessuno stile specifico per oggi, nemmeno sul numero: e' la colonna che
+     si guarda di piu', e qualsiasi cosa la renda diversa la rende anche piu'
+     faticosa da leggere. Si trova gia' dal tasto «Oggi» nella barra. */
+  deve(!/\.wds-col\.oggi/.test(css), 'la colonna di oggi ha ancora uno stile suo nella settimana');
 });
 
 let ko = 0;

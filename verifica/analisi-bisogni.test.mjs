@@ -188,6 +188,23 @@ prova('i colori del disegno restano dentro la schermata', () => {
     'una classe del prototipo è entrata senza prefisso: collide col resto di IAM');
 });
 
+prova('si ancora solo la testa della colonna, non la colonna intera', () => {
+  /* Un elemento sticky PIU' ALTO del contenitore che scorre viene ancorato
+     dal browser per il bordo inferiore, e la sua cima finisce a coordinata
+     negativa. Misurato: colonna 552px in un'area di 500px, titolo a y=-73 e
+     l'anello dell'indice tagliato via. Su uno schermo alto non si vede, ed è
+     per questo che serve una prova invece della buona memoria. */
+  const lato = html.slice(html.indexOf('#panel-analisi .ab-lato{'), html.indexOf('}', html.indexOf('#panel-analisi .ab-lato{')));
+  deve(!/position:\s*sticky/.test(lato), 'la colonna intera è tornata sticky: su schermi bassi taglia l\'indice');
+  const cima = html.slice(html.indexOf('#panel-analisi .ab-lato-cima{'), html.indexOf('}', html.indexOf('#panel-analisi .ab-lato-cima{')));
+  deve(/position:\s*sticky/.test(cima), 'la testa della colonna non è più agganciata');
+  /* Gli scostamenti di uno sticky si misurano dal riquadro INTERNO del
+     contenitore che scorre: se l'ancoraggio non compensa il margine del
+     pannello resta una fessura da cui passa il contenuto che scorre. Le due
+     misure devono restare legate. */
+  deve(/--ab-cima/.test(cima), 'l\'ancoraggio non è legato al margine del pannello: tornerebbe la fessura');
+});
+
 prova('niente dati dimostrativi del prototipo', () => {
   /* Il prototipo gira su quattro clienti finti. Un gestionale che mostra
      Mario Rossi accanto ai clienti veri non è una demo: è un errore che

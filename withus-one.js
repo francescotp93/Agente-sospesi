@@ -317,6 +317,12 @@
            del preventivatore (IAM.md §4). */
         { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: function(){ vai('fonti'); } },
         { l: 'Campagne email', i: 'i-mail', go: Q('campagne') },
+        /* Il pacchetto la collocava in «Strumenti > Marketing > Analisi dei
+           bisogni», ma questo menu ha due livelli e non tre. Sta accanto alle
+           campagne email, che e' l'altra funzione di marketing: aggiungere un
+           terzo livello per una voce sola avrebbe voluto dire riscrivere il
+           menu di tutto il gestionale. */
+        { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function(){ vai('analisi'); } },
         { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
         { hr: true },
         { l: 'Banca dati ANIA', i: 'i-db', ext: ANIA },
@@ -348,6 +354,9 @@
        effetto, perche' quella mappa si legge solo quando la scheda aperta e'
        il preventivatore: la barra restava a «IAM > IAM». */
     fonti:       ['Fonti compagnie', 'Strumenti'],
+    /* Qui e non in TITOLI_QUOTO, per la stessa ragione scritta sopra per le
+       Fonti: quella mappa si legge solo a preventivatore aperto. */
+    analisi:     ['Analisi dei bisogni', 'Strumenti'],
     carica:      ['Contabilità', 'Contabilità'],
     team:        ['Collaboratori', 'Agenzia'],
     pipeline:    ['Trattative', 'Clienti'],
@@ -418,6 +427,7 @@
     quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'clienti', lab: 'strumenti',
+    fonti: 'strumenti', analisi: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
   };
 

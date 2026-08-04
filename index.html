@@ -520,82 +520,140 @@ input[type=file]{display:none;}
    dettaglio di quello che si sta guardando. Sotto i 1100 px le colonne
    laterali passano sopra e sotto la griglia: su un telefono tre colonne
    affiancate non si leggono. */
-.wds-barra{display:flex;align-items:center;gap:10px;padding:12px 12px 6px;flex-wrap:wrap}
-.wds-nav{background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:16px;line-height:1.2;color:var(--txt)}
-.wds-nav:hover{border-color:var(--acc)}
-.wds-titolo{font-size:14px;font-weight:700;min-width:200px}
-.wds-oggi{background:var(--acc);border:none;color:#fff;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
-.wds-conta{font-size:12px;color:var(--txt3);margin-left:auto}
+/* ══ DIARIO DI LAVORO — kit grafico consegnato il 4/8/2026 ═════════════
+   Il design e' quello del prototipo, applicato com'e' stato consegnato.
 
-.wds-layout{display:grid;grid-template-columns:230px minmax(0,1fr) 250px;gap:10px;padding:0 12px 14px;align-items:start}
-@media(max-width:1100px){.wds-layout{grid-template-columns:minmax(0,1fr)}}
-.wds-pan{background:var(--surf);border:.5px solid var(--bord2);border-radius:12px;overflow:hidden}
-.wds-pan-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:.5px solid var(--bord2)}
-.wds-pan-h h3{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.2px}
-.wds-badge{background:var(--acc);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
-.wds-stato{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surf2);color:var(--txt3)}
-.wds-stato.aperta{background:#fff4e6;color:#b06a00}
-.wds-stato.ok{background:#eaf7ef;color:#1c6b42}
+   La tavolozza e' DICHIARATA QUI e vale solo dentro #panel-workdiary: e'
+   una tavolozza chiara e fissa, e senza questo confinamento uscirebbe dal
+   diario e sfonderebbe il tema scuro nel resto del gestionale. */
+#panel-workdiary{
+  --d-green:#087747; --d-green-deep:#05613a; --d-green-soft:#e8f5ee;
+  --d-teal:#176d78;  --d-teal-soft:#eaf4f5;
+  --d-amber:#a7650b; --d-amber-soft:#fff5e5;
+  --d-red:#b83a31;   --d-red-soft:#fff0ee;
+  --d-ink:#14201c;   --d-muted:#68756f;
+  --d-line:#dfe6e2;  --d-line-strong:#ccd7d2;
+  --d-surf:#fff;     --d-surf2:#f8faf9;  --d-bg:#f3f6f5;
+  --d-shadow:0 10px 28px rgba(20,32,28,.07);
+  background:var(--d-bg); color:var(--d-ink); font-size:14px; line-height:1.4;
+}
+#panel-workdiary button,#panel-workdiary input,#panel-workdiary select,#panel-workdiary textarea{font:inherit}
 
-.wds-coda{max-height:520px;overflow:auto;padding:6px}
-.wds-task{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:9px;cursor:pointer;transition:background .12s}
-.wds-task:hover{background:var(--surf2)}
-.wds-task.ritardo b{color:#b3261e}
-.wds-task b{display:block;font-size:12.5px;font-weight:600;line-height:1.3}
-.wds-task span{display:block;font-size:11px;color:var(--txt3);margin-top:1px}
-.wds-mark{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:4px;background:var(--acc)}
-.wds-mark.urgente{background:#e8833a}
-.wds-mark.fatto{background:#9aa3bd}
-.wds-vuoto{padding:16px 12px;font-size:12.5px;color:var(--txt3);text-align:center}
+/* La barra in alto: le viste a sinistra, l'azione verde a destra. */
+.wd-top{min-height:62px;display:flex;align-items:center;gap:16px;padding:10px 14px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--d-line)}
+.wd-viste{display:flex;align-items:center;gap:6px;margin-right:auto;flex-wrap:wrap}
+.wd-c,.wd-p,.wd-ib{min-height:36px;border:1px solid var(--d-line);border-radius:8px;background:#fff;color:var(--d-ink);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 11px;font-weight:700;font-size:12px}
+.wd-c:hover,.wd-ib:hover{background:var(--d-surf2)}
+.wd-c.act{background:var(--d-ink);border-color:var(--d-ink);color:#fff}
+.wd-p{background:var(--d-green);border-color:var(--d-green);color:#fff}
+.wd-p:hover{background:var(--d-green-deep)}
+.wd-ib{width:36px;padding:0}
 
-/* La griglia: una colonna per le ore, sette per i giorni. */
-.wds-cal{overflow:auto}
-/* Vista Giorno. Riusa i colori e le misure gia' in uso nella settimana:
-   i valori vivono nelle variabili del tema, non qui dentro, cosi' il diario
-   segue il tema chiaro e quello scuro senza una riga in piu'. */
-.wdg-somma{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--bord2);border:.5px solid var(--bord2);border-radius:var(--rs);overflow:hidden;margin-bottom:10px}
-.wdg-s{background:var(--surf2);padding:10px 12px}
-.wdg-s span{display:block;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}
-.wdg-s b{display:block;font-size:15px;margin-top:3px}
+/* La seconda barra: il periodo, uguale per tutte le viste. */
+.wd-sub{display:flex;align-items:center;gap:12px;padding:10px 14px;background:#fff;border-bottom:1px solid var(--d-line);flex-wrap:wrap}
+.wd-per{display:flex;align-items:center;gap:6px;margin-right:auto}
+.wd-per-l{min-width:190px;text-align:center;font-weight:800;font-size:13px}
+.wd-quiet{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--d-line);border-radius:999px;background:var(--d-surf2);color:var(--d-muted);padding:4px 8px;font-size:10px;font-weight:750}
+
+/* Tre colonne: la coda, il calendario, il dettaglio. */
+.wds-layout{display:grid;grid-template-columns:236px minmax(0,1fr) 286px;gap:14px;padding:16px clamp(12px,2vw,26px) 30px;align-items:start;min-width:0}
+.wds-pan{background:var(--d-surf);border:1px solid var(--d-line);border-radius:8px;box-shadow:var(--d-shadow);min-width:0;overflow:hidden}
+.wds-pan-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid var(--d-line)}
+.wds-pan-h h3{font-size:13px;margin:0}
+.wds-badge{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:999px;background:var(--d-green-soft);color:var(--d-green);font-size:10px;font-weight:800;padding:0 6px}
+.wds-stato{border-radius:999px;padding:3px 8px;font-size:9px;font-weight:800;background:#edf0ee;color:#68736e}
+.wds-stato.ok{background:var(--d-green-soft);color:var(--d-green-deep)}
+.wds-stato.aperta{background:var(--d-amber-soft);color:var(--d-amber)}
+
+/* La coda: una barretta colorata a sinistra, titolo e riga di contesto. */
+.wds-coda{padding:5px}
+.wds-ci{width:100%;display:grid;grid-template-columns:4px minmax(0,1fr);gap:9px;border:0;border-bottom:1px solid var(--d-line);background:transparent;text-align:left;padding:10px 8px;border-radius:6px;cursor:pointer}
+.wds-ci:last-child{border-bottom:0}
+.wds-ci:hover,.wds-ci.sel{background:var(--d-surf2)}
+.wds-ci.sel{box-shadow:inset 3px 0 0 var(--d-green)}
+/* L'arretrato si distingue anche SENZA leggere: la riga di contesto lo dice
+   a parole, ma chi scorre la coda guarda il colore, non il testo. Ambra,
+   perche' nel kit vuol dire «da fare», non «errore». */
+.wds-ci.ritardo{background:var(--d-amber-soft)}
+.wds-ci.ritardo .wds-cm{background:var(--d-amber)}
+.wds-ci.ritardo small{color:var(--d-amber);font-weight:700}
+.wds-cm{border-radius:999px;background:var(--d-green)}
+.wds-cm.urgente{background:var(--d-red)}
+.wds-cm.fatto{background:var(--d-teal)}
+.wds-ci b,.wds-ci small{display:block}
+.wds-ci b{font-size:11px}
+.wds-ci small{font-size:10px;color:var(--d-muted);margin-top:2px}
+.wds-vuoto{padding:22px 14px;text-align:center;color:var(--d-muted);font-size:11px}
+
+/* La griglia della settimana. */
+.wds-griglia{display:grid;grid-template-columns:54px repeat(7,minmax(112px,1fr));min-width:850px}
+.wds-wrap{overflow:auto}
+.wds-ang,.wds-gh{position:sticky;top:0;z-index:2;background:var(--d-surf2);border-bottom:1px solid var(--d-line);border-right:1px solid var(--d-line);min-height:58px}
+.wds-gh{border-top:0;border-left:0;padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wds-gh:hover{background:var(--d-green-soft)}
+.wds-gh.oggi{background:var(--d-green-soft);color:var(--d-green-deep)}
+.wds-gh b{font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.wds-gh span{font-size:9px;color:var(--d-muted);margin-top:2px;font-weight:400}
+.wds-o{min-height:72px;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);padding:7px 6px;text-align:right;font-size:9px;color:var(--d-muted);background:var(--d-surf2)}
+.wds-cella{min-height:72px;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);padding:4px;display:grid;align-content:start;gap:4px}
+.wds-cella:hover{background:#fbfdfc}
+
+/* L'attivita': barretta a sinistra col colore del suo stato. */
+.wds-ev{width:100%;border:0;border-left:3px solid var(--d-green);border-radius:6px;background:var(--d-green-soft);color:var(--d-ink);text-align:left;padding:5px 6px;min-width:0;cursor:pointer;display:block}
+.wds-ev:hover{filter:brightness(.98)}
+.wds-ev.sel{outline:2px solid var(--d-green);outline-offset:-2px}
+.wds-ev.urgente{border-left-color:var(--d-red);background:var(--d-red-soft)}
+.wds-ev.fatto{border-left-color:var(--d-teal);background:var(--d-teal-soft)}
+.wds-ev i{display:block;font-size:9px;font-style:normal;font-weight:700}
+.wds-ev span{display:block;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Il pannello di dettaglio. */
+.wds-det{padding:13px}
+.wds-tit{font-size:13px;font-weight:700;padding-bottom:12px;border-bottom:1px solid var(--d-line)}
+.wds-r{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;padding:7px 0;border-bottom:1px solid var(--d-line);font-size:10px}
+.wds-r span{color:var(--d-muted)}
+.wds-r b{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.wds-note{border:1px solid var(--d-line);background:var(--d-surf2);border-radius:7px;padding:9px;font-size:10px;color:var(--d-muted);margin:10px 0}
+.wds-apri{margin-top:10px;width:100%;background:var(--d-green);border:1px solid var(--d-green);color:#fff;border-radius:8px;min-height:36px;font-size:12px;font-weight:700;cursor:pointer}
+.wds-apri:hover{background:var(--d-green-deep)}
+
+/* La giornata: i tre totali e l'agenda ora per ora. */
+.wdg-somma{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--d-line);background:var(--d-surf2)}
+.wdg-s{padding:10px 12px;border-right:1px solid var(--d-line)}
+.wdg-s:last-child{border-right:0}
+.wdg-s span,.wdg-s b{display:block}
+.wdg-s span{font-size:9px;color:var(--d-muted);text-transform:uppercase;letter-spacing:.06em}
+.wdg-s b{font-size:12px;margin-top:2px}
 .wdg-agenda{display:grid}
-.wdg-r{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:58px;border-top:.5px solid var(--bord2)}
-.wdg-r:first-child{border-top:0}
-.wdg-t{padding:9px 8px 0 0;background:var(--surf2);border-right:.5px solid var(--bord2);text-align:right;font-size:10.5px;color:var(--txt3)}
-.wdg-s2{padding:5px 6px;display:grid;gap:5px;align-content:start}
-.wdg-vuoto{padding:26px 14px;text-align:center;color:var(--txt3);font-size:12px}
-@media(max-width:640px){.wdg-somma{grid-template-columns:1fr}.wdg-r{grid-template-columns:48px minmax(0,1fr)}}
-.wds-griglia{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr));min-width:740px}
-.wds-ore,.wds-col{display:flex;flex-direction:column}
-.wds-ang{height:38px;border-bottom:.5px solid var(--bord2)}
-.wds-o{height:44px;font-size:10.5px;color:var(--txt3);text-align:right;padding:2px 6px 0 0;border-top:.5px solid var(--bord2)}
-.wds-col{border-left:.5px solid var(--bord2)}
-.wds-col.oggi{background:rgba(16,163,127,.045)}
-.wds-gh{height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-bottom:.5px solid var(--bord2)}
-.wds-gh b{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3)}
-.wds-gh span{font-size:14px;font-weight:700}
-.wds-col.oggi .wds-gh span{color:var(--acc)}
-.wds-senzora{min-height:0;padding:0 3px}
-.wds-senzora:not(:empty){padding:3px}
-.wds-fascia{height:44px;border-top:.5px solid var(--bord2);padding:2px 3px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.wdg-r{display:grid;grid-template-columns:62px minmax(0,1fr);min-height:64px;border-bottom:1px solid var(--d-line)}
+.wdg-t{padding:11px 8px;background:var(--d-surf2);border-right:1px solid var(--d-line);text-align:right;font-size:9px;color:var(--d-muted)}
+.wdg-s2{padding:6px;display:grid;gap:5px;align-content:start}
+.wdg-s2 .wds-ev{max-width:560px;padding:8px 10px}
+.wdg-s2 .wds-ev i{font-size:11px}
+.wdg-s2 .wds-ev span{font-size:9px}
+.wdg-vuoto{padding:26px 14px;text-align:center;color:var(--d-muted);font-size:11px}
 
-/* Un'attivita' nella griglia. Il colore non e' l'unico segnale: c'e' sempre
-   l'ora e il titolo, perche' un pallino colorato da solo non si legge. */
-.wds-ev{background:#e7f4ef;border-left:3px solid #10a37f;border-radius:5px;padding:2px 5px;cursor:pointer;overflow:hidden;line-height:1.25}
-.wds-ev i{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:#0a7a55}
-.wds-ev span{display:block;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
-.wds-ev.urgente{background:#fdf1e6;border-left-color:#e8833a}
-.wds-ev.urgente i{color:#b06a00}
-.wds-ev.fatto{background:var(--surf2);border-left-color:#9aa3bd;opacity:.65}
-.wds-ev.fatto span{text-decoration:line-through}
-.wds-ev.sel{outline:2px solid var(--acc);outline-offset:-1px}
-
-.wds-det{padding:12px}
-.wds-tit{font-size:13.5px;font-weight:700;line-height:1.35;margin-bottom:10px}
-.wds-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:.5px solid var(--bord2);font-size:12px}
-.wds-r span{color:var(--txt3)}
-.wds-r b{font-weight:600;text-align:right}
-.wds-note{margin-top:10px;padding:9px 11px;background:var(--surf2);border-radius:8px;font-size:12px;line-height:1.45;color:var(--txt2)}
-.wds-apri{margin-top:12px;width:100%;background:var(--acc);border:none;color:#fff;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+/* Sotto i 1080px il dettaglio passa sotto; sotto i 760 si impila tutto e la
+   coda diventa a due colonne, come nel prototipo. */
+@media(max-width:1080px){
+  .wds-layout{grid-template-columns:210px minmax(0,1fr)}
+  .wds-layout>.wds-det-pan{grid-column:1/-1}
+}
+@media(max-width:760px){
+  .wds-layout{grid-template-columns:1fr;padding:10px}
+  .wd-per{width:100%;justify-content:space-between}
+  .wd-per-l{min-width:0;flex:1}
+  .wd-quiet{display:none}
+  .wds-coda{display:grid;grid-template-columns:1fr 1fr}
+  .wds-griglia{grid-template-columns:48px repeat(7,minmax(104px,1fr))}
+  .wdg-somma{grid-template-columns:1fr}
+  .wdg-s{border-right:0;border-bottom:1px solid var(--d-line)}
+}
+@media(max-width:440px){
+  .wd-viste .wd-c{font-size:0;width:36px;padding:0}
+  .wd-viste .wd-c i{font-size:17px}
+  .wds-coda{grid-template-columns:1fr}
+}
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=1">
 <link rel="stylesheet" href="withus-one.css?v=2">
@@ -1226,11 +1284,28 @@ input[type=file]{display:none;}
 
 <!-- WORK DIARY -->
 <div class="panel" id="panel-workdiary">
-  <div style="display:flex;gap:8px;padding:10px 12px 0;">
-    <button id="wd-tab-lista" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
-    <button id="wd-tab-sett" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('sett')"><i class="ti ti-layout-columns"></i> Settimana</button>
-    <button id="wd-tab-cal" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Mese</button>
-    <button id="wd-tab-giorno" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('giorno')"><i class="ti ti-calendar-event"></i> Giorno</button>
+  <!-- Barra delle viste e azione principale, come nel prototipo consegnato. -->
+  <div class="wd-top">
+    <nav class="wd-viste" aria-label="Vista del diario">
+      <button id="wd-tab-sett" class="wd-c act" type="button" onclick="selWDTab('sett')"><i class="ti ti-calendar-week"></i> Settimana</button>
+      <button id="wd-tab-cal" class="wd-c" type="button" onclick="selWDTab('cal')"><i class="ti ti-calendar-month"></i> Mese</button>
+      <button id="wd-tab-giorno" class="wd-c" type="button" onclick="selWDTab('giorno')"><i class="ti ti-calendar-event"></i> Giorno</button>
+      <button id="wd-tab-lista" class="wd-c" type="button" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
+    </nav>
+    <button class="wd-p" type="button" onclick="openWDModal(null)"><i class="ti ti-plus"></i> Nuova attività</button>
+  </div>
+
+  <!-- Il periodo si governa da UN posto solo, per tutte le viste. Prima ogni
+       vista aveva la sua barra: tre comandi identici in tre punti diversi, e
+       cambiando vista si perdeva il punto in cui si stava guardando. -->
+  <div class="wd-sub" id="wd-subbar">
+    <div class="wd-per">
+      <button class="wd-ib" type="button" onclick="wdPeriodo(-1)" aria-label="Periodo precedente"><i class="ti ti-chevron-left"></i></button>
+      <button class="wd-c" type="button" onclick="wdPeriodoOggi()">Oggi</button>
+      <strong class="wd-per-l" id="wd-per-l"></strong>
+      <button class="wd-ib" type="button" onclick="wdPeriodo(1)" aria-label="Periodo successivo"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div><span class="wd-quiet" id="wds-conta"></span></div>
   </div>
   <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
@@ -1268,22 +1343,16 @@ input[type=file]{display:none;}
        c'erano in un giorno, non A CHE ORA: per capire se una giornata era
        piena bisognava aprirla. ══════════════════════════════════════════ -->
   <div id="wd-sett" style="display:none">
-    <div class="wds-barra">
-      <button class="wds-nav" onclick="wdSettPrev()" title="Settimana precedente">‹</button>
-      <div class="wds-titolo" id="wds-titolo"></div>
-      <button class="wds-nav" onclick="wdSettNext()" title="Settimana successiva">›</button>
-      <button class="wds-oggi" onclick="wdSettOggi()">Oggi</button>
-      <span class="wds-conta" id="wds-conta"></span>
-    </div>
+    <span id="wds-titolo" hidden></span>
     <div class="wds-layout">
       <aside class="wds-pan">
         <div class="wds-pan-h"><h3>Da gestire oggi</h3><span class="wds-badge" id="wds-coda-n">0</span></div>
         <div class="wds-coda" id="wds-coda"></div>
       </aside>
-      <section class="wds-pan wds-cal">
-        <div class="wds-griglia" id="wds-griglia"></div>
+      <section class="wds-pan">
+        <div class="wds-wrap"><div class="wds-griglia" id="wds-griglia"></div></div>
       </section>
-      <aside class="wds-pan">
+      <aside class="wds-pan wds-det-pan">
         <div class="wds-pan-h"><h3>Dettaglio attività</h3><span class="wds-stato" id="wds-stato">—</span></div>
         <div class="wds-det" id="wds-det"></div>
       </aside>
@@ -1295,14 +1364,21 @@ input[type=file]{display:none;}
        chiedono guardandola: quante attivita', quante gia' chiuse, e quanto
        tempo e' gia' impegnato. -->
   <div id="wd-giorno" style="display:none">
-    <div class="wds-barra">
-      <button class="wds-nav" onclick="wdGiornoPrev()" title="Giorno precedente">‹</button>
-      <div class="wds-titolo" id="wdg-titolo"></div>
-      <button class="wds-nav" onclick="wdGiornoNext()" title="Giorno successivo">›</button>
-      <button class="wds-oggi" onclick="wdGiornoOggi()">Oggi</button>
+    <span id="wdg-titolo" hidden></span>
+    <div class="wds-layout" style="grid-template-columns:236px minmax(0,1fr) 286px">
+      <aside class="wds-pan">
+        <div class="wds-pan-h"><h3>Da gestire oggi</h3><span class="wds-badge" id="wdg-coda-n">0</span></div>
+        <div class="wds-coda" id="wdg-coda"></div>
+      </aside>
+      <section class="wds-pan">
+        <div class="wdg-somma" id="wdg-somma"></div>
+        <div class="wdg-agenda" id="wdg-agenda"></div>
+      </section>
+      <aside class="wds-pan wds-det-pan">
+        <div class="wds-pan-h"><h3>Dettaglio attività</h3><span class="wds-stato" id="wdg-stato">—</span></div>
+        <div class="wds-det" id="wdg-det"></div>
+      </aside>
     </div>
-    <div class="wdg-somma" id="wdg-somma"></div>
-    <div class="wds-pan"><div class="wdg-agenda" id="wdg-agenda"></div></div>
   </div>
 
   <div id="wd-cal" style="display:none">
@@ -8844,13 +8920,24 @@ function renderWDSett() {
   const cn = document.getElementById('wds-coda-n'); if (cn) cn.textContent = coda.length;
   const cd = document.getElementById('wds-coda');
   if (cd) cd.innerHTML = coda.length
-    ? coda.map(w => `<div class="wds-task ${w.data < oggi ? 'ritardo' : ''}" onclick="wdsApri('${esc(w.id)}')">
-        <span class="wds-mark ${wdsColore(w)}"></span>
-        <div><b>${esc(w.titolo || '(senza titolo)')}</b>
-        <span>${w.data < oggi ? 'in ritardo . ' + esc(w.data) : (w.ora ? esc(w.ora) : 'senza orario')}</span></div></div>`).join('')
-    : '<div class="wds-vuoto">Niente da gestire: la giornata e pulita.</div>';
+    ? coda.map(wdsVoceCoda).join('')
+    : '<div class="wds-vuoto">Niente da gestire: la giornata è pulita.</div>';
 
   wdsDettaglio(WDS_SEL);
+  wdEtichettaPeriodo();
+}
+
+/* Una voce della coda. Il contesto sotto il titolo dice la cosa piu' utile
+   che c'e': prima il ritardo, poi il cliente, poi l'ora. Ripetere l'ora quando
+   la voce e' in ritardo di tre giorni non aiuta nessuno. */
+function wdsVoceCoda(w) {
+  const oggi = wdsISO(new Date());
+  const ctx = w.data < oggi ? 'in ritardo · ' + esc(w.data)
+            : (w.cliente ? esc(w.cliente) : (w.ora ? esc(w.ora) : 'senza orario'));
+  const ritardo = w.data < oggi ? ' ritardo' : '';
+  return `<button class="wds-ci${ritardo} ${WDS_SEL === w.id ? 'sel' : ''}" type="button" onclick="wdsApri('${esc(w.id)}')">
+    <span class="wds-cm ${wdsColore(w)}"></span>
+    <span><b>${esc(w.titolo || '(senza titolo)')}</b><small>${ctx}</small></span></button>`;
 }
 
 function wdsChip(w) {
@@ -8883,6 +8970,46 @@ function wdGiornoNext() { wdGiornoVai(1); }
 /* Apre la vista Giorno su una data precisa (dalla settimana o dal mese). */
 function wdApriGiorno(ds) { WDG_DATA = ds; selWDTab('giorno'); }
 
+/* ══ IL PERIODO, GOVERNATO DA UN POSTO SOLO ═══════════════════════════════
+   Prima ogni vista aveva la sua barra con i suoi tre comandi: lo stesso
+   gesto scritto in tre punti, e cambiando vista si tornava sempre a oggi
+   perche' ogni vista teneva il proprio segnaposto. Qui il comando e' uno e
+   sa a quale vista sta parlando. */
+function wdVistaAttiva() {
+  for (const [id, k] of [['wd-sett','sett'], ['wd-cal','cal'], ['wd-giorno','giorno'], ['wd-lista','lista']]) {
+    const e = document.getElementById(id);
+    if (e && e.style.display !== 'none') return k;
+  }
+  return 'sett';
+}
+function wdPeriodo(dir) {
+  const v = wdVistaAttiva();
+  if (v === 'sett') { dir < 0 ? wdSettPrev() : wdSettNext(); }
+  else if (v === 'cal') { dir < 0 ? wdCalPrev() : wdCalNext(); }
+  else if (v === 'giorno') { wdGiornoVai(dir); }
+  wdEtichettaPeriodo();
+}
+function wdPeriodoOggi() {
+  const v = wdVistaAttiva();
+  if (v === 'sett') wdSettOggi();
+  else if (v === 'giorno') wdGiornoOggi();
+  else if (v === 'cal') { WD_CAL = new Date(); renderWDCal(); }
+  wdEtichettaPeriodo();
+}
+/* L'etichetta si prende dal titolo che ogni vista sa gia' calcolare: era
+   scritto in tre posti e bastava che uno cambiasse formato perche' le tre
+   viste dicessero il periodo in tre modi diversi. */
+function wdEtichettaPeriodo() {
+  const el = document.getElementById('wd-per-l');
+  if (!el) return;
+  const v = wdVistaAttiva();
+  const da = v === 'giorno' ? 'wdg-titolo' : v === 'cal' ? 'wd-cal-title' : 'wds-titolo';
+  const src = document.getElementById(da);
+  el.textContent = (src && src.textContent.trim()) || '';
+  const sub = document.getElementById('wd-subbar');
+  if (sub) sub.style.display = (v === 'lista') ? 'none' : '';
+}
+
 /* Il tempo gia' impegnato. Conta solo le attivita' con un'ora di fine: una
    voce senza fine non vale zero minuti, vale «non si sa» — e sommarla come
    zero farebbe sembrare libera una giornata che non lo e'. Per questo il
@@ -8901,6 +9028,24 @@ function wdgTempo(lista) {
     testo: `${h ? h + 'h ' : ''}${m ? m + 'm' : (h ? '' : '0m')}`.trim(),
     nota: contate === lista.length ? 'tutte le attività' : `su ${contate} di ${lista.length}`
   };
+}
+
+/* I due pannelli laterali della giornata. La vista Giorno ha la stessa
+   struttura della settimana — coda a sinistra, dettaglio a destra — perche'
+   passare da una all'altra non deve voler dire reimparare dove stanno le
+   cose: cambia il centro, non la stanza. */
+function wdgPannelli(lista) {
+  const oggi = wdsISO(new Date());
+  const coda = (WD || []).filter(w => w.stato !== 'completato' && w.data && w.data <= oggi)
+    .sort((a,b) => (a.data === b.data ? String(a.ora||'').localeCompare(String(b.ora||'')) : a.data.localeCompare(b.data)));
+  const cn = document.getElementById('wdg-coda-n'); if (cn) cn.textContent = coda.length;
+  const cd = document.getElementById('wdg-coda');
+  if (cd) cd.innerHTML = coda.length
+    ? coda.map(wdsVoceCoda).join('')
+    : '<div class="wds-vuoto">Niente da gestire: la giornata è pulita.</div>';
+  /* Se non si sta guardando niente, si mostra la prima cosa del giorno:
+     un pannello vuoto accanto a una giornata piena non dice niente. */
+  wdsDettaglio(WDS_SEL || (lista[0] || {}).id, 'wdg-det', 'wdg-stato');
 }
 
 function renderWDGiorno() {
@@ -8939,10 +9084,12 @@ function renderWDGiorno() {
          + `<div class="wdg-s2">${dentro.map(wdsChip).join('')}</div></div>`;
   }).join('');
   ag.innerHTML = h;
+  wdgPannelli(lista);
+  wdEtichettaPeriodo();
 }
 
-function wdsDettaglio(id) {
-  const box = document.getElementById('wds-det'), st = document.getElementById('wds-stato');
+function wdsDettaglio(id, idBox, idStato) {
+  const box = document.getElementById(idBox || 'wds-det'), st = document.getElementById(idStato || 'wds-stato');
   if (!box) return;
   const w = (WD || []).find(x => String(x.id) === String(id));
   if (!w) {

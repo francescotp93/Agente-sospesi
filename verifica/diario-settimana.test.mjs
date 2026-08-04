@@ -95,7 +95,12 @@ prova('«da gestire oggi» comprende anche quello rimasto indietro', () => {
   const r = corpoDi('function renderWDSett()');
   deve(/w\.data <= oggi/.test(r), 'la coda guarda solo il giorno di oggi: gli arretrati spariscono');
   deve(/stato !== 'completato'/.test(r), 'la coda mostra anche quello che è già stato fatto');
-  deve(/ritardo/.test(r) && /wds-task\.ritardo/.test(html), 'un arretrato non si distingue da una cosa di oggi');
+  /* L'arretrato deve distinguersi a colpo d'occhio, non solo a parole.
+     La coda e' disegnata da wdsVoceCoda(), estratta da renderWDSett() quando
+     la giornata ha smesso di essere l'unica vista a mostrarla. */
+  const c = corpoDi('function wdsVoceCoda(w)');
+  deve(c && /ritardo/.test(c), 'la voce di coda non segna l\'arretrato');
+  deve(/\.wds-ci\.ritardo/.test(html), 'un arretrato non si distingue da una cosa di oggi');
 });
 
 // ── 6. Il colore non è l'unico segnale ───────────────────────────────────────
@@ -111,12 +116,12 @@ prova('ogni attività porta scritto l\'orario e il titolo, non solo un colore', 
 prova('titoli e note passano dalla ripulitura', () => {
   /* I titoli li scrivono i collaboratori. Senza esc() basta un apice nel
      titolo per rompere la griglia — e un tag per fare di peggio. */
-  for (const f of ['function wdsChip(w)', 'function wdsDettaglio(id)']) {
+  for (const f of ['function wdsChip(w)', 'function wdsDettaglio(id']) {
     const c = corpoDi(f);
     deve(c, 'manca ' + f);
     deve(!/\$\{w\.(titolo|note|tipo|luogo)\}/.test(c), f + ': un campo esce senza ripulitura');
   }
-  const d = corpoDi('function wdsDettaglio(id)');
+  const d = corpoDi('function wdsDettaglio(id');
   deve(/escNl\(w\.note\)/.test(d), 'le note non conservano gli a capo (o non sono ripulite)');
 });
 

@@ -140,7 +140,7 @@ prova('ora di fine, cliente e prodotto: si scrivono, si salvano, si rileggono', 
     deve(apri.includes(id), 'aprendo in modifica il campo ' + id + ' resta vuoto');
     deve(apri.includes(campo), 'aprendo in modifica non si rilegge ' + campo);
   }
-  const det = corpoDi('function wdsDettaglio(id)');
+  const det = corpoDi('function wdsDettaglio(id');
   deve(det && /w\.cliente/.test(det) && /w\.prodotto/.test(det), 'il dettaglio non mostra cliente e prodotto');
 });
 
@@ -148,7 +148,7 @@ prova('ora di fine, cliente e prodotto: si scrivono, si salvano, si rileggono', 
 prova('i campi nuovi passano dalla ripulitura', () => {
   /* Cliente lo scrive una persona di fretta: basta un apice per rompere il
      pannello, e un tag per fare di peggio. */
-  const det = corpoDi('function wdsDettaglio(id)');
+  const det = corpoDi('function wdsDettaglio(id');
   deve(det, 'manca wdsDettaglio');
   deve(!/\$\{w\.(cliente|prodotto|ora_fine)\}/.test(det), 'un campo nuovo esce senza ripulitura');
   const g = corpoDi('function renderWDGiorno()');

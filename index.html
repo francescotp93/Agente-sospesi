@@ -941,7 +941,10 @@ input[type=file]{display:none;}
 #panel-analisi .ab-eti.verde{background:var(--ab-verde-tenue);color:var(--ab-verde-scuro)}
 #panel-analisi .ab-eti.grigio{background:var(--ab-grigio-bg);color:var(--ab-grigio)}
 /* ── Questionario ──────────────────────────────────────────────────────── */
-#panel-analisi .ab-q-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+/* Resta agganciata in alto mentre si scorre: nei passi lunghi — le otto
+   coperture, gli otto interessi — spariva subito, e con lei l'unica cosa
+   che dice a che punto sei di sette. */
+#panel-analisi .ab-q-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-20px -20px 20px;padding:14px 20px;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--ab-line);flex-wrap:wrap}
 #panel-analisi .ab-barra{width:220px;max-width:100%;height:6px;border-radius:999px;background:#e7ecef;overflow:hidden}
 #panel-analisi .ab-barra span{display:block;height:100%;background:linear-gradient(90deg,var(--ab-verde),var(--ab-verde-vivo));transition:width .35s}
 #panel-analisi .ab-passo-n{font-size:11.5px;font-weight:700;color:var(--ab-ink2);white-space:nowrap}
@@ -9136,6 +9139,19 @@ function abVista(quale){
     const e = document.getElementById('ab-vista-' + v);
     if (e) e.style.display = (v === quale) ? '' : 'none';
   }
+  abInCima();
+}
+
+/* Il pannello e' lui stesso il contenitore che scorre (.panel e' absolute
+   inset:0 con overflow-y:auto), e la posizione resta dov'era: dopo un passo
+   lungo come la privacy, tornando a uno corto si restava scorsi in basso e
+   il titolo della domanda finiva sopra il bordo, tagliato.
+   Si riporta in cima quando cambia il PASSO, non a ogni ridisegno: farlo
+   anche quando si spunta una casella butterebbe via la posizione a meta'
+   di un elenco lungo. */
+function abInCima(){
+  const p = document.getElementById('panel-analisi');
+  if (p) p.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function analisiAvvia(){
@@ -9156,10 +9172,10 @@ function analisiAvvia(){
   };
   AB_PASSO = 0;
   abVista('quest');
-  abDisegnaPasso();
+  abDisegnaPasso(true);
 }
 
-function abDisegnaPasso(){
+function abDisegnaPasso(scorri){
   const p = AB_PASSI[AB_PASSO];
   document.getElementById('ab-dom-i').innerHTML = '<i class="ti ' + p.icona + '"></i>';
   document.getElementById('ab-dom-t').textContent = p.titolo;
@@ -9169,6 +9185,7 @@ function abDisegnaPasso(){
   document.getElementById('ab-passo-n').textContent = 'Passo ' + (AB_PASSO + 1) + ' di ' + AB_PASSI.length;
   document.getElementById('ab-avanti').innerHTML = (AB_PASSO === AB_PASSI.length - 1)
     ? 'Mostra il risultato <i class="ti ti-sparkles"></i>' : 'Continua <i class="ti ti-arrow-right"></i>';
+  if (scorri) abInCima();
   abRicalcola();
 }
 
@@ -9307,12 +9324,12 @@ function abAvanti(){
   abSalvaPasso();
   const errore = abValida();
   if (errore) { abDisegnaPasso(); alert(errore); return; }
-  if (AB_PASSO < AB_PASSI.length - 1) { AB_PASSO++; abDisegnaPasso(); }
+  if (AB_PASSO < AB_PASSI.length - 1) { AB_PASSO++; abDisegnaPasso(true); }
   else abEsito();
 }
 function abIndietro(){
   abSalvaPasso();
-  if (AB_PASSO > 0) { AB_PASSO--; abDisegnaPasso(); }
+  if (AB_PASSO > 0) { AB_PASSO--; abDisegnaPasso(true); }
   else { abVista('console'); }
 }
 

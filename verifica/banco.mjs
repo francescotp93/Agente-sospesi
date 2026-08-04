@@ -47,6 +47,13 @@ export function ritaglia(sorgente, nome) {
     }
     if (c === '"' || c === "'" || c === '`') { dentroStringa = c; continue; }
     if (c === '/' && sorgente[j + 1] === '/') { j = sorgente.indexOf('\n', j); if (j < 0) break; continue; }
+    /* I commenti /* *\/ vanno saltati come quelli di riga. Qui dentro si
+       scrive in italiano, e in italiano ci sono gli apostrofi: senza questo
+       salto un «non c'e'» dentro un commento veniva letto come apertura di
+       stringa, il conteggio delle graffe si perdeva, e la funzione tornava
+       tagliata a meta' — con un errore che parlava di sintassi e non del
+       commento. */
+    if (c === '/' && sorgente[j + 1] === '*') { j = sorgente.indexOf('*/', j + 2); if (j < 0) break; j++; continue; }
     if (c === '{') liv++;
     else if (c === '}') { liv--; if (liv === 0) { j++; break; } }
   }

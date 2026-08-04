@@ -499,6 +499,104 @@ input[type=file]{display:none;}
 /* I bordi stanno sulle voci, non sui vuoti della griglia: con il gap colorato,
    la cella lasciata libera dall'ultima riga si vedeva come un riquadro grigio
    rotto. */
+/* ══ FONTI COMPAGNIE — design consegnato il 4/8/2026 ═══════════════════
+   Prima questa schermata viveva nel preventivatore e IAM la apriva dentro un
+   riquadro. E' una schermata di AMMINISTRAZIONE — credenziali dei portali —
+   e il preventivatore resta dedicato a preventivare (IAM.md §4).
+
+   Tavolozza confinata: e' una superficie chiara fissa, e libera sfonderebbe
+   il tema scuro nel resto del gestionale. */
+#panel-fonti{
+  --f-green:#087747; --f-green-dark:#065d39; --f-green-soft:#e7f4ed;
+  --f-teal:#176d66; --f-ink:#17211d; --f-muted:#6b7771; --f-bg:#f4f7f5;
+  --f-line:#dfe6e2; --f-amber:#a76008; --f-amber-bg:#fff3df;
+  --f-red:#ad3a32; --f-red-bg:#fdecea;
+  --f-shadow:0 10px 28px rgba(22,42,33,.07);
+  background:var(--f-bg); color:var(--f-ink); padding:22px 16px 40px;
+}
+#panel-fonti .f-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+#panel-fonti .f-head h1{font-size:25px;line-height:1.15;margin:0 0 5px;letter-spacing:-.03em}
+#panel-fonti .f-head p{margin:0;color:var(--f-muted);font-size:12px}
+#panel-fonti .f-b{height:38px;border-radius:8px;padding:0 13px;border:1px solid var(--f-line);background:#fff;color:var(--f-ink);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+#panel-fonti .f-b:hover{border-color:#b9c8c0}
+#panel-fonti .f-b.pri{background:var(--f-green);border-color:var(--f-green);color:#fff}
+#panel-fonti .f-b.pri:hover{background:var(--f-green-dark)}
+#panel-fonti .f-b:disabled{opacity:.6;cursor:wait}
+#panel-fonti .f-somma{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid var(--f-line);border-radius:8px;margin-bottom:12px}
+#panel-fonti .f-m{padding:13px 15px;display:flex;align-items:center;gap:10px;border-right:1px solid var(--f-line);min-width:0}
+#panel-fonti .f-m:last-child{border-right:0}
+#panel-fonti .f-m>i{width:31px;height:31px;border-radius:7px;background:#eff3f1;color:#5f6d66;display:grid;place-items:center;font-size:17px;flex:none}
+#panel-fonti .f-m.ok>i{color:var(--f-green);background:var(--f-green-soft)}
+#panel-fonti .f-m.warn>i{color:var(--f-amber);background:var(--f-amber-bg)}
+#panel-fonti .f-m b{display:block;font-size:16px}
+#panel-fonti .f-m span{display:block;color:var(--f-muted);font-size:10px;margin-top:2px}
+#panel-fonti .f-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+#panel-fonti .f-cerca{height:39px;width:min(350px,100%);display:flex;align-items:center;gap:8px;padding:0 11px;background:#fff;border:1px solid var(--f-line);border-radius:8px;color:var(--f-muted)}
+#panel-fonti .f-cerca:focus-within{border-color:var(--f-green);box-shadow:0 0 0 3px rgba(8,119,71,.11)}
+#panel-fonti .f-cerca input{width:100%;border:0;outline:0;background:transparent;font-size:12px;color:var(--f-ink)}
+#panel-fonti .f-filtri{padding:3px;background:#e8eeeb;border-radius:8px;display:flex}
+#panel-fonti .f-filtri button{border:0;background:transparent;color:var(--f-muted);font-size:11px;font-weight:700;padding:7px 11px;border-radius:6px;cursor:pointer}
+#panel-fonti .f-filtri button.act{background:#fff;color:var(--f-green);box-shadow:0 1px 3px rgba(20,40,31,.1)}
+#panel-fonti .f-sic{display:flex;align-items:center;gap:7px;margin:0 2px 14px;color:var(--f-muted);font-size:10.5px}
+#panel-fonti .f-sic i{color:var(--f-green);font-size:15px}
+#panel-fonti .f-lista{display:flex;flex-direction:column;gap:8px}
+#panel-fonti .f-src{background:#fff;border:1px solid var(--f-line);border-radius:8px;overflow:hidden}
+#panel-fonti .f-src.open{border-color:#bdd9cc;box-shadow:var(--f-shadow)}
+#panel-fonti .f-sh{width:100%;border:0;background:#fff;padding:13px 15px;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;cursor:pointer}
+#panel-fonti .f-sh:hover{background:#fbfdfc}
+#panel-fonti .f-co{display:flex;align-items:center;gap:10px;min-width:0}
+#panel-fonti .f-dot{width:9px;height:9px;border-radius:50%;flex:none;background:#a9b2ad}
+#panel-fonti .f-dot.attiva{background:#0b8b55;box-shadow:0 0 0 3px rgba(11,139,85,.12)}
+#panel-fonti .f-dot.scaduta{background:#d68618}
+#panel-fonti .f-dot.spento,#panel-fonti .f-dot.bloccata{background:#c6473e}
+#panel-fonti .f-ic{width:32px;height:32px;display:grid;place-items:center;border-radius:7px;background:#eef4f1;color:var(--f-teal);font-weight:800;font-size:11px;flex:none}
+#panel-fonti .f-co b,#panel-fonti .f-co small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel-fonti .f-co b{font-size:12.5px}
+#panel-fonti .f-co small{font-size:9.5px;color:var(--f-muted);margin-top:3px}
+#panel-fonti .f-meta{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex:none}
+#panel-fonti .f-bd{border-radius:999px;padding:4px 8px;font-size:9.5px;font-weight:700;white-space:nowrap;background:#edf0ee;color:#68736e}
+#panel-fonti .f-bd.attiva,#panel-fonti .f-bd.pronta{background:var(--f-green-soft);color:var(--f-green-dark)}
+#panel-fonti .f-bd.scaduta{background:var(--f-amber-bg);color:var(--f-amber)}
+#panel-fonti .f-bd.spento,#panel-fonti .f-bd.bloccata{background:var(--f-red-bg);color:var(--f-red)}
+#panel-fonti .f-corpo{display:none;border-top:1px solid var(--f-line);padding:15px;background:#fcfdfd}
+#panel-fonti .f-src.open .f-corpo{display:block}
+#panel-fonti .f-avviso{display:flex;align-items:flex-start;gap:8px;border-radius:8px;background:#eff5f2;padding:10px 11px;color:#56635d;font-size:10.5px;line-height:1.5;margin-bottom:11px}
+#panel-fonti .f-avviso i{color:var(--f-green);font-size:16px;flex:none}
+#panel-fonti .f-avviso.bloccata{background:var(--f-red-bg);color:var(--f-red)}
+#panel-fonti .f-avviso.bloccata i{color:var(--f-red)}
+#panel-fonti .f-card{background:#fff;border:1px solid var(--f-line);border-radius:8px;padding:14px}
+#panel-fonti .f-st{display:flex;align-items:center;gap:9px;margin-bottom:13px}
+#panel-fonti .f-st>i{width:29px;height:29px;border-radius:7px;display:grid;place-items:center;background:var(--f-green-soft);color:var(--f-green)}
+#panel-fonti .f-st b{display:block;font-size:11.5px}
+#panel-fonti .f-st small{display:block;font-size:9.5px;color:var(--f-muted);margin-top:2px}
+#panel-fonti .f-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#panel-fonti .f-f.full{grid-column:1/-1}
+#panel-fonti .f-f label{display:block;color:var(--f-muted);font-size:9px;font-weight:800;letter-spacing:.04em;margin:0 0 5px;text-transform:uppercase}
+#panel-fonti .f-f label span{font-weight:600;text-transform:none;letter-spacing:0}
+#panel-fonti .f-f input{width:100%;height:38px;border:1px solid var(--f-line);border-radius:8px;background:#fff;color:var(--f-ink);padding:0 10px;font-size:11.5px;outline:0}
+#panel-fonti .f-f input:focus{border-color:var(--f-green);box-shadow:0 0 0 3px rgba(8,119,71,.1)}
+#panel-fonti .f-hint{font-size:9.5px;color:var(--f-muted);line-height:1.5;margin-top:5px}
+#panel-fonti .f-az{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+#panel-fonti .f-adv{margin-top:12px;border:1px solid var(--f-line);border-radius:8px;background:#fff;overflow:hidden}
+#panel-fonti .f-adv summary{list-style:none;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+#panel-fonti .f-adv summary::-webkit-details-marker{display:none}
+#panel-fonti .f-adv-b{border-top:1px solid var(--f-line);padding:13px 14px;background:#fafcfb;color:var(--f-muted);font-size:11px;line-height:1.55}
+#panel-fonti .f-adv-g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#panel-fonti .f-adv-i{border:1px solid var(--f-line);border-radius:8px;background:#fff;padding:11px}
+#panel-fonti .f-adv-i i{color:var(--f-teal);font-size:18px}
+#panel-fonti .f-adv-i b{display:block;font-size:10.5px;margin:7px 0 3px;color:var(--f-ink)}
+#panel-fonti .f-adv-i span{display:block;font-size:9px;line-height:1.4}
+#panel-fonti .f-vuoto{text-align:center;padding:40px 14px;color:var(--f-muted);font-size:11px}
+#panel-fonti .f-vuoto i{display:block;font-size:26px;margin-bottom:7px}
+@media(max-width:760px){
+  #panel-fonti .f-somma{grid-template-columns:1fr 1fr}
+  #panel-fonti .f-m:nth-child(2){border-right:0}
+  #panel-fonti .f-tools{align-items:stretch;flex-direction:column}
+  #panel-fonti .f-cerca{width:100%}
+  #panel-fonti .f-filtri{display:grid;grid-template-columns:repeat(3,1fr)}
+  #panel-fonti .f-grid,#panel-fonti .f-adv-g{grid-template-columns:1fr}
+  #panel-fonti .f-f.full{grid-column:auto}
+}
 /* ══ SCRIVANIA — design consegnato il 4/8/2026 ═════════════════════════
    Applicato com'e' stato consegnato. I token sono quelli UFFICIALI With Us
    (--w1-*), gli stessi di withus-one-tokens.css: questo design, a differenza
@@ -2613,6 +2711,37 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- ══ FONTI COMPAGNIE ═══════════════════════════════════════════════════
+     Design consegnato il 4/8/2026. Vive in IAM, non nel preventivatore: e'
+     amministrazione (credenziali dei portali), e il preventivatore resta
+     dedicato a preventivare. -->
+<div class="panel" id="panel-fonti">
+  <section class="f-head">
+    <div>
+      <h1>Fonti compagnie</h1>
+      <p>Accessi e stato operativo dei portali collegati alla preventivazione.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="f-b" type="button" id="f-ric" onclick="fontiCarica(true)"><i class="ti ti-refresh"></i> Aggiorna</button>
+    </div>
+  </section>
+
+  <section class="f-somma" id="f-somma"></section>
+
+  <section class="f-tools">
+    <label class="f-cerca"><i class="ti ti-search"></i><input id="f-q" placeholder="Cerca compagnia" autocomplete="off" oninput="fontiDisegna()"></label>
+    <div class="f-filtri">
+      <button class="act" data-f="tutte" onclick="fontiFiltro('tutte')">Tutte</button>
+      <button data-f="gestire" onclick="fontiFiltro('gestire')">Da gestire</button>
+      <button data-f="pronte" onclick="fontiFiltro('pronte')">Pronte</button>
+    </div>
+  </section>
+
+  <div class="f-sic"><i class="ti ti-lock"></i><span>Credenziali cifrate sul server. Password e segreti salvati non vengono mai mostrati nel browser.</span></div>
+
+  <section class="f-lista" id="f-lista"><div class="f-vuoto">Carico lo stato delle fonti…</div></section>
+</div>
+
 <script>
 'use strict';
 
@@ -3335,6 +3464,10 @@ function goTab(t) {
     setTimeout(() => { quotoUrl().then(u => { window.location.href = u; }); }, 1400);
     return;
   }
+  /* Le fonti si ricaricano ogni volta che si apre la schermata: uno stato di
+     collegamento vecchio di dieci minuti e' peggio di nessuno stato, perche'
+     si crede a un «attiva» che non c'e' piu'. */
+  if (t === 'fonti') { fontiCarica(true); }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
       if (p) { PROFILO = p; applicaPermessi(p.ruolo); }
@@ -7931,6 +8064,204 @@ function renderLeo(backlog, cfg){
 async function leoToggle(on){
   try{ await db.from('agenti_config').upsert({agente:'leo',chiave:'autonomia',valore:{attivo:on,pubblica_basso_rischio:true,solo_dev_per_alto_rischio:true},aggiornato_il:new Date().toISOString()},{onConflict:'agente,chiave'}); }catch(e){ alert('Errore: '+(e.message||'')); }
 }
+/* ══ FONTI COMPAGNIE ══════════════════════════════════════════════════════
+   Le credenziali dei portali delle compagnie. E' la schermata piu' delicata
+   del sistema, e le regole del kit consegnato sono vincoli, non consigli:
+
+   1. SOLO SUPER ADMIN. Non e' un permesso fra gli altri: chi entra qui puo'
+      cambiare le credenziali con cui l'agenzia entra nei portali.
+   2. LE PASSWORD NON TORNANO MAI AL BROWSER. Il backend manda «salvata», non
+      il valore. I campi non si precompilano: vuoto vuol dire «non la cambio».
+   3. IL FRENO NON SI SCAVALCA. Dopo tre accessi falliti lo scraper smette di
+      bussare al portale. Uno stato «bloccata» si MOSTRA e si spiega: togliere
+      il freno da qui trasformerebbe un login sbagliato in un martellamento
+      che fa bloccare l'utenza dalla compagnia.
+   4. «RIUSCITO» LO DICE IL BACKEND. Mai scrivere che l'accesso e' andato a
+      buon fine solo perche' la richiesta e' partita.
+
+   Gli endpoint sono quelli che c'erano: /fonti, /fonti/:id/credenziali,
+   /fonti/:id/verifica. Non sono stati rinominati. */
+let FONTI = [], FONTI_FILTRO = 'tutte', FONTI_APERTA = null, FONTI_ULTIMO = 0;
+
+function fontiPuoEntrare() {
+  return ((ME && ME.email) || '').toLowerCase() === SUPER_ADMIN_EMAIL;
+}
+
+async function fontiCarica(forza) {
+  const box = document.getElementById('f-lista');
+  if (!box) return;
+  /* Il cancello si chiude qui e NON solo nel menu: una voce nascosta si
+     raggiunge comunque scrivendo l'indirizzo, e questa e' l'unica schermata
+     dove entrare per sbaglio significa vedere con quali utenze l'agenzia
+     entra nei portali. */
+  if (!fontiPuoEntrare()) {
+    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-lock"></i>Questa schermata è riservata al Super Admin.</div>';
+    const sm = document.getElementById('f-somma'); if (sm) sm.innerHTML = '';
+    return;
+  }
+  const ora = Date.now();
+  if (!forza && FONTI_ULTIMO && (ora - FONTI_ULTIMO) < 20000) { fontiDisegna(); return; }
+  FONTI_ULTIMO = ora;
+  const btn = document.getElementById('f-ric');
+  if (btn) btn.disabled = true;
+  try {
+    const d = await mailFetch('/fonti');
+    FONTI = (d && d.fonti) || [];
+    fontiDisegna();
+  } catch (e) {
+    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-plug-connected-x"></i>'
+      + esc(e.message || 'Motore non raggiungibile') + '</div>';
+  } finally { if (btn) btn.disabled = false; }
+}
+
+function fontiFiltro(f) {
+  FONTI_FILTRO = f;
+  document.querySelectorAll('#panel-fonti .f-filtri button').forEach(b =>
+    b.classList.toggle('act', b.dataset.f === f));
+  fontiDisegna();
+}
+
+/* «Pronta» vuol dire che non chiede niente a nessuno: sessione attiva o
+   configurata. Tutto il resto — scaduta, spenta, bloccata, da configurare —
+   e' roba da gestire, ed e' il filtro con cui si apre la giornata. */
+const FONTI_OK = ['attiva', 'pronta'];
+
+function fontiDisegna() {
+  const box = document.getElementById('f-lista');
+  if (!box) return;
+  const q = (document.getElementById('f-q')?.value || '').trim().toLowerCase();
+  const righe = FONTI.filter(f => {
+    const pronta = FONTI_OK.includes(f.stato);
+    if (FONTI_FILTRO === 'pronte' && !pronta) return false;
+    if (FONTI_FILTRO === 'gestire' && pronta) return false;
+    if (q && !((f.nome || '') + ' ' + (f.id || '') + ' ' + (f.stato || '')).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  fontiSomma();
+  box.innerHTML = righe.length
+    ? righe.map(fontiScheda).join('')
+    : '<div class="f-vuoto"><i class="ti ti-search-off"></i>Nessuna fonte con questa ricerca o questo filtro.</div>';
+}
+
+function fontiSomma() {
+  const sm = document.getElementById('f-somma');
+  if (!sm) return;
+  const attive = FONTI.filter(f => f.stato === 'attiva').length;
+  const pronte = FONTI.filter(f => f.stato === 'pronta').length;
+  const gestire = FONTI.filter(f => !FONTI_OK.includes(f.stato)).length;
+  sm.innerHTML =
+      `<div class="f-m"><i class="ti ti-plug-connected"></i><div><b>${FONTI.length}</b><span>fonti collegate</span></div></div>`
+    + `<div class="f-m ok"><i class="ti ti-circle-check"></i><div><b>${attive}</b><span>sessioni attive</span></div></div>`
+    + `<div class="f-m"><i class="ti ti-settings-check"></i><div><b>${pronte}</b><span>configurate</span></div></div>`
+    + `<div class="f-m ${gestire ? 'warn' : 'ok'}"><i class="ti ${gestire ? 'ti-alert-circle' : 'ti-shield-check'}"></i><div><b>${gestire}</b><span>da gestire</span></div></div>`;
+}
+
+const FONTI_STATO = {
+  attiva:   { l: 'Sessione attiva', i: 'ti-circle-check',  az: 'Nessuna azione richiesta' },
+  pronta:   { l: 'Configurata',     i: 'ti-shield-check',  az: 'Verifica l\'accesso' },
+  scaduta:  { l: 'Sessione scaduta', i: 'ti-login',        az: 'Rinnova l\'accesso' },
+  spento:   { l: 'Scraper spento',  i: 'ti-server-off',    az: 'Controlla lo scraper' },
+  bloccata: { l: 'Tentativi fermati', i: 'ti-hand-stop',   az: 'Serve un accesso nuovo dal pannello' }
+};
+function fontiInfo(st) {
+  return FONTI_STATO[st] || { l: st || 'Da configurare', i: 'ti-key', az: 'Inserisci le credenziali' };
+}
+
+function fontiScheda(f) {
+  const st = f.stato || '';
+  const info = fontiInfo(st);
+  const aperta = FONTI_APERTA === f.id;
+  const sigla = esc(String(f.nome || f.id || '?').slice(0, 2).toUpperCase());
+  /* Lo stato «bloccata» ha un avviso suo: e' l'unico che chiede un gesto
+     preciso, e confonderlo con «non attiva» fa perdere tempo a chi guarda. */
+  const avviso = st === 'bloccata'
+    ? `<div class="f-avviso bloccata"><i class="ti ti-hand-stop"></i><span>Il freno è tirato: dopo tre accessi falliti lo scraper ha smesso di bussare al portale, per non far bloccare l'utenza dalla compagnia. Si riparte con un accesso nuovo, non forzando da qui.</span></div>`
+    : '';
+  return `<article class="f-src ${aperta ? 'open' : ''}">
+    <button class="f-sh" type="button" aria-expanded="${aperta}" onclick="fontiApri('${esc(f.id)}')">
+      <span class="f-co">
+        <span class="f-dot ${esc(st)}"></span>
+        <span class="f-ic">${sigla}</span>
+        <span><b>${esc(f.nome || f.id)}</b><small><i class="ti ${info.i}"></i> ${esc(info.az)}</small></span>
+      </span>
+      <span class="f-meta">
+        <span class="f-bd ${esc(st)}">${esc(info.l)}</span>
+        <i class="ti ti-chevron-${aperta ? 'up' : 'down'}"></i>
+      </span>
+    </button>
+    <div class="f-corpo">
+      ${avviso}
+      <div class="f-card">
+        <div class="f-st"><i class="ti ti-key"></i><span><b>Credenziali e accesso</b><small>I valori salvati restano sul server e non vengono mostrati.</small></span></div>
+        <div class="f-grid">
+          <div class="f-f full"><label>Link di accesso</label><input id="f-url-${esc(f.id)}" value="${esc(f.url || '')}" placeholder="https://portale.compagnia.it/login"></div>
+          <div class="f-f"><label>Utente ${f.username ? '<span>· attuale ' + esc(f.username) + '</span>' : ''}</label><input id="f-user-${esc(f.id)}" autocomplete="off" placeholder="Nuovo username"></div>
+          <div class="f-f"><label>Password ${f.username ? '<span>· salvata</span>' : ''}</label><input id="f-pw-${esc(f.id)}" type="password" autocomplete="new-password" placeholder="${f.username ? 'Lascia vuoto per non cambiarla' : 'Password'}"></div>
+          <div class="f-f full"><div class="f-hint">Un campo lasciato vuoto non cambia niente. La password non viene mai rimandata al browser: qui non c'è nulla da precompilare.</div></div>
+        </div>
+        <div class="f-az">
+          <button class="f-b pri" type="button" onclick="fontiSalva('${esc(f.id)}')"><i class="ti ti-device-floppy"></i> Salva credenziali</button>
+          <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'scaduta' ? 'Rinnova accesso' : 'Verifica accesso'}</button>
+          <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:var(--f-muted)"></span>
+        </div>
+      </div>
+      <details class="f-adv">
+        <summary><span style="display:flex;align-items:center;gap:9px"><i class="ti ti-tool" style="color:var(--f-teal)"></i><span><b style="font-size:11.5px">Strumenti tecnici</b><small style="display:block;font-size:9.5px;color:var(--f-muted)">Diagnostica, fuori dal lavoro di ogni giorno</small></span></span><i class="ti ti-chevron-down"></i></summary>
+        <div class="f-adv-b"><div class="f-adv-g">
+          <div class="f-adv-i"><i class="ti ti-car"></i><b>Prova preventivo</b><span>Verifica il flusso con una targa di prova.</span></div>
+          <div class="f-adv-i"><i class="ti ti-device-desktop-analytics"></i><b>Cattura API</b><span>Registra le chiamate del portale, ripulite dai segreti.</span></div>
+          <div class="f-adv-i"><i class="ti ti-route"></i><b>Esplora portale</b><span>Mappa campi e passaggi per la diagnostica.</span></div>
+        </div>
+        <div class="f-hint" style="margin-top:10px">Questi strumenti restano nel preventivatore, dove girano gli scraper. Da qui si vede lo stato; la diagnostica si fa là.</div></div>
+      </details>
+    </div>
+  </article>`;
+}
+
+function fontiApri(id) { FONTI_APERTA = (FONTI_APERTA === id) ? null : id; fontiDisegna(); }
+
+function fontiEsito(id, testo, colore) {
+  const e = document.getElementById('f-esito-' + id);
+  if (e) { e.textContent = testo; e.style.color = colore || 'var(--f-muted)'; }
+}
+
+async function fontiSalva(id) {
+  if (!fontiPuoEntrare()) return;
+  const gv = k => (document.getElementById('f-' + k + '-' + id)?.value || '').trim();
+  const corpo = {};
+  const url = gv('url'), user = gv('user'), pw = gv('pw');
+  if (url) corpo.url = url;
+  if (user) corpo.username = user;
+  if (pw) corpo.password = pw;
+  if (!Object.keys(corpo).length) { fontiEsito(id, 'Niente da salvare: tutti i campi sono vuoti.'); return; }
+  fontiEsito(id, 'Salvo…');
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/credenziali',
+      { method: 'POST', body: JSON.stringify(corpo) });
+    /* Il campo password si svuota subito: lasciarlo pieno fa credere che il
+       valore sia «quello che si vede», e al salvataggio successivo lo si
+       rimanderebbe senza volerlo. */
+    const pwEl = document.getElementById('f-pw-' + id); if (pwEl) pwEl.value = '';
+    fontiEsito(id, 'Credenziali salvate.', 'var(--f-green)');
+    fontiCarica(true);
+  } catch (e) { fontiEsito(id, 'Non salvate: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
+async function fontiVerifica(id) {
+  if (!fontiPuoEntrare()) return;
+  /* «Verifica in corso», non «riuscito»: il secondo lo puo' dire solo il
+      backend, e dirlo prima e' il modo piu' rapido di far fidare qualcuno di
+      un collegamento che non funziona. */
+  fontiEsito(id, 'Verifica in corso…');
+  try {
+    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/verifica', { method: 'POST' });
+    const ok = !!(r && (r.ok === true || r.stato === 'attiva'));
+    fontiEsito(id, ok ? 'Accesso confermato dal motore.' : (r && r.messaggio) || 'Il motore non ha confermato l\'accesso.',
+      ok ? 'var(--f-green)' : 'var(--f-amber)');
+    fontiCarica(true);
+  } catch (e) { fontiEsito(id, 'Verifica non riuscita: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
 async function mailToken(){ try { const { data } = await db.auth.getSession(); return (data && data.session && data.session.access_token) || null; } catch(e){ return null; } }
 async function mailFetch(path, opts){
   opts = opts || {};

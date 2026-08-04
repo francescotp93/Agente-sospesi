@@ -310,9 +310,12 @@
         { l: 'Richieste all\'ufficio', i: 'i-tick', go: Q('richieste') }
       ] },
 
-    { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: Q('fonti'),
+    { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: function(){ vai('fonti'); },
       sub: [
-        { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: Q('fonti') },
+        /* Le fonti stanno in IAM, non nel preventivatore: sono credenziali dei
+           portali, cioe' amministrazione. Prima questa voce apriva il riquadro
+           del preventivatore (IAM.md §4). */
+        { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: function(){ vai('fonti'); } },
         { l: 'Campagne email', i: 'i-mail', go: Q('campagne') },
         { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
         { hr: true },

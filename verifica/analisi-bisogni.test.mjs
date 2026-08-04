@@ -270,6 +270,25 @@ prova('un\'analisi non firmata non si spaccia per archiviata', () => {
     'il risultato non dice che l\'analisi non è ancora archiviata');
 });
 
+prova('non indica una necessità principale se nessuna area la merita', () => {
+  /* Con la sola anagrafica compilata l'area previdenza esce verde — bassa
+     priorità — e chiamarla «necessità principale» accanto a «non sono emersi
+     elementi sufficienti» faceva dire alla schermata due cose opposte nella
+     stessa riga. Letto di corsa, il primo pezzo suona come un consiglio di
+     vendita: esattamente quello che questo strumento non deve fare. */
+  const f = corpoDi('function abPrincipale(necessita)');
+  deve(f, 'manca abPrincipale');
+  deve(/AB_DA_AGIRE/.test(f), 'la necessità principale non è filtrata sugli stati che richiedono un\'azione');
+  const lista = html.slice(html.indexOf('const AB_DA_AGIRE'), html.indexOf('\n', html.indexOf('const AB_DA_AGIRE')));
+  for (const c of ['rosso', 'ambra', 'blu']) deve(lista.includes(c), 'manca lo stato ' + c);
+  for (const c of ['verde', 'grigio']) deve(!lista.includes(c), 'lo stato ' + c + ' non può essere una necessità principale');
+  /* E che nessuna delle due schermate torni a pescare la prima non-grigia. */
+  for (const fn of ['function abRicalcola()', 'function abEsito()']) {
+    const b = corpoDi(fn);
+    deve(b && !/colore\s*!==\s*'grigio'/.test(b), fn + ' sceglie ancora la prima area non grigia');
+  }
+});
+
 prova('il risultato mostra i perché, non solo i numeri', () => {
   const f = corpoDi('function abEsito()');
   deve(f && /motivi/.test(f), 'il risultato non stampa le motivazioni');

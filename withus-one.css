@@ -232,6 +232,11 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
   padding:13px 22px; display:flex; align-items:center; gap:14px;
   position:relative; z-index:200;
 }
+/* Titolo con il pittogramma della sezione a fianco. Sotto i 520px il
+   pittogramma sparisce: su uno schermo stretto lo spazio serve al titolo,
+   e un simbolo che spinge fuori le parole non aiuta nessuno. */
+.w1-pbar .w1-pt{ display:flex; align-items:center; gap:10px; min-width:0; }
+@media (max-width:520px){ .w1-pbar .w1-pt .wus-pictogram{ display:none; } }
 .w1-pbar h1{ font-size:17px; font-weight:600; letter-spacing:-.2px; color:var(--w1-txt); margin:0; }
 .w1-crumb{
   font-size:11px; color:var(--w1-txt3); display:flex; align-items:center;

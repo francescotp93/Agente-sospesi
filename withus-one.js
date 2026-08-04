@@ -595,8 +595,10 @@
     var p = document.createElement('div');
     p.className = 'w1-pbar';
     p.innerHTML =
+      '<div class="w1-pt"><span class="wus-pictogram" id="w1-pitto" aria-hidden="true">' +
+      '<i class="ti ti-layout-grid"></i></span>' +
       '<div><h1 id="w1-titolo">Scrivania</h1>' +
-      '<div class="w1-crumb" id="w1-crumb">IAM</div></div>' +
+      '<div class="w1-crumb" id="w1-crumb">IAM</div></div></div>' +
       '<div class="w1-az"><button class="w1-b p" id="w1-nuovo">' + ico('i-plus', 'sm') + ' Nuovo preventivo</button></div>';
     /* Come Plurima: il tasto verde apre la TENDINA dei prodotti, non una griglia.
        Se la voce di menu non e' visibile (permessi), si ripiega sull'elenco prodotti. */
@@ -637,8 +639,46 @@
       voce = m ? [m.l, m.l] : ['IAM', 'IAM'];
     }
     t.textContent = voce[0];
+    aggiornaPittogramma(k);
     c.innerHTML = 'IAM <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[1] +
       (voce[1] !== voce[0] ? ' <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[0] : '');
+  }
+
+  /* ═══ il pittogramma della sezione ═══════════════════════════════════
+     UNO per titolo, e solo qui: nei pulsanti, nelle tabelle e nelle
+     pastiglie di stato restano le icone Tabler nude. Un pittogramma dentro
+     un pulsante lo fa sembrare una scheda; in una tabella, riga dopo riga,
+     diventa rumore.
+
+     Non sono emoji. Un'emoji Unicode la disegna il sistema operativo: la
+     stessa faccina e' gialla su un telefono, piatta su Windows e diversa su
+     un Mac — e in un gestionale assicurativo un simbolo che cambia forma a
+     seconda di chi guarda non e' un simbolo.
+
+     Il verde e' fisso, NON segue l'accento del tema: l'accento lo sceglie
+     l'utente e puo' essere arancione o viola, e il kit grafico esclude
+     esplicitamente il viola. Un pittogramma che cambia colore con le
+     preferenze non e' piu' un segnale, e' una decorazione. */
+  var PITTO = {
+    dashboard:   'ti-layout-grid',
+    quoto:       'ti-shield-check',
+    clienti:     'ti-users-group',
+    portafoglio: 'ti-file-description',
+    carica:      'ti-credit-card',
+    agenzia:     'ti-building',
+    strumenti:   'ti-plug',
+    admin:       'ti-shield-lock'
+  };
+
+  function aggiornaPittogramma(k) {
+    var p = document.getElementById('w1-pitto');
+    if (!p) return;
+    var i = p.querySelector('i');
+    if (!i) return;
+    /* Chi non ha una voce in mappa non resta col simbolo di prima: mostrare
+       il pittogramma della sezione precedente dice il falso, ed e' peggio
+       di un simbolo generico. */
+    i.className = 'ti ' + (PITTO[k] || 'ti-layout-grid');
   }
 
   /* ═══ permessi: si rileggono dai vecchi pulsanti, non si reinventano ═ */

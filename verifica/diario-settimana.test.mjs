@@ -164,6 +164,16 @@ prova('oggi ha la stessa scatola degli altri giorni', () => {
      si guarda di piu', e qualsiasi cosa la renda diversa la rende anche piu'
      faticosa da leggere. Si trova gia' dal tasto «Oggi» nella barra. */
   deve(!/\.wds-col\.oggi/.test(css), 'la colonna di oggi ha ancora uno stile suo nella settimana');
+  /* E soprattutto NON deve chiamarsi «oggi»: la scrivania ha un riquadro
+     «Da fare oggi» con quel nome, e la sua regola globale — margin:14px,
+     bordo, angoli — cadeva sulla colonna del diario. Risultato: 28px più
+     stretta, spinta giù di 14 e disegnata come una scheda a sé. Due cose
+     diverse con lo stesso nome in un foglio unico: lo stesso equivoco per
+     cui è stato ritirato il nome «With Us One». */
+  const r = corpoDi('function renderWDSett()');
+  deve(r && !/\? ' oggi'/.test(r), 'la colonna usa la classe «oggi», che è già del riquadro della scrivania');
+  deve(r && /wds-oggi/.test(r), 'la colonna di oggi non ha un nome suo');
+  deve(/^\.oggi\{/m.test(html), 'la regola .oggi della scrivania non c\'è più: la prova non sorveglia niente');
 });
 
 let ko = 0;

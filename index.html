@@ -824,7 +824,7 @@ input[type=file]{display:none;}
 .wdm-g:hover{background:var(--d-surf2)}
 .wdm-g.fuori{background:#fafbfb;color:#a3ada8;cursor:default}
 .wdm-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;font-size:10px;font-weight:800}
-.wdm-g.oggi .wdm-n{background:var(--d-green);color:#fff}
+.wdm-g.wdm-oggi .wdm-n{background:var(--d-green);color:#fff}
 .wdm-g.sel{box-shadow:inset 0 0 0 2px var(--d-green)}
 .wdm-ev{display:grid;gap:3px;margin-top:5px}
 .wdm-e{display:flex;align-items:center;gap:4px;min-width:0;background:var(--d-green-soft);border-radius:4px;padding:3px 5px;font-size:8px}
@@ -9752,7 +9752,13 @@ function renderWDSett() {
     const iso = wdsISO(g);
     const delGiorno = dentro.filter(w => w.data === iso);
     const senzaOra = delGiorno.filter(w => !wdsOra(w));
-    h += `<div class="wds-col${iso === oggi ? ' oggi' : ''}">`;
+    /* NON si usa la classe «oggi»: la scrivania ha un riquadro «Da fare
+       oggi» con quel nome, e la sua regola globale (.oggi{margin:14px;
+       border;border-radius}) cadeva su questa colonna — 28px piu' stretta,
+       spinta giu' di 14 e disegnata come una scheda a se'. Due cose diverse
+       con lo stesso nome in un foglio unico: e' lo stesso equivoco per cui
+       e' stato ritirato il nome «With Us One». */
+    h += `<div class="wds-col${iso === oggi ? ' wds-oggi' : ''}">`;
     /* L'intestazione del giorno apre la giornata: dalla settimana si vede
        CHE un giorno e' pieno, e la domanda subito dopo e' sempre «pieno di
        cosa» — che e' esattamente la vista Giorno. */
@@ -10342,7 +10348,7 @@ function renderWDCal() {
     const ev = (WD || []).filter(w => w.data === ds)
       .sort((a,b) => String(a.ora||'').localeCompare(String(b.ora||'')));
     const chip = e => `<span class="wdm-e ${wdsColore(e)}"><span>${e.ora ? esc(e.ora) + ' ' : ''}${esc(e.titolo || '(senza titolo)')}</span></span>`;
-    html += `<button type="button" class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
+    html += `<button type="button" class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' wdm-oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
       ${fuori ? '' : `onclick="wdApriGiorno('${ds}')"`} title="${fuori ? '' : 'Apri la giornata'}">
       <span class="wdm-n">${g.getDate()}</span>
       ${ev.length ? `<span class="wdm-ev">${ev.slice(0,3).map(chip).join('')}${ev.length > 3 ? `<span class="wdm-piu">+${ev.length - 3} altre</span>` : ''}</span>` : ''}

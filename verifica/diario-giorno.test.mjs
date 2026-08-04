@@ -209,8 +209,13 @@ prova('«oggi» evidenzia il numero, non tutta la cella', () => {
   /* La cella intera riempita di verde schiaccia il numero invece di
      indicarlo, e con dentro le attività le rende illeggibili. Nel disegno è
      solo il numero a essere evidenziato. */
-  deve(/\.wdm-g\.oggi \.wdm-n\s*\{[^}]*background/.test(html.replace(/\s+/g, ' ')),
+  /* La classe si chiama wdm-oggi, non «oggi»: quel nome è già del riquadro
+     «Da fare oggi» della scrivania, e la sua regola globale cadeva anche
+     qui. Due cose diverse con lo stesso nome in un foglio unico. */
+  deve(/\.wdm-g\.wdm-oggi \.wdm-n\s*\{[^}]*background/.test(html.replace(/\s+/g, ' ')),
     '«oggi» non evidenzia il numero');
+  const r = corpoDi('function renderWDCal()');
+  deve(r && !/\? ' oggi'/.test(r), 'il mese usa la classe «oggi», che è già del riquadro della scrivania');
   const c = corpoDi('function renderWDCal()');
   deve(c && !/oggi\s*\?\s*'var\(--acc\)'/.test(c), 'il mese usa ancora l\'accento del tema per «oggi»');
 });

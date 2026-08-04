@@ -131,6 +131,58 @@ prova('aprendo la schermata lo stato si rilegge', () => {
     'aprendo le fonti non si rilegge lo stato');
 });
 
+// ── 8. Niente di quello che c'era deve essere andato perso ──────────────
+prova('il pannello nuovo fa tutto quello che faceva il vecchio', () => {
+  /* La schermata nuova sostituisce quella del preventivatore: se ne perde
+     un pezzo, quel pezzo si puo' fare solo mettendo le mani sul server.
+     Questo elenco viene dalle rotte del backend, non da un desiderio. */
+  const attese = {
+    'elenco':            "'/fonti'",
+    'salva credenziali': '/credenziali',
+    'controlla stato':   '/verifica',
+    'accedi al portale': '/accedi',
+    'stato del login':   '/loginstate',
+    'conferma codice':   '/conferma-codice',
+    'altro codice':      '/altro-codice',
+    'prova preventivo':  '/auto?targa=',
+    'cattura API':       "'/sniff'",
+    'esplora portale':   "'/explore'",
+  };
+  for (const [cosa, pezzo] of Object.entries(attese)) {
+    deve(html.includes(pezzo), 'funzione persa rispetto al vecchio pannello: ' + cosa);
+  }
+  for (const fn of ['fontiCrea', 'fontiElimina']) {
+    deve(ritaglia(html, fn), 'manca ' + fn + ': una compagnia nuova si collegherebbe solo dal server');
+  }
+});
+
+prova('il codice del portale ha dove essere scritto', () => {
+  /* Il portale manda un codice via email e senza quello il collegamento non
+     riparte. Lasciare l'operatore davanti al messaggio senza un campo dove
+     scriverlo e' il punto esatto in cui si rinuncia e si telefona. */
+  const s = ritaglia(html, 'fontiScheda');
+  deve(s && /f-cod-/.test(s), 'non c\'è nessun campo per il codice ricevuto');
+  deve(s && /fontiCodice\(/.test(s), 'il codice non si può confermare');
+  deve(s && /fontiAltroCodice\(/.test(s), 'non si può chiedere un codice nuovo');
+});
+
+prova('dopo l\'accesso si aspetta il portale, non si dice «fatto»', () => {
+  const a = ritaglia(html, 'fontiAspetta');
+  deve(a, 'manca l\'attesa: si direbbe «fatto» appena partita la richiesta');
+  deve(/loginstate/.test(a), 'lo stato del login non viene richiesto al portale');
+  /* Un ciclo senza fine lascerebbe la schermata a girare per sempre su un
+     portale che non risponde piu'. */
+  deve(/i < \d+/.test(a), 'l\'attesa non ha una fine');
+  deve(/non ha ancora risposto/.test(a), 'scaduta l\'attesa non viene detto niente');
+});
+
+prova('eliminare una fonte chiede conferma e dice cosa sparisce', () => {
+  const e = ritaglia(html, 'fontiElimina');
+  deve(e, 'manca fontiElimina');
+  deve(/confirm\(/.test(e), 'una fonte si elimina senza chiedere niente');
+  deve(/credenziali/.test(e), 'non viene detto che spariscono anche le credenziali');
+});
+
 let ko = 0;
 console.log('\nFONTI COMPAGNIE');
 for (const [ok, nome, msg] of esiti) {

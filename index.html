@@ -2723,6 +2723,7 @@ input[type=file]{display:none;}
     </div>
     <div style="display:flex;gap:8px">
       <button class="f-b" type="button" id="f-ric" onclick="fontiCarica(true)"><i class="ti ti-refresh"></i> Aggiorna</button>
+      <button class="f-b pri" type="button" onclick="fontiNuovaApri(true)"><i class="ti ti-plus"></i> Aggiungi fonte</button>
     </div>
   </section>
 
@@ -2740,6 +2741,28 @@ input[type=file]{display:none;}
   <div class="f-sic"><i class="ti ti-lock"></i><span>Credenziali cifrate sul server. Password e segreti salvati non vengono mai mostrati nel browser.</span></div>
 
   <section class="f-lista" id="f-lista"><div class="f-vuoto">Carico lo stato delle fonti…</div></section>
+
+  <!-- Aggiungi fonte: pannello laterale, come nel design consegnato. -->
+  <div id="f-drawer" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(12,28,20,.32);align-items:stretch;justify-content:flex-end" onclick="if(event.target===this)fontiNuovaApri(false)">
+    <aside style="width:min(480px,100%);background:#fff;padding:22px;overflow:auto;box-shadow:-20px 0 50px rgba(10,30,20,.13)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+        <div><h2 style="font-size:18px;margin:0 0 4px">Aggiungi fonte</h2><p style="font-size:10.5px;color:var(--f-muted);margin:0">Nuovo portale compagnia</p></div>
+        <button class="f-b" style="width:34px;padding:0" type="button" onclick="fontiNuovaApri(false)" aria-label="Chiudi"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="f-grid">
+        <div class="f-f full"><label>Compagnia *</label><input id="f-n-nome" placeholder="es. Generali"></div>
+        <div class="f-f full"><label>Link di accesso</label><input id="f-n-url" placeholder="https://portale.compagnia.it/login"></div>
+        <div class="f-f"><label>Utente</label><input id="f-n-user" autocomplete="off" placeholder="username"></div>
+        <div class="f-f"><label>Password</label><input id="f-n-pw" type="password" autocomplete="new-password" placeholder="password"></div>
+      </div>
+      <div class="f-hint" style="margin-top:8px">La password viene cifrata sul server e non torna più indietro: da qui in avanti si vedrà solo «salvata».</div>
+      <div class="f-az" style="margin-top:14px">
+        <button class="f-b pri" type="button" onclick="fontiCrea()"><i class="ti ti-plus"></i> Aggiungi fonte</button>
+        <button class="f-b" type="button" onclick="fontiNuovaApri(false)">Annulla</button>
+        <span id="f-n-esito" style="font-size:11px;color:var(--f-muted)"></span>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <script>
@@ -8174,6 +8197,7 @@ function fontiScheda(f) {
   const sigla = esc(String(f.nome || f.id || '?').slice(0, 2).toUpperCase());
   /* Lo stato «bloccata» ha un avviso suo: e' l'unico che chiede un gesto
      preciso, e confonderlo con «non attiva» fa perdere tempo a chi guarda. */
+  const attesa = !!(FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].codice);
   const avviso = st === 'bloccata'
     ? `<div class="f-avviso bloccata"><i class="ti ti-hand-stop"></i><span>Il freno è tirato: dopo tre accessi falliti lo scraper ha smesso di bussare al portale, per non far bloccare l'utenza dalla compagnia. Si riparte con un accesso nuovo, non forzando da qui.</span></div>`
     : '';
@@ -8201,18 +8225,34 @@ function fontiScheda(f) {
         </div>
         <div class="f-az">
           <button class="f-b pri" type="button" onclick="fontiSalva('${esc(f.id)}')"><i class="ti ti-device-floppy"></i> Salva credenziali</button>
-          <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'scaduta' ? 'Rinnova accesso' : 'Verifica accesso'}</button>
+          <button class="f-b" type="button" onclick="fontiAccedi('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'attiva' ? 'Rifai l\'accesso' : 'Accedi al portale'}</button>
+          <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-refresh-dot"></i> Controlla stato</button>
+          ${f.custom ? `<button class="f-b" style="color:var(--f-red);border-color:#efc9c5" type="button" onclick="fontiElimina('${esc(f.id)}')"><i class="ti ti-trash"></i> Elimina</button>` : ''}
           <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:var(--f-muted)"></span>
         </div>
+        ${attesa ? `<div class="f-card" style="margin-top:11px;border-color:var(--f-amber)">
+          <div class="f-st"><i class="ti ti-mail-fast" style="background:var(--f-amber-bg);color:var(--f-amber)"></i><span><b>Codice dal portale</b><small>Arriva via email. Vale pochi minuti.</small></span></div>
+          <div class="f-grid">
+            <div class="f-f"><label>Codice ricevuto</label><input id="f-cod-${esc(f.id)}" autocomplete="one-time-code" inputmode="numeric" placeholder="es. 123456"></div>
+          </div>
+          <div class="f-az">
+            <button class="f-b pri" type="button" onclick="fontiCodice('${esc(f.id)}')"><i class="ti ti-check"></i> Conferma codice</button>
+            <button class="f-b" type="button" onclick="fontiAltroCodice('${esc(f.id)}')"><i class="ti ti-mail"></i> Mandane un altro</button>
+          </div>
+        </div>` : ''}
       </div>
       <details class="f-adv">
         <summary><span style="display:flex;align-items:center;gap:9px"><i class="ti ti-tool" style="color:var(--f-teal)"></i><span><b style="font-size:11.5px">Strumenti tecnici</b><small style="display:block;font-size:9.5px;color:var(--f-muted)">Diagnostica, fuori dal lavoro di ogni giorno</small></span></span><i class="ti ti-chevron-down"></i></summary>
         <div class="f-adv-b"><div class="f-adv-g">
-          <div class="f-adv-i"><i class="ti ti-car"></i><b>Prova preventivo</b><span>Verifica il flusso con una targa di prova.</span></div>
-          <div class="f-adv-i"><i class="ti ti-device-desktop-analytics"></i><b>Cattura API</b><span>Registra le chiamate del portale, ripulite dai segreti.</span></div>
-          <div class="f-adv-i"><i class="ti ti-route"></i><b>Esplora portale</b><span>Mappa campi e passaggi per la diagnostica.</span></div>
+          <div class="f-adv-i"><i class="ti ti-car"></i><b>Prova preventivo</b><span>Verifica il flusso con una targa di prova.</span>
+            <input id="f-targa-${esc(f.id)}" placeholder="TARGA" style="width:100%;height:32px;margin-top:7px;border:1px solid var(--f-line);border-radius:7px;padding:0 8px;font-size:11px;text-transform:uppercase">
+            <button class="f-b" style="height:32px;margin-top:6px;width:100%" type="button" onclick="fontiStrumento('${esc(f.id)}','auto')">Prova</button></div>
+          <div class="f-adv-i"><i class="ti ti-device-desktop-analytics"></i><b>Cattura API</b><span>Le chiamate del portale, già ripulite dai segreti.</span>
+            <button class="f-b" style="height:32px;margin-top:6px;width:100%" type="button" onclick="fontiStrumento('${esc(f.id)}','sniff')">Registra</button></div>
+          <div class="f-adv-i"><i class="ti ti-route"></i><b>Esplora portale</b><span>Mappa campi e passaggi per la diagnostica.</span>
+            <button class="f-b" style="height:32px;margin-top:6px;width:100%" type="button" onclick="fontiStrumento('${esc(f.id)}','explore')">Esplora</button></div>
         </div>
-        <div class="f-hint" style="margin-top:10px">Questi strumenti restano nel preventivatore, dove girano gli scraper. Da qui si vede lo stato; la diagnostica si fa là.</div></div>
+        <pre id="f-diag-${esc(f.id)}" style="margin:10px 0 0;padding:9px;background:#f4f7f5;border:1px solid var(--f-line);border-radius:7px;font-size:10px;max-height:260px;overflow:auto;white-space:pre-wrap"></pre></div>
       </details>
     </div>
   </article>`;
@@ -8245,6 +8285,157 @@ async function fontiSalva(id) {
     fontiEsito(id, 'Credenziali salvate.', 'var(--f-green)');
     fontiCarica(true);
   } catch (e) { fontiEsito(id, 'Non salvate: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
+/* Aggiungere e togliere una fonte. Sono le due azioni che il vecchio
+   pannello aveva e che vanno conservate: senza, una compagnia nuova si
+   collega solo mettendo le mani sul server. */
+function fontiNuovaApri(apri) {
+  const d = document.getElementById('f-drawer');
+  if (d) d.style.display = apri ? 'flex' : 'none';
+  if (apri) setTimeout(() => document.getElementById('f-n-nome')?.focus(), 30);
+}
+
+async function fontiCrea() {
+  if (!fontiPuoEntrare()) return;
+  const gv = k => (document.getElementById('f-n-' + k)?.value || '').trim();
+  const nome = gv('nome');
+  const box = document.getElementById('f-n-esito');
+  if (!nome) { if (box) { box.textContent = 'Il nome della compagnia è obbligatorio.'; box.style.color = 'var(--f-red)'; } return; }
+  if (box) { box.textContent = 'Creo…'; box.style.color = 'var(--f-muted)'; }
+  try {
+    await mailFetch('/fonti', { method: 'POST', body: JSON.stringify({
+      nome, url: gv('url') || undefined, username: gv('user') || undefined, password: gv('pw') || undefined
+    })});
+    ['nome','url','user','pw'].forEach(k => { const e = document.getElementById('f-n-' + k); if (e) e.value = ''; });
+    fontiNuovaApri(false);
+    fontiCarica(true);
+  } catch (e) { if (box) { box.textContent = 'Non creata: ' + (e.message || ''); box.style.color = 'var(--f-red)'; } }
+}
+
+async function fontiElimina(id) {
+  if (!fontiPuoEntrare()) return;
+  /* Si chiede prima, e si dice cosa sparisce davvero: togliere una fonte
+     porta via anche le credenziali cifrate, e non c'e' un annulla. */
+  if (!confirm('Eliminare questa fonte?\n\nSpariscono anche le credenziali salvate sul server. Non si torna indietro.')) return;
+  fontiEsito(id, 'Elimino…');
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id), { method: 'DELETE' });
+    FONTI_APERTA = null;
+    fontiCarica(true);
+  } catch (e) { fontiEsito(id, 'Non eliminata: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
+/* Gli strumenti tecnici, quelli veri. Stavano nel vecchio pannello e vanno
+   conservati: sono il modo in cui si capisce PERCHE' una compagnia non
+   quota, senza aprire il server. */
+async function fontiStrumento(id, quale) {
+  if (!fontiPuoEntrare()) return;
+  const box = document.getElementById('f-diag-' + id);
+  if (!box) return;
+  let rotta = '', targa = '';
+  if (quale === 'auto') {
+    targa = (document.getElementById('f-targa-' + id)?.value || '').trim().toUpperCase();
+    if (!targa) { box.textContent = 'Serve una targa di prova.'; return; }
+    rotta = '/auto?targa=' + encodeURIComponent(targa);
+  } else if (quale === 'sniff') rotta = '/sniff';
+  else rotta = '/explore';
+  box.textContent = 'Chiedo al motore…';
+  try {
+    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + rotta);
+    /* La risposta si mostra com'e': e' diagnostica, e riassumerla toglierebbe
+       proprio il dettaglio che si sta cercando. Esce gia' ripulita dal
+       backend — targhe, date di nascita e password sono oscurate la'. */
+    box.textContent = JSON.stringify(r, null, 2).slice(0, 4000);
+  } catch (e) { box.textContent = 'Errore: ' + (e.message || ''); }
+}
+
+/* ══ L'ACCESSO CON CODICE ════════════════════════════════════════════════
+   E' la cosa che su questa schermata si fa piu' spesso: una sessione scade e
+   va rifatto il login. Il portale della compagnia manda un codice via email,
+   e finche' quel codice non e' confermato SUL PORTALE il collegamento non e'
+   ripristinato — anche se la prima richiesta e' andata a buon fine.
+
+   Tre passaggi, e nessuno si puo' saltare:
+     1. /accedi          manda utente e password, il portale spedisce il codice
+     2. /loginstate      si chiede al portale a che punto e' (si interroga a
+                         intervalli: il login puo' durare un minuto e mezzo)
+     3. /conferma-codice si manda il codice e si aspetta la conferma
+
+   Il passaggio 2 non e' un dettaglio: senza, si direbbe «fatto» appena
+   partita la richiesta, mentre il portale sta ancora caricando. */
+let FONTI_ATTESA = {};
+
+async function fontiAccedi(id) {
+  if (!fontiPuoEntrare()) return;
+  FONTI_ATTESA[id] = { codice: false };
+  fontiEsito(id, 'Accesso in corso… il portale può metterci fino a un minuto e mezzo.');
+  fontiDisegna();
+  try {
+    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
+    /* Se il portale chiede il codice, la schermata deve APRIRE il campo:
+       lasciare l'operatore davanti a un messaggio senza dove scriverlo e' il
+       punto in cui si abbandona e si telefona all'ufficio. */
+    if (r && (r.codice_richiesto || r.serve_codice || r.stato === 'codice')) {
+      FONTI_ATTESA[id] = { codice: true };
+      fontiEsito(id, 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
+      fontiDisegna();
+      return;
+    }
+    await fontiAspetta(id);
+  } catch (e) { fontiEsito(id, 'Accesso non riuscito: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
+/* Si interroga il portale invece di aspettare a occhio. Dieci tentativi ogni
+   tre secondi: se dopo mezzo minuto non ha ancora deciso, lo si dice invece
+   di restare a girare per sempre. */
+async function fontiAspetta(id) {
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    let st = null;
+    try { st = await mailFetch('/fonti/' + encodeURIComponent(id) + '/loginstate'); } catch (_) { continue; }
+    if (!st) continue;
+    if (st.codice_richiesto || st.serve_codice || st.stato === 'codice') {
+      FONTI_ATTESA[id] = { codice: true };
+      fontiEsito(id, 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
+      fontiDisegna();
+      return;
+    }
+    if (st.stato === 'attiva' || st.ok === true) {
+      FONTI_ATTESA[id] = null;
+      fontiEsito(id, 'Accesso confermato dal portale.', 'var(--f-green)');
+      fontiCarica(true);
+      return;
+    }
+    if (st.stato === 'spento' || st.error) {
+      fontiEsito(id, st.error || 'Il portale non ha risposto.', 'var(--f-red)');
+      return;
+    }
+  }
+  fontiEsito(id, 'Il portale non ha ancora risposto. Riprova fra poco: il freno impedisce di insistere.', 'var(--f-amber)');
+}
+
+async function fontiCodice(id) {
+  if (!fontiPuoEntrare()) return;
+  const codice = (document.getElementById('f-cod-' + id)?.value || '').trim();
+  if (!codice) { fontiEsito(id, 'Scrivi il codice ricevuto via email.', 'var(--f-amber)'); return; }
+  fontiEsito(id, 'Confermo il codice sul portale…');
+  try {
+    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/conferma-codice',
+      { method: 'POST', body: JSON.stringify({ codice }) });
+    const ok = !!(r && (r.ok === true || r.stato === 'attiva'));
+    if (ok) { FONTI_ATTESA[id] = null; fontiEsito(id, 'Accesso ripristinato.', 'var(--f-green)'); fontiCarica(true); }
+    else fontiEsito(id, (r && (r.error || r.msg)) || 'Il portale non ha accettato il codice.', 'var(--f-red)');
+  } catch (e) { fontiEsito(id, 'Codice non accettato: ' + (e.message || ''), 'var(--f-red)'); }
+}
+
+async function fontiAltroCodice(id) {
+  if (!fontiPuoEntrare()) return;
+  fontiEsito(id, 'Chiedo un codice nuovo…');
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/altro-codice', { method: 'POST' });
+    fontiEsito(id, 'Richiesto: controlla la posta fra qualche istante.', 'var(--f-amber)');
+  } catch (e) { fontiEsito(id, 'Non richiesto: ' + (e.message || ''), 'var(--f-red)'); }
 }
 
 async function fontiVerifica(id) {

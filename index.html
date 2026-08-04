@@ -8271,13 +8271,13 @@ function fontiScheda(f) {
           <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:var(--f-muted)"></span>
         </div>
         ${attesa ? `<div class="f-card" style="margin-top:11px;border-color:var(--f-amber)">
-          <div class="f-st"><i class="ti ti-mail-fast" style="background:var(--f-amber-bg);color:var(--f-amber)"></i><span><b>Codice dal portale</b><small>Arriva via email. Vale pochi minuti.</small></span></div>
+          <div class="f-st"><i class="ti ti-mail-fast" style="background:var(--f-amber-bg);color:var(--f-amber)"></i><span><b>Codice dal portale</b><small>${esc((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || 'Vale pochi minuti.')}</small></span></div>
           <div class="f-grid">
             <div class="f-f"><label>Codice ricevuto</label><input id="f-cod-${esc(f.id)}" autocomplete="one-time-code" inputmode="numeric" placeholder="es. 123456"></div>
           </div>
           <div class="f-az">
             <button class="f-b pri" type="button" onclick="fontiCodice('${esc(f.id)}')"><i class="ti ti-check"></i> Conferma codice</button>
-            <button class="f-b" type="button" onclick="fontiAltroCodice('${esc(f.id)}')"><i class="ti ti-mail"></i> Mandane un altro</button>
+            ${/duo|authenticator|app/i.test((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || '') ? '' : `<button class="f-b" type="button" onclick="fontiAltroCodice('${esc(f.id)}')"><i class="ti ti-mail"></i> Mandane un altro</button>`}
           </div>
         </div>` : ''}
       </div>
@@ -8444,8 +8444,8 @@ async function fontiAspetta(id) {
     if (!passo) continue;
 
     if (FONTI_PASSO_CODICE.test(passo)) {
-      FONTI_ATTESA[id] = { codice: true };
-      fontiEsito(id, (st && st.msg) || 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
+      FONTI_ATTESA[id] = { codice: true, msg: (st && st.msg) || '' };
+      fontiEsito(id, (st && st.msg) || 'Il portale chiede un codice: scrivilo qui sotto.', 'var(--f-amber)');
       fontiDisegna();
       return;
     }
@@ -8459,10 +8459,13 @@ async function fontiAspetta(id) {
       fontiEsito(id, (st && st.msg) || 'Mancano utente e password di questo portale.', 'var(--f-red)');
       return;
     }
-    /* `running` falso su un passo che non e' nessuno dei tre vuol dire che
-       il portale ha finito e non e' entrato: insistere non serve. */
-    if (st && st.running === false) {
-      fontiEsito(id, (st && st.msg) || 'Accesso al portale non riuscito.', 'var(--f-red)');
+    /* Il portale si e' fermato e ha spiegato perche'. Il messaggio e' SUO —
+       «la schermata password non e' comparsa», «campo utente non trovato» —
+       e va riportato tale e quale: riassumerlo in «accesso non riuscito»
+       toglierebbe l'unica informazione utile, cioe' a che punto si e' rotto.
+       Si dice anche da dove viene, perche' non e' un guasto del gestionale. */
+    if (/^errore?$/i.test(passo) || (st && st.running === false)) {
+      fontiEsito(id, 'Il portale: ' + ((st && st.msg) || 'accesso non riuscito.'), 'var(--f-red)');
       return;
     }
   }

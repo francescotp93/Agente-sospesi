@@ -247,6 +247,30 @@ prova('la bussata iniziale non blocca la schermata', () => {
   deve(/fontiAspetta\(/.test(c), 'dopo la bussata non si segue lo stato del portale');
 });
 
+// ── 11. Il portale parla, la schermata riporta ──────────────────────────
+prova('quando il portale si ferma, si riporta quello che dice lui', () => {
+  /* «La schermata password non è comparsa dopo l'utente» è il portale che
+     spiega A CHE PUNTO si è rotto. Riassumerlo in «accesso non riuscito»
+     toglie l'unica informazione utile che c'era. */
+  const a = ritaglia(html, 'fontiAspetta');
+  deve(a, 'manca fontiAspetta');
+  deve(/st\.msg/.test(a), 'il messaggio del portale non viene riportato');
+  deve(/Il portale:/.test(a), 'non si distingue un guasto del portale da uno del gestionale');
+});
+
+prova('non si inventa da dove arriva il codice', () => {
+  /* Allianz usa Duo Mobile, altri mandano una email. Scrivere «arriva via
+     email» su tutti manda l'operatore a guardare la posta mentre il codice
+     è sul telefono. Il testo viene dal portale. */
+  const s = ritaglia(html, 'fontiScheda');
+  deve(s, 'manca fontiScheda');
+  const senzaCommenti = s.replace(/\/\*[\s\S]*?\*\//g, '');
+  deve(!/Arriva via email/.test(senzaCommenti), 'la scheda dà per scontato che il codice arrivi via email');
+  deve(/FONTI_ATTESA\[f\.id\][\s\S]{0,40}msg/.test(s), 'la scheda non usa il messaggio del portale');
+  const asp = ritaglia(html, 'fontiAspetta');
+  deve(/codice: true, msg:/.test(asp), 'il messaggio del portale non viene conservato per la scheda');
+});
+
 let ko = 0;
 console.log('\nFONTI COMPAGNIE');
 for (const [ok, nome, msg] of esiti) {

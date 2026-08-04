@@ -1,5 +1,14 @@
 # IAM — Note per Claude Code
 
+> **Prima di toccare qualsiasi cosa, leggi `IAM.md`**: dice che cos'è IAM, come
+> si chiama e dove finisce. Questo file dice come si lavora su questo
+> repository. In caso di contraddizione sul *nome* o sul *perimetro*, vale
+> `IAM.md`.
+>
+> In breve: **IAM (Insurance Agency Management) è il sistema, uno solo.**
+> «QUOTO» è il nome del repository `francescotp93/QUOTE`, non di un'applicazione;
+> «With Us One» è un nome ritirato. Davanti a un utente si legge solo IAM.
+
 ## BLOCCHI — Non modificare senza esplicita richiesta dell'utente
 
 ### Transizione IAM → Quoto

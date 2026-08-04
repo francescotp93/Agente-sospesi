@@ -499,6 +499,55 @@ input[type=file]{display:none;}
 /* I bordi stanno sulle voci, non sui vuoti della griglia: con il gap colorato,
    la cella lasciata libera dall'ultima riga si vedeva come un riquadro grigio
    rotto. */
+/* ══ SCRIVANIA — design consegnato il 4/8/2026 ═════════════════════════
+   Applicato com'e' stato consegnato. I token sono quelli UFFICIALI With Us
+   (--w1-*), gli stessi di withus-one-tokens.css: questo design, a differenza
+   del kit dei pittogrammi, e' gia' sul verde di marchio #02984e.
+
+   Dichiarati dentro #panel-dashboard perche' la scrivania e' una superficie
+   chiara fissa: lasciarli liberi sfonderebbe il tema scuro altrove. */
+#panel-dashboard{
+  --w1-verde:#02984e; --w1-verde-scuro:#016b38; --w1-verde-tenue:#eaf7f0;
+  --w1-sfondo:#f3f5f7; --w1-bordo:#e3e8ec;
+  --w1-testo:#1f2a37; --w1-testo2:#5a6b7c; --w1-testo3:#8b9aa9;
+  --w1-ambra:#b06a00; --w1-ambra-bg:#fff4e6;
+  --w1-rosso:#a3352a; --w1-rosso-bg:#fff6f5;
+  --w1-raggio:4px;
+  --w1-focus:0 0 0 3px rgba(2,152,78,.14);
+  --w1-ombra:0 1px 2px rgba(16,36,54,.04),0 12px 34px rgba(16,36,54,.055);
+  background:var(--w1-sfondo); color:var(--w1-testo);
+}
+#panel-dashboard .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;padding:16px 16px 0}
+#panel-dashboard .eyebrow{color:var(--w1-testo3);font-size:11px;margin-bottom:4px}
+#panel-dashboard .page-head h1{font-size:22px;letter-spacing:-.03em;margin:0 0 5px;color:var(--w1-testo)}
+#panel-dashboard .subtitle{color:var(--w1-testo2);font-size:13px}
+#panel-dashboard .head-actions{display:flex;gap:8px;flex-wrap:wrap}
+#panel-dashboard .d-btn{height:34px;border-radius:var(--w1-raggio);border:1px solid var(--w1-bordo);background:#fff;color:var(--w1-testo);padding:0 12px;display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;cursor:pointer}
+#panel-dashboard .d-btn:hover{background:#f7f9fa}
+#panel-dashboard .d-btn:focus-visible{outline:none;box-shadow:var(--w1-focus)}
+#panel-dashboard .d-btn.primario{border-color:var(--w1-verde);background:var(--w1-verde);color:#fff}
+#panel-dashboard .d-btn.primario:hover{background:var(--w1-verde-scuro)}
+#panel-dashboard .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:0 16px}
+#panel-dashboard .d-card{background:#fff;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);box-shadow:var(--w1-ombra)}
+#panel-dashboard .kpi{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 15px;width:100%;text-align:left;cursor:pointer;font:inherit}
+#panel-dashboard .kpi:hover{border-color:#c9d3da}
+#panel-dashboard .kpi-label{color:var(--w1-testo2);font-weight:600;font-size:12px}
+#panel-dashboard .kpi-value{font-size:23px;font-weight:700;letter-spacing:-.03em;margin-top:8px}
+#panel-dashboard .kpi-note{margin-top:6px;color:var(--w1-testo3);font-size:11px}
+#panel-dashboard .pictogram{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;background:var(--w1-verde-tenue);color:var(--w1-verde-scuro);flex:none}
+#panel-dashboard .pictogram i{font-size:18px}
+#panel-dashboard .pictogram.amber{background:var(--w1-ambra-bg);color:var(--w1-ambra)}
+#panel-dashboard .pictogram.red{background:var(--w1-rosso-bg);color:var(--w1-rosso)}
+#panel-dashboard .pictogram.gray{background:#f0f3f5;color:#6d7f8e}
+#panel-dashboard .dashboard-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(310px,.8fr);gap:12px;align-items:start;padding:0 16px 16px}
+#panel-dashboard .stack{display:grid;gap:12px;min-width:0}
+#panel-dashboard .card-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--w1-bordo)}
+#panel-dashboard .card-title{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700}
+#panel-dashboard .card-title .pictogram{width:28px;height:28px}
+#panel-dashboard .card-body{padding:14px 15px}
+/* Sotto i 1100px le colonne si impilano; sotto i 720 anche i KPI. */
+@media(max-width:1100px){#panel-dashboard .dashboard-grid{grid-template-columns:1fr}#panel-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){#panel-dashboard .kpi-grid{grid-template-columns:1fr}#panel-dashboard .page-head{flex-direction:column}#panel-dashboard .head-actions{width:100%}#panel-dashboard .head-actions .d-btn{flex:1}}
 .oggi-corpo{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));background:var(--surf);}
 .oggi-attesa,.oggi-vuoto{grid-column:1/-1;padding:20px 16px;font-size:13px;color:var(--txt3);background:var(--surf);}
 .oggi-vuoto{color:#02984e;font-weight:600;}
@@ -992,15 +1041,50 @@ input[type=file]{display:none;}
        Non mostra numeri: mostra AZIONI, ognuna con il suo conteggio e il
        collegamento a un elenco già filtrato. Chi apre il programma la mattina
        deve sapere cosa fare senza cercarlo. ──────────────────────────────── -->
-  <div class="oggi" id="oggi">
-    <div class="oggi-hd">
-      <div class="oggi-t">Da fare <span>oggi</span></div>
-      <button class="oggi-ric" onclick="caricaDaFareOggi(true)" title="Ricalcola"><i class="ti ti-refresh"></i></button>
+  <!-- Intestazione, indicatori e griglia: design consegnato il 4/8/2026.
+       I quattro indicatori NON sono i numeri del mockup: sono le metriche
+       che «Da fare oggi» gia' calcolava. Mostrare i numeri d'esempio del
+       disegno su un gestionale in uso sarebbe mostrare dati falsi. -->
+  <section class="page-head">
+    <div>
+      <div class="eyebrow" id="d-eyebrow"></div>
+      <h1 id="d-saluto">Scrivania</h1>
+      <div class="subtitle">Le cose che richiedono attenzione, prima di tutto il resto.</div>
     </div>
-    <div class="oggi-corpo" id="oggi-corpo">
-      <div class="oggi-attesa">Calcolo il lavoro del giorno…</div>
+    <div class="head-actions">
+      <button class="d-btn" type="button" onclick="goTab('workdiary')"><i class="ti ti-calendar-event"></i> Apri agenda</button>
+      <button class="d-btn primario" type="button" onclick="openWDModal(null)"><i class="ti ti-plus"></i> Inizia una nuova attività</button>
     </div>
-  </div>
+  </section>
+
+  <section class="kpi-grid" id="d-kpi" aria-label="Indicatori principali"></section>
+
+  <section class="dashboard-grid">
+    <div class="stack">
+      <div class="d-card oggi" id="oggi">
+        <div class="card-head">
+          <div class="card-title"><span class="pictogram"><i class="ti ti-checkbox"></i></span> Da fare oggi</div>
+          <button class="oggi-ric" onclick="caricaDaFareOggi(true)" title="Ricalcola"><i class="ti ti-refresh"></i></button>
+        </div>
+        <div class="oggi-corpo" id="oggi-corpo">
+          <div class="oggi-attesa">Calcolo il lavoro del giorno…</div>
+        </div>
+      </div>
+    </div>
+    <div class="stack" id="d-lato">
+      <div class="d-card">
+        <div class="card-head">
+          <div class="card-title"><span class="pictogram gray"><i class="ti ti-bolt"></i></span> Azioni rapide</div>
+        </div>
+        <div class="card-body dash-list">
+          <div class="dash-list-row" onclick="goTab('sospesi')"><i class="ti ti-file-invoice"></i><span>Controlla sospesi</span></div>
+          <div class="dash-list-row" onclick="goTab('pipeline')"><i class="ti ti-chart-arrows-vertical"></i><span>Apri trattative</span></div>
+          <div class="dash-list-row" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Chiudi estratto conto</span></div>
+          <div class="dash-list-row" onclick="goTab('scadenzario')"><i class="ti ti-calendar-due"></i><span>Scadenzario e rinnovi</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div id="d-empty" class="empty" style="margin-top:50px;"><i class="ti ti-chart-bar"></i><p>Carica i file per vedere il resto della scrivania (contabilità)</p></div>
   <div id="d-content" style="display:none;">
@@ -3746,12 +3830,54 @@ function oggiApri(pagina) {
    passa forza=true e non aspetta. */
 /* Il disegno sta separato dalla raccolta: così si può ridisegnare senza
    reinterrogare, e si può verificare la resa senza un database. */
+/* I quattro indicatori in cima, disegnati DALLE STESSE voci del «da fare
+   oggi»: nessuna interrogazione in piu', e soprattutto nessun numero che
+   possa smentire quello scritto sotto. Nel disegno consegnato gli indicatori
+   erano d'esempio (€ 8.420, 27, 5, 14): metterli davvero vorrebbe dire
+   mostrare dati falsi a chi apre il gestionale la mattina. */
+function oggiIndicatori(voci) {
+  const box = document.getElementById('d-kpi');
+  if (!box) return;
+  const pitto = { urg: 'red', att: 'amber' };
+  const icona = { urg: 'ti-alert-triangle', att: 'ti-clock', '': 'ti-chart-bar' };
+  if (!voci.length) {
+    box.innerHTML = '<article class="d-card kpi"><div><div class="kpi-label">Lavoro in pari</div>'
+      + '<div class="kpi-value">0</div><div class="kpi-note">niente in scadenza né in sospeso</div></div>'
+      + '<div class="pictogram"><i class="ti ti-circle-check"></i></div></article>';
+    return;
+  }
+  /* Le prime quattro: le voci arrivano gia' in ordine di urgenza, quindi
+     tagliare in fondo toglie le meno gravi, non a caso. */
+  box.innerHTML = voci.slice(0, 4).map((v, i) =>
+    `<button class="d-card kpi" type="button" onclick="__OGGI[${i}] && __OGGI[${i}].va && __OGGI[${i}].va()">
+       <span><span class="kpi-label">${v.l}</span>
+       <span class="kpi-value" style="display:block">${v.n}</span>
+       <span class="kpi-note" style="display:block">${v.s || ''}</span></span>
+       <span class="pictogram ${pitto[v.cls] || 'gray'}"><i class="ti ${icona[v.cls] || icona['']}"></i></span>
+     </button>`).join('');
+}
+
+/* Il saluto cambia con l'ora: chi apre il programma alle otto di sera non
+   deve leggere «buongiorno». */
+function oggiSaluto() {
+  const h = new Date().getHours();
+  const q = h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera';
+  const nome = (PROFILO && PROFILO.nome) || (ME && ME.email ? String(ME.email).split('@')[0] : '');
+  const t = document.getElementById('d-saluto');
+  if (t) t.textContent = nome ? `${q}, ${nome}` : q;
+  const e = document.getElementById('d-eyebrow');
+  if (e) e.textContent = new Date().toLocaleDateString('it-IT',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ' · Scrivania operativa';
+}
+
 function oggiDisegna(voci) {
   const box = document.getElementById('oggi-corpo');
   if (!box) return;
   window.__OGGI = voci || [];
+  oggiSaluto();
+  oggiIndicatori(window.__OGGI);
   if (!window.__OGGI.length) {
-    box.innerHTML = '<div class="oggi-vuoto">Non c\'è niente in scadenza né in sospeso: il lavoro è in pari. 👌</div>';
+    box.innerHTML = '<div class="oggi-vuoto">Non c\'è niente in scadenza né in sospeso: il lavoro è in pari.</div>';
     return;
   }
   box.innerHTML = window.__OGGI.map((v, i) =>

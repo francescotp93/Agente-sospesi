@@ -941,10 +941,15 @@ input[type=file]{display:none;}
 #panel-analisi .ab-eti.verde{background:var(--ab-verde-tenue);color:var(--ab-verde-scuro)}
 #panel-analisi .ab-eti.grigio{background:var(--ab-grigio-bg);color:var(--ab-grigio)}
 /* ── Questionario ──────────────────────────────────────────────────────── */
-/* Resta agganciata in alto mentre si scorre: nei passi lunghi — le otto
-   coperture, gli otto interessi — spariva subito, e con lei l'unica cosa
-   che dice a che punto sei di sette. */
-#panel-analisi .ab-q-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-20px -20px 20px;padding:14px 20px;background:rgba(255,255,255,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--ab-line);flex-wrap:wrap}
+/* Niente position:sticky nemmeno qui. L'avevo messo, e NON FUNZIONAVA: la
+   scheda che la contiene ha overflow:hidden, e un antenato con overflow
+   diverso da visible diventa il contenitore di riferimento dello sticky —
+   la barra restava incollata a una scheda che non scorre, cioe' scorreva
+   via come prima. Una regola che non fa niente e' peggio di una regola
+   assente: la si legge e si crede che il problema sia altrove.
+   Il problema vero e' risolto altrove: cambiando passo si torna in cima,
+   quindi la barra la vedi ogni volta che arrivi su una domanda. */
+#panel-analisi .ab-q-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-20px -20px 20px;padding:14px 20px;background:#fbfcfd;border-bottom:1px solid var(--ab-line);flex-wrap:wrap}
 #panel-analisi .ab-barra{width:220px;max-width:100%;height:6px;border-radius:999px;background:#e7ecef;overflow:hidden}
 #panel-analisi .ab-barra span{display:block;height:100%;background:linear-gradient(90deg,var(--ab-verde),var(--ab-verde-vivo));transition:width .35s}
 #panel-analisi .ab-passo-n{font-size:11.5px;font-weight:700;color:var(--ab-ink2);white-space:nowrap}
@@ -991,7 +996,14 @@ input[type=file]{display:none;}
 /* Le misure del prototipo (9-10px) stavano in un mockup stretto; dentro IAM,
    a schermo intero, erano solo piccole. Qui la scala e' quella di una cosa
    che si legge davvero mentre si parla con un cliente. */
-#panel-analisi .ab-lato{border:1px solid var(--ab-line);background:#fff;border-radius:13px;padding:18px;box-shadow:var(--ab-ombra);position:sticky;top:12px}
+/* NIENTE position:sticky qui. C'era, e su schermi bassi tagliava la cima
+   della colonna: quando un elemento sticky e' piu' ALTO del contenitore che
+   scorre, il browser lo ancora per il bordo inferiore e la testa finisce a
+   coordinata negativa, fuori dallo schermo. Misurato: con 552px di colonna e
+   500px di area utile, il titolo finiva a y=-73 e spariva anche l'anello.
+   Su uno schermo grande non si vedeva — ed e' esattamente il motivo per cui
+   non va rimesso «tanto da me funziona». */
+#panel-analisi .ab-lato{border:1px solid var(--ab-line);background:#fff;border-radius:13px;padding:18px;box-shadow:var(--ab-ombra)}
 #panel-analisi .ab-lato h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ab-ink2);margin:0 0 14px}
 #panel-analisi .ab-anello-r{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:14px}
 #panel-analisi .ab-anello{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--ab-verde) calc(var(--ab-p,0)*1%),#e8edef 0)}
@@ -9341,6 +9353,19 @@ const AB_COLORI = { rosso: 'var(--ab-rosso)', ambra: 'var(--ab-ambra)', blu: 'va
 const AB_STATO_BREVE = { rosso: 'Priorità', ambra: 'Approfondire', blu: 'Da verificare', verde: 'Bassa', grigio: 'Dati assenti' };
 const AB_ICONE = { famiglia: 'ti-heart-handshake', casa: 'ti-home-shield', salute: 'ti-heartbeat', previdenza: 'ti-pig-money', responsabilita: 'ti-scale' };
 
+/* «Necessita' principale» va detto solo quando c'e' davvero qualcosa da
+   fare: rosso, ambra o blu. Con la sola anagrafica compilata l'area
+   previdenza esce verde — bassa priorita' — e chiamarla «necessita'
+   principale» accanto alla frase «non sono emersi elementi sufficienti»
+   faceva dire alla schermata due cose opposte nella stessa riga. Letto di
+   corsa da un operatore, il primo pezzo suona come un consiglio di vendita.
+   Il motore non si tocca: e' versionato e il suo ordinamento e' giusto.
+   Qui cambia solo che cosa si mette in evidenza. */
+const AB_DA_AGIRE = ['rosso', 'ambra', 'blu'];
+function abPrincipale(necessita){
+  return (necessita || []).find(function(x){ return AB_DA_AGIRE.includes(x.colore); }) || null;
+}
+
 function abRicalcola(){
   const M = window.ABRating;
   if (!M || !AB_DATI) return null;
@@ -9373,9 +9398,11 @@ function abRicalcola(){
       + '<u>' + (grigio ? '—' : a.punteggio) + '</u></div></div>';
   }).join('');
 
-  const primo = n.find(function(x){ return x.colore !== 'grigio'; });
-  document.getElementById('ab-princ-t').textContent = primo ? ('Necessità principale: ' + primo.etichetta) : 'Necessità principale non ancora definita';
-  document.getElementById('ab-princ-p').textContent = primo ? primo.motivi[0] : 'Servono ancora risposte per poterlo dire.';
+  const primo = abPrincipale(n);
+  document.getElementById('ab-princ-t').textContent = primo
+    ? ('Necessità principale: ' + primo.etichetta) : 'Nessuna necessità principale, per ora';
+  document.getElementById('ab-princ-p').textContent = primo
+    ? primo.motivi[0] : 'Con le risposte raccolte finora non c\'è un\'area che meriti di essere messa davanti alle altre.';
   return { n: n, indice: indice, primo: primo };
 }
 
@@ -9383,7 +9410,7 @@ function abRicalcola(){
 function abEsito(){
   const M = window.ABRating;
   const s = M.creaSnapshotRating(AB_DATI);
-  const primo = s.necessita.find(function(x){ return x.colore !== 'grigio'; });
+  const primo = abPrincipale(s.necessita);
   const box = document.getElementById('ab-vista-esito');
 
   box.innerHTML = '<div class="ab-esito-t"><div class="ab-simbolo"><i class="ti ti-shield-check"></i></div>'
@@ -9395,8 +9422,9 @@ function abEsito(){
         + '<div><span class="ab-eti ' + primo.colore + '">' + esc(primo.stato) + '</span>'
         + '<h3>Necessità principale: ' + esc(primo.etichetta) + '</h3><p>' + esc(primo.prossimoPasso) + '</p></div>'
         + '<div class="ab-punt"><b>' + (s.indiceComplessivo == null ? '—' : s.indiceComplessivo) + '</b><span>indice complessivo</span></div></div>'
-      : '<div class="ab-avviso"><i class="ti ti-help-circle"></i> Le risposte raccolte non bastano a indicare una necessità principale. '
-        + 'Non è un buon segno né cattivo: vuol dire che manca ancora troppo per dire qualcosa di sensato.</div>')
+      : '<div class="ab-avviso"><i class="ti ti-help-circle"></i> <b>Nessuna area emerge sulle altre.</b> '
+        + 'O le risposte non bastano ancora, oppure non è emerso nulla che meriti la priorità. '
+        + 'Non è un buon segno né cattivo: è un profilo su cui non si può dire di più senza parlarne.</div>')
 
     + (primo
       ? '<div class="ab-perche"><h3><i class="ti ti-list-check"></i> Perché emerge questa necessità</h3><div class="ab-perche-l">'

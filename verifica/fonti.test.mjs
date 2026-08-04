@@ -78,9 +78,13 @@ prova('un campo vuoto non cancella quello che c\'è', () => {
   deve(s, 'manca fontiSalva');
   /* Mandare una stringa vuota sovrascriverebbe la credenziale buona con
      niente, e l'agenzia resterebbe fuori dal portale. */
-  for (const campo of ['url', 'user', 'pw']) {
+  for (const campo of ['user', 'pw']) {
     deve(new RegExp('if \\(' + campo + '\\)').test(s), 'il campo ' + campo + ' viene mandato anche se vuoto');
   }
+  /* L'indirizzo ha una condizione in più: sulle compagnie con collegamento
+     dedicato l'indirizzo lo conosce il collegamento, e mandarlo darebbe
+     l'impressione di averlo cambiato senza che cambi niente. */
+  deve(/if \(url && campoUrl && !campoUrl\.disabled\)/.test(s), 'l\'indirizzo viene mandato anche dove non è modificabile');
   deve(/Niente da salvare/.test(s), 'con tutti i campi vuoti parte comunque una scrittura');
   /* Dopo il salvataggio il campo si svuota: lasciarlo pieno fa credere che
      il valore mostrato sia quello salvato. */

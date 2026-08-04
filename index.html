@@ -8258,7 +8258,8 @@ function fontiScheda(f) {
       <div class="f-card">
         <div class="f-st"><i class="ti ti-key"></i><span><b>Credenziali e accesso</b><small>I valori salvati restano sul server e non vengono mostrati.</small></span></div>
         <div class="f-grid">
-          <div class="f-f full"><label>Link di accesso</label><input id="f-url-${esc(f.id)}" value="${esc(f.url || '')}" placeholder="https://portale.compagnia.it/login"></div>
+          <div class="f-f full"><label>Link di accesso</label><input id="f-url-${esc(f.id)}" value="${esc(f.url || '')}" placeholder="https://portale.compagnia.it/login"${f.custom ? '' : ' disabled style="background:#f4f7f5;color:var(--f-muted)"'}>
+            ${f.custom ? '' : '<div class="f-hint">Questa compagnia ha un collegamento dedicato che conosce da sé l\'indirizzo di accesso: cambiarlo qui non avrebbe effetto. Il campo è mostrato solo per riferimento.</div>'}</div>
           <div class="f-f"><label>Utente ${f.username ? '<span>· attuale ' + esc(f.username) + '</span>' : ''}</label><input id="f-user-${esc(f.id)}" autocomplete="off" placeholder="Nuovo username"></div>
           <div class="f-f"><label>Password ${f.username ? '<span>· salvata</span>' : ''}</label><input id="f-pw-${esc(f.id)}" type="password" autocomplete="new-password" placeholder="${f.username ? 'Lascia vuoto per non cambiarla' : 'Password'}"></div>
           ${f.has2fa ? `<div class="f-f full"><label>Segreto dell'app di autenticazione ${f.ha_totp ? '<span>· impostato</span>' : ''}</label>
@@ -8328,7 +8329,11 @@ async function fontiSalva(id) {
   const corpo = {};
   const url = gv('url'), user = gv('user'), pw = gv('pw');
   const totp = (document.getElementById('f-totp-' + id)?.value || '').replace(/\s+/g, '').trim();
-  if (url) corpo.url = url;
+  /* Sulle compagnie con collegamento dedicato l'indirizzo e' scritto nel
+     collegamento stesso: mandarlo qui darebbe l'impressione di averlo
+     cambiato senza che cambi niente. */
+  const campoUrl = document.getElementById('f-url-' + id);
+  if (url && campoUrl && !campoUrl.disabled) corpo.url = url;
   if (user) corpo.username = user;
   if (pw) corpo.password = pw;
   if (totp) corpo.totp = totp;

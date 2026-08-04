@@ -177,7 +177,7 @@ prova('dopo l\'accesso si aspetta il portale, non si dice «fatto»', () => {
   /* Un ciclo senza fine lascerebbe la schermata a girare per sempre su un
      portale che non risponde piu'. */
   deve(/i < \d+/.test(a), 'l\'attesa non ha una fine');
-  deve(/non ha ancora risposto/.test(a), 'scaduta l\'attesa non viene detto niente');
+  deve(/più del previsto/.test(a), 'scaduta l\'attesa non viene detto niente');
 });
 
 prova('eliminare una fonte chiede conferma e dice cosa sparisce', () => {
@@ -227,8 +227,20 @@ prova('lo stato del login si legge con i nomi veri del backend', () => {
   deve(/st\.step|\.step \|\|/.test(a), 'lo stato non viene letto da «step»');
   deve(/loggato/.test(a), 'non si riconosce il passo «loggato»');
   deve(/attesa_codice|FONTI_PASSO_CODICE/.test(a), 'non si riconosce l\'attesa del codice');
-  deve(/senza_credenziali/.test(a), 'non si riconosce «mancano le credenziali»');
-  deve(/running/.test(a), 'non si distingue un portale che ha finito da uno che sta ancora lavorando');
+  /* Il vocabolario degli stati rotti sta in una lista sola, condivisa fra
+     le compagnie: error, errore, non_loggato, senza_credenziali, timeout_otp,
+     totp_rifiutato. Riconoscerne solo alcuni lascia l'accesso «in corso» per
+     sempre su quelli che mancano. */
+  deve(/FONTI_PASSI_ROTTI/.test(a), 'gli stati di fallimento non vengono riconosciuti');
+  for (const passo of ['non_loggato', 'senza_credenziali', 'timeout_otp', 'totp_rifiutato']) {
+    deve(html.includes(passo), 'stato di fallimento non riconosciuto: ' + passo);
+  }
+  /* NON si decide su `running`: era un'altra mia invenzione. Gli stati di
+     passaggio — credenziali, invio_otp, start — non sono errori, e leggerli
+     come «ha finito» chiudeva l'accesso a metà. Si decide solo su `step`,
+     come faceva il pannello che funzionava. */
+  deve(/Accesso in corso/.test(a), 'gli stati di passaggio non vengono mostrati mentre si aspetta');
+  deve(/i < 60/.test(a), 'i tentativi sono meno di 60: un login lento verrebbe dato per fallito');
   /* I campi inventati non devono tornare — nel CODICE. Il commento che
      racconta il guasto li nomina, ed è il motivo per cui è scritto. */
   const codice = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');

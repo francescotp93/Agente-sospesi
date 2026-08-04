@@ -8261,12 +8261,16 @@ function fontiScheda(f) {
           <div class="f-f full"><label>Link di accesso</label><input id="f-url-${esc(f.id)}" value="${esc(f.url || '')}" placeholder="https://portale.compagnia.it/login"></div>
           <div class="f-f"><label>Utente ${f.username ? '<span>· attuale ' + esc(f.username) + '</span>' : ''}</label><input id="f-user-${esc(f.id)}" autocomplete="off" placeholder="Nuovo username"></div>
           <div class="f-f"><label>Password ${f.username ? '<span>· salvata</span>' : ''}</label><input id="f-pw-${esc(f.id)}" type="password" autocomplete="new-password" placeholder="${f.username ? 'Lascia vuoto per non cambiarla' : 'Password'}"></div>
+          ${f.has2fa ? `<div class="f-f full"><label>Segreto dell'app di autenticazione ${f.ha_totp ? '<span>· impostato</span>' : ''}</label>
+            <input id="f-totp-${esc(f.id)}" autocomplete="off" placeholder="${f.ha_totp ? 'Lascia vuoto per non cambiarlo' : "chiave dell'app, es. JBSWY3DPEHPK3PXP"}">
+            <div class="f-hint">È la chiave mostrata una volta sola quando si configura l'app (Duo, Google Authenticator…), non il codice a sei cifre. Salvandola, il codice se lo genera il motore e non serve più scriverlo a mano.</div></div>` : ''}
           <div class="f-f full"><div class="f-hint">Un campo lasciato vuoto non cambia niente. La password non viene mai rimandata al browser: qui non c'è nulla da precompilare.</div></div>
         </div>
         <div class="f-az">
           <button class="f-b pri" type="button" onclick="fontiSalva('${esc(f.id)}')"><i class="ti ti-device-floppy"></i> Salva credenziali</button>
           <button class="f-b" type="button" onclick="fontiAccedi('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'attiva' ? 'Rifai l\'accesso' : 'Accedi al portale'}</button>
           <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-refresh-dot"></i> Controlla stato</button>
+          ${f.has2fa && !attesa ? `<button class="f-b" type="button" onclick="fontiApriCodice('${esc(f.id)}')"><i class="ti ti-device-mobile-check"></i> Accedi col codice</button>` : ''}
           ${f.custom ? `<button class="f-b" style="color:var(--f-red);border-color:#efc9c5" type="button" onclick="fontiElimina('${esc(f.id)}')"><i class="ti ti-trash"></i> Elimina</button>` : ''}
           <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:${esc((FONTI_ESITI[f.id] || {}).colore || 'var(--f-muted)')}">${esc((FONTI_ESITI[f.id] || {}).testo || '')}</span>
         </div>
@@ -8276,8 +8280,8 @@ function fontiScheda(f) {
             <div class="f-f"><label>Codice ricevuto</label><input id="f-cod-${esc(f.id)}" autocomplete="one-time-code" inputmode="numeric" placeholder="es. 123456"></div>
           </div>
           <div class="f-az">
-            <button class="f-b pri" type="button" onclick="fontiCodice('${esc(f.id)}')"><i class="ti ti-check"></i> Conferma codice</button>
-            ${/duo|authenticator|app/i.test((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || '') ? '' : `<button class="f-b" type="button" onclick="fontiAltroCodice('${esc(f.id)}')"><i class="ti ti-mail"></i> Mandane un altro</button>`}
+            <button class="f-b pri" type="button" onclick="${(FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].diretto) ? `fontiCodiceDiretto('${esc(f.id)}')` : `fontiCodice('${esc(f.id)}')`}"><i class="ti ti-check"></i> ${(FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].diretto) ? 'Accedi col codice' : 'Conferma codice'}</button>
+            ${/duo|authenticator|\bapp\b/i.test((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || '') ? '' : `<button class="f-b" type="button" onclick="fontiAltroCodice('${esc(f.id)}')"><i class="ti ti-mail"></i> Mandane un altro</button>`}
           </div>
         </div>` : ''}
       </div>
@@ -8323,9 +8327,11 @@ async function fontiSalva(id) {
   const gv = k => (document.getElementById('f-' + k + '-' + id)?.value || '').trim();
   const corpo = {};
   const url = gv('url'), user = gv('user'), pw = gv('pw');
+  const totp = (document.getElementById('f-totp-' + id)?.value || '').replace(/\s+/g, '').trim();
   if (url) corpo.url = url;
   if (user) corpo.username = user;
   if (pw) corpo.password = pw;
+  if (totp) corpo.totp = totp;
   if (!Object.keys(corpo).length) { fontiEsito(id, 'Niente da salvare: tutti i campi sono vuoti.'); return; }
   fontiEsito(id, 'Salvo…');
   try {
@@ -8419,70 +8425,108 @@ async function fontiStrumento(id, quale) {
    partita la richiesta, mentre il portale sta ancora caricando. */
 let FONTI_ATTESA = {};
 
-/* I NOMI DEI CAMPI VENGONO DAL BACKEND, NON DA UNA SUPPOSIZIONE.
-   La prima versione leggeva `codice_richiesto`, `serve_codice` e
-   `stato === 'codice'`: campi che non esistono. Il ciclo girava a vuoto e
-   non rilevava mai niente — «non accede», senza un errore da leggere.
+/* ══ L'ACCESSO AL PORTALE — ripristinato dal pannello che funzionava ══════
+   Questa non e' una schermata di configurazione: e' la SIMULAZIONE del login
+   vero della compagnia. Se il portale chiede utente, poi password, poi un
+   codice, qui devono succedere le stesse tre cose nello stesso ordine — ed
+   e' il motivo per cui non si puo' inventare: il flusso lo detta il portale.
 
-   Il contratto vero e' /loginstate, che risponde { step, running, msg, url }:
-     step = 'loggato'            -> dentro
-     step = 'attesa_codice'      -> il portale ha mandato il codice via email
-     step = 'attesa_otp'         -> idem
-     step = 'senza_credenziali'  -> mancano utente e password
-   e `running` dice se sta ancora lavorando. Sono gli stessi nomi che usa
-   seguiLoginGuidato() nel backend (server/fonti.js). */
-const FONTI_PASSO_CODICE = /^(attesa_codice|attesa_otp)$/i;
+   Tre cose che avevo sbagliato ricostruendolo da zero, e che qui tornano
+   come stavano nel pannello che funzionava:
+
+   1. DUE VOCABOLARI CONVIVONO. AXA, Allianz, Prima e Groupama dicono
+      'attesa_otp'; HDI dice 'attesa_codice'. Riconoscerne uno solo fa
+      passare inosservata la richiesta del codice, e l'accesso sembra «in
+      corso» per sempre.
+   2. SESSANTA TENTATIVI, non trenta. I login lenti arrivano a novanta
+      secondi e il backend si da' cento: arrendersi a meta' vuol dire
+      dichiarare fallito un accesso che sta per riuscire.
+   3. SI DECIDE SU `step`, MAI su `running`. Gli stati di passaggio
+      (credenziali, invio_otp, start) non sono errori: si mostra il
+      messaggio e si continua ad aspettare. */
+const FONTI_PASSO_CODICE = /^(attesa_otp|attesa_codice)$/i;
+const FONTI_PASSI_ROTTI = ['error', 'errore', 'non_loggato', 'senza_credenziali', 'timeout_otp', 'totp_rifiutato'];
 
 async function fontiAccedi(id) {
   if (!fontiPuoEntrare()) return;
   FONTI_ATTESA[id] = { codice: false };
-  fontiEsito(id, 'Accesso in corso… il portale può metterci fino a un minuto e mezzo.');
+  fontiEsito(id, 'Avvio l\'accesso al portale…');
   fontiDisegna();
-  /* La bussata iniziale puo' restare appesa a lungo: non la si aspetta, si
-     parte subito a seguire lo stato. Aspettarla voleva dire una schermata
-     ferma per novanta secondi senza dire niente. */
-  mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' }).catch(() => {});
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
+  } catch (e) {
+    /* 404/405 vuol dire che il motore si sta aggiornando, non che l'accesso
+       e' fallito: sono due cose diverse e chiedono due attese diverse. */
+    const m = String(e.message || '');
+    if (/404|405/.test(m)) { fontiEsito(id, 'Il motore si sta aggiornando: riprova fra un paio di minuti.', 'var(--f-amber)'); return; }
+    /* Sugli altri errori NON ci si ferma: la bussata puo' andare in timeout
+       mentre il login parte lo stesso in sottofondo. Si va a vedere. */
+  }
   await fontiAspetta(id);
 }
 
-/* Si segue il portale passo per passo. Trenta tentativi da tre secondi: il
-   backend stesso si da' cento secondi, e arrendersi prima vorrebbe dire
-   dichiarare fallito un login che sta per riuscire. */
 async function fontiAspetta(id) {
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 3000));
     let st = null;
     try { st = await mailFetch('/fonti/' + encodeURIComponent(id) + '/loginstate'); } catch (_) { continue; }
     const passo = String((st && st.step) || '');
+    const msg = (st && st.msg) || '';
     if (!passo) continue;
 
-    if (FONTI_PASSO_CODICE.test(passo)) {
-      FONTI_ATTESA[id] = { codice: true, msg: (st && st.msg) || '' };
-      fontiEsito(id, (st && st.msg) || 'Il portale chiede un codice: scrivilo qui sotto.', 'var(--f-amber)');
-      fontiDisegna();
-      return;
-    }
     if (/^loggato$/i.test(passo)) {
       FONTI_ATTESA[id] = null;
-      fontiEsito(id, 'Accesso confermato dal portale.', 'var(--f-green)');
+      fontiEsito(id, msg || 'Accesso eseguito.', 'var(--f-green)');
       fontiCarica(true);
       return;
     }
-    if (/^senza_credenziali$/i.test(passo)) {
-      fontiEsito(id, (st && st.msg) || 'Mancano utente e password di questo portale.', 'var(--f-red)');
+    if (FONTI_PASSO_CODICE.test(passo)) {
+      FONTI_ATTESA[id] = { codice: true, msg: msg };
+      fontiEsito(id, msg || 'Inserisci il codice qui sotto e premi Conferma.', 'var(--f-amber)');
+      fontiDisegna();
+      setTimeout(() => document.getElementById('f-cod-' + id)?.focus(), 60);
       return;
     }
-    /* Il portale si e' fermato e ha spiegato perche'. Il messaggio e' SUO —
-       «la schermata password non e' comparsa», «campo utente non trovato» —
-       e va riportato tale e quale: riassumerlo in «accesso non riuscito»
-       toglierebbe l'unica informazione utile, cioe' a che punto si e' rotto.
-       Si dice anche da dove viene, perche' non e' un guasto del gestionale. */
-    if (/^errore?$/i.test(passo) || (st && st.running === false)) {
-      fontiEsito(id, 'Il portale: ' + ((st && st.msg) || 'accesso non riuscito.'), 'var(--f-red)');
+    if (FONTI_PASSI_ROTTI.includes(passo.toLowerCase())) {
+      fontiEsito(id, 'Il portale: ' + (msg || 'accesso non riuscito.'), 'var(--f-red)');
+      fontiCarica(true);
       return;
     }
+    /* Stati di passaggio: si dice a che punto e' e si continua. */
+    fontiEsito(id, msg || 'Accesso in corso…');
   }
-  fontiEsito(id, 'Il portale non ha ancora risposto. Riprova fra poco: il freno impedisce di insistere.', 'var(--f-amber)');
+  fontiEsito(id, 'Ci sta mettendo più del previsto: premi «Controlla stato» fra poco.', 'var(--f-amber)');
+}
+
+/* Il SECONDO flusso: alcune compagnie non mandano niente e chiedono un codice
+   generato sul momento dall'app di autenticazione. Li' non c'e' niente da
+   aspettare — si incolla il codice e lo scraper lo usa. Sono due flussi
+   diversi e il portale decide quale: averne uno solo lasciava fuori meta'
+   delle compagnie. */
+/* Apre il campo del codice senza bussare al portale: chi usa un'app lo
+   genera quando vuole, e obbligarlo a passare da «Accedi» vorrebbe dire
+   far ripartire un login che non serve. */
+function fontiApriCodice(id) {
+  FONTI_ATTESA[id] = { codice: true, diretto: true, msg: "Genera il codice dall'app di autenticazione e incollalo qui." };
+  fontiEsito(id, 'Incolla il codice generato dall\'app.', 'var(--f-amber)');
+  fontiDisegna();
+  setTimeout(() => document.getElementById('f-cod-' + id)?.focus(), 60);
+}
+
+async function fontiCodiceDiretto(id) {
+  if (!fontiPuoEntrare()) return;
+  const c = (document.getElementById('f-cod-' + id)?.value || '').trim();
+  if (!c) { fontiEsito(id, 'Genera il codice dall\'app e incollalo qui.', 'var(--f-amber)'); return; }
+  fontiEsito(id, 'Invio il codice…');
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/codice',
+      { method: 'POST', body: JSON.stringify({ codice: c }) });
+    const el = document.getElementById('f-cod-' + id); if (el) el.value = '';
+    /* Lo scraper ci mette qualche secondo a prendere il codice e premere
+       Conferma sul portale: rileggere subito darebbe lo stato di prima. */
+    fontiEsito(id, 'Codice inviato: lo scraper lo sta confermando sul portale…', 'var(--f-amber)');
+    setTimeout(() => fontiCarica(true), 7000);
+  } catch (e) { fontiEsito(id, 'Codice non inviato: ' + (e.message || ''), 'var(--f-red)'); }
 }
 
 async function fontiCodice(id) {

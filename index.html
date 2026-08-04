@@ -874,6 +874,79 @@ input[type=file]{display:none;}
   .wd-viste .wd-c i{font-size:17px}
   .wds-coda{grid-template-columns:1fr}
 }
+
+/* ══ ANALISI DEI BISOGNI — disegno consegnato il 4/8/2026 ═══════════════
+   Specifica: docs/analisi-bisogni/ (pacchetto 1.0.0, verificato SHA256).
+
+   Tavolozza confinata e ogni classe con prefisso «ab-». Le due cose vanno
+   insieme e non sono pignoleria: nel diario una classe chiamata «oggi» ha
+   ereditato per sbaglio lo stile di un riquadro della scrivania, e il
+   difetto sembrava venire da tutt'altra parte del programma. */
+#panel-analisi{
+  --ab-verde:#02984e; --ab-verde-vivo:#01c061; --ab-verde-scuro:#016b38; --ab-verde-tenue:#eaf7f0;
+  --ab-ink:#1f2a37; --ab-ink2:#607080; --ab-ink3:#93a0ac;
+  --ab-bg:#edf1f3; --ab-line:#dfe5e9; --ab-line2:#cfd8de;
+  --ab-rosso:#a3352a; --ab-rosso-bg:#fff5f3; --ab-ambra:#b06a00; --ab-ambra-bg:#fff4e6;
+  --ab-blu:#356b8c; --ab-blu-bg:#eef7fb; --ab-grigio:#6b7684; --ab-grigio-bg:#f0f3f5;
+  --ab-ombra:0 8px 24px rgba(16,24,32,.06);
+  background:var(--ab-bg); color:var(--ab-ink); padding:22px 16px 40px; overflow-y:auto;
+}
+#panel-analisi button,#panel-analisi input,#panel-analisi select,#panel-analisi textarea{font:inherit}
+#panel-analisi .ab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+#panel-analisi .ab-head h1{font-size:25px;line-height:1.15;margin:0 0 6px;letter-spacing:-.03em}
+#panel-analisi .ab-head p{margin:0;color:var(--ab-ink2);font-size:12px;line-height:1.55;max-width:720px}
+#panel-analisi .ab-b{height:38px;border-radius:8px;padding:0 14px;border:1px solid var(--ab-line);background:#fff;color:var(--ab-ink);font-size:12px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+#panel-analisi .ab-b:hover{border-color:#b9d8c6}
+#panel-analisi .ab-b.pri{background:linear-gradient(180deg,var(--ab-verde-vivo),var(--ab-verde));border-color:var(--ab-verde);color:#fff}
+#panel-analisi .ab-b.soft{background:var(--ab-verde-tenue);border-color:#cde8d8;color:var(--ab-verde-scuro)}
+#panel-analisi .ab-b.sm{height:32px;padding:0 11px;font-size:11px}
+#panel-analisi .ab-b:disabled{opacity:.45;cursor:not-allowed}
+#panel-analisi .ab-griglia{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr);gap:14px;align-items:start}
+#panel-analisi .ab-riq{border:1px solid var(--ab-line);background:#fff;border-radius:13px;box-shadow:var(--ab-ombra);overflow:hidden}
+#panel-analisi .ab-riq-t{padding:14px 15px;border-bottom:1px solid var(--ab-line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+#panel-analisi .ab-riq-t h3{margin:0;font-size:13px}
+#panel-analisi .ab-riq-t small{display:block;color:var(--ab-ink3);font-size:10px;margin-top:3px}
+#panel-analisi .ab-tit{display:flex;align-items:center;gap:10px}
+#panel-analisi .ab-pitto{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--ab-verde-tenue);color:var(--ab-verde-scuro);font-size:18px;flex:0 0 auto}
+#panel-analisi .ab-riq-c{padding:15px}
+#panel-analisi .ab-cerca{display:flex;gap:9px}
+#panel-analisi .ab-cerca-w{position:relative;flex:1;min-width:0}
+#panel-analisi .ab-cerca-w i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ab-ink3);font-size:17px}
+#panel-analisi .ab-cerca-w input{width:100%;height:42px;border:1px solid var(--ab-line2);border-radius:9px;padding:0 12px 0 38px;background:#fff;color:var(--ab-ink)}
+#panel-analisi input:focus,#panel-analisi select:focus,#panel-analisi textarea:focus{outline:none;border-color:var(--ab-verde);box-shadow:0 0 0 3px rgba(2,152,78,.12)}
+#panel-analisi .ab-elenco{display:grid;gap:8px;margin-top:13px;max-height:340px;overflow:auto}
+#panel-analisi .ab-cli{border:1px solid var(--ab-line);background:#fff;border-radius:11px;padding:11px;display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;text-align:left;cursor:pointer;width:100%}
+#panel-analisi .ab-cli:hover{border-color:#b9d8c6}
+#panel-analisi .ab-cli.sel{border-color:var(--ab-verde);background:linear-gradient(180deg,#f9fdfb,#eff9f3);box-shadow:0 0 0 3px rgba(2,152,78,.07)}
+#panel-analisi .ab-ini{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#edf3f5;color:var(--ab-ink2);font-weight:800;font-size:12px}
+#panel-analisi .ab-cli.sel .ab-ini{background:var(--ab-verde);color:#fff}
+#panel-analisi .ab-cli strong{display:block;font-size:12px}
+#panel-analisi .ab-cli small{display:block;color:var(--ab-ink3);font-size:10px;margin-top:3px}
+#panel-analisi .ab-vuoto{padding:26px 14px;text-align:center;color:var(--ab-ink3);font-size:11px;display:grid;gap:6px;justify-items:center}
+#panel-analisi .ab-vuoto i{font-size:26px;color:var(--ab-line2)}
+#panel-analisi .ab-vuoto b{color:var(--ab-ink2);font-size:12px}
+#panel-analisi .ab-scelto{margin-top:13px;border:1px solid #cde8d8;background:var(--ab-verde-tenue);border-radius:11px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+#panel-analisi .ab-scelto h4{margin:0 0 4px;font-size:12px}
+#panel-analisi .ab-scelto p{margin:0;color:var(--ab-ink2);font-size:10px}
+#panel-analisi .ab-az{display:grid;gap:10px}
+#panel-analisi .ab-az-c{border:1px solid var(--ab-line);border-radius:12px;padding:13px;background:#fff;display:grid;grid-template-columns:42px 1fr auto;gap:11px;align-items:center}
+#panel-analisi .ab-az-i{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,var(--ab-verde-tenue),#fff);color:var(--ab-verde-scuro);font-size:21px;border:1px solid #d6eadf}
+#panel-analisi .ab-az-c h4{margin:0 0 4px;font-size:12px}
+#panel-analisi .ab-az-c p{margin:0;color:var(--ab-ink2);font-size:10px;line-height:1.45}
+#panel-analisi .ab-nota{margin-top:12px;padding:10px 12px;border-left:3px solid var(--ab-blu);background:var(--ab-blu-bg);border-radius:5px;color:#3e6073;font-size:10px;line-height:1.55}
+#panel-analisi .ab-eti{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:9.5px;font-weight:800;white-space:nowrap}
+#panel-analisi .ab-eti.rosso{background:var(--ab-rosso-bg);color:var(--ab-rosso)}
+#panel-analisi .ab-eti.ambra{background:var(--ab-ambra-bg);color:var(--ab-ambra)}
+#panel-analisi .ab-eti.blu{background:var(--ab-blu-bg);color:var(--ab-blu)}
+#panel-analisi .ab-eti.verde{background:var(--ab-verde-tenue);color:var(--ab-verde-scuro)}
+#panel-analisi .ab-eti.grigio{background:var(--ab-grigio-bg);color:var(--ab-grigio)}
+@media(max-width:980px){ #panel-analisi .ab-griglia{grid-template-columns:1fr} }
+@media(max-width:560px){
+  #panel-analisi{padding:16px 10px 34px}
+  #panel-analisi .ab-cerca{flex-direction:column}
+  #panel-analisi .ab-az-c{grid-template-columns:42px 1fr}
+  #panel-analisi .ab-az-c .ab-b{grid-column:1/-1}
+}
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
 <link rel="stylesheet" href="withus-one.css?v=20260804">
@@ -2837,6 +2910,75 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- ══ ANALISI DEI BISOGNI ══════════════════════════════════════════════
+     Strumento marketing-consulenziale: si parte da un cliente del
+     portafoglio, si raccolgono poche informazioni e ne esce un indicatore
+     MOTIVATO delle aree da approfondire — non un preventivo e non una
+     raccomandazione automatica.
+     Specifica completa in docs/analisi-bisogni/. -->
+<div class="panel" id="panel-analisi">
+  <section class="ab-head">
+    <div>
+      <h1>Analisi dei bisogni</h1>
+      <p>Si parte da un cliente del portafoglio. L'analisi indica quali aree meritano un confronto e perché: non calcola premi e non propone prodotti.</p>
+    </div>
+  </section>
+
+  <div class="ab-griglia">
+    <section class="ab-riq">
+      <div class="ab-riq-t">
+        <div class="ab-tit">
+          <span class="ab-pitto"><i class="ti ti-user-search"></i></span>
+          <div><h3>Ricerca cliente</h3><small>Nominativo, codice fiscale, email o comune</small></div>
+        </div>
+      </div>
+      <div class="ab-riq-c">
+        <div class="ab-cerca">
+          <div class="ab-cerca-w">
+            <i class="ti ti-search"></i>
+            <input id="ab-q" type="search" placeholder="Cerca nel portafoglio…" autocomplete="off"
+                   onkeydown="if(event.key==='Enter')analisiCerca()">
+          </div>
+          <button class="ab-b pri" type="button" onclick="analisiCerca()">Cerca</button>
+        </div>
+        <div class="ab-elenco" id="ab-elenco"></div>
+        <div class="ab-scelto" id="ab-scelto" style="display:none">
+          <div><h4 id="ab-scelto-n"></h4><p id="ab-scelto-m"></p></div>
+          <span class="ab-eti verde"><i class="ti ti-check"></i> Selezionato</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ab-riq">
+      <div class="ab-riq-t">
+        <div class="ab-tit">
+          <span class="ab-pitto"><i class="ti ti-route"></i></span>
+          <div><h3>Scegli il percorso</h3><small>Questi comandi restano in agenzia</small></div>
+        </div>
+      </div>
+      <div class="ab-riq-c">
+        <div class="ab-az">
+          <div class="ab-az-c">
+            <span class="ab-az-i"><i class="ti ti-building-store"></i></span>
+            <div><h4>Compila in agenzia</h4><p>L'operatore guida il cliente, raccoglie privacy e firma OTP in sede.</p></div>
+            <button class="ab-b sm pri" type="button" id="ab-avvia" disabled onclick="analisiAvvia()">Avvia</button>
+          </div>
+          <div class="ab-az-c">
+            <span class="ab-az-i"><i class="ti ti-send"></i></span>
+            <div><h4>Invia al cliente</h4><p>Genera un link personale con scadenza e segui apertura, completamento e firma.</p></div>
+            <button class="ab-b sm soft" type="button" id="ab-invia" disabled onclick="analisiInvita()">Genera</button>
+          </div>
+        </div>
+        <div class="ab-nota" id="ab-nota">
+          <i class="ti ti-shield-lock"></i> Il link non contiene mai dati del cliente: solo un codice casuale, con scadenza e revocabile. Email e WhatsApp preparano una bozza, l'invio lo confermi tu.
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script type="module" src="analisi-bisogni-rating.js?v=20260804"></script>
+
 <script>
 'use strict';
 
@@ -3563,6 +3705,15 @@ function goTab(t) {
      collegamento vecchio di dieci minuti e' peggio di nessuno stato, perche'
      si crede a un «attiva» che non c'e' piu'. */
   if (t === 'fonti') { fontiCarica(true); }
+  /* L'analisi non carica niente da sola: partirebbe con l'elenco di tutti i
+     clienti dell'agenzia aperto sullo schermo, e questa schermata si usa col
+     cliente seduto davanti. Si mostra come si comincia e si aspetta. */
+  if (t === 'analisi') {
+    const e = document.getElementById('ab-elenco');
+    if (e && !e.innerHTML.trim()) {
+      e.innerHTML = abVuoto('ti-user-search', 'Cerca il cliente', 'Nominativo, codice fiscale, email o comune. Servono almeno due lettere.');
+    }
+  }
   if (t === 'utenti') {
     caricaProfilo(ME?.id).then(p => {
       if (p) { PROFILO = p; applicaPermessi(p.ruolo); }
@@ -8665,6 +8816,99 @@ async function mailFetch(path, opts){
   if (!res.ok) throw new Error((body && body.error) || ('Errore ' + res.status));
   return body;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ANALISI DEI BISOGNI — console interna
+//
+//  I clienti NON stanno in IAM: l'anagrafica vive in QUOTO, tabella
+//  quote_anagrafiche, e si raggiunge dal motore con /crm/anagrafiche?q=.
+//  Per questo la ricerca passa da mailFetch e non da Supabase: dal browser
+//  non si legge direttamente una tabella che sta dall'altra parte.
+// ═══════════════════════════════════════════════════════════════════════════════
+let AB_CLIENTE = null;      // il cliente scelto
+let AB_TROVATI = [];        // l'ultimo elenco, per ritrovare chi viene cliccato
+
+function abIniziali(c){
+  const n = (c.nominativo || ((c.cognome||'') + ' ' + (c.nome||''))).trim();
+  const p = n.split(/\s+/).filter(Boolean);
+  return ((p[0]||'C')[0] + (p[1]||'L')[0]).toUpperCase();
+}
+function abNome(c){
+  return (c.nominativo || ((c.cognome||'') + ' ' + (c.nome||'')).trim() || 'Senza nominativo');
+}
+/* Sotto il nome si mostra quel poco che serve a non sbagliare persona —
+   codice fiscale, email, comune — e nient'altro: questa schermata sta aperta
+   davanti al cliente, e il resto dei suoi dati non c'entra. */
+function abRiga(c){
+  return [c.codice_fiscale || c.partita_iva, c.email, c.comune].filter(Boolean).join(' · ') || 'Nessun recapito registrato';
+}
+
+function abVuoto(icona, titolo, spiega){
+  return '<div class="ab-vuoto"><i class="ti ' + icona + '"></i><b>' + esc(titolo) + '</b>'
+       + (spiega ? '<span>' + esc(spiega) + '</span>' : '') + '</div>';
+}
+
+async function analisiCerca(){
+  const box = document.getElementById('ab-elenco');
+  const q = (document.getElementById('ab-q').value || '').trim();
+  if (!box) return;
+  if (q.length < 2) {
+    box.innerHTML = abVuoto('ti-search', 'Scrivi almeno due lettere', 'Cerca per nominativo, codice fiscale, email o comune.');
+    return;
+  }
+  box.innerHTML = abVuoto('ti-loader-2', 'Cerco nel portafoglio…', '');
+  try {
+    const r = await mailFetch('/crm/anagrafiche?limit=25&q=' + encodeURIComponent(q));
+    AB_TROVATI = (r && r.items) || [];
+    if (!AB_TROVATI.length) {
+      box.innerHTML = abVuoto('ti-user-off', 'Nessun cliente trovato',
+        'Nessuna anagrafica corrisponde a «' + q + '». Controlla come è scritto, oppure crea prima il cliente in anagrafica.');
+      return;
+    }
+    box.innerHTML = AB_TROVATI.map(function(c, i){
+      const sel = (AB_CLIENTE && AB_CLIENTE.id === c.id) ? ' sel' : '';
+      return '<button class="ab-cli' + sel + '" type="button" onclick="analisiScegli(' + i + ')">'
+           + '<span class="ab-ini">' + esc(abIniziali(c)) + '</span>'
+           + '<span><strong>' + esc(abNome(c)) + '</strong><small>' + esc(abRiga(c)) + '</small></span>'
+           + '<i class="ti ti-chevron-right" style="color:var(--ab-ink3)"></i></button>';
+    }).join('');
+  } catch (e) {
+    /* Il motore gira su un'altra macchina: quando non risponde la causa piu'
+       probabile e' quella, non un errore di chi sta cercando. Dirlo evita di
+       mandare qualcuno a caccia di un cliente che c'e' eccome. */
+    const m = (e && e.message) || '';
+    const spiega = /401|Token|sessione/i.test(m) ? 'La sessione non è più valida: esci e rientra.'
+                 : /Failed to fetch|NetworkError|CORS/i.test(m) ? 'Il motore non risponde (api.withusassicurazioni.it). Se è appena stato riavviato, riprova fra un minuto.'
+                 : m;
+    document.getElementById('ab-elenco').innerHTML = abVuoto('ti-plug-connected-x', 'Ricerca non riuscita', spiega);
+  }
+}
+
+function analisiScegli(i){
+  const c = AB_TROVATI[i];
+  if (!c) return;
+  AB_CLIENTE = c;
+  document.getElementById('ab-scelto').style.display = '';
+  document.getElementById('ab-scelto-n').textContent = abNome(c);
+  document.getElementById('ab-scelto-m').textContent = abRiga(c);
+  document.getElementById('ab-avvia').disabled = false;
+  document.getElementById('ab-invia').disabled = false;
+  analisiCerca();   // ridisegna l'elenco con la riga evidenziata
+}
+
+/* Le due azioni hanno bisogno delle rotte lato motore, che non ci sono
+   ancora. Finche' non ci sono devono DIRLO: un pulsante che si preme e non
+   fa niente e' peggio di un pulsante spento, perche' lascia credere che il
+   lavoro sia partito. */
+function analisiNonPronto(cosa){
+  const n = document.getElementById('ab-nota');
+  if (!n) return;
+  n.innerHTML = '<i class="ti ti-tool"></i> <b>' + esc(cosa) + '</b> non è ancora attivo: manca la parte lato motore '
+              + '(questionario, token dell\'invito, OTP e report). Il cliente è selezionato e la ricerca funziona.';
+}
+function analisiAvvia(){ analisiNonPronto('La compilazione in agenzia'); }
+function analisiInvita(){ analisiNonPronto('L\'invio del link al cliente'); }
+
 // ── Pallino notifiche: mail non lette in arrivo ─────────────────────────────────
 let MAIL_BADGE_TIMER = null;
 function mailSetBadge(n){

@@ -733,17 +733,35 @@ input[type=file]{display:none;}
 .wds-vuoto{padding:22px 14px;text-align:center;color:var(--d-muted);font-size:11px}
 
 /* La griglia della settimana. */
+/* La settimana e' fatta a COLONNE, non a righe: una colonna per le ore e una
+   per giorno, ognuna una pila verticale. Quindi le altezze delle due pile
+   devono corrispondere ESATTAMENTE, altrimenti gli eventi scivolano rispetto
+   all'ora scritta a sinistra — ed e' un disallineamento che non si nota
+   guardando il codice, solo guardando lo schermo. */
 .wds-griglia{display:grid;grid-template-columns:54px repeat(7,minmax(112px,1fr));min-width:850px}
 .wds-wrap{overflow:auto}
-.wds-ang,.wds-gh{position:sticky;top:0;z-index:2;background:var(--d-surf2);border-bottom:1px solid var(--d-line);border-right:1px solid var(--d-line);min-height:58px}
-.wds-gh{border-top:0;border-left:0;padding:8px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.wds-ore,.wds-col{display:flex;flex-direction:column;min-width:0}
+.wds-ore{background:var(--d-surf2)}
+.wds-col{border-left:1px solid var(--d-line)}
+.wds-col.oggi{background:rgba(8,119,71,.045)}
+/* Intestazione: stessa altezza nelle due pile. */
+.wds-ang,.wds-gh{height:58px;flex:0 0 58px;border-bottom:1px solid var(--d-line);background:var(--d-surf2)}
+.wds-gh{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 6px;text-align:center}
 .wds-gh:hover{background:var(--d-green-soft)}
-.wds-gh.oggi{background:var(--d-green-soft);color:var(--d-green-deep)}
-.wds-gh b{font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-.wds-gh span{font-size:9px;color:var(--d-muted);margin-top:2px;font-weight:400}
-.wds-o{min-height:72px;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);padding:7px 6px;text-align:right;font-size:9px;color:var(--d-muted);background:var(--d-surf2)}
-.wds-cella{min-height:72px;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);padding:4px;display:grid;align-content:start;gap:4px}
-.wds-cella:hover{background:#fbfdfc}
+.wds-col.oggi .wds-gh{background:var(--d-green-soft)}
+.wds-gh b{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--d-muted)}
+.wds-gh span{font-size:14px;font-weight:700;color:var(--d-ink);margin-top:1px}
+.wds-col.oggi .wds-gh span{color:var(--d-green-deep)}
+/* Fascia oraria: stessa altezza a sinistra e dentro i giorni. */
+.wds-o,.wds-fascia{height:72px;flex:0 0 72px;border-top:1px solid var(--d-line)}
+.wds-o{font-size:9px;color:var(--d-muted);text-align:right;padding:5px 6px 0 0}
+.wds-fascia{padding:4px;display:flex;flex-direction:column;gap:4px;overflow:hidden}
+.wds-fascia:hover{background:#fbfdfc}
+/* «Senza orario»: la banda c'e' in TUTTE le colonne, anche vuota. Se
+   comparisse solo dove serve, quel giorno scenderebbe di una banda e le sue
+   attivita' finirebbero accanto all'ora sbagliata. */
+.wds-senzora{height:44px;flex:0 0 44px;padding:4px;display:flex;flex-direction:column;gap:4px;overflow:hidden;border-bottom:1px solid var(--d-line);background:var(--d-surf2)}
+.wds-senzora.eti{font-size:9px;color:var(--d-muted);text-align:right;padding:5px 6px 0 0;line-height:1.15}
 
 /* L'attivita': barretta a sinistra col colore del suo stato. */
 .wds-ev{width:100%;border:0;border-left:3px solid var(--d-green);border-radius:6px;background:var(--d-green-soft);color:var(--d-ink);text-align:left;padding:5px 6px;min-width:0;cursor:pointer;display:block}
@@ -9718,7 +9736,15 @@ function renderWDSett() {
   if (c) c.textContent = dentro.length ? (dentro.length === 1 ? '1 attivita' : dentro.length + ' attivita') : 'nessuna attivita';
 
   const oggi = wdsISO(new Date());
-  let h = '<div class="wds-ore"><div class="wds-ang"></div>' + WDS_ORE.map(o => `<div class="wds-o">${String(o).padStart(2,'0')}:00</div>`).join('') + '</div>';
+  /* La banda «senza orario» si disegna in TUTTE le colonne quando almeno
+     un'attivita' della settimana non ha un orario leggibile. Metterla solo
+     dove serve farebbe scendere quel giorno di una banda, e le sue attivita'
+     finirebbero accanto all'ora sbagliata: un giorno sfalsato rispetto agli
+     altri, che dal codice non si vede. */
+  const seNoOra = dentro.some(w => !wdsOra(w));
+  let h = '<div class="wds-ore"><div class="wds-ang"></div>'
+    + (seNoOra ? '<div class="wds-senzora eti">senza<br>orario</div>' : '')
+    + WDS_ORE.map(o => `<div class="wds-o">${String(o).padStart(2,'0')}:00</div>`).join('') + '</div>';
   for (const g of giorni) {
     const iso = wdsISO(g);
     const delGiorno = dentro.filter(w => w.data === iso);
@@ -9731,7 +9757,7 @@ function renderWDSett() {
       title="Apri la giornata" onclick="wdApriGiorno('${wdsISO(g)}')"
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();wdApriGiorno('${wdsISO(g)}')}"
       ><b>${g.toLocaleDateString('it-IT',{weekday:'short'})}</b><span>${g.getDate()}</span></div>`;
-    h += `<div class="wds-senzora">${senzaOra.map(w => wdsChip(w)).join('')}</div>`;
+    if (seNoOra) h += `<div class="wds-senzora">${senzaOra.map(w => wdsChip(w)).join('')}</div>`;
     for (const o of WDS_ORE) {
       const qui = delGiorno.filter(w => { const t = wdsOra(w); return t && t.h === o; });
       h += `<div class="wds-fascia" data-ora="${o}">${qui.map(w => wdsChip(w)).join('')}</div>`;

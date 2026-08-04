@@ -125,6 +125,33 @@ prova('titoli e note passano dalla ripulitura', () => {
   deve(/escNl\(w\.note\)/.test(d), 'le note non conservano gli a capo (o non sono ripulite)');
 });
 
+// ── 8. Le due pile devono restare allineate ─────────────────────────────
+prova('le ore a sinistra e i giorni hanno le stesse altezze', () => {
+  /* La settimana è fatta a COLONNE: una per le ore, una per giorno, ognuna
+     una pila verticale. Se le due pile non hanno le stesse altezze, gli
+     eventi scivolano rispetto all'ora scritta a sinistra — e non si vede
+     leggendo il codice, solo guardando lo schermo. È successo: .wds-fascia
+     era rimasta senza altezza e tutti gli eventi si accatastavano in cima. */
+  const css = html.replace(/\s+/g, ' ');
+  deve(/\.wds-ore,\.wds-col\{display:flex;flex-direction:column/.test(css),
+    'le colonne non sono pile verticali');
+  deve(/\.wds-ang,\.wds-gh\{height:(\d+)px;flex:0 0 \1px/.test(css),
+    'le intestazioni delle due pile non hanno la stessa altezza');
+  deve(/\.wds-o,\.wds-fascia\{height:(\d+)px;flex:0 0 \1px/.test(css),
+    'le fasce orarie delle due pile non hanno la stessa altezza');
+});
+
+prova('la banda «senza orario» c\'è in tutte le colonne o in nessuna', () => {
+  /* Se comparisse solo nei giorni che ne hanno bisogno, quel giorno
+     scenderebbe di una banda e le sue attività finirebbero accanto all'ora
+     sbagliata: una colonna sfalsata rispetto alle altre. */
+  const r = corpoDi('function renderWDSett()');
+  deve(r, 'manca renderWDSett');
+  deve(/seNoOra/.test(r), 'la banda «senza orario» non è decisa per l\'intera settimana');
+  deve(/if \(seNoOra\) h \+=/.test(r), 'la banda viene disegnata solo in alcune colonne');
+  deve(/wds-senzora eti/.test(r), 'la colonna delle ore non ha la banda corrispondente');
+});
+
 let ko = 0;
 console.log('\nDIARIO — la vista settimana');
 for (const [ok, nome, msg] of esiti) {

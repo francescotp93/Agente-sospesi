@@ -28,3 +28,23 @@ La grafica di questa sezione funziona esattamente come voluto dall'utente. Non t
 ## Convenzioni
 - Modifiche chirurgiche, mai riscritture complete del file
 - Testare sempre che il login non si rompa dopo ogni modifica
+
+---
+
+## Memoria di sessione (Obsidian)
+
+Il vault Obsidian `secondo-cervello` è collegato via MCP (server `mcp-tools-istefox`).
+
+**A inizio sessione:** leggi la nota `withus_memoria_strategica` (cartella `raw/`) e
+usala come contesto di partenza, prima di rispondere o toccare codice.
+
+**A fine sessione**, o quando Francesco dice "salva": aggiungi **in fondo** a quella
+nota una voce con la data di oggi che riporta:
+- cosa è stato fatto
+- le decisioni prese e il perché
+- i problemi rimasti aperti
+
+Regole:
+- Aggiungi in fondo, non riscrivere la nota da capo: lo storico non si cancella.
+- Se il server MCP di Obsidian non risponde (Obsidian chiuso, sessione cloud),
+  dillo una volta e prosegui lo stesso — non è un motivo per bloccarsi.

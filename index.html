@@ -940,12 +940,108 @@ input[type=file]{display:none;}
 #panel-analisi .ab-eti.blu{background:var(--ab-blu-bg);color:var(--ab-blu)}
 #panel-analisi .ab-eti.verde{background:var(--ab-verde-tenue);color:var(--ab-verde-scuro)}
 #panel-analisi .ab-eti.grigio{background:var(--ab-grigio-bg);color:var(--ab-grigio)}
+/* ── Questionario ──────────────────────────────────────────────────────── */
+#panel-analisi .ab-q-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+#panel-analisi .ab-barra{width:220px;max-width:100%;height:6px;border-radius:999px;background:#e7ecef;overflow:hidden}
+#panel-analisi .ab-barra span{display:block;height:100%;background:linear-gradient(90deg,var(--ab-verde),var(--ab-verde-vivo));transition:width .35s}
+#panel-analisi .ab-passo-n{font-size:10px;color:var(--ab-ink2);white-space:nowrap}
+#panel-analisi .ab-modo{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--ab-line);background:#fff;border-radius:999px;padding:6px 11px;font-size:10px;font-weight:800;color:var(--ab-ink2)}
+#panel-analisi .ab-dom{display:flex;align-items:flex-start;gap:14px}
+#panel-analisi .ab-dom-i{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,var(--ab-verde-tenue),#fff);color:var(--ab-verde-scuro);font-size:24px;border:1px solid #d7e9df;flex:0 0 auto}
+#panel-analisi .ab-dom h2{margin:0 0 6px;font-size:22px;letter-spacing:-.025em}
+#panel-analisi .ab-dom p{margin:0;color:var(--ab-ink2);font-size:11.5px;line-height:1.55;max-width:660px}
+#panel-analisi .ab-corpo{margin-top:20px}
+#panel-analisi .ab-sez+.ab-sez{margin-top:18px}
+#panel-analisi .ab-sez-t{display:flex;align-items:center;gap:7px;margin-bottom:9px;font-size:10.5px;font-weight:800;color:var(--ab-ink2)}
+#panel-analisi .ab-sez-t i{color:var(--ab-verde);font-size:16px}
+#panel-analisi .ab-scelte{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#panel-analisi .ab-scelta{border:1px solid var(--ab-line);background:#fff;border-radius:11px;padding:12px;text-align:left;display:flex;gap:10px;min-height:76px;cursor:pointer;color:var(--ab-ink)}
+#panel-analisi .ab-scelta:hover{border-color:#b8d7c4}
+#panel-analisi .ab-scelta.sel{border-color:var(--ab-verde);background:linear-gradient(180deg,#f9fdfb,#eef9f3);box-shadow:0 0 0 3px rgba(2,152,78,.07)}
+#panel-analisi .ab-scelta .ab-ic{width:34px;height:34px;border-radius:10px;background:#f0f4f5;display:grid;place-items:center;color:var(--ab-ink2);font-size:18px;flex:0 0 auto}
+#panel-analisi .ab-scelta.sel .ab-ic{background:var(--ab-verde);color:#fff}
+#panel-analisi .ab-scelta strong{display:block;font-size:11.5px;margin-bottom:3px}
+#panel-analisi .ab-scelta small{display:block;color:var(--ab-ink2);font-size:9.5px;line-height:1.4}
+#panel-analisi .ab-multi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+#panel-analisi .ab-mc{border:1px solid var(--ab-line);background:#fff;border-radius:11px;padding:11px;text-align:left;min-height:100px;position:relative;cursor:pointer;color:var(--ab-ink)}
+#panel-analisi .ab-mc:hover{border-color:#b8d7c4}
+#panel-analisi .ab-mc.sel{border-color:var(--ab-verde);background:linear-gradient(180deg,#f9fdfb,#eef9f3);box-shadow:0 0 0 3px rgba(2,152,78,.07)}
+#panel-analisi .ab-mc .ab-ic{width:32px;height:32px;border-radius:10px;background:#f1f5f6;display:grid;place-items:center;color:var(--ab-ink2);font-size:17px;margin-bottom:9px}
+#panel-analisi .ab-mc.sel .ab-ic{background:var(--ab-verde);color:#fff}
+#panel-analisi .ab-mc strong{display:block;font-size:10.5px}
+#panel-analisi .ab-mc small{display:block;color:var(--ab-ink2);font-size:9px;line-height:1.4;margin-top:4px}
+#panel-analisi .ab-spunta{position:absolute;right:9px;top:9px;width:18px;height:18px;border-radius:50%;border:1px solid var(--ab-line2);background:#fff;display:grid;place-items:center;font-size:11px;color:transparent}
+#panel-analisi .ab-mc.sel .ab-spunta{background:var(--ab-verde);border-color:var(--ab-verde);color:#fff}
+#panel-analisi .ab-campi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#panel-analisi .ab-campo{display:flex;flex-direction:column;gap:6px}
+#panel-analisi .ab-campo.largo{grid-column:1/-1}
+#panel-analisi .ab-campo label{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--ab-ink2)}
+#panel-analisi .ab-campo input,#panel-analisi .ab-campo select,#panel-analisi .ab-campo textarea{width:100%;border:1px solid var(--ab-line2);border-radius:8px;background:#fff;padding:10px;color:var(--ab-ink)}
+#panel-analisi .ab-campo textarea{resize:vertical;min-height:92px}
+#panel-analisi .ab-priv{border:1px solid #cfdee6;background:var(--ab-blu-bg);border-radius:11px;padding:13px}
+#panel-analisi .ab-priv-r{display:flex;gap:10px;align-items:flex-start;font-size:10.5px;color:#3e6073;line-height:1.55;cursor:pointer}
+#panel-analisi .ab-priv-r+.ab-priv-r{margin-top:10px;padding-top:10px;border-top:1px solid #dceaf0}
+#panel-analisi .ab-priv-r input{margin-top:2px;accent-color:var(--ab-verde);flex:0 0 auto}
+#panel-analisi .ab-q-az{margin-top:24px;padding-top:18px;border-top:1px solid var(--ab-line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+#panel-analisi .ab-avviso{margin-top:12px;padding:11px 13px;border-left:3px solid var(--ab-ambra);background:var(--ab-ambra-bg);border-radius:5px;color:#7a4a00;font-size:10.5px;line-height:1.55}
+/* ── Indicatore laterale ───────────────────────────────────────────────── */
+#panel-analisi .ab-lato{border:1px solid var(--ab-line);background:#fff;border-radius:13px;padding:14px;box-shadow:var(--ab-ombra)}
+#panel-analisi .ab-lato h3{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--ab-ink2);margin:0 0 11px}
+#panel-analisi .ab-anello-r{display:grid;grid-template-columns:84px 1fr;align-items:center;gap:12px}
+#panel-analisi .ab-anello{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--ab-verde) calc(var(--ab-p,0)*1%),#e8edef 0)}
+#panel-analisi .ab-anello:before{content:"";position:absolute;inset:8px;border-radius:50%;background:#fff}
+#panel-analisi .ab-anello-c{position:relative;text-align:center}
+#panel-analisi .ab-anello-c b{display:block;font-size:18px}
+#panel-analisi .ab-anello-c span{display:block;font-size:7px;color:var(--ab-ink3);text-transform:uppercase;letter-spacing:.08em}
+#panel-analisi .ab-lato h4{margin:0 0 5px;font-size:11.5px}
+#panel-analisi .ab-lato .ab-somm{margin:0;color:var(--ab-ink2);font-size:9.5px;line-height:1.45}
+#panel-analisi .ab-aree{display:grid;gap:9px;margin-top:14px}
+#panel-analisi .ab-area{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+#panel-analisi .ab-area strong{display:block;font-size:9.5px;font-weight:700}
+#panel-analisi .ab-mini{height:4px;border-radius:999px;background:#e9edef;overflow:hidden;margin-top:5px}
+#panel-analisi .ab-mini span{display:block;height:100%;border-radius:inherit;transition:width .3s}
+#panel-analisi .ab-princ{margin-top:13px;border-left:3px solid var(--ab-verde);background:var(--ab-verde-tenue);border-radius:6px;padding:10px}
+#panel-analisi .ab-princ strong{display:block;font-size:9.5px;margin-bottom:4px}
+#panel-analisi .ab-princ p{margin:0;color:var(--ab-ink2);font-size:9px;line-height:1.45}
+#panel-analisi .ab-leg{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#panel-analisi .ab-leg div{font-size:8px;color:var(--ab-ink2);display:flex;align-items:center;gap:5px}
+#panel-analisi .ab-pall{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+/* ── Risultato ─────────────────────────────────────────────────────────── */
+#panel-analisi .ab-esito-t{text-align:center;max-width:740px;margin:0 auto 22px}
+#panel-analisi .ab-esito-t h2{font-size:24px;margin:0 0 8px;letter-spacing:-.025em}
+#panel-analisi .ab-esito-t p{margin:0;color:var(--ab-ink2);font-size:11.5px;line-height:1.6}
+#panel-analisi .ab-simbolo{width:56px;height:56px;border-radius:17px;display:grid;place-items:center;margin:0 auto 14px;background:linear-gradient(145deg,var(--ab-verde-tenue),#fff);border:1px solid #d7e9df;color:var(--ab-verde-scuro);font-size:26px}
+#panel-analisi .ab-primo{display:grid;grid-template-columns:66px 1fr auto;gap:15px;align-items:center;border:1px solid #cde8d8;background:linear-gradient(135deg,#f5fbf7,#eef8f2);border-radius:14px;padding:17px;margin-bottom:13px}
+#panel-analisi .ab-primo-i{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--ab-verde);color:#fff;font-size:26px}
+#panel-analisi .ab-primo h3{margin:5px 0 5px;font-size:16px}
+#panel-analisi .ab-primo p{margin:0;color:var(--ab-ink2);font-size:10.5px;line-height:1.55}
+#panel-analisi .ab-punt{text-align:right}
+#panel-analisi .ab-punt b{display:block;font-size:26px;color:var(--ab-verde-scuro)}
+#panel-analisi .ab-punt span{font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--ab-ink3)}
+#panel-analisi .ab-perche{border:1px solid var(--ab-line);background:#fff;border-radius:12px;padding:15px;margin-bottom:13px}
+#panel-analisi .ab-perche h3{margin:0 0 10px;font-size:12.5px;display:flex;align-items:center;gap:8px}
+#panel-analisi .ab-perche-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#panel-analisi .ab-perche-i{display:flex;gap:8px;align-items:flex-start;padding:9px;background:#f7f9fa;border-radius:8px;color:var(--ab-ink2);font-size:10px;line-height:1.5}
+#panel-analisi .ab-perche-i i{color:var(--ab-verde);font-size:15px;flex:0 0 auto}
+#panel-analisi .ab-schede{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#panel-analisi .ab-scheda{border:1px solid var(--ab-line);border-radius:12px;padding:14px;background:#fff;box-shadow:var(--ab-ombra)}
+#panel-analisi .ab-scheda-t{display:grid;grid-template-columns:36px 1fr auto;gap:9px;align-items:center}
+#panel-analisi .ab-scheda-i{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:#f1f5f6;color:var(--ab-ink2);font-size:17px}
+#panel-analisi .ab-scheda h4{margin:0;font-size:11.5px}
+#panel-analisi .ab-scheda p{margin:9px 0 0;color:var(--ab-ink2);font-size:10px;line-height:1.5}
+#panel-analisi .ab-scheda ul{margin:9px 0 0;padding-left:16px;color:var(--ab-ink2);font-size:9.5px;line-height:1.55}
 @media(max-width:980px){ #panel-analisi .ab-griglia{grid-template-columns:1fr} }
 @media(max-width:560px){
   #panel-analisi{padding:16px 10px 34px}
   #panel-analisi .ab-cerca{flex-direction:column}
   #panel-analisi .ab-az-c{grid-template-columns:42px 1fr}
   #panel-analisi .ab-az-c .ab-b{grid-column:1/-1}
+  #panel-analisi .ab-scelte,#panel-analisi .ab-campi,#panel-analisi .ab-perche-l,#panel-analisi .ab-schede{grid-template-columns:1fr}
+  #panel-analisi .ab-multi{grid-template-columns:1fr 1fr}
+  #panel-analisi .ab-dom h2{font-size:19px}
+  #panel-analisi .ab-primo{grid-template-columns:50px 1fr}
+  #panel-analisi .ab-punt{grid-column:1/-1;text-align:left;display:flex;align-items:baseline;gap:7px}
+  #panel-analisi .ab-q-az{flex-wrap:wrap}
 }
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
@@ -2924,6 +3020,7 @@ input[type=file]{display:none;}
     </div>
   </section>
 
+  <div id="ab-vista-console">
   <div class="ab-griglia">
     <section class="ab-riq">
       <div class="ab-riq-t">
@@ -2974,7 +3071,53 @@ input[type=file]{display:none;}
         </div>
       </div>
     </section>
+    </div>
   </div>
+
+  <!-- ── Questionario ────────────────────────────────────────────────── -->
+  <div id="ab-vista-quest" style="display:none">
+    <div class="ab-griglia">
+      <section class="ab-riq">
+        <div class="ab-riq-c">
+          <div class="ab-q-top">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="ab-barra"><span id="ab-barra" style="width:14%"></span></div>
+              <span class="ab-passo-n" id="ab-passo-n">Passo 1 di 7</span>
+            </div>
+            <span class="ab-modo"><i class="ti ti-building-store"></i> Compilazione in agenzia</span>
+          </div>
+          <div class="ab-dom">
+            <div class="ab-dom-i" id="ab-dom-i"><i class="ti ti-user-circle"></i></div>
+            <div><h2 id="ab-dom-t"></h2><p id="ab-dom-d"></p></div>
+          </div>
+          <div class="ab-corpo" id="ab-corpo"></div>
+          <div class="ab-q-az">
+            <button class="ab-b" type="button" onclick="abIndietro()"><i class="ti ti-arrow-left"></i> Indietro</button>
+            <button class="ab-b pri" type="button" id="ab-avanti" onclick="abAvanti()">Continua <i class="ti ti-arrow-right"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="ab-lato">
+        <h3>Indicatore delle necessità</h3>
+        <div class="ab-anello-r">
+          <div class="ab-anello" id="ab-anello"><div class="ab-anello-c"><b id="ab-indice">—</b><span>indice</span></div></div>
+          <div><h4 id="ab-livello">Analisi in corso</h4><p class="ab-somm" id="ab-somm">Le priorità compaiono man mano che arrivano le risposte.</p></div>
+        </div>
+        <div class="ab-aree" id="ab-aree"></div>
+        <div class="ab-princ"><strong id="ab-princ-t">Necessità principale non ancora definita</strong><p id="ab-princ-p">Completa il percorso per avere una motivazione.</p></div>
+        <div class="ab-leg">
+          <div><span class="ab-pall" style="background:var(--ab-rosso)"></span> priorità alta</div>
+          <div><span class="ab-pall" style="background:var(--ab-ambra)"></span> da approfondire</div>
+          <div><span class="ab-pall" style="background:var(--ab-blu)"></span> da verificare</div>
+          <div><span class="ab-pall" style="background:var(--ab-grigio)"></span> dati insufficienti</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ── Risultato ───────────────────────────────────────────────────── -->
+  <div id="ab-vista-esito" style="display:none"></div>
 </div>
 
 <script type="module" src="analisi-bisogni-rating.js?v=20260804"></script>
@@ -8896,18 +9039,352 @@ function analisiScegli(i){
   analisiCerca();   // ridisegna l'elenco con la riga evidenziata
 }
 
-/* Le due azioni hanno bisogno delle rotte lato motore, che non ci sono
-   ancora. Finche' non ci sono devono DIRLO: un pulsante che si preme e non
-   fa niente e' peggio di un pulsante spento, perche' lascia credere che il
+/* L'invio del link ha bisogno delle rotte lato motore, che non ci sono
+   ancora. Finche' non ci sono deve DIRLO: un pulsante che si preme e non fa
+   niente e' peggio di un pulsante spento, perche' lascia credere che il
    lavoro sia partito. */
-function analisiNonPronto(cosa){
+function analisiInvita(){
   const n = document.getElementById('ab-nota');
   if (!n) return;
-  n.innerHTML = '<i class="ti ti-tool"></i> <b>' + esc(cosa) + '</b> non è ancora attivo: manca la parte lato motore '
-              + '(questionario, token dell\'invito, OTP e report). Il cliente è selezionato e la ricerca funziona.';
+  n.innerHTML = '<i class="ti ti-tool"></i> <b>L\'invio del link al cliente</b> non è ancora attivo: il token, la sua scadenza '
+              + 'e la revoca vivono lato motore, e quella parte non c\'è. La compilazione in agenzia funziona già.';
 }
-function analisiAvvia(){ analisiNonPronto('La compilazione in agenzia'); }
-function analisiInvita(){ analisiNonPronto('L\'invio del link al cliente'); }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  ANALISI DEI BISOGNI — il questionario
+//
+//  Sette passi, non uno di piu' (specifica 02 §4): un questionario lungo si
+//  abbandona a meta', e un'analisi abbandonata non produce niente — ne'
+//  consulenza ne' dato.
+//
+//  Il punteggio non si calcola qui. Le regole stanno in
+//  analisi-bisogni-rating.js e ci si parla soltanto: una seconda copia
+//  dentro questo file divergerebbe dalla prima al primo ritocco, e
+//  l'anteprima mostrerebbe un numero diverso da quello poi archiviato.
+// ═══════════════════════════════════════════════════════════════════════════════
+let AB_PASSO = 0;
+let AB_DATI = null;
+
+const AB_PRODOTTI = [
+  ['casa', 'Polizza casa', 'Abitazione, contenuto e responsabilità', 'ti-home-shield'],
+  ['salute', 'Polizza salute', 'Spese sanitarie e accesso alle cure', 'ti-heartbeat'],
+  ['infortuni', 'Polizza infortuni', 'Invalidità e conseguenze economiche', 'ti-first-aid-kit'],
+  ['tcm', 'TCM / protezione mutuo', 'Protezione del debito e della famiglia', 'ti-heart-dollar'],
+  ['previdenza', 'Previdenza integrativa', 'Integrazione del reddito futuro', 'ti-pig-money'],
+  ['rcfam', 'RC famiglia', 'Danni involontari a terzi', 'ti-users-group'],
+  ['tutela', 'Tutela legale', 'Assistenza e spese legali', 'ti-scale'],
+  ['professionale', 'Protezione professionale', 'Rischi dell\'attività o impresa', 'ti-building-factory-2'],
+];
+const AB_INTERESSI = [
+  ['famiglia', 'Protezione famiglia', 'Continuità del reddito e serenità', 'ti-heart-handshake'],
+  ['casa', 'Casa e patrimonio', 'Immobile, contenuto ed eventi', 'ti-home-heart'],
+  ['salute', 'Salute', 'Cure, prevenzione e spese', 'ti-heartbeat'],
+  ['infortuni', 'Infortuni', 'Capacità lavorativa e invalidità', 'ti-first-aid-kit'],
+  ['mutuo', 'Mutuo e debiti', 'Protezione degli impegni finanziari', 'ti-home-dollar'],
+  ['risparmio', 'Risparmio', 'Costruzione di capitale nel tempo', 'ti-coins'],
+  ['pensione', 'Pensione', 'Integrazione del reddito futuro', 'ti-sun-high'],
+  ['impresa', 'Professione o impresa', 'Continuità e responsabilità aziendali', 'ti-building-store'],
+];
+
+const AB_PASSI = [
+  { icona: 'ti-user-circle', titolo: 'I tuoi dati',
+    desc: 'Sono precompilati dall\'anagrafica. Correggili qui se qualcosa è cambiato: la correzione resta in questa analisi e non tocca la scheda del cliente.',
+    disegna: abPassoAnagrafica },
+  { icona: 'ti-users-group', titolo: 'Famiglia e continuità del reddito',
+    desc: 'Due domande per capire chi dipende da questo reddito e quanto sarebbe difficile sostituirlo.',
+    disegna: abPassoFamiglia },
+  { icona: 'ti-home-heart', titolo: 'Casa e patrimonio',
+    desc: 'La situazione abitativa e i beni posseduti dicono quali aree hanno qualcosa da proteggere.',
+    disegna: abPassoCasa },
+  { icona: 'ti-shield-check', titolo: 'Coperture già presenti',
+    desc: 'Si può sceglierne più di una. Un prodotto già presente non viene riproposto: viene segnato in blu, perché massimali ed esclusioni non li ha ancora letti nessuno.',
+    disegna: abPassoCoperture },
+  { icona: 'ti-target-arrow', titolo: 'Aree da approfondire',
+    desc: 'Obiettivi e preoccupazioni del cliente, anche più di uno. Entrano nella lettura finale.',
+    disegna: abPassoInteressi },
+  { icona: 'ti-message-circle', titolo: 'Osservazioni e preferenze',
+    desc: 'Cambiamenti recenti, dubbi o progetti che le risposte chiuse non raccontano. Non è obbligatorio.',
+    disegna: abPassoNote },
+  { icona: 'ti-signature', titolo: 'Privacy e firma',
+    desc: 'Il consenso necessario serve per completare. Quello di marketing è separato, facoltativo, e non cambia nulla se manca.',
+    disegna: abPassoPrivacy },
+];
+
+function abVista(quale){
+  for (const v of ['console', 'quest', 'esito']) {
+    const e = document.getElementById('ab-vista-' + v);
+    if (e) e.style.display = (v === quale) ? '' : 'none';
+  }
+}
+
+function analisiAvvia(){
+  if (!AB_CLIENTE) return;
+  /* Le risposte partono dall'anagrafica del cliente e restano staccate da
+     essa: qui si fotografa la situazione dichiarata oggi, non si modifica
+     la scheda in portafoglio. */
+  AB_DATI = {
+    anagrafica: {
+      nome: AB_CLIENTE.nome || '', cognome: AB_CLIENTE.cognome || '',
+      nascita: (AB_CLIENTE.data_nascita || '').slice(0, 10),
+      cf: AB_CLIENTE.codice_fiscale || AB_CLIENTE.partita_iva || '',
+      email: AB_CLIENTE.email || '', telefono: AB_CLIENTE.cellulare || AB_CLIENTE.telefono || '',
+    },
+    famiglia: null, dipendenzaReddito: null, casa: null,
+    patrimonio: [], coperture: [], copertureConfermate: false,
+    interessi: [], note: '', contatto: 'Telefono', privacy: false, marketing: false,
+  };
+  AB_PASSO = 0;
+  abVista('quest');
+  abDisegnaPasso();
+}
+
+function abDisegnaPasso(){
+  const p = AB_PASSI[AB_PASSO];
+  document.getElementById('ab-dom-i').innerHTML = '<i class="ti ' + p.icona + '"></i>';
+  document.getElementById('ab-dom-t').textContent = p.titolo;
+  document.getElementById('ab-dom-d').textContent = p.desc;
+  document.getElementById('ab-corpo').innerHTML = p.disegna();
+  document.getElementById('ab-barra').style.width = Math.round(((AB_PASSO + 1) / AB_PASSI.length) * 100) + '%';
+  document.getElementById('ab-passo-n').textContent = 'Passo ' + (AB_PASSO + 1) + ' di ' + AB_PASSI.length;
+  document.getElementById('ab-avanti').innerHTML = (AB_PASSO === AB_PASSI.length - 1)
+    ? 'Mostra il risultato <i class="ti ti-sparkles"></i>' : 'Continua <i class="ti ti-arrow-right"></i>';
+  abRicalcola();
+}
+
+// ── I passi ───────────────────────────────────────────────────────────────
+function abCampo(id, etichetta, valore, tipo){
+  return '<div class="ab-campo"><label for="ab-f-' + id + '">' + esc(etichetta) + '</label>'
+       + '<input id="ab-f-' + id + '" type="' + (tipo || 'text') + '" value="' + esc(valore || '') + '"></div>';
+}
+function abPassoAnagrafica(){
+  const a = AB_DATI.anagrafica;
+  return '<div class="ab-campi">'
+    + abCampo('nome', 'Nome', a.nome) + abCampo('cognome', 'Cognome', a.cognome)
+    + abCampo('nascita', 'Data di nascita', a.nascita, 'date') + abCampo('cf', 'Codice fiscale', a.cf)
+    + abCampo('email', 'Email', a.email, 'email') + abCampo('telefono', 'Telefono', a.telefono)
+    + '</div>';
+}
+function abScelte(chiave, voci){
+  return '<div class="ab-scelte">' + voci.map(function(o){
+    return '<button type="button" class="ab-scelta' + (AB_DATI[chiave] === o[0] ? ' sel' : '') + '"'
+         + ' onclick="abScegli(\'' + chiave + '\',\'' + o[0] + '\')">'
+         + '<span class="ab-ic"><i class="ti ' + o[3] + '"></i></span>'
+         + '<span><strong>' + esc(o[1]) + '</strong><small>' + esc(o[2]) + '</small></span></button>';
+  }).join('') + '</div>';
+}
+function abMulti(chiave, voci){
+  return '<div class="ab-multi">' + voci.map(function(o){
+    return '<button type="button" class="ab-mc' + (AB_DATI[chiave].includes(o[0]) ? ' sel' : '') + '"'
+         + ' onclick="abSpunta(\'' + chiave + '\',\'' + o[0] + '\')">'
+         + '<span class="ab-spunta"><i class="ti ti-check"></i></span>'
+         + '<span class="ab-ic"><i class="ti ' + o[3] + '"></i></span>'
+         + '<strong>' + esc(o[1]) + '</strong><small>' + esc(o[2]) + '</small></button>';
+  }).join('') + '</div>';
+}
+function abPassoFamiglia(){
+  return '<div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-users"></i> Situazione familiare</div>'
+    + abScelte('famiglia', [
+        ['solo', 'Vive da solo', 'Nessuna persona economicamente dipendente', 'ti-user'],
+        ['coppia', 'Vive in coppia', 'Spese e progetti condivisi', 'ti-users'],
+        ['figli', 'Ha figli', 'Una o più persone dipendono dal reddito', 'ti-baby-carriage'],
+        ['allargata', 'Famiglia allargata', 'Responsabilità verso più persone', 'ti-users-group']])
+    + '</div><div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-wallet"></i> Dipendenza dal reddito</div>'
+    + abScelte('dipendenzaReddito', [
+        ['bassa', 'Bassa', 'Ci sono altre entrate sufficienti', 'ti-scale'],
+        ['media', 'Media', 'Il reddito è importante, ma non l\'unico', 'ti-chart-dots'],
+        ['alta', 'Alta', 'Sostiene gran parte delle spese', 'ti-currency-euro'],
+        ['totale', 'Totale', 'Senza, sarebbe difficile proseguire', 'ti-alert-triangle']])
+    + '</div>';
+}
+function abPassoCasa(){
+  return '<div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-home-dollar"></i> Abitazione principale</div>'
+    + abScelte('casa', [
+        ['proprieta', 'Proprietà senza mutuo', 'Nessun finanziamento attivo', 'ti-home-check'],
+        ['mutuo', 'Proprietà con mutuo', 'Finanziamento ancora attivo', 'ti-home-dollar'],
+        ['affitto', 'In affitto', 'Abitazione non di proprietà', 'ti-key'],
+        ['multi', 'Più immobili', 'Patrimonio immobiliare articolato', 'ti-building-community']])
+    + '</div><div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-building-bank"></i> Patrimonio da considerare — se ne può scegliere più di uno</div>'
+    + abMulti('patrimonio', [
+        ['prima_casa', 'Abitazione principale', 'Casa in cui vive il nucleo', 'ti-home'],
+        ['altri_immobili', 'Altri immobili', 'Seconda casa o immobili a reddito', 'ti-building-community'],
+        ['veicoli', 'Veicoli', 'Auto, moto o altri mezzi', 'ti-car'],
+        ['risparmi', 'Risparmi e investimenti', 'Capitale accumulato nel tempo', 'ti-coins'],
+        ['impresa', 'Attività o impresa', 'Beni e responsabilità professionali', 'ti-building-store'],
+        ['oggetti_valore', 'Oggetti di valore', 'Gioielli, arte o collezioni', 'ti-diamond']])
+    + '</div>';
+}
+function abPassoCoperture(){
+  return '<div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-shield-check"></i> Prodotti già posseduti</div>'
+    + abMulti('coperture', AB_PRODOTTI) + '</div>'
+    + '<div class="ab-nota"><i class="ti ti-info-circle"></i> Se il cliente non ha nessuno di questi prodotti, prosegui senza spuntare nulla: '
+    + 'il fatto che l\'elenco sia stato guardato conta quanto le risposte, ed è quello che distingue «non ce l\'ha» da «non l\'ha ancora detto».</div>';
+}
+function abPassoInteressi(){
+  return '<div class="ab-sez"><div class="ab-sez-t"><i class="ti ti-target-arrow"></i> Esigenze e obiettivi</div>'
+    + abMulti('interessi', AB_INTERESSI) + '</div>';
+}
+function abPassoNote(){
+  const sc = function(v){ return AB_DATI.contatto === v ? ' selected' : ''; };
+  return '<div class="ab-campi"><div class="ab-campo largo"><label for="ab-f-note">Che cosa conta, per il cliente</label>'
+    + '<textarea id="ab-f-note" placeholder="Per esempio: ha appena acceso un mutuo, sta per avere un figlio, ha una polizza ma non ricorda cosa copre…">' + esc(AB_DATI.note) + '</textarea></div>'
+    + '<div class="ab-campo largo"><label for="ab-f-contatto">Canale preferito per il ricontatto</label>'
+    + '<select id="ab-f-contatto"><option' + sc('Telefono') + '>Telefono</option><option' + sc('WhatsApp') + '>WhatsApp</option>'
+    + '<option' + sc('Email') + '>Email</option><option' + sc('In agenzia') + '>In agenzia</option></select></div></div>';
+}
+function abPassoPrivacy(){
+  /* Testo PROVVISORIO. Va sostituito con quello approvato dall'agenzia prima
+     che firmi un cliente vero (specifica 07 §1). Il marketing sta separato e
+     non parte mai spuntato. */
+  return '<div class="ab-priv">'
+    + '<label class="ab-priv-r"><input type="checkbox" id="ab-f-privacy"' + (AB_DATI.privacy ? ' checked' : '') + '>'
+    + '<span><strong>Consenso necessario.</strong> Il cliente acconsente al trattamento dei dati personali per la gestione '
+    + 'dell\'analisi dei bisogni e per il confronto successivo con un consulente (Reg. UE 2016/679).</span></label>'
+    + '<label class="ab-priv-r"><input type="checkbox" id="ab-f-marketing"' + (AB_DATI.marketing ? ' checked' : '') + '>'
+    + '<span><strong>Consenso facoltativo.</strong> Il cliente acconsente a ricevere comunicazioni commerciali coerenti con '
+    + 'gli interessi indicati. Il rifiuto non impedisce di completare l\'analisi.</span></label></div>'
+    + '<div class="ab-avviso"><i class="ti ti-alert-triangle"></i> <b>Testo provvisorio.</b> Questa informativa è un segnaposto: '
+    + 'va sostituita con quella approvata dall\'agenzia prima che la firmi un cliente vero. '
+    + 'La <b>firma OTP</b> arriva con la parte lato motore, che non c\'è ancora: per ora il risultato si può vedere, non firmare.</div>';
+}
+
+// ── Raccolta, validazione, navigazione ────────────────────────────────────
+function abScegli(chiave, valore){ AB_DATI[chiave] = valore; abDisegnaPasso(); }
+function abSpunta(chiave, valore){
+  const a = AB_DATI[chiave], i = a.indexOf(valore);
+  if (i >= 0) a.splice(i, 1); else a.push(valore);
+  abDisegnaPasso();
+}
+function abLeggi(id){ const e = document.getElementById('ab-f-' + id); return e ? e.value.trim() : ''; }
+
+function abSalvaPasso(){
+  if (AB_PASSO === 0) {
+    for (const k of ['nome', 'cognome', 'nascita', 'cf', 'email', 'telefono']) AB_DATI.anagrafica[k] = abLeggi(k);
+  }
+  /* Superato il passo delle coperture, l'elenco e' stato guardato: da qui in
+     avanti «vuoto» vuol dire davvero «non ne ha», e il motore puo' contarlo. */
+  if (AB_PASSO === 3) AB_DATI.copertureConfermate = true;
+  if (AB_PASSO === 5) {
+    AB_DATI.note = abLeggi('note');
+    const c = document.getElementById('ab-f-contatto'); if (c) AB_DATI.contatto = c.value;
+  }
+  if (AB_PASSO === 6) {
+    const p = document.getElementById('ab-f-privacy'), m = document.getElementById('ab-f-marketing');
+    if (p) AB_DATI.privacy = p.checked;
+    if (m) AB_DATI.marketing = m.checked;
+  }
+}
+
+function abValida(){
+  if (AB_PASSO === 0 && (!AB_DATI.anagrafica.nome || !AB_DATI.anagrafica.cognome)) return 'Servono almeno nome e cognome.';
+  if (AB_PASSO === 1 && (!AB_DATI.famiglia || !AB_DATI.dipendenzaReddito)) return 'Rispondi a entrambe le domande.';
+  if (AB_PASSO === 2 && !AB_DATI.casa) return 'Indica la situazione abitativa.';
+  if (AB_PASSO === 6 && !AB_DATI.privacy) return 'Senza il consenso necessario l\'analisi non si può completare.';
+  return null;
+}
+
+function abAvanti(){
+  abSalvaPasso();
+  const errore = abValida();
+  if (errore) { abDisegnaPasso(); alert(errore); return; }
+  if (AB_PASSO < AB_PASSI.length - 1) { AB_PASSO++; abDisegnaPasso(); }
+  else abEsito();
+}
+function abIndietro(){
+  abSalvaPasso();
+  if (AB_PASSO > 0) { AB_PASSO--; abDisegnaPasso(); }
+  else { abVista('console'); }
+}
+
+// ── L'anteprima laterale ──────────────────────────────────────────────────
+const AB_COLORI = { rosso: 'var(--ab-rosso)', ambra: 'var(--ab-ambra)', blu: 'var(--ab-blu)', verde: 'var(--ab-verde)', grigio: 'var(--ab-grigio)' };
+
+function abRicalcola(){
+  const M = window.ABRating;
+  if (!M || !AB_DATI) return null;
+  const n = M.calcolaNecessita(AB_DATI);
+  const indice = M.calcolaIndiceComplessivo(n);
+
+  const anello = document.getElementById('ab-anello');
+  /* Con l'indice nullo l'anello resta vuoto e il numero diventa un trattino:
+     disegnare uno zero direbbe «tutto a posto», che e' l'opposto di «non lo
+     so ancora». */
+  if (anello) anello.style.setProperty('--ab-p', indice == null ? 0 : indice);
+  document.getElementById('ab-indice').textContent = indice == null ? '—' : indice;
+  document.getElementById('ab-livello').textContent = indice == null ? 'Dati insufficienti'
+    : indice >= 70 ? 'Necessità elevate' : indice >= 45 ? 'Necessità da approfondire' : 'Nessuna criticità forte';
+  document.getElementById('ab-somm').textContent = indice == null
+    ? 'Non ci sono ancora abbastanza risposte per esprimere un indice.'
+    : indice >= 70 ? 'Ci sono aree che meritano un confronto prioritario.'
+    : indice >= 45 ? 'Il profilo mostra bisogni da valutare insieme al consulente.'
+    : 'Con le risposte raccolte non emergono criticità forti.';
+
+  document.getElementById('ab-aree').innerHTML = n.map(function(a){
+    return '<div class="ab-area"><span><strong>' + esc(a.etichetta) + '</strong>'
+      + '<span class="ab-mini"><span style="width:' + (a.colore === 'grigio' ? 0 : a.punteggio) + '%;background:' + AB_COLORI[a.colore] + '"></span></span></span>'
+      + '<span class="ab-eti ' + a.colore + '">' + esc(a.colore === 'grigio' ? '—' : a.colore === 'blu' ? 'verifica' : String(a.punteggio)) + '</span></div>';
+  }).join('');
+
+  const primo = n.find(function(x){ return x.colore !== 'grigio'; });
+  document.getElementById('ab-princ-t').textContent = primo ? ('Necessità principale: ' + primo.etichetta) : 'Necessità principale non ancora definita';
+  document.getElementById('ab-princ-p').textContent = primo ? primo.motivi[0] : 'Servono ancora risposte per poterlo dire.';
+  return { n: n, indice: indice, primo: primo };
+}
+
+// ── Il risultato ──────────────────────────────────────────────────────────
+function abEsito(){
+  const M = window.ABRating;
+  const s = M.creaSnapshotRating(AB_DATI);
+  const primo = s.necessita.find(function(x){ return x.colore !== 'grigio'; });
+  const box = document.getElementById('ab-vista-esito');
+
+  box.innerHTML = '<div class="ab-esito-t"><div class="ab-simbolo"><i class="ti ti-shield-check"></i></div>'
+    + '<h2>Analisi dei bisogni completata</h2>'
+    + '<p>Indica quali aree meritano un confronto e perché. Non è un preventivo, non è una raccomandazione e non sostituisce il colloquio con il consulente.</p></div>'
+
+    + (primo
+      ? '<div class="ab-primo"><div class="ab-primo-i"><i class="ti ti-alert-hexagon"></i></div>'
+        + '<div><span class="ab-eti ' + primo.colore + '">' + esc(primo.stato) + '</span>'
+        + '<h3>Necessità principale: ' + esc(primo.etichetta) + '</h3><p>' + esc(primo.prossimoPasso) + '</p></div>'
+        + '<div class="ab-punt"><b>' + (s.indiceComplessivo == null ? '—' : s.indiceComplessivo) + '</b><span>indice complessivo</span></div></div>'
+      : '<div class="ab-avviso"><i class="ti ti-help-circle"></i> Le risposte raccolte non bastano a indicare una necessità principale. '
+        + 'Non è un buon segno né cattivo: vuol dire che manca ancora troppo per dire qualcosa di sensato.</div>')
+
+    + (primo
+      ? '<div class="ab-perche"><h3><i class="ti ti-list-check"></i> Perché emerge questa necessità</h3><div class="ab-perche-l">'
+        + primo.motivi.map(function(m){ return '<div class="ab-perche-i"><i class="ti ti-check"></i><span>' + esc(m) + '</span></div>'; }).join('')
+        + '</div></div>'
+      : '')
+
+    + '<div class="ab-schede">' + s.necessita.map(function(a){
+        return '<div class="ab-scheda"><div class="ab-scheda-t">'
+          + '<span class="ab-scheda-i"><i class="ti ti-circle-dot"></i></span>'
+          + '<div><h4>' + esc(a.etichetta) + '</h4></div>'
+          /* Lo stato scritto a parole accanto al colore: stampato in bianco e
+             nero, o letto da chi non distingue rosso e verde, il colore da
+             solo non direbbe niente (specifica 08 §6). */
+          + '<span class="ab-eti ' + a.colore + '">' + esc(a.stato) + '</span></div>'
+          + '<p>' + esc(a.prossimoPasso) + '</p>'
+          + '<ul>' + a.motivi.slice(0, 3).map(function(m){ return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
+      }).join('') + '</div>'
+
+    /* Senza le rotte lato motore qui non si e' salvato niente e non si e'
+       firmato niente. Tacere lascerebbe chiudere la scheda convinti di aver
+       lasciato una traccia sul cliente: non c'e' niente di peggio di un
+       lavoro che si crede fatto. */
+    + '<div class="ab-avviso" style="margin-top:16px"><i class="ti ti-database-off"></i> '
+    + '<b>Questa analisi non è stata salvata.</b> Nessuna traccia è rimasta sulla scheda del cliente, non è stata firmata '
+    + 'e non è stato prodotto nessun report: l\'archiviazione, la firma OTP e i due PDF vivono lato motore, e quella parte '
+    + 'non c\'è ancora. Se ti serve, trascrivi adesso quello che conta.</div>'
+
+    + '<div class="ab-q-az"><button class="ab-b" type="button" onclick="abVista(\'quest\')">'
+    + '<i class="ti ti-arrow-left"></i> Torna alle risposte</button>'
+    + '<button class="ab-b soft" type="button" onclick="abVista(\'console\')">Chiudi e torna alla ricerca</button></div>'
+
+    + '<p style="margin:14px 0 0;text-align:center;color:var(--ab-ink3);font-size:9.5px">Regole ' + esc(s.versioneRegole)
+    + ' · questionario ' + esc(s.versioneQuestionario) + '</p>';
+
+  abVista('esito');
+}
 
 // ── Pallino notifiche: mail non lette in arrivo ─────────────────────────────────
 let MAIL_BADGE_TIMER = null;

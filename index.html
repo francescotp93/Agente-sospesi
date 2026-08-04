@@ -8268,7 +8268,7 @@ function fontiScheda(f) {
           <button class="f-b" type="button" onclick="fontiAccedi('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'attiva' ? 'Rifai l\'accesso' : 'Accedi al portale'}</button>
           <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-refresh-dot"></i> Controlla stato</button>
           ${f.custom ? `<button class="f-b" style="color:var(--f-red);border-color:#efc9c5" type="button" onclick="fontiElimina('${esc(f.id)}')"><i class="ti ti-trash"></i> Elimina</button>` : ''}
-          <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:var(--f-muted)"></span>
+          <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:${esc((FONTI_ESITI[f.id] || {}).colore || 'var(--f-muted)')}">${esc((FONTI_ESITI[f.id] || {}).testo || '')}</span>
         </div>
         ${attesa ? `<div class="f-card" style="margin-top:11px;border-color:var(--f-amber)">
           <div class="f-st"><i class="ti ti-mail-fast" style="background:var(--f-amber-bg);color:var(--f-amber)"></i><span><b>Codice dal portale</b><small>${esc((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || 'Vale pochi minuti.')}</small></span></div>
@@ -8300,9 +8300,22 @@ function fontiScheda(f) {
 
 function fontiApri(id) { FONTI_APERTA = (FONTI_APERTA === id) ? null : id; fontiDisegna(); }
 
+/* L'esito deve SOPRAVVIVERE al ridisegno.
+   Il difetto: quasi tutte le azioni finiscono con fontiCarica(true), che
+   ridisegna l'elenco e ricrea le schede da zero — buttando via lo <span>
+   dove l'esito era appena stato scritto. «Credenziali salvate», «accesso
+   confermato», «eliminata»: comparivano e sparivano nello stesso istante,
+   e il pulsante sembrava non fare niente. L'unico messaggio che si vedeva
+   era l'errore del portale, perche' quel ramo era l'unico a non ridisegnare.
+
+   Quindi l'esito si tiene qui, e la scheda lo ristampa ogni volta che viene
+   ricostruita. */
+const FONTI_ESITI = {};
+
 function fontiEsito(id, testo, colore) {
+  FONTI_ESITI[id] = { testo: testo, colore: colore || 'var(--f-muted)' };
   const e = document.getElementById('f-esito-' + id);
-  if (e) { e.textContent = testo; e.style.color = colore || 'var(--f-muted)'; }
+  if (e) { e.textContent = testo; e.style.color = FONTI_ESITI[id].colore; }
 }
 
 async function fontiSalva(id) {

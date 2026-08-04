@@ -271,6 +271,26 @@ prova('non si inventa da dove arriva il codice', () => {
   deve(/codice: true, msg:/.test(asp), 'il messaggio del portale non viene conservato per la scheda');
 });
 
+// ── 12. L'esito deve sopravvivere al ridisegno ──────────────────────────
+prova('l\'esito di un\'azione non viene cancellato dal ridisegno', () => {
+  /* Il guasto «non dice nulla». Quasi tutte le azioni finiscono con
+     fontiCarica(true), che ridisegna l'elenco e ricrea le schede da zero —
+     buttando via lo <span> dove l'esito era appena stato scritto.
+     «Credenziali salvate», «accesso confermato», «eliminata»: comparivano e
+     sparivano nello stesso istante, e il pulsante sembrava non fare niente.
+     L'unico messaggio che si vedeva era l'errore del portale, perché quel
+     ramo era l'unico a non ridisegnare — ed è il motivo per cui il guasto
+     è sembrato a lungo un problema del motore. */
+  const e = ritaglia(html, 'fontiEsito');
+  deve(e, 'manca fontiEsito');
+  deve(/FONTI_ESITI\[id\]\s*=/.test(e), 'l\'esito non viene conservato: sopravvive solo finché nessuno ridisegna');
+  const s = ritaglia(html, 'fontiScheda');
+  deve(s && /FONTI_ESITI\[f\.id\]/.test(s), 'la scheda non ristampa l\'esito quando viene ricostruita');
+  /* Anche il colore: un «salvato» verde che torna grigio dopo il ridisegno
+     fa dubitare che sia andata bene. */
+  deve(s && /colore/.test(s), 'il colore dell\'esito si perde nel ridisegno');
+});
+
 let ko = 0;
 console.log('\nFONTI COMPAGNIE');
 for (const [ok, nome, msg] of esiti) {

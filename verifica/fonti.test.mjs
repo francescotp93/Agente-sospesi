@@ -45,7 +45,11 @@ prova('le fonti sono una schermata di IAM, non un riquadro del preventivatore', 
 prova('il cancello sta nel codice, non solo nel menu', () => {
   const g = ritaglia(html, 'fontiPuoEntrare');
   deve(g, 'manca fontiPuoEntrare');
-  deve(/SUPER_ADMIN_EMAIL/.test(g), 'il controllo non guarda il Super Admin');
+  /* Il controllo riusa isSuperAdmin(), che è l'helper del resto del
+     gestionale. Una copia della regola qui dentro vorrebbe dire che il
+     giorno in cui cambia, questa schermata resta indietro in silenzio. */
+  deve(/isSuperAdmin\(\)/.test(g), 'il controllo non riusa isSuperAdmin()');
+  deve(/function isSuperAdmin\(\)/.test(html), 'manca l\'helper isSuperAdmin');
   /* Una voce di menu nascosta si raggiunge scrivendo l'indirizzo: il
      controllo deve stare dove i dati vengono chiesti. */
   const c = ritaglia(html, 'fontiCarica');

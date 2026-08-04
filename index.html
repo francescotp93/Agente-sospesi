@@ -8107,7 +8107,11 @@ async function leoToggle(on){
 let FONTI = [], FONTI_FILTRO = 'tutte', FONTI_APERTA = null, FONTI_ULTIMO = 0;
 
 function fontiPuoEntrare() {
-  return ((ME && ME.email) || '').toLowerCase() === SUPER_ADMIN_EMAIL;
+  /* isSuperAdmin() esiste gia' (riga ~6703) ed e' quello che usa il resto del
+     gestionale. Riscriverne una copia qui voleva dire che il giorno in cui
+     cambia la regola cambia in un posto solo, e questa schermata resta
+     indietro senza che nessuno se ne accorga. */
+  return typeof isSuperAdmin === 'function' ? isSuperAdmin() : false;
 }
 
 async function fontiCarica(forza) {
@@ -8132,8 +8136,21 @@ async function fontiCarica(forza) {
     FONTI = (d && d.fonti) || [];
     fontiDisegna();
   } catch (e) {
+    /* Un messaggio generico costringe ad aprire la console del browser per
+       sapere se il motore e' spento, se la sessione e' scaduta o se e' un
+       problema di permessi: tre guasti diversi con tre rimedi diversi. */
+    const m = String(e.message || '');
+    const spiega = /401|token|autoriz/i.test(m)
+        ? 'La sessione non è più valida: esci e rientra.'
+      : /403|permess/i.test(m)
+        ? 'Il motore ha rifiutato l\'accesso a questa schermata.'
+      : /Failed to fetch|NetworkError|CORS/i.test(m)
+        ? 'Il motore non risponde (api.withusassicurazioni.it). Se è appena stato riavviato, riprova fra un minuto.'
+        : '';
     box.innerHTML = '<div class="f-vuoto"><i class="ti ti-plug-connected-x"></i>'
-      + esc(e.message || 'Motore non raggiungibile') + '</div>';
+      + '<b>Elenco non caricato</b>'
+      + (spiega ? '<span>' + esc(spiega) + '</span>' : '')
+      + '<span style="opacity:.7">' + esc(m) + '</span></div>';
   } finally { if (btn) btn.disabled = false; }
 }
 

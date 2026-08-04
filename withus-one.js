@@ -404,7 +404,7 @@
     richieste:   ["Richieste all'ufficio", 'Agenzia'],
     performance: ['Performance', 'Agenzia'],
     estratto:    ['Estratto conto', 'Contabilità'],
-    fonti:       ['Fonti e collegamenti compagnie', 'Strumenti']
+    fonti:       ['Fonti compagnie', 'Strumenti']
   };
 
   /* Da quale voce di menu dipende una scheda di IAM */
@@ -602,10 +602,15 @@
       '<i class="ti ti-layout-grid"></i></span>' +
       '<div><h1 id="w1-titolo">Scrivania</h1>' +
       '<div class="w1-crumb" id="w1-crumb">IAM</div></div></div>' +
-      '<div class="w1-az"><button class="w1-b p" id="w1-nuovo">' + ico('i-plus', 'sm') + ' Nuovo preventivo</button></div>';
+      '';
+    /* Niente tasto «Nuovo preventivo» qui: NUOVO PREVENTIVO sta gia' nel menu
+       scuro, che e' sempre visibile. Averlo due volte nella stessa schermata
+       non da' una scorciatoia in piu', toglie un punto di riferimento —
+       chi cerca il tasto verde ne trova due e deve decidere quale. */
     /* Come Plurima: il tasto verde apre la TENDINA dei prodotti, non una griglia.
        Se la voce di menu non e' visibile (permessi), si ripiega sull'elenco prodotti. */
-    p.querySelector('#w1-nuovo').onclick = function (e) {
+    var bNuovo = p.querySelector('#w1-nuovo');
+    if (bNuovo) bNuovo.onclick = function (e) {
       e.preventDefault(); e.stopPropagation();
       var voce = document.querySelector('.w1-m[data-key="quoto"]');
       if (voce && voce.querySelector('.w1-mega')) {

@@ -215,6 +215,38 @@ prova('a chi non ha i permessi si dice con che utenza è entrato', () => {
   deve(c && /ME\.email/.test(c), 'non viene detto con quale utenza si è entrati');
 });
 
+// ── 10. I nomi dei campi vengono dal backend, non da una supposizione ───
+prova('lo stato del login si legge con i nomi veri del backend', () => {
+  /* Il guasto «non accede»: la prima versione leggeva codice_richiesto,
+     serve_codice e stato === 'codice'. Campi inventati. Il ciclo girava a
+     vuoto e non rilevava mai niente — senza errore, perché tecnicamente
+     nessuna riga era sbagliata. I nomi veri stanno in seguiLoginGuidato()
+     dentro server/fonti.js: step, running, msg. */
+  const a = ritaglia(html, 'fontiAspetta');
+  deve(a, 'manca fontiAspetta');
+  deve(/st\.step|\.step \|\|/.test(a), 'lo stato non viene letto da «step»');
+  deve(/loggato/.test(a), 'non si riconosce il passo «loggato»');
+  deve(/attesa_codice|FONTI_PASSO_CODICE/.test(a), 'non si riconosce l\'attesa del codice');
+  deve(/senza_credenziali/.test(a), 'non si riconosce «mancano le credenziali»');
+  deve(/running/.test(a), 'non si distingue un portale che ha finito da uno che sta ancora lavorando');
+  /* I campi inventati non devono tornare — nel CODICE. Il commento che
+     racconta il guasto li nomina, ed è il motivo per cui è scritto. */
+  const codice = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+  for (const finto of ['codice_richiesto', 'serve_codice']) {
+    deve(!codice.includes(finto), 'è tornato un campo che il backend non manda: ' + finto);
+  }
+});
+
+prova('la bussata iniziale non blocca la schermata', () => {
+  /* POST /accedi può restare appeso fino a un minuto e mezzo. Aspettarlo
+     vuol dire una schermata ferma che non dice niente: si parte subito a
+     seguire lo stato. */
+  const c = ritaglia(html, 'fontiAccedi');
+  deve(c, 'manca fontiAccedi');
+  deve(!/await mailFetch\([^)]*accedi/.test(c), 'si aspetta la bussata iniziale invece di seguire lo stato');
+  deve(/fontiAspetta\(/.test(c), 'dopo la bussata non si segue lo stato del portale');
+});
+
 let ko = 0;
 console.log('\nFONTI COMPAGNIE');
 for (const [ok, nome, msg] of esiti) {

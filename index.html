@@ -8406,49 +8406,63 @@ async function fontiStrumento(id, quale) {
    partita la richiesta, mentre il portale sta ancora caricando. */
 let FONTI_ATTESA = {};
 
+/* I NOMI DEI CAMPI VENGONO DAL BACKEND, NON DA UNA SUPPOSIZIONE.
+   La prima versione leggeva `codice_richiesto`, `serve_codice` e
+   `stato === 'codice'`: campi che non esistono. Il ciclo girava a vuoto e
+   non rilevava mai niente — «non accede», senza un errore da leggere.
+
+   Il contratto vero e' /loginstate, che risponde { step, running, msg, url }:
+     step = 'loggato'            -> dentro
+     step = 'attesa_codice'      -> il portale ha mandato il codice via email
+     step = 'attesa_otp'         -> idem
+     step = 'senza_credenziali'  -> mancano utente e password
+   e `running` dice se sta ancora lavorando. Sono gli stessi nomi che usa
+   seguiLoginGuidato() nel backend (server/fonti.js). */
+const FONTI_PASSO_CODICE = /^(attesa_codice|attesa_otp)$/i;
+
 async function fontiAccedi(id) {
   if (!fontiPuoEntrare()) return;
   FONTI_ATTESA[id] = { codice: false };
   fontiEsito(id, 'Accesso in corso… il portale può metterci fino a un minuto e mezzo.');
   fontiDisegna();
-  try {
-    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
-    /* Se il portale chiede il codice, la schermata deve APRIRE il campo:
-       lasciare l'operatore davanti a un messaggio senza dove scriverlo e' il
-       punto in cui si abbandona e si telefona all'ufficio. */
-    if (r && (r.codice_richiesto || r.serve_codice || r.stato === 'codice')) {
-      FONTI_ATTESA[id] = { codice: true };
-      fontiEsito(id, 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
-      fontiDisegna();
-      return;
-    }
-    await fontiAspetta(id);
-  } catch (e) { fontiEsito(id, 'Accesso non riuscito: ' + (e.message || ''), 'var(--f-red)'); }
+  /* La bussata iniziale puo' restare appesa a lungo: non la si aspetta, si
+     parte subito a seguire lo stato. Aspettarla voleva dire una schermata
+     ferma per novanta secondi senza dire niente. */
+  mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' }).catch(() => {});
+  await fontiAspetta(id);
 }
 
-/* Si interroga il portale invece di aspettare a occhio. Dieci tentativi ogni
-   tre secondi: se dopo mezzo minuto non ha ancora deciso, lo si dice invece
-   di restare a girare per sempre. */
+/* Si segue il portale passo per passo. Trenta tentativi da tre secondi: il
+   backend stesso si da' cento secondi, e arrendersi prima vorrebbe dire
+   dichiarare fallito un login che sta per riuscire. */
 async function fontiAspetta(id) {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 30; i++) {
     await new Promise(r => setTimeout(r, 3000));
     let st = null;
     try { st = await mailFetch('/fonti/' + encodeURIComponent(id) + '/loginstate'); } catch (_) { continue; }
-    if (!st) continue;
-    if (st.codice_richiesto || st.serve_codice || st.stato === 'codice') {
+    const passo = String((st && st.step) || '');
+    if (!passo) continue;
+
+    if (FONTI_PASSO_CODICE.test(passo)) {
       FONTI_ATTESA[id] = { codice: true };
-      fontiEsito(id, 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
+      fontiEsito(id, (st && st.msg) || 'Il portale ha mandato un codice via email: scrivilo qui sotto.', 'var(--f-amber)');
       fontiDisegna();
       return;
     }
-    if (st.stato === 'attiva' || st.ok === true) {
+    if (/^loggato$/i.test(passo)) {
       FONTI_ATTESA[id] = null;
       fontiEsito(id, 'Accesso confermato dal portale.', 'var(--f-green)');
       fontiCarica(true);
       return;
     }
-    if (st.stato === 'spento' || st.error) {
-      fontiEsito(id, st.error || 'Il portale non ha risposto.', 'var(--f-red)');
+    if (/^senza_credenziali$/i.test(passo)) {
+      fontiEsito(id, (st && st.msg) || 'Mancano utente e password di questo portale.', 'var(--f-red)');
+      return;
+    }
+    /* `running` falso su un passo che non e' nessuno dei tre vuol dire che
+       il portale ha finito e non e' entrato: insistere non serve. */
+    if (st && st.running === false) {
+      fontiEsito(id, (st && st.msg) || 'Accesso al portale non riuscito.', 'var(--f-red)');
       return;
     }
   }
@@ -8463,9 +8477,15 @@ async function fontiCodice(id) {
   try {
     const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/conferma-codice',
       { method: 'POST', body: JSON.stringify({ codice }) });
-    const ok = !!(r && (r.ok === true || r.stato === 'attiva'));
+    /* Lo scraper risponde con `step`, come /loginstate. «Loggato» e' l'unica
+       conferma che vale: qualsiasi altro passo vuol dire che il codice non e'
+       bastato, e dirlo riuscito qui manderebbe l'operatore a quotare su una
+       sessione che non c'e'. */
+    const passo = String((r && (r.step || r.stato)) || '');
+    const ok = !!(r && (r.ok === true || /^(loggato|attiva)$/i.test(passo)));
     if (ok) { FONTI_ATTESA[id] = null; fontiEsito(id, 'Accesso ripristinato.', 'var(--f-green)'); fontiCarica(true); }
-    else fontiEsito(id, (r && (r.error || r.msg)) || 'Il portale non ha accettato il codice.', 'var(--f-red)');
+    else if (FONTI_PASSO_CODICE.test(passo)) fontiEsito(id, (r && r.msg) || 'Codice non valido: controlla e riprova.', 'var(--f-amber)');
+    else { fontiEsito(id, (r && (r.error || r.msg)) || 'Il portale non ha accettato il codice.', 'var(--f-red)'); fontiCarica(true); }
   } catch (e) { fontiEsito(id, 'Codice non accettato: ' + (e.message || ''), 'var(--f-red)'); }
 }
 

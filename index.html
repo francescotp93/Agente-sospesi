@@ -889,7 +889,14 @@ input[type=file]{display:none;}
   --ab-rosso:#a3352a; --ab-rosso-bg:#fff5f3; --ab-ambra:#b06a00; --ab-ambra-bg:#fff4e6;
   --ab-blu:#356b8c; --ab-blu-bg:#eef7fb; --ab-grigio:#6b7684; --ab-grigio-bg:#f0f3f5;
   --ab-ombra:0 8px 24px rgba(16,24,32,.06);
-  background:var(--ab-bg); color:var(--ab-ink); padding:22px 16px 40px; overflow-y:auto;
+  /* Il margine superiore sta in una variabile perche' serve in DUE posti: qui
+     e nell'ancoraggio della testa della colonna. Gli scostamenti di uno
+     sticky si misurano dal riquadro INTERNO del contenitore che scorre, non
+     dal suo bordo: con 22px di margine la testa si fermava a y=21 e in quella
+     fessura passava il contenuto che scorreva dietro. Legate cosi', le due
+     misure non possono piu' divergere. */
+  --ab-cima:22px;
+  background:var(--ab-bg); color:var(--ab-ink); padding:var(--ab-cima) 16px 40px; overflow-y:auto;
 }
 #panel-analisi button,#panel-analisi input,#panel-analisi select,#panel-analisi textarea{font:inherit}
 #panel-analisi .ab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
@@ -1005,6 +1012,13 @@ input[type=file]{display:none;}
    non va rimesso «tanto da me funziona». */
 #panel-analisi .ab-lato{border:1px solid var(--ab-line);background:#fff;border-radius:13px;padding:18px;box-shadow:var(--ab-ombra)}
 #panel-analisi .ab-lato h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ab-ink2);margin:0 0 14px}
+/* Si aggancia solo la testa — titolo e anello, circa 130px. Un elemento
+   sticky piu' alto del contenitore che scorre viene ancorato dal browser per
+   il bordo INFERIORE, e la sua cima finisce a coordinata negativa: e' cosi'
+   che l'indice si vedeva tagliato quando si scorreva per arrivare ai campi.
+   Una testa bassa non puo' mai trovarsi in quella condizione. */
+#panel-analisi .ab-lato-cima{position:sticky;top:calc(var(--ab-cima) * -1);z-index:1;background:#fff;margin:-18px -18px 0;padding:18px 18px 12px}
+#panel-analisi .ab-lato-cima:after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;background:var(--ab-line)}
 #panel-analisi .ab-anello-r{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:14px}
 #panel-analisi .ab-anello{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--ab-verde) calc(var(--ab-p,0)*1%),#e8edef 0)}
 #panel-analisi .ab-anello:before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
@@ -1013,7 +1027,7 @@ input[type=file]{display:none;}
 #panel-analisi .ab-anello-c span{display:block;font-size:8px;color:var(--ab-ink3);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
 #panel-analisi .ab-lato h4{margin:0 0 6px;font-size:13px;line-height:1.25}
 #panel-analisi .ab-lato .ab-somm{margin:0;color:var(--ab-ink2);font-size:11px;line-height:1.5}
-#panel-analisi .ab-aree{display:grid;gap:11px;margin-top:16px;padding-top:15px;border-top:1px solid var(--ab-line)}
+#panel-analisi .ab-aree{display:grid;gap:11px;margin-top:16px}
 #panel-analisi .ab-area-r{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #panel-analisi .ab-area strong{font-size:10px;font-weight:700;line-height:1.3;min-width:0}
 /* display:block e non inline: su uno <span> inline l'altezza non si applica e
@@ -3135,10 +3149,16 @@ input[type=file]{display:none;}
       </section>
 
       <aside class="ab-lato">
-        <h3>Indicatore delle necessità</h3>
-        <div class="ab-anello-r">
-          <div class="ab-anello" id="ab-anello"><div class="ab-anello-c"><b id="ab-indice">—</b><span>indice</span></div></div>
-          <div><h4 id="ab-livello">Analisi in corso</h4><p class="ab-somm" id="ab-somm">Le priorità compaiono man mano che arrivano le risposte.</p></div>
+        <!-- Solo QUESTA testa resta agganciata mentre si scorre, non tutta la
+             colonna: e' alta poco piu' di cento pixel e non puo' mai superare
+             l'altezza dello schermo, che e' la condizione in cui uno sticky si
+             ancora al contrario e si taglia la cima. -->
+        <div class="ab-lato-cima">
+          <h3>Indicatore delle necessità</h3>
+          <div class="ab-anello-r">
+            <div class="ab-anello" id="ab-anello"><div class="ab-anello-c"><b id="ab-indice">—</b><span>indice</span></div></div>
+            <div><h4 id="ab-livello">Analisi in corso</h4><p class="ab-somm" id="ab-somm">Le priorità compaiono man mano che arrivano le risposte.</p></div>
+          </div>
         </div>
         <div class="ab-aree" id="ab-aree"></div>
         <div class="ab-princ"><strong id="ab-princ-t">Necessità principale non ancora definita</strong><p id="ab-princ-p">Completa il percorso per avere una motivazione.</p></div>

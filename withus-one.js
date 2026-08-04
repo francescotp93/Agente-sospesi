@@ -343,6 +343,11 @@
   /* Titolo e briciole di pane della terza barra */
   var TITOLI = {
     dashboard:   ['Scrivania', 'Scrivania'],
+    /* Le Fonti sono una scheda di IAM, non piu' una pagina del preventivatore:
+       la voce va QUI. Metterla in TITOLI_QUOTO — dove era finita — non ha
+       effetto, perche' quella mappa si legge solo quando la scheda aperta e'
+       il preventivatore: la barra restava a «IAM > IAM». */
+    fonti:       ['Fonti compagnie', 'Strumenti'],
     carica:      ['Contabilità', 'Contabilità'],
     team:        ['Collaboratori', 'Agenzia'],
     pipeline:    ['Trattative', 'Clienti'],

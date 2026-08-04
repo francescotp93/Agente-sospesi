@@ -97,5 +97,17 @@ e.prova('il testo cercato viaggia anche nell\'indirizzo', () => {
   deve(/function applicaRicerca/.test(src), 'manca la scrittura diretta quando il dominio e\' lo stesso');
 });
 
+e.prova('la scheda Fonti ha un titolo fra quelli di IAM', () => {
+  /* Ci sono due mappe: TITOLI (le schede di IAM) e TITOLI_QUOTO (le pagine
+     del preventivatore). La seconda si legge SOLO quando la scheda aperta è
+     il preventivatore. Le Fonti sono passate a IAM: mettere la voce nella
+     mappa sbagliata non dà nessun errore — dà una barra del titolo che dice
+     «IAM > IAM», ed è esattamente quello che è successo. */
+  const i = src.indexOf('var TITOLI = {');
+  deve(i > 0, 'manca la mappa TITOLI');
+  const mappa = src.slice(i, src.indexOf('};', i));
+  deve(/fonti:/.test(mappa), 'la scheda Fonti non ha un titolo fra quelli di IAM');
+});
+
 e.stampa();
 process.exit(e.ko === 0 ? 0 : 1);

@@ -550,6 +550,20 @@ input[type=file]{display:none;}
 
 /* La griglia: una colonna per le ore, sette per i giorni. */
 .wds-cal{overflow:auto}
+/* Vista Giorno. Riusa i colori e le misure gia' in uso nella settimana:
+   i valori vivono nelle variabili del tema, non qui dentro, cosi' il diario
+   segue il tema chiaro e quello scuro senza una riga in piu'. */
+.wdg-somma{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--bord2);border:.5px solid var(--bord2);border-radius:var(--rs);overflow:hidden;margin-bottom:10px}
+.wdg-s{background:var(--surf2);padding:10px 12px}
+.wdg-s span{display:block;font-size:9.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px}
+.wdg-s b{display:block;font-size:15px;margin-top:3px}
+.wdg-agenda{display:grid}
+.wdg-r{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:58px;border-top:.5px solid var(--bord2)}
+.wdg-r:first-child{border-top:0}
+.wdg-t{padding:9px 8px 0 0;background:var(--surf2);border-right:.5px solid var(--bord2);text-align:right;font-size:10.5px;color:var(--txt3)}
+.wdg-s2{padding:5px 6px;display:grid;gap:5px;align-content:start}
+.wdg-vuoto{padding:26px 14px;text-align:center;color:var(--txt3);font-size:12px}
+@media(max-width:640px){.wdg-somma{grid-template-columns:1fr}.wdg-r{grid-template-columns:48px minmax(0,1fr)}}
 .wds-griglia{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr));min-width:740px}
 .wds-ore,.wds-col{display:flex;flex-direction:column}
 .wds-ang{height:38px;border-bottom:.5px solid var(--bord2)}
@@ -1215,6 +1229,7 @@ input[type=file]{display:none;}
     <button id="wd-tab-lista" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
     <button id="wd-tab-sett" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('sett')"><i class="ti ti-layout-columns"></i> Settimana</button>
     <button id="wd-tab-cal" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Mese</button>
+    <button id="wd-tab-giorno" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('giorno')"><i class="ti ti-calendar-event"></i> Giorno</button>
   </div>
   <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
@@ -1274,6 +1289,21 @@ input[type=file]{display:none;}
     </div>
   </div>
 
+  <!-- Vista Giorno: la settimana dice se un giorno e' pieno, non COME.
+       Qui la giornata si legge ora per ora, con in cima le tre cose che si
+       chiedono guardandola: quante attivita', quante gia' chiuse, e quanto
+       tempo e' gia' impegnato. -->
+  <div id="wd-giorno" style="display:none">
+    <div class="wds-barra">
+      <button class="wds-nav" onclick="wdGiornoPrev()" title="Giorno precedente">‹</button>
+      <div class="wds-titolo" id="wdg-titolo"></div>
+      <button class="wds-nav" onclick="wdGiornoNext()" title="Giorno successivo">›</button>
+      <button class="wds-oggi" onclick="wdGiornoOggi()">Oggi</button>
+    </div>
+    <div class="wdg-somma" id="wdg-somma"></div>
+    <div class="wds-pan"><div class="wdg-agenda" id="wdg-agenda"></div></div>
+  </div>
+
   <div id="wd-cal" style="display:none">
     <div style="padding:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -1318,6 +1348,16 @@ input[type=file]{display:none;}
         <div class="fld ffull"><label>Titolo</label><input type="text" id="wd-titolo" placeholder="es. Riunione agenti gennaio"></div>
         <div class="fld"><label>Data</label><input type="date" id="wd-data"></div>
         <div class="fld"><label>Ora</label><input type="time" id="wd-ora" value="09:00"></div>
+        <div class="fld"><label>Fine (facoltativa)</label><input type="time" id="wd-ora-fine"></div>
+        <div class="fld"><label>Cliente / contatto</label><input type="text" id="wd-cliente" placeholder="Nominativo o ragione sociale"></div>
+        <div class="fld"><label>Prodotto / pratica</label>
+          <select id="wd-prodotto">
+            <option value="">Nessun prodotto</option>
+            <option>Auto</option><option>Casa</option><option>Salute</option>
+            <option>Famiglia</option><option>Azienda</option><option>Viaggi</option>
+            <option>Altro</option>
+          </select>
+        </div>
         <div class="fld"><label>Priorità</label>
           <select id="wd-prior">
             <option value="normale">Normale</option>
@@ -8662,12 +8702,28 @@ async function saveWD_DB(w) {
     file_nome:     w.file_nome || null,
     file_data:     w.file_data || null,
     importante:    !!w.importante,
+    ora_fine:      w.ora_fine || null,
+    cliente:       w.cliente  || null,
+    prodotto:      w.prodotto || null,
     aggiornato_il: new Date().toISOString(),
   };
+  /* Le colonne aggiunte dopo (importante, e poi ora_fine/cliente/prodotto)
+     possono non esistere ancora: gli script SQL li lancia una persona, e fra
+     il rilascio del programma e il lancio della migrazione passa del tempo.
+     In quella finestra il salvataggio deve RIUSCIRE LO STESSO, senza il campo
+     nuovo — perdere il titolo di un'attività perché manca una colonna
+     facoltativa sarebbe un guasto molto peggiore del campo che non si salva.
+     Si toglie una colonna per volta: il messaggio ne nomina una sola, e
+     toglierle tutte insieme butterebbe via anche quelle che c'erano. */
+  const FACOLTATIVE = ['importante', 'ora_fine', 'cliente', 'prodotto'];
   try {
     let { error } = await db.from('iam_workdiary').upsert(payload);
-    if (error && String(error.message||'').includes('importante')) { // colonna non ancora creata
-      delete payload.importante;
+    for (let g = 0; error && g < FACOLTATIVE.length; g++) {
+      const manca = FACOLTATIVE.find(c => c in payload && String(error.message||'').includes(c));
+      if (!manca) break;
+      console.warn('Diario: la colonna «' + manca + '» non esiste ancora — salvo senza. '
+                 + 'Lancia sql/DA-APPROVARE-diario-campi-nuovi.sql per conservarla.');
+      delete payload[manca];
       ({ error } = await db.from('iam_workdiary').upsert(payload));
     }
     if (error) throw error;
@@ -8763,7 +8819,13 @@ function renderWDSett() {
     const delGiorno = dentro.filter(w => w.data === iso);
     const senzaOra = delGiorno.filter(w => !wdsOra(w));
     h += `<div class="wds-col${iso === oggi ? ' oggi' : ''}">`;
-    h += `<div class="wds-gh"><b>${g.toLocaleDateString('it-IT',{weekday:'short'})}</b><span>${g.getDate()}</span></div>`;
+    /* L'intestazione del giorno apre la giornata: dalla settimana si vede
+       CHE un giorno e' pieno, e la domanda subito dopo e' sempre «pieno di
+       cosa» — che e' esattamente la vista Giorno. */
+    h += `<div class="wds-gh" role="button" tabindex="0" style="cursor:pointer"
+      title="Apri la giornata" onclick="wdApriGiorno('${wdsISO(g)}')"
+      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();wdApriGiorno('${wdsISO(g)}')}"
+      ><b>${g.toLocaleDateString('it-IT',{weekday:'short'})}</b><span>${g.getDate()}</span></div>`;
     h += `<div class="wds-senzora">${senzaOra.map(w => wdsChip(w)).join('')}</div>`;
     for (const o of WDS_ORE) {
       const qui = delGiorno.filter(w => { const t = wdsOra(w); return t && t.h === o; });
@@ -8799,6 +8861,85 @@ function wdsChip(w) {
 
 function wdsApri(id) { WDS_SEL = id; renderWDSett(); }
 
+/* ══ DIARIO · VISTA GIORNO ═══════════════════════════════════════════════
+   La settimana dice se un giorno e' pieno; non dice come. Dieci cose da
+   dieci minuti e tre incontri da due ore fanno la stessa colonna alta, e
+   dalla settimana sembrano lo stesso carico. Qui la giornata si legge ora
+   per ora, e sopra ci sono le tre risposte che si cercano guardandola. */
+let WDG_DATA = null;
+
+function wdgData() { return WDG_DATA || (WDG_DATA = wdsISO(new Date())); }
+function wdGiornoOggi() { WDG_DATA = wdsISO(new Date()); renderWDGiorno(); }
+function wdGiornoVai(passo) {
+  const d = new Date(wdgData() + 'T12:00:00');   // mezzogiorno: cambiando giorno
+  d.setDate(d.getDate() + passo);                // l'ora legale non sposta la data
+  WDG_DATA = wdsISO(d);
+  renderWDGiorno();
+}
+function wdGiornoPrev() { wdGiornoVai(-1); }
+function wdGiornoNext() { wdGiornoVai(1); }
+
+/* Apre la vista Giorno su una data precisa (dalla settimana o dal mese). */
+function wdApriGiorno(ds) { WDG_DATA = ds; selWDTab('giorno'); }
+
+/* Il tempo gia' impegnato. Conta solo le attivita' con un'ora di fine: una
+   voce senza fine non vale zero minuti, vale «non si sa» — e sommarla come
+   zero farebbe sembrare libera una giornata che non lo e'. Per questo il
+   totale dice anche quante voci ha potuto contare. */
+function wdgTempo(lista) {
+  let minuti = 0, contate = 0;
+  lista.forEach(w => {
+    const a = wdsOra(w), b = wdsOra({ ora: w.ora_fine });
+    if (!a || !b) return;
+    const d = (b.h * 60 + b.min) - (a.h * 60 + a.min);
+    if (d > 0) { minuti += d; contate++; }
+  });
+  if (!contate) return { testo: '—', nota: 'nessuna con orario di fine' };
+  const h = Math.floor(minuti / 60), m = minuti % 60;
+  return {
+    testo: `${h ? h + 'h ' : ''}${m ? m + 'm' : (h ? '' : '0m')}`.trim(),
+    nota: contate === lista.length ? 'tutte le attività' : `su ${contate} di ${lista.length}`
+  };
+}
+
+function renderWDGiorno() {
+  const ds = wdgData();
+  const giorno = new Date(ds + 'T12:00:00');
+  const tit = document.getElementById('wdg-titolo');
+  if (tit) tit.textContent = giorno.toLocaleDateString('it-IT',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  const lista = (WD || []).filter(w => w.data === ds);
+  const chiuse = lista.filter(w => w.stato === 'completato').length;
+  const tempo  = wdgTempo(lista);
+
+  const somma = document.getElementById('wdg-somma');
+  if (somma) somma.innerHTML =
+    `<div class="wdg-s"><span>Attività</span><b>${lista.length}</b></div>` +
+    `<div class="wdg-s"><span>Completate</span><b>${chiuse} <span style="font-size:11px;color:var(--txt3);font-weight:400;">di ${lista.length}</span></b></div>` +
+    `<div class="wdg-s"><span>Tempo impegnato</span><b>${esc(tempo.testo)} <span style="font-size:11px;color:var(--txt3);font-weight:400;">${esc(tempo.nota)}</span></b></div>`;
+
+  const ag = document.getElementById('wdg-agenda');
+  if (!ag) return;
+  if (!lista.length) {
+    ag.innerHTML = '<div class="wdg-vuoto">Nessuna attività in questa giornata.</div>';
+    return;
+  }
+  /* Chi non ha un'ora leggibile non sparisce: sta in cima, nella fascia
+     «senza orario». Una voce che si perde perche' l'ora era scritta male e'
+     peggio di una voce fuori posto. */
+  const senzaOra = lista.filter(w => !wdsOra(w));
+  let h = senzaOra.length
+    ? `<div class="wdg-r"><div class="wdg-t">senza<br>orario</div><div class="wdg-s2">${senzaOra.map(wdsChip).join('')}</div></div>`
+    : '';
+  h += WDS_ORE.map(o => {
+    const dentro = lista.filter(w => { const t = wdsOra(w); return t && t.h === o; });
+    return `<div class="wdg-r"><div class="wdg-t">${String(o).padStart(2,'0')}:00</div>`
+         + `<div class="wdg-s2">${dentro.map(wdsChip).join('')}</div></div>`;
+  }).join('');
+  ag.innerHTML = h;
+}
+
 function wdsDettaglio(id) {
   const box = document.getElementById('wds-det'), st = document.getElementById('wds-stato');
   if (!box) return;
@@ -8811,7 +8952,9 @@ function wdsDettaglio(id) {
   if (st) { st.textContent = w.stato === 'completato' ? 'Completata' : 'Da fare'; st.className = 'wds-stato ' + (w.stato === 'completato' ? 'ok' : 'aperta'); }
   const riga = (e, v) => v ? `<div class="wds-r"><span>${e}</span><b>${esc(v)}</b></div>` : '';
   box.innerHTML = `<div class="wds-tit">${esc(w.titolo || '(senza titolo)')}</div>
-    ${riga('Quando', (w.data || '') + (w.ora ? ' . ' + w.ora : ''))}
+    ${riga('Quando', (w.data || '') + (w.ora ? ' . ' + w.ora : '') + (w.ora_fine ? ' - ' + w.ora_fine : ''))}
+    ${riga('Cliente', w.cliente)}
+    ${riga('Prodotto', w.prodotto)}
     ${riga('Tipo', w.tipo)}
     ${riga('Priorita', w.prior)}
     ${riga('Luogo', w.luogo)}
@@ -8821,13 +8964,17 @@ function wdsDettaglio(id) {
 
 function selWDTab(t) {
   const lst=document.getElementById('wd-lista'), cal=document.getElementById('wd-cal'), set=document.getElementById('wd-sett');
+  const gio=document.getElementById('wd-giorno');
   if(lst) lst.style.display=(t==='lista')?'block':'none';
   if(cal) cal.style.display=(t==='cal')?'block':'none';
   if(set) set.style.display=(t==='sett')?'block':'none';
+  if(gio) gio.style.display=(t==='giorno')?'block':'none';
   const tl=document.getElementById('wd-tab-lista'); if(tl) tl.classList.toggle('act', t==='lista');
   const tc=document.getElementById('wd-tab-cal'); if(tc) tc.classList.toggle('act', t==='cal');
   const ts=document.getElementById('wd-tab-sett'); if(ts) ts.classList.toggle('act', t==='sett');
-  if (t==='cal') renderWDCal(); else if (t==='sett') renderWDSett(); else renderWD();
+  const tg=document.getElementById('wd-tab-giorno'); if(tg) tg.classList.toggle('act', t==='giorno');
+  if (t==='cal') renderWDCal(); else if (t==='sett') renderWDSett();
+  else if (t==='giorno') renderWDGiorno(); else renderWD();
 }
 
 // Helper Diary: escape contenuti utente + date + completa rapido
@@ -9071,6 +9218,7 @@ async function openWDModal(id) {
   sv('wd-titolo', w?.titolo); sv('wd-note', w?.note); sv('wd-data', w?.data);
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
+  sv('wd-ora-fine', w?.ora_fine); sv('wd-cliente', w?.cliente); sv('wd-prodotto', w?.prodotto);
   { const impEl = document.getElementById('wd-import'); if (impEl) impEl.checked = !!w?.importante; }
   document.getElementById('wd-file-nome').textContent = w?.file_nome || 'Seleziona file';
   const luogoEl = document.getElementById('wd-luogo');
@@ -9121,6 +9269,7 @@ function saveWD() {
     stato:     gv('wd-stato-m'), prior: gv('wd-prior'),
     importante: document.getElementById('wd-import')?.checked || false,
     data:      gv('wd-data'), ora: gv('wd-ora'), note: gv('wd-note'),
+    ora_fine:  gv('wd-ora-fine'), cliente: gv('wd-cliente'), prodotto: gv('wd-prodotto'),
     condivisi,
     file_nome: WD_FILE?.nome  || existing?.file_nome || '',
     file_data: WD_FILE?.data  || existing?.file_data || '',
@@ -9129,8 +9278,18 @@ function saveWD() {
     lng:       parseNum(document.getElementById('wd-luogo')?.dataset.lng) || null,
   };
   if (!w.titolo) { alert('Inserisci un titolo.'); return; }
+  /* Un'ora di fine prima dell'ora di inizio darebbe un tempo pianificato
+     negativo, e la giornata risulterebbe più libera di quanto è: meglio
+     fermarsi qui che mostrare un totale che mente. */
+  if (w.ora_fine && w.ora && w.ora_fine <= w.ora) {
+    alert('La fine è prima dell\'inizio: correggi l\'orario di fine, oppure lascialo vuoto.');
+    return;
+  }
   saveWD_DB(w).then(() => {
-    loadWD_DB().then(() => { renderWD(); renderWDCal(); });
+    /* Si ridisegnano tutte le viste, non solo quella aperta: sono quattro
+       letture degli stessi dati, e lasciarne indietro una fa ricomparire
+       l'attivita' vecchia appena si cambia linguetta. */
+    loadWD_DB().then(() => { renderWD(); renderWDCal(); renderWDSett(); renderWDGiorno(); });
   });
   closeModal('modal-wd');
 }

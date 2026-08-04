@@ -152,6 +152,18 @@ prova('la banda «senza orario» c\'è in tutte le colonne o in nessuna', () => 
   deve(/wds-senzora eti/.test(r), 'la colonna delle ore non ha la banda corrispondente');
 });
 
+prova('oggi ha la stessa scatola degli altri giorni', () => {
+  /* La colonna di oggi era tinta di verde e la sua intestazione aveva un
+     fondo suo: la somma delle due la faceva sembrare un blocco più alto e
+     più stretto, e il giorno che serve di più si leggeva peggio degli altri.
+     Ora cambia solo il numero — un segnale, non una sottolineatura. */
+  const css = html.replace(/\s+/g, ' ');
+  deve(!/\.wds-col\.oggi\{background/.test(css), 'la colonna di oggi è ancora tinta');
+  deve(!/\.wds-col\.oggi \.wds-gh\{background/.test(css), 'l\'intestazione di oggi ha ancora un fondo suo');
+  deve(/\.wds-col\.oggi \.wds-gh span\{[^}]*background:var\(--d-green\)/.test(css),
+    'oggi non è più riconoscibile dal numero');
+});
+
 let ko = 0;
 console.log('\nDIARIO — la vista settimana');
 for (const [ok, nome, msg] of esiti) {

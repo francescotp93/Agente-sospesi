@@ -764,6 +764,58 @@ input[type=file]{display:none;}
 .wds-apri{margin-top:10px;width:100%;background:var(--d-green);border:1px solid var(--d-green);color:#fff;border-radius:8px;min-height:36px;font-size:12px;font-weight:700;cursor:pointer}
 .wds-apri:hover{background:var(--d-green-deep)}
 
+/* La finestra «Nuova attività», nel disegno consegnato.
+   Confinata a #modal-wd: le classi .modal/.fld sono condivise con le altre
+   finestre del gestionale, e ridisegnarle qui le cambierebbe tutte. */
+#modal-wd{
+  --d-green:#087747; --d-green-deep:#05613a; --d-line:#dfe6e2;
+  --d-line-strong:#ccd7d2; --d-ink:#14201c; --d-muted:#68756f;
+}
+#modal-wd .modal-box{width:min(660px,100%);border-radius:8px;background:#fff;border:1px solid var(--d-line);box-shadow:0 30px 90px rgba(15,25,21,.24);color:var(--d-ink)}
+#modal-wd .modal-hdr{padding:14px 16px;border-bottom:1px solid var(--d-line);background:#fff}
+#modal-wd .modal-title{font-size:15px;font-weight:700;color:var(--d-ink)}
+#modal-wd .modal-body{padding:15px 16px;background:#fff}
+#modal-wd .fld label{font-size:10px;font-weight:800;color:var(--d-muted);letter-spacing:.04em;text-transform:none;margin-bottom:1px}
+#modal-wd .fld input,#modal-wd .fld select,#modal-wd .fld textarea{
+  height:39px;border:1px solid var(--d-line-strong);border-radius:8px;background:#fff;color:var(--d-ink);
+  padding:0 10px;font-size:12.5px;box-shadow:none}
+#modal-wd .fld textarea{height:82px;padding:9px 10px;resize:vertical;min-height:82px}
+#modal-wd .fld input:focus,#modal-wd .fld select:focus,#modal-wd .fld textarea:focus{
+  border-color:var(--d-green);box-shadow:0 0 0 3px rgba(8,119,71,.11);background:#fff}
+#modal-wd .modal-ftr{padding:12px 16px;border-top:1px solid var(--d-line);display:flex;align-items:center;justify-content:flex-end;gap:7px;background:#fff}
+/* Il verde del salvataggio e' quello del kit, non l'accento del tema: la
+   finestra e' una superficie chiara fissa e l'accento puo' essere viola. */
+#modal-wd .mbtn{min-height:38px;border-radius:8px;padding:0 13px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--d-line);background:#fff;color:var(--d-ink);cursor:pointer}
+#modal-wd .mbtn.sec:hover{background:#f7f9fa}
+#modal-wd .mbtn.prim{background:var(--d-green);border-color:var(--d-green);color:#fff}
+#modal-wd .mbtn.prim:hover{background:var(--d-green-deep)}
+#modal-wd .modal-hdr .mbtn.sec{width:34px;padding:0;justify-content:center}
+@media(max-width:640px){#modal-wd .fgrid{grid-template-columns:1fr}#modal-wd .ffull{grid-column:auto}}
+/* Il mese, nel disegno consegnato. Prima era una griglia di quadratini con
+   un pallino: diceva SE un giorno aveva qualcosa, non cosa. E «oggi» era la
+   cella intera riempita di verde, che schiaccia il numero invece di
+   indicarlo — nel disegno e' solo il NUMERO a essere evidenziato. */
+.wdm-griglia{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--d-line);border-radius:8px;overflow:hidden;background:var(--d-surf)}
+.wdm-gio{background:var(--d-surf2);padding:8px;text-align:center;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);font-size:9px;font-weight:800;color:var(--d-muted);text-transform:uppercase}
+.wdm-gio:nth-child(7n){border-right:0}
+.wdm-g{min-height:118px;border:0;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);background:#fff;text-align:left;padding:7px;min-width:0;cursor:pointer;font:inherit;color:inherit}
+.wdm-g:nth-child(7n){border-right:0}
+.wdm-g:hover{background:var(--d-surf2)}
+.wdm-g.fuori{background:#fafbfb;color:#a3ada8;cursor:default}
+.wdm-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;font-size:10px;font-weight:800}
+.wdm-g.oggi .wdm-n{background:var(--d-green);color:#fff}
+.wdm-g.sel{box-shadow:inset 0 0 0 2px var(--d-green)}
+.wdm-ev{display:grid;gap:3px;margin-top:5px}
+.wdm-e{display:flex;align-items:center;gap:4px;min-width:0;background:var(--d-green-soft);border-radius:4px;padding:3px 5px;font-size:8px}
+.wdm-e.urgente{background:var(--d-red-soft)}
+.wdm-e.fatto{background:var(--d-teal-soft)}
+.wdm-e span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wdm-piu{font-size:8px;color:var(--d-muted);padding-left:4px}
+@media(max-width:760px){
+  .wdm-g{min-height:94px}
+  .wdm-e{font-size:0;width:7px;height:7px;border-radius:50%;padding:0}
+  .wdm-ev{display:flex;flex-wrap:wrap}
+}
 /* La giornata: i tre totali e l'agenda ora per ora. */
 .wdg-somma{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid var(--d-line);background:var(--d-surf2)}
 .wdg-s{padding:10px 12px;border-right:1px solid var(--d-line)}
@@ -1564,13 +1616,9 @@ input[type=file]{display:none;}
   </div>
 
   <div id="wd-cal" style="display:none">
-    <div style="padding:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <button onclick="wdCalPrev()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">‹</button>
-        <div style="font-size:14px;font-weight:700;" id="wd-cal-title"></div>
-        <button onclick="wdCalNext()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">›</button>
-      </div>
-      <div id="wd-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+    <span id="wd-cal-title" hidden></span>
+    <div style="padding:16px clamp(12px,2vw,26px) 30px">
+      <div class="wdm-griglia" id="wd-cal-grid"></div>
       <div id="wd-cal-eventi" style="margin-top:12px;"></div>
     </div>
   </div>
@@ -1580,11 +1628,8 @@ input[type=file]{display:none;}
 <div class="modal" id="modal-wd">
   <div class="modal-box">
     <div class="modal-hdr">
-      <div class="modal-title" id="wd-modal-title">Nuova operazione</div>
-      <div style="display:flex;gap:8px;">
-        <button class="mbtn prim" onclick="saveWD()">Salva</button>
-        <button class="mbtn sec" onclick="closeModal('modal-wd')">✕</button>
-      </div>
+      <div class="modal-title" id="wd-modal-title">Nuova attività</div>
+      <button class="mbtn sec" onclick="closeModal('modal-wd')" aria-label="Chiudi"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
       <div class="fgrid">
@@ -1663,6 +1708,12 @@ input[type=file]{display:none;}
         </div>
       </div>
       <button onclick="addToCalWD()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--blu-bg);color:var(--blu-txt);border:.5px solid var(--bord2);border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;width:100%;justify-content:center;"><i class="ti ti-calendar-plus" style="font-size:15px;"></i> Aggiungi al calendario</button>
+    </div>
+    <!-- Le azioni stanno in fondo, come nel disegno consegnato: si leggono i
+         campi e poi si decide, invece di avere «Salva» sopra la prima riga. -->
+    <div class="modal-ftr">
+      <button class="mbtn sec" onclick="closeModal('modal-wd')">Annulla</button>
+      <button class="mbtn prim" onclick="saveWD()"><i class="ti ti-check"></i> Salva attività</button>
     </div>
   </div>
 </div>
@@ -4056,8 +4107,12 @@ async function caricaDaFareOggi(forza) {
   OGGI_ULTIMO = ora;
   if (!box.querySelector('.oggi-v')) box.innerHTML = '<div class="oggi-attesa">Calcolo il lavoro del giorno…</div>';
 
-  const oggi = new Date().toISOString().slice(0, 10);
-  const fra = g => new Date(Date.now() + g * 86400000).toISOString().slice(0, 10);
+  /* Ora LOCALE, non UTC. toISOString() fra mezzanotte e le due in Italia
+     restituisce il giorno prima: la scrivania calcolava «oggi» sul giorno
+     sbagliato proprio nelle ore in cui qualcuno apre il programma tardi, e
+     l'errore spariva da solo alle due — quindi non lo si trovava mai. */
+  const oggi = wdsISO(new Date());
+  const fra = g => { const d = new Date(); d.setDate(d.getDate() + g); return wdsISO(d); };
   const voci = [];
 
   /* Ogni conteggio è indipendente: se una tabella non risponde, le altre voci
@@ -10240,19 +10295,29 @@ function renderWDCal() {
   const y = WD_CAL_DATE.getFullYear();
   const m = WD_CAL_DATE.getMonth();
   document.getElementById('wd-cal-title').textContent = WD_CAL_DATE.toLocaleString('it-IT',{month:'long',year:'numeric'});
-  const giorni = ['Lu','Ma','Me','Gi','Ve','Sa','Do'];
-  const primoGiorno = (new Date(y,m,1).getDay()||7);
-  const ultimoGiorno = new Date(y,m+1,0).getDate();
-  const eventiMese = WD.filter(w => w.data?.startsWith(`${y}-${String(m+1).padStart(2,'0')}`));
-  let html = giorni.map(g=>`<div style="text-align:center;font-size:10px;font-weight:700;color:var(--txt3);padding:4px 0;">${g}</div>`).join('');
-  for(let i=1;i<primoGiorno;i++) html+=`<div></div>`;
-  for(let d=1;d<=ultimoGiorno;d++) {
-    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const ev = eventiMese.filter(w=>w.data===ds);
-    const oggi = new Date().toISOString().split('T')[0]===ds;
-    html+=`<div onclick="showWDDay('${ds}')" style="text-align:center;padding:5px 2px;border-radius:8px;cursor:pointer;background:${oggi?'var(--acc)':ev.length?'rgba(var(--acc-rgb),.15)':'transparent'};color:${oggi?'#fff':'var(--txt)'};font-size:13px;">
-      ${d}${ev.length?`<div style="width:5px;height:5px;border-radius:50%;background:${oggi?'#fff':'var(--acc)'};margin:1px auto 0;"></div>`:''}
-    </div>`;
+  const giorni = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  /* Il giorno di oggi si prende in ora LOCALE. toISOString() e' in UTC: fra
+     mezzanotte e le due di notte in Italia restituisce il giorno prima, e il
+     mese evidenziava il quadretto sbagliato — un guasto che si vede solo a
+     quell'ora, e che quindi nessuno collega mai alla causa. */
+  const oggiISO = wdsISO(new Date());
+  /* Sei righe piene da lunedi': cosi' il mese non cambia altezza da un mese
+     all'altro e le celle non ballano sotto il cursore. */
+  const primo = new Date(y, m, 1);
+  const partenza = wdsLunedi(primo);
+  let html = giorni.map(g => `<div class="wdm-gio">${g}</div>`).join('');
+  for (let i = 0; i < 42; i++) {
+    const g = new Date(partenza.getFullYear(), partenza.getMonth(), partenza.getDate() + i);
+    const ds = wdsISO(g);
+    const fuori = g.getMonth() !== m;
+    const ev = (WD || []).filter(w => w.data === ds)
+      .sort((a,b) => String(a.ora||'').localeCompare(String(b.ora||'')));
+    const chip = e => `<span class="wdm-e ${wdsColore(e)}"><span>${e.ora ? esc(e.ora) + ' ' : ''}${esc(e.titolo || '(senza titolo)')}</span></span>`;
+    html += `<button type="button" class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
+      ${fuori ? '' : `onclick="wdApriGiorno('${ds}')"`} title="${fuori ? '' : 'Apri la giornata'}">
+      <span class="wdm-n">${g.getDate()}</span>
+      ${ev.length ? `<span class="wdm-ev">${ev.slice(0,3).map(chip).join('')}${ev.length > 3 ? `<span class="wdm-piu">+${ev.length - 3} altre</span>` : ''}</span>` : ''}
+    </button>`;
   }
   document.getElementById('wd-cal-grid').innerHTML = html;
   // Mantieni il giorno aperto se appartiene al mese visualizzato, altrimenti svuota

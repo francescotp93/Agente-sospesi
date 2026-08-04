@@ -193,6 +193,59 @@ prova('lo script SQL c\'è, non esegue niente da solo ed è rilanciabile', () =>
   deve(!/\bdrop\b|\btruncate\b|\bdelete from\b/i.test(sql), 'lo script contiene un comando distruttivo');
 });
 
+// ── 12. Il mese, nel disegno consegnato ─────────────────────────────────
+prova('il mese mostra le attività, non un pallino', () => {
+  /* Prima era una griglia di quadratini con un puntino: diceva SE un giorno
+     aveva qualcosa, non cosa — e per saperlo bisognava aprirlo. */
+  const c = corpoDi('function renderWDCal()');
+  deve(c, 'manca renderWDCal');
+  deve(/wdm-griglia|wdm-g\b/.test(html), 'il mese non usa la griglia del disegno');
+  deve(/wdm-e\b/.test(html), 'nel mese non si vedono le attività');
+  deve(/slice\(0,\s*3\)/.test(c), 'non c\'è un limite alle attività mostrate per giorno');
+  deve(/altre/.test(c), 'le attività oltre il limite spariscono senza dirlo');
+});
+
+prova('«oggi» evidenzia il numero, non tutta la cella', () => {
+  /* La cella intera riempita di verde schiaccia il numero invece di
+     indicarlo, e con dentro le attività le rende illeggibili. Nel disegno è
+     solo il numero a essere evidenziato. */
+  deve(/\.wdm-g\.oggi \.wdm-n\s*\{[^}]*background/.test(html.replace(/\s+/g, ' ')),
+    '«oggi» non evidenzia il numero');
+  const c = corpoDi('function renderWDCal()');
+  deve(c && !/oggi\s*\?\s*'var\(--acc\)'/.test(c), 'il mese usa ancora l\'accento del tema per «oggi»');
+});
+
+prova('«oggi» si calcola in ora locale, non in UTC', () => {
+  /* toISOString() è in UTC: fra mezzanotte e le due in Italia restituisce il
+     giorno prima, e il mese evidenzia il quadretto sbagliato. Si vede solo a
+     quell'ora, e quindi nessuno lo collega mai alla causa. */
+  const c = corpoDi('function renderWDCal()');
+  deve(c, 'manca renderWDCal');
+  const senzaCommenti = c.replace(/\/\*[\s\S]*?\*\//g, '');
+  deve(!/toISOString\(\)/.test(senzaCommenti), '«oggi» viene calcolato in UTC');
+  deve(/wdsISO\(new Date\(\)\)/.test(c), '«oggi» non usa la data locale');
+});
+
+// ── 13. La finestra «Nuova attività» ────────────────────────────────────
+prova('le azioni della finestra stanno in fondo, non sopra i campi', () => {
+  /* Si leggono i campi e poi si decide. «Salva» sopra la prima riga invita a
+     premerlo prima di aver guardato cosa c'è sotto. */
+  deve(/modal-ftr/.test(html), 'la finestra non ha un piede con le azioni');
+  deve(/Salva attività/.test(html), 'manca il pulsante di salvataggio in fondo');
+  deve(/#modal-wd \.mbtn\.prim/.test(html), 'il pulsante di salvataggio non è quello del disegno');
+});
+
+prova('la finestra è ridisegnata senza toccare le altre', () => {
+  /* Le classi .modal e .fld sono condivise con tutte le finestre del
+     gestionale: ridisegnarle qui le cambierebbe tutte. */
+  const i = html.indexOf('#modal-wd{');
+  deve(i > 0, 'lo stile della finestra non è confinato a #modal-wd');
+  deve(/#modal-wd \.fld input/.test(html), 'i campi non seguono il disegno');
+  /* E il verde e' quello del kit, non l'accento del tema: la finestra e' una
+     superficie chiara fissa, e l'accento puo' essere viola. */
+  deve(!/#modal-wd[^{]*\{[^}]*var\(--acc\)/.test(html), 'la finestra segue l\'accento del tema');
+});
+
 let ko = 0;
 console.log('\nDIARIO — la vista giorno');
 for (const [ok, nome, msg] of esiti) {

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   WITH US ONE — scocca a tre barre
+   IAM — scocca a tre barre
    ───────────────────────────────────────────────────────────────────────
    BARRA 1  intestazione bianca: logo, ricerca globale, utente
    BARRA 2  barra scura: menu orizzontale con tendine e mega-menu prodotti
@@ -87,7 +87,7 @@
   }
 
   /* Dentro il riquadro il preventivatore non deve mostrare la sua barra:
-     la navigazione è quella di With Us One. Stessa origine, quindi
+     la navigazione è quella di IAM. Stessa origine, quindi
      possiamo scrivere una regola di stile dentro il riquadro. */
   function vestiFrame(fr) {
     try {
@@ -596,7 +596,7 @@
     p.className = 'w1-pbar';
     p.innerHTML =
       '<div><h1 id="w1-titolo">Scrivania</h1>' +
-      '<div class="w1-crumb" id="w1-crumb">With Us One</div></div>' +
+      '<div class="w1-crumb" id="w1-crumb">IAM</div></div>' +
       '<div class="w1-az"><button class="w1-b p" id="w1-nuovo">' + ico('i-plus', 'sm') + ' Nuovo preventivo</button></div>';
     /* Come Plurima: il tasto verde apre la TENDINA dei prodotti, non una griglia.
        Se la voce di menu non e' visibile (permessi), si ripiega sull'elenco prodotti. */
@@ -634,10 +634,10 @@
     if (!voce) {
       var m = null;
       for (var z = 0; z < MENU.length; z++) if (MENU[z].key === k) m = MENU[z];
-      voce = m ? [m.l, m.l] : ['With Us One', 'With Us One'];
+      voce = m ? [m.l, m.l] : ['IAM', 'IAM'];
     }
     t.textContent = voce[0];
-    c.innerHTML = 'With Us One <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[1] +
+    c.innerHTML = 'IAM <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[1] +
       (voce[1] !== voce[0] ? ' <svg class="w1-i sm"><use href="#i-right"/></svg> ' + voce[0] : '');
   }
 

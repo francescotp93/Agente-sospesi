@@ -14,7 +14,9 @@
 ### Transizione IAM → Quoto
 **File:** `index.html` — funzione `goTab(t)`, blocco `if (t === 'quoto')`
 
-La **grafica** della splash screen Quoto (overlay blu fullscreen con logo bolt, scritta QUOTO, barra di caricamento) è BLOCCATA: non modificarla senza richiesta esplicita dell'utente.
+La **grafica** della splash screen (overlay blu fullscreen con logo bolt e barra di caricamento) è BLOCCATA: non modificarla senza richiesta esplicita dell'utente.
+
+**Il testo, invece, è stato cambiato su richiesta esplicita dell'utente (4 agosto 2026).** La scritta diceva `QUOTO`, ora dice `IAM`: mostrare a tutto schermo il nome di un'altra applicazione era il punto in cui l'utente vedeva, nero su bianco, che i sistemi erano due — mentre IAM è uno solo (`IAM.md` §2). Stessa cosa per il secondo overlay (`quoto-bridge-overlay`), che diceva «Accesso a QUOTO» e ora dice «Accesso all'area PREVENTIVI». **Nessuna regola di stile è stata toccata**: colori, animazioni, dimensioni e disposizione sono identiche a prima.
 
 La **destinazione** del redirect è ora `https://quoto.withusassicurazioni.it/?from=iam` ed è costruita dalla helper `quotoUrl()`, che allega anche la sessione (`#at`/`#rt`) per il login automatico tra i sottodomini. Aggiornata su richiesta esplicita dell'utente (giugno 2026) per il passaggio ai domini personalizzati — vedi `INTERFACCIA-QUOTO-IAM.md` sez. 2-3.
 

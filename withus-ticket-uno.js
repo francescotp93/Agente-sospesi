@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════
-   WITH US ONE — Coda ticket unica
+   IAM — Coda ticket unica
    ───────────────────────────────────────────────────────────────────
    Problema risolto: i ticket esistevano due volte. Quelli aperti da IAM
    stavano in `iam_ticket`, quelli aperti da QUOTO in `quote_ticket`, e

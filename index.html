@@ -515,6 +515,73 @@ input[type=file]{display:none;}
 .oggi-s{display:block;font-size:11.5px;color:var(--txt3);margin-top:2px;}
 .oggi-fr{flex:0 0 auto;color:var(--txt3);font-size:15px;}
 .oggi-v:hover .oggi-fr{color:#02984e;}
+/* == DIARIO . VISTA SETTIMANA ==============================================
+   Tre colonne: che cosa c'e' da fare oggi, la settimana ora per ora, il
+   dettaglio di quello che si sta guardando. Sotto i 1100 px le colonne
+   laterali passano sopra e sotto la griglia: su un telefono tre colonne
+   affiancate non si leggono. */
+.wds-barra{display:flex;align-items:center;gap:10px;padding:12px 12px 6px;flex-wrap:wrap}
+.wds-nav{background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:4px 12px;cursor:pointer;font-size:16px;line-height:1.2;color:var(--txt)}
+.wds-nav:hover{border-color:var(--acc)}
+.wds-titolo{font-size:14px;font-weight:700;min-width:200px}
+.wds-oggi{background:var(--acc);border:none;color:#fff;border-radius:8px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.wds-conta{font-size:12px;color:var(--txt3);margin-left:auto}
+
+.wds-layout{display:grid;grid-template-columns:230px minmax(0,1fr) 250px;gap:10px;padding:0 12px 14px;align-items:start}
+@media(max-width:1100px){.wds-layout{grid-template-columns:minmax(0,1fr)}}
+.wds-pan{background:var(--surf);border:.5px solid var(--bord2);border-radius:12px;overflow:hidden}
+.wds-pan-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:.5px solid var(--bord2)}
+.wds-pan-h h3{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.2px}
+.wds-badge{background:var(--acc);color:#fff;border-radius:999px;padding:1px 8px;font-size:11px;font-weight:700}
+.wds-stato{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--surf2);color:var(--txt3)}
+.wds-stato.aperta{background:#fff4e6;color:#b06a00}
+.wds-stato.ok{background:#eaf7ef;color:#1c6b42}
+
+.wds-coda{max-height:520px;overflow:auto;padding:6px}
+.wds-task{display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:9px;cursor:pointer;transition:background .12s}
+.wds-task:hover{background:var(--surf2)}
+.wds-task.ritardo b{color:#b3261e}
+.wds-task b{display:block;font-size:12.5px;font-weight:600;line-height:1.3}
+.wds-task span{display:block;font-size:11px;color:var(--txt3);margin-top:1px}
+.wds-mark{width:8px;height:8px;border-radius:50%;flex:0 0 auto;margin-top:4px;background:var(--acc)}
+.wds-mark.urgente{background:#e8833a}
+.wds-mark.fatto{background:#9aa3bd}
+.wds-vuoto{padding:16px 12px;font-size:12.5px;color:var(--txt3);text-align:center}
+
+/* La griglia: una colonna per le ore, sette per i giorni. */
+.wds-cal{overflow:auto}
+.wds-griglia{display:grid;grid-template-columns:52px repeat(7,minmax(96px,1fr));min-width:740px}
+.wds-ore,.wds-col{display:flex;flex-direction:column}
+.wds-ang{height:38px;border-bottom:.5px solid var(--bord2)}
+.wds-o{height:44px;font-size:10.5px;color:var(--txt3);text-align:right;padding:2px 6px 0 0;border-top:.5px solid var(--bord2)}
+.wds-col{border-left:.5px solid var(--bord2)}
+.wds-col.oggi{background:rgba(16,163,127,.045)}
+.wds-gh{height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-bottom:.5px solid var(--bord2)}
+.wds-gh b{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3)}
+.wds-gh span{font-size:14px;font-weight:700}
+.wds-col.oggi .wds-gh span{color:var(--acc)}
+.wds-senzora{min-height:0;padding:0 3px}
+.wds-senzora:not(:empty){padding:3px}
+.wds-fascia{height:44px;border-top:.5px solid var(--bord2);padding:2px 3px;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+
+/* Un'attivita' nella griglia. Il colore non e' l'unico segnale: c'e' sempre
+   l'ora e il titolo, perche' un pallino colorato da solo non si legge. */
+.wds-ev{background:#e7f4ef;border-left:3px solid #10a37f;border-radius:5px;padding:2px 5px;cursor:pointer;overflow:hidden;line-height:1.25}
+.wds-ev i{display:block;font-style:normal;font-size:9.5px;font-weight:700;color:#0a7a55}
+.wds-ev span{display:block;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+.wds-ev.urgente{background:#fdf1e6;border-left-color:#e8833a}
+.wds-ev.urgente i{color:#b06a00}
+.wds-ev.fatto{background:var(--surf2);border-left-color:#9aa3bd;opacity:.65}
+.wds-ev.fatto span{text-decoration:line-through}
+.wds-ev.sel{outline:2px solid var(--acc);outline-offset:-1px}
+
+.wds-det{padding:12px}
+.wds-tit{font-size:13.5px;font-weight:700;line-height:1.35;margin-bottom:10px}
+.wds-r{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:.5px solid var(--bord2);font-size:12px}
+.wds-r span{color:var(--txt3)}
+.wds-r b{font-weight:600;text-align:right}
+.wds-note{margin-top:10px;padding:9px 11px;background:var(--surf2);border-radius:8px;font-size:12px;line-height:1.45;color:var(--txt2)}
+.wds-apri{margin-top:12px;width:100%;background:var(--acc);border:none;color:#fff;border-radius:8px;padding:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
 </style>
 <link rel="stylesheet" href="withus-one.css?v=2">
 </head>
@@ -1146,7 +1213,8 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-workdiary">
   <div style="display:flex;gap:8px;padding:10px 12px 0;">
     <button id="wd-tab-lista" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('lista')"><i class="ti ti-list"></i> Lista</button>
-    <button id="wd-tab-cal" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Calendario</button>
+    <button id="wd-tab-sett" class="ctab act" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('sett')"><i class="ti ti-layout-columns"></i> Settimana</button>
+    <button id="wd-tab-cal" class="ctab" style="flex:0 0 auto;padding:7px 16px;" onclick="selWDTab('cal')"><i class="ti ti-calendar"></i> Mese</button>
   </div>
   <div id="wd-lista" style="display:none;">
     <div style="display:flex;gap:8px;padding:10px 12px 4px;align-items:center;">
@@ -1178,7 +1246,35 @@ input[type=file]{display:none;}
     <div class="card"><div id="wd-list"></div></div>
     <div style="height:16px;"></div>
   </div>
-  <div id="wd-cal">
+  <!-- ══ SETTIMANA ═══════════════════════════════════════════════════════
+       Tre colonne: cosa c'e' da fare OGGI, la settimana ora per ora, e il
+       dettaglio di quello che si sta guardando. Il mese diceva quante cose
+       c'erano in un giorno, non A CHE ORA: per capire se una giornata era
+       piena bisognava aprirla. ══════════════════════════════════════════ -->
+  <div id="wd-sett" style="display:none">
+    <div class="wds-barra">
+      <button class="wds-nav" onclick="wdSettPrev()" title="Settimana precedente">‹</button>
+      <div class="wds-titolo" id="wds-titolo"></div>
+      <button class="wds-nav" onclick="wdSettNext()" title="Settimana successiva">›</button>
+      <button class="wds-oggi" onclick="wdSettOggi()">Oggi</button>
+      <span class="wds-conta" id="wds-conta"></span>
+    </div>
+    <div class="wds-layout">
+      <aside class="wds-pan">
+        <div class="wds-pan-h"><h3>Da gestire oggi</h3><span class="wds-badge" id="wds-coda-n">0</span></div>
+        <div class="wds-coda" id="wds-coda"></div>
+      </aside>
+      <section class="wds-pan wds-cal">
+        <div class="wds-griglia" id="wds-griglia"></div>
+      </section>
+      <aside class="wds-pan">
+        <div class="wds-pan-h"><h3>Dettaglio attività</h3><span class="wds-stato" id="wds-stato">—</span></div>
+        <div class="wds-det" id="wds-det"></div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="wd-cal" style="display:none">
     <div style="padding:12px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <button onclick="wdCalPrev()" style="background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:16px;">‹</button>
@@ -8605,13 +8701,133 @@ const WD_TIPI = {
   altro:        {lbl:'Altro',        ic:'ti-note',       c:'var(--txt2)',    bg:'var(--surf2)'}
 };
 
+/* == DIARIO . VISTA SETTIMANA ==============================================
+   Il mese diceva QUANTE cose c'erano in un giorno, non a che ora: per capire
+   se una giornata era piena bisognava aprirla una per una. Qui la settimana si
+   legge come una griglia oraria, e accanto stanno le due cose che servono
+   sempre: che cosa c'e' da fare oggi, e il dettaglio di quello che guardi. */
+let WDS_LUN = null, WDS_SEL = null;
+const WDS_ORE = [8,9,10,11,12,13,14,15,16,17,18];
+
+/* Il lunedi' della settimana di una data. In Italia la settimana comincia di
+   lunedi'; getDay() invece parte da domenica, ed e' l'errore classico che
+   sposta tutta la griglia di un giorno. */
+function wdsLunedi(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const g = (x.getDay() + 6) % 7;
+  x.setDate(x.getDate() - g);
+  return x;
+}
+function wdsISO(d) { const z = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+
+/* L'ora e' un testo scritto a mano: puo' essere «9», «9:30», «09.30» o niente.
+   Chi non ha un'ora leggibile non si perde: finisce nella fascia «senza
+   orario» in cima al giorno, invece di sparire dalla griglia. */
+function wdsOra(w) {
+  const m = String(w.ora || '').match(/^(\d{1,2})[:.]?(\d{2})?/);
+  if (!m) return null;
+  const h = parseInt(m[1], 10);
+  if (isNaN(h) || h < 0 || h > 23) return null;
+  return { h, min: m[2] ? parseInt(m[2],10) : 0 };
+}
+
+function wdSettOggi() { WDS_LUN = wdsLunedi(new Date()); renderWDSett(); }
+function wdSettPrev() { WDS_LUN = new Date(WDS_LUN.getFullYear(), WDS_LUN.getMonth(), WDS_LUN.getDate()-7); renderWDSett(); }
+function wdSettNext() { WDS_LUN = new Date(WDS_LUN.getFullYear(), WDS_LUN.getMonth(), WDS_LUN.getDate()+7); renderWDSett(); }
+
+function wdsColore(w) {
+  if (w.stato === 'completato') return 'fatto';
+  if (w.importante || w.prior === 'alta') return 'urgente';
+  return 'normale';
+}
+
+function renderWDSett() {
+  if (!WDS_LUN) WDS_LUN = wdsLunedi(new Date());
+  const giorni = [];
+  for (let i = 0; i < 7; i++) giorni.push(new Date(WDS_LUN.getFullYear(), WDS_LUN.getMonth(), WDS_LUN.getDate()+i));
+  const dal = giorni[0], al = giorni[6];
+  const tit = document.getElementById('wds-titolo');
+  if (tit) tit.textContent = dal.getMonth() === al.getMonth()
+    ? `${dal.getDate()}-${al.getDate()} ${al.toLocaleString('it-IT',{month:'long',year:'numeric'})}`
+    : `${dal.getDate()} ${dal.toLocaleString('it-IT',{month:'short'})} - ${al.getDate()} ${al.toLocaleString('it-IT',{month:'short',year:'numeric'})}`;
+
+  const chiavi = giorni.map(wdsISO);
+  const dentro = (WD || []).filter(w => chiavi.includes(w.data));
+  const c = document.getElementById('wds-conta');
+  if (c) c.textContent = dentro.length ? (dentro.length === 1 ? '1 attivita' : dentro.length + ' attivita') : 'nessuna attivita';
+
+  const oggi = wdsISO(new Date());
+  let h = '<div class="wds-ore"><div class="wds-ang"></div>' + WDS_ORE.map(o => `<div class="wds-o">${String(o).padStart(2,'0')}:00</div>`).join('') + '</div>';
+  for (const g of giorni) {
+    const iso = wdsISO(g);
+    const delGiorno = dentro.filter(w => w.data === iso);
+    const senzaOra = delGiorno.filter(w => !wdsOra(w));
+    h += `<div class="wds-col${iso === oggi ? ' oggi' : ''}">`;
+    h += `<div class="wds-gh"><b>${g.toLocaleDateString('it-IT',{weekday:'short'})}</b><span>${g.getDate()}</span></div>`;
+    h += `<div class="wds-senzora">${senzaOra.map(w => wdsChip(w)).join('')}</div>`;
+    for (const o of WDS_ORE) {
+      const qui = delGiorno.filter(w => { const t = wdsOra(w); return t && t.h === o; });
+      h += `<div class="wds-fascia" data-ora="${o}">${qui.map(w => wdsChip(w)).join('')}</div>`;
+    }
+    h += '</div>';
+  }
+  const gr = document.getElementById('wds-griglia'); if (gr) gr.innerHTML = h;
+
+  /* La coda «da gestire oggi» non e' la colonna di oggi: ci finisce anche
+     quello che era in ritardo e non e' stato chiuso. Se sparisse dalla vista,
+     sparirebbe dalla testa. */
+  const coda = (WD || []).filter(w => w.stato !== 'completato' && w.data && w.data <= oggi)
+    .sort((a,b) => (a.data === b.data ? String(a.ora||'').localeCompare(String(b.ora||'')) : a.data.localeCompare(b.data)));
+  const cn = document.getElementById('wds-coda-n'); if (cn) cn.textContent = coda.length;
+  const cd = document.getElementById('wds-coda');
+  if (cd) cd.innerHTML = coda.length
+    ? coda.map(w => `<div class="wds-task ${w.data < oggi ? 'ritardo' : ''}" onclick="wdsApri('${esc(w.id)}')">
+        <span class="wds-mark ${wdsColore(w)}"></span>
+        <div><b>${esc(w.titolo || '(senza titolo)')}</b>
+        <span>${w.data < oggi ? 'in ritardo . ' + esc(w.data) : (w.ora ? esc(w.ora) : 'senza orario')}</span></div></div>`).join('')
+    : '<div class="wds-vuoto">Niente da gestire: la giornata e pulita.</div>';
+
+  wdsDettaglio(WDS_SEL);
+}
+
+function wdsChip(w) {
+  const t = wdsOra(w);
+  const ora = t ? String(t.h).padStart(2,'0') + ':' + String(t.min).padStart(2,'0') : '';
+  return `<div class="wds-ev ${wdsColore(w)}${WDS_SEL === w.id ? ' sel' : ''}" onclick="wdsApri('${esc(w.id)}')" title="${esc(w.titolo||'')}">
+    ${ora ? '<i>' + ora + '</i>' : ''}<span>${esc(w.titolo || '(senza titolo)')}</span></div>`;
+}
+
+function wdsApri(id) { WDS_SEL = id; renderWDSett(); }
+
+function wdsDettaglio(id) {
+  const box = document.getElementById('wds-det'), st = document.getElementById('wds-stato');
+  if (!box) return;
+  const w = (WD || []).find(x => String(x.id) === String(id));
+  if (!w) {
+    box.innerHTML = '<div class="wds-vuoto">Scegli un\'attivita dal calendario o dalla coda per vederne il dettaglio.</div>';
+    if (st) { st.textContent = '-'; st.className = 'wds-stato'; }
+    return;
+  }
+  if (st) { st.textContent = w.stato === 'completato' ? 'Completata' : 'Da fare'; st.className = 'wds-stato ' + (w.stato === 'completato' ? 'ok' : 'aperta'); }
+  const riga = (e, v) => v ? `<div class="wds-r"><span>${e}</span><b>${esc(v)}</b></div>` : '';
+  box.innerHTML = `<div class="wds-tit">${esc(w.titolo || '(senza titolo)')}</div>
+    ${riga('Quando', (w.data || '') + (w.ora ? ' . ' + w.ora : ''))}
+    ${riga('Tipo', w.tipo)}
+    ${riga('Priorita', w.prior)}
+    ${riga('Luogo', w.luogo)}
+    ${w.note ? `<div class="wds-note">${escNl(w.note)}</div>` : ''}
+    <button class="wds-apri" onclick="openWDModal('${esc(w.id)}')"><i class="ti ti-pencil"></i> Apri e modifica</button>`;
+}
+
 function selWDTab(t) {
-  const lst=document.getElementById('wd-lista'), cal=document.getElementById('wd-cal');
+  const lst=document.getElementById('wd-lista'), cal=document.getElementById('wd-cal'), set=document.getElementById('wd-sett');
   if(lst) lst.style.display=(t==='lista')?'block':'none';
   if(cal) cal.style.display=(t==='cal')?'block':'none';
+  if(set) set.style.display=(t==='sett')?'block':'none';
   const tl=document.getElementById('wd-tab-lista'); if(tl) tl.classList.toggle('act', t==='lista');
   const tc=document.getElementById('wd-tab-cal'); if(tc) tc.classList.toggle('act', t==='cal');
-  if (t==='cal') renderWDCal(); else renderWD();
+  const ts=document.getElementById('wd-tab-sett'); if(ts) ts.classList.toggle('act', t==='sett');
+  if (t==='cal') renderWDCal(); else if (t==='sett') renderWDSett(); else renderWD();
 }
 
 // Helper Diary: escape contenuti utente + date + completa rapido

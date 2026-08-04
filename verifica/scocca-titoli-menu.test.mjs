@@ -109,5 +109,19 @@ e.prova('la scheda Fonti ha un titolo fra quelli di IAM', () => {
   deve(/fonti:/.test(mappa), 'la scheda Fonti non ha un titolo fra quelli di IAM');
 });
 
+e.prova('i fogli collegati hanno una versione che cambia coi rilasci', () => {
+  /* withus-one.css?v=2 e .js?v=2 avevano una versione FISSA: il browser
+     teneva la copia vecchia e un rilascio poteva non arrivare mai a chi il
+     programma ce l'aveva gia' aperto. Si vedeva come «ho pubblicato ma non
+     cambia niente», ed e' il modo piu' rapido di perdere un pomeriggio a
+     cercare un guasto che non c'e'. */
+  const iam = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
+  for (const f of ['withus-one.css', 'withus-one.js', 'withus-pictograms.css']) {
+    const m = iam.match(new RegExp(f.replace('.', '\\.') + '\\?v=([0-9]+)'));
+    deve(m, f + ' non ha una versione nell\'indirizzo');
+    deve(m[1].length >= 6, f + ' ha una versione fissa e corta: il browser terrà la copia vecchia');
+  }
+});
+
 e.stampa();
 process.exit(e.ko === 0 ? 0 : 1);

@@ -215,6 +215,70 @@ prova('il PDF non viene generato da una libreria esterna', () => {
   }
 });
 
+// ── 5. Il questionario ────────────────────────────────────────────────────
+function corpoDi(firma) {
+  const i = html.indexOf(firma);
+  if (i < 0) return null;
+  let liv = 0, j = html.indexOf('{', i);
+  const inizio = j;
+  for (; j < html.length; j++) {
+    if (html[j] === '{') liv++;
+    else if (html[j] === '}') { liv--; if (liv === 0) return html.slice(inizio, j + 1); }
+  }
+  return null;
+}
+
+prova('i sette passi sono quelli della specifica', () => {
+  /* «7 passaggi al massimo oltre all'anagrafica precompilata» (02 §4). Non è
+     un vezzo: un questionario lungo si abbandona a metà, e un'analisi
+     abbandonata a metà non produce niente — né consulenza né dato. */
+  const i = html.indexOf('const AB_PASSI');
+  deve(i > 0, 'manca l\'elenco dei passi');
+  const passi = html.slice(i, html.indexOf('];', i));
+  for (const t of ['I tuoi dati', 'Famiglia', 'Casa e patrimonio', 'Coperture', 'approfondire', 'Osservazioni', 'Privacy']) {
+    deve(passi.includes(t), 'manca il passo: ' + t);
+  }
+  deve((passi.match(/titolo:/g) || []).length === 7, 'i passi non sono sette');
+});
+
+prova('l\'anteprima usa il motore vero, non una copia', () => {
+  /* Una seconda copia delle regole dentro index.html divergerebbe dalla
+     prima al primo ritocco, e l'anteprima mostrerebbe un punteggio diverso
+     da quello che poi viene archiviato. Si chiama il modulo. */
+  const f = corpoDi('function abRicalcola()');
+  deve(f, 'manca abRicalcola');
+  deve(/ABRating/.test(f), 'l\'anteprima non chiama il motore');
+  deve(!/punteggio\s*\+=|\+=\s*28|>=\s*65/.test(html.replace(/\/\*[\s\S]*?\*\//g, '')),
+    'le soglie o i pesi del rating sono stati ricopiati dentro index.html');
+});
+
+prova('non si va avanti senza le risposte necessarie', () => {
+  const f = corpoDi('function abValida()');
+  deve(f, 'manca abValida');
+  deve(/famiglia/.test(f) && /dipendenzaReddito/.test(f), 'il passo famiglia si può saltare vuoto');
+  deve(/casa/.test(f), 'il passo casa si può saltare vuoto');
+});
+
+prova('un\'analisi non firmata non si spaccia per archiviata', () => {
+  /* Senza le rotte lato motore qui non si salva niente e non si firma
+     niente. Se la schermata del risultato tacesse, l'operatore chiuderebbe
+     la scheda convinto di aver lasciato una traccia sul cliente — e non
+     c'è nulla di peggio di un lavoro che si crede fatto. */
+  const f = corpoDi('function abEsito()');
+  deve(f, 'manca abEsito');
+  deve(/non è stata salvata|non salvata|nessuna traccia/i.test(f),
+    'il risultato non dice che l\'analisi non è ancora archiviata');
+});
+
+prova('il risultato mostra i perché, non solo i numeri', () => {
+  const f = corpoDi('function abEsito()');
+  deve(f && /motivi/.test(f), 'il risultato non stampa le motivazioni');
+  deve(f && /prossimoPasso/.test(f), 'il risultato non dice che cosa verificare');
+  /* Il colore da solo non basta: stampato in bianco e nero, o letto da chi
+     non distingue rosso e verde, resterebbe muto (08 §6). */
+  deve(f && /stato/.test(f), 'lo stato non è scritto a parole accanto al colore');
+});
+
 let ko = 0;
 console.log('\nANALISI DEI BISOGNI — motore, innesto e confini');
 for (const [ok, nome, msg] of esiti) {

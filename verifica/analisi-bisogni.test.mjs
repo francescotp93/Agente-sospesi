@@ -21,6 +21,7 @@
 //  non c'era niente su cui calcolarlo. Vale il modulo.
 // ═══════════════════════════════════════
 import fs from 'fs';
+import { createHash } from 'node:crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -128,6 +129,32 @@ if (M) {
     deve(s.bisognoPrincipale === 'famiglia', 'il bisogno principale non è famiglia: ' + s.bisognoPrincipale);
     const b = M.creaSnapshotRating(base(), { dataRiferimento: oggi });
     deve(JSON.stringify(s) === JSON.stringify(b), 'due calcoli sugli stessi dati danno risultati diversi');
+  });
+
+  prova('le regole sono identiche a quelle del motore', () => {
+    /* Questo file calcola l'ANTEPRIMA che l'operatore vede mentre compila; il
+       punteggio che finisce nel documento firmato lo calcola il motore
+       (QUOTE/server/analisiBisogniRating.js). Sono due copie perché stanno in
+       due repository e IAM non ha un passo di costruzione.
+
+       Se divergessero, l'operatore leggerebbe un numero mentre parla col
+       cliente e il PDF ne porterebbe un altro — e non se ne accorgerebbe
+       nessuno, perché nessuno mette i due numeri accanto.
+
+       L'impronta si calcola sul CODICE delle funzioni come lo vede il motore
+       JavaScript: commenti e spaziatura non contano, contano le regole. Lo
+       stesso valore è inchiodato nella prova gemella lato motore. Se questa
+       diventa rossa: cambia anche l'altro file, alza VERSIONE_REGOLE e
+       aggiorna il valore in tutte e due. */
+    const IMPRONTA_ATTESA = 'f378179307977aa8';
+    const pezzi = [
+      M.VERSIONE_REGOLE, M.VERSIONE_QUESTIONARIO, JSON.stringify(M.META_CATEGORIE),
+      M.calcolaNecessita.toString(), M.calcolaIndiceComplessivo.toString(), M.creaSnapshotRating.toString(),
+    ].join(' ');
+    const impronta = createHash('sha256').update(pezzi.replace(/\s+/g, ' ')).digest('hex').slice(0, 16);
+    deve(impronta === IMPRONTA_ATTESA,
+      'le regole dell\'anteprima sono cambiate (impronta ' + impronta + ' invece di ' + IMPRONTA_ATTESA + '): '
+      + 'l\'anteprima mostrerebbe un punteggio diverso da quello archiviato nel PDF');
   });
 
   prova('il bisogno principale non può essere una categoria grigia', () => {

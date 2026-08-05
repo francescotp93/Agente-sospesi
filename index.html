@@ -903,8 +903,13 @@ input[type=file]{display:none;}
      comportamento da indovinare: la colonna sta ferma perche' non ha dove
      andare. */
   background:var(--ab-bg); color:var(--ab-ink); padding:0; overflow:hidden;
-  display:flex; flex-direction:column;
 }
+/* Il display sta su .act e NON su #panel-analisi. Scriverlo sull'id lo faceva
+   vincere su .panel{display:none} — un id batte una classe — e il pannello
+   restava visibile SEMPRE: essendo position:absolute inset:0 copriva tutti
+   gli altri, e dalla scrivania non si usciva piu'. Bloccato l'intero
+   gestionale sull'analisi dei bisogni. */
+#panel-analisi.act{display:flex; flex-direction:column}
 #panel-analisi .ab-head{flex:0 0 auto;padding:var(--ab-cima) 16px 0}
 #panel-analisi > div[id^=ab-vista]{flex:1 1 auto;min-height:0;padding:0 16px 22px}
 #panel-analisi > #ab-vista-console,#panel-analisi > #ab-vista-esito{overflow-y:auto}

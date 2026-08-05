@@ -837,7 +837,11 @@ input[type=file]{display:none;}
 .wdm-g.wdm-oggi .wdm-n{background:var(--d-green);color:#fff}
 .wdm-g.sel{box-shadow:inset 0 0 0 2px var(--d-green)}
 .wdm-ev{display:grid;gap:3px;margin-top:5px}
-.wdm-e{display:flex;align-items:center;gap:4px;min-width:0;background:var(--d-green-soft);border-radius:4px;padding:3px 5px;font-size:8px}
+/* E' un <button>, quindi vanno spenti i suoi stili di serie: senza, il
+   riquadro cambierebbe aspetto solo perche' e' diventato cliccabile. */
+.wdm-e{display:flex;align-items:center;gap:4px;min-width:0;width:100%;background:var(--d-green-soft);border:0;border-radius:4px;padding:3px 5px;font-size:8px;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+.wdm-e:hover{filter:brightness(.96)}
+.wdm-e:focus-visible{outline:2px solid var(--d-green);outline-offset:1px}
 .wdm-e.urgente{background:var(--d-red-soft)}
 .wdm-e.fatto{background:var(--d-teal-soft)}
 .wdm-e.fatto span{text-decoration:line-through;opacity:.7}
@@ -10833,7 +10837,25 @@ function wdsChip(w) {
     ${ora ? '<i>' + ora + '</i>' : ''}<span>${esc(w.titolo || '(senza titolo)')}</span></div>`;
 }
 
-function wdsApri(id) { WDS_SEL = id; renderWDSett(); }
+/* Ridisegna la vista APERTA, non sempre la settimana. Prima faceva
+   renderWDSett() e basta: nella vista giorno ridisegnava una schermata
+   nascosta, quindi il clic sembrava non fare niente — mentre in memoria la
+   selezione era cambiata davvero. Un difetto peggiore di un errore visibile:
+   il programma aveva capito, e chi lo usava no. */
+function wdsApri(id) {
+  WDS_SEL = id;
+  if (wdVistaAttiva() === 'giorno') renderWDGiorno();
+  else renderWDSett();
+}
+
+/* Dal mese si va al GIORNO con quell'attivita' gia' scelta. Nel mese un
+   riquadro e' alto otto pixel e il pannello di dettaglio non c'e' nemmeno:
+   aprirlo li' non servirebbe a niente. */
+function wdApriEvento(id, ds) {
+  WDS_SEL = id;
+  WDG_DATA = ds;
+  selWDTab('giorno');
+}
 
 /* ══ DIARIO · VISTA GIORNO ═══════════════════════════════════════════════
    La settimana dice se un giorno e' pieno; non dice come. Dieci cose da
@@ -11370,7 +11392,12 @@ function renderWDCal() {
     const fuori = g.getMonth() !== m;
     const ev = (WD || []).filter(w => w.data === ds)
       .sort((a,b) => String(a.ora||'').localeCompare(String(b.ora||'')));
-    const chip = e => `<span class="wdm-e ${wdsColore(e)}"><span>${e.ora ? esc(e.ora) + ' ' : ''}${esc(e.titolo || '(senza titolo)')}</span></span>`;
+    /* type="button" e non uno <span>: cosi' ci si arriva col tabulatore e si
+       apre con Invio, come qualunque altro comando del gestionale.
+       stopPropagation perche' la cella sotto ha un clic suo — senza, si
+       aprirebbe il giorno perdendo per strada l'attivita' scelta. */
+    const chip = e => `<button type="button" class="wdm-e ${wdsColore(e)}" title="${esc(e.titolo || '')}"
+      onclick="event.stopPropagation();wdApriEvento('${esc(e.id)}','${ds}')"><span>${e.ora ? esc(e.ora) + ' ' : ''}${esc(e.titolo || '(senza titolo)')}</span></button>`;
     html += `<button type="button" class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' wdm-oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
       ${fuori ? '' : `onclick="wdApriGiorno('${ds}')"`} title="${fuori ? '' : 'Apri la giornata'}">
       <span class="wdm-n">${g.getDate()}</span>

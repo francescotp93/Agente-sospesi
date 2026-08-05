@@ -896,7 +896,29 @@ input[type=file]{display:none;}
      fessura passava il contenuto che scorreva dietro. Legate cosi', le due
      misure non possono piu' divergere. */
   --ab-cima:22px;
-  background:var(--ab-bg); color:var(--ab-ink); padding:var(--ab-cima) 16px 40px; overflow-y:auto;
+  /* Il pannello non scorre piu' lui: scorrono i riquadri dentro. Cosi'
+     l'indicatore a destra NON PUO' uscire dallo schermo, e non serve nessun
+     position:sticky — che era la fonte di tutti i tagli, perche' si comporta
+     in modo diverso a seconda dell'altezza della finestra. Qui non c'e' un
+     comportamento da indovinare: la colonna sta ferma perche' non ha dove
+     andare. */
+  background:var(--ab-bg); color:var(--ab-ink); padding:0; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+#panel-analisi .ab-head{flex:0 0 auto;padding:var(--ab-cima) 16px 0}
+#panel-analisi > div[id^=ab-vista]{flex:1 1 auto;min-height:0;padding:0 16px 22px}
+#panel-analisi > #ab-vista-console,#panel-analisi > #ab-vista-esito{overflow-y:auto}
+#panel-analisi > #ab-vista-quest{display:flex}
+#panel-analisi > #ab-vista-quest > .ab-griglia{flex:1 1 auto;min-height:0}
+@media(min-width:981px){
+  /* Affiancati e alti uguale: dentro, ciascuno si scorre per conto suo. */
+  #panel-analisi #ab-vista-quest > .ab-griglia{align-items:stretch}
+  #panel-analisi #ab-vista-quest .ab-riq,#panel-analisi #ab-vista-quest .ab-lato{overflow-y:auto}
+}
+@media(max-width:980px){
+  /* In colonna stretta i due riquadri si impilano e scorre tutta la vista:
+     due scorrimenti annidati su un telefono sono ingestibili. */
+  #panel-analisi > #ab-vista-quest{display:block;overflow-y:auto}
 }
 #panel-analisi button,#panel-analisi input,#panel-analisi select,#panel-analisi textarea{font:inherit}
 #panel-analisi .ab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
@@ -956,7 +978,10 @@ input[type=file]{display:none;}
    assente: la si legge e si crede che il problema sia altrove.
    Il problema vero e' risolto altrove: cambiando passo si torna in cima,
    quindi la barra la vedi ogni volta che arrivi su una domanda. */
-#panel-analisi .ab-q-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-20px -20px 20px;padding:14px 20px;background:#fbfcfd;border-bottom:1px solid var(--ab-line);flex-wrap:wrap}
+/* Adesso si aggancia davvero: il riquadro che la contiene ha un suo
+   scorrimento, quindi e' lui il contenitore di riferimento. Prima aveva
+   overflow:hidden e la regola non faceva niente. */
+#panel-analisi .ab-q-top{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-20px -20px 20px;padding:14px 20px;background:#fbfcfd;border-bottom:1px solid var(--ab-line);flex-wrap:wrap}
 #panel-analisi .ab-barra{width:220px;max-width:100%;height:6px;border-radius:999px;background:#e7ecef;overflow:hidden}
 #panel-analisi .ab-barra span{display:block;height:100%;background:linear-gradient(90deg,var(--ab-verde),var(--ab-verde-vivo));transition:width .35s}
 #panel-analisi .ab-passo-n{font-size:11.5px;font-weight:700;color:var(--ab-ink2);white-space:nowrap}
@@ -1012,13 +1037,12 @@ input[type=file]{display:none;}
    non va rimesso «tanto da me funziona». */
 #panel-analisi .ab-lato{border:1px solid var(--ab-line);background:#fff;border-radius:13px;padding:18px;box-shadow:var(--ab-ombra)}
 #panel-analisi .ab-lato h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--ab-ink2);margin:0 0 14px}
-/* Si aggancia solo la testa — titolo e anello, circa 130px. Un elemento
-   sticky piu' alto del contenitore che scorre viene ancorato dal browser per
-   il bordo INFERIORE, e la sua cima finisce a coordinata negativa: e' cosi'
-   che l'indice si vedeva tagliato quando si scorreva per arrivare ai campi.
-   Una testa bassa non puo' mai trovarsi in quella condizione. */
-#panel-analisi .ab-lato-cima{position:sticky;top:calc(var(--ab-cima) * -1);z-index:1;background:#fff;margin:-18px -18px 0;padding:18px 18px 12px}
-#panel-analisi .ab-lato-cima:after{content:"";position:absolute;left:18px;right:18px;bottom:0;height:1px;background:var(--ab-line)}
+/* Niente position:sticky, in nessuna forma. Ci ho provato due volte e ha
+   prodotto due difetti diversi: ancorato al contrario quando l'elemento e'
+   piu' alto della finestra, e una fessura da cui passava il contenuto
+   perche' gli scostamenti si contano dal riquadro interno del contenitore.
+   Adesso la colonna sta ferma per costruzione, non per una regola furba. */
+#panel-analisi .ab-lato-cima{padding-bottom:14px;border-bottom:1px solid var(--ab-line)}
 #panel-analisi .ab-anello-r{display:grid;grid-template-columns:92px 1fr;align-items:center;gap:14px}
 #panel-analisi .ab-anello{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;position:relative;background:conic-gradient(var(--ab-verde) calc(var(--ab-p,0)*1%),#e8edef 0)}
 #panel-analisi .ab-anello:before{content:"";position:absolute;inset:9px;border-radius:50%;background:#fff}
@@ -9182,8 +9206,16 @@ function abVista(quale){
    anche quando si spunta una casella butterebbe via la posizione a meta'
    di un elenco lungo. */
 function abInCima(){
-  const p = document.getElementById('panel-analisi');
-  if (p) p.scrollTo({ top: 0, behavior: 'smooth' });
+  /* Non scorre piu' il pannello: scorrono i riquadri dentro. Si riportano in
+     cima tutti quelli che possono avere una posizione — la vista aperta e la
+     scheda delle domande — perche' quale sia dipende dalla larghezza dello
+     schermo, e chiederselo qui vorrebbe dire ripetere in JavaScript una
+     regola che sta gia' nel CSS. */
+  const bersagli = ['#panel-analisi', '#ab-vista-quest', '#ab-vista-quest .ab-riq', '#ab-vista-esito', '#ab-vista-console'];
+  for (const b of bersagli) {
+    const e = document.querySelector(b);
+    if (e && e.scrollTop) e.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }
 
 function analisiAvvia(){

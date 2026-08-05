@@ -188,21 +188,32 @@ prova('i colori del disegno restano dentro la schermata', () => {
     'una classe del prototipo è entrata senza prefisso: collide col resto di IAM');
 });
 
-prova('si ancora solo la testa della colonna, non la colonna intera', () => {
-  /* Un elemento sticky PIU' ALTO del contenitore che scorre viene ancorato
-     dal browser per il bordo inferiore, e la sua cima finisce a coordinata
-     negativa. Misurato: colonna 552px in un'area di 500px, titolo a y=-73 e
-     l'anello dell'indice tagliato via. Su uno schermo alto non si vede, ed è
-     per questo che serve una prova invece della buona memoria. */
-  const lato = html.slice(html.indexOf('#panel-analisi .ab-lato{'), html.indexOf('}', html.indexOf('#panel-analisi .ab-lato{')));
-  deve(!/position:\s*sticky/.test(lato), 'la colonna intera è tornata sticky: su schermi bassi taglia l\'indice');
-  const cima = html.slice(html.indexOf('#panel-analisi .ab-lato-cima{'), html.indexOf('}', html.indexOf('#panel-analisi .ab-lato-cima{')));
-  deve(/position:\s*sticky/.test(cima), 'la testa della colonna non è più agganciata');
-  /* Gli scostamenti di uno sticky si misurano dal riquadro INTERNO del
-     contenitore che scorre: se l'ancoraggio non compensa il margine del
-     pannello resta una fessura da cui passa il contenuto che scorre. Le due
-     misure devono restare legate. */
-  deve(/--ab-cima/.test(cima), 'l\'ancoraggio non è legato al margine del pannello: tornerebbe la fessura');
+prova('l\'indicatore non può uscire dallo schermo', () => {
+  /* Questa è la lezione di tre tentativi falliti, ed è il motivo per cui la
+     prova guarda la STRUTTURA e non un accorgimento.
+
+     Ho provato due volte con position:sticky e ha prodotto due difetti
+     diversi: ancorato al contrario quando l'elemento è più alto della
+     finestra (misurato: colonna 552px in 500px, titolo a y=-73, anello
+     tagliato), e una fessura da cui passava il contenuto, perché gli
+     scostamenti si contano dal riquadro interno del contenitore.
+
+     Ora la colonna sta ferma per COSTRUZIONE: il pannello non scorre, i due
+     riquadri dentro scorrono per conto loro. L'indicatore non ha dove
+     andare. Rimettere lo scorrimento sul pannello rifarebbe il difetto. */
+  const pan = html.slice(html.indexOf('#panel-analisi{'), html.indexOf('}', html.indexOf('#panel-analisi{')));
+  deve(/overflow:\s*hidden/.test(pan), 'il pannello è tornato a scorrere: la colonna scorrerebbe via con lui');
+  deve(/display:\s*flex/.test(pan), 'il pannello non è più una colonna flessibile: le viste non possono riempirlo');
+  for (const [sel, nome] of [['#panel-analisi .ab-lato{', 'la colonna'], ['#panel-analisi .ab-lato-cima{', 'la testa della colonna']]) {
+    const b = html.slice(html.indexOf(sel), html.indexOf('}', html.indexOf(sel)));
+    deve(!/position:\s*sticky/.test(b), nome + ' è tornata sticky: è la strada che ha già fallito due volte');
+  }
+  deve(/#panel-analisi #ab-vista-quest \.ab-riq,#panel-analisi #ab-vista-quest \.ab-lato\{overflow-y:auto\}/.test(html),
+    'i due riquadri delle domande non scorrono per conto loro');
+  /* Su schermo stretto si impilano e scorre la vista: due scorrimenti
+     annidati dentro un telefono sono ingestibili. */
+  deve(/#panel-analisi > #ab-vista-quest\{display:block;overflow-y:auto\}/.test(html),
+    'su schermo stretto restano due scorrimenti annidati');
 });
 
 prova('niente dati dimostrativi del prototipo', () => {

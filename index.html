@@ -826,27 +826,41 @@ input[type=file]{display:none;}
    un pallino: diceva SE un giorno aveva qualcosa, non cosa. E «oggi» era la
    cella intera riempita di verde, che schiaccia il numero invece di
    indicarlo — nel disegno e' solo il NUMERO a essere evidenziato. */
-.wdm-griglia{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--d-line);border-radius:8px;overflow:hidden;background:var(--d-surf)}
+/* Righe di altezza FISSA, non minima. Con min-height una giornata piena
+   allungava la sua riga e le celle ballavano da una settimana all'altra: il
+   mese si leggeva a scalini. Misurato: righe da 118 a 141 pixel nello stesso
+   mese. Quello che non ci sta si conta nel «+N altre». */
+.wdm-griglia{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));grid-template-rows:auto;grid-auto-rows:124px;border:1px solid var(--d-line);border-radius:8px;overflow:hidden;background:var(--d-surf)}
 .wdm-gio{background:var(--d-surf2);padding:8px;text-align:center;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);font-size:9px;font-weight:800;color:var(--d-muted);text-transform:uppercase}
 .wdm-gio:nth-child(7n){border-right:0}
-.wdm-g{min-height:118px;border:0;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);background:#fff;text-align:left;padding:7px;min-width:0;cursor:pointer;font:inherit;color:inherit}
+.wdm-g{display:flex;flex-direction:column;gap:5px;border-right:1px solid var(--d-line);border-bottom:1px solid var(--d-line);background:#fff;text-align:left;padding:7px;min-width:0;min-height:0;cursor:pointer;overflow:hidden}
+.wdm-g:hover{background:var(--d-surf2)}
+.wdm-g.fuori{background:var(--d-surf);cursor:default}
+.wdm-g.fuori:hover{background:var(--d-surf)}
 .wdm-g:nth-child(7n){border-right:0}
 .wdm-g:hover{background:var(--d-surf2)}
 .wdm-g.fuori{background:#fafbfb;color:#a3ada8;cursor:default}
-.wdm-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;font-size:10px;font-weight:800}
+.wdm-n{display:inline-grid;place-items:center;width:24px;height:24px;flex:0 0 auto;align-self:flex-start;border:0;background:transparent;border-radius:7px;font-size:11px;font-weight:800;font-family:inherit;color:inherit;cursor:pointer;padding:0}
+.wdm-n:hover{background:var(--d-green-soft)}
+.wdm-n:focus-visible{outline:2px solid var(--d-green);outline-offset:1px}
 .wdm-g.wdm-oggi .wdm-n{background:var(--d-green);color:#fff}
 .wdm-g.sel{box-shadow:inset 0 0 0 2px var(--d-green)}
-.wdm-ev{display:grid;gap:3px;margin-top:5px}
+.wdm-ev{display:grid;gap:3px;margin-top:0;min-height:0;overflow:hidden;align-content:start}
 /* E' un <button>, quindi vanno spenti i suoi stili di serie: senza, il
    riquadro cambierebbe aspetto solo perche' e' diventato cliccabile. */
-.wdm-e{display:flex;align-items:center;gap:4px;min-width:0;width:100%;background:var(--d-green-soft);border:0;border-radius:4px;padding:3px 5px;font-size:8px;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+/* 10px e non 8: a otto pixel il titolo di un'attivita' non si legge, si
+   indovina. Una riga sola, tagliata con i puntini: due righe farebbero
+   ballare di nuovo l'altezza. */
+.wdm-e{display:flex;align-items:center;gap:4px;min-width:0;width:100%;background:var(--d-green-soft);border:0;border-left:2px solid var(--d-green);border-radius:4px;padding:3px 6px;font-size:10px;line-height:1.35;font-family:inherit;color:var(--d-ink);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden}
+.wdm-e.urgente{border-left-color:var(--d-red)}
+.wdm-e.fatto{border-left-color:var(--d-teal)}
 .wdm-e:hover{filter:brightness(.96)}
 .wdm-e:focus-visible{outline:2px solid var(--d-green);outline-offset:1px}
 .wdm-e.urgente{background:var(--d-red-soft)}
 .wdm-e.fatto{background:var(--d-teal-soft)}
 .wdm-e.fatto span{text-decoration:line-through;opacity:.7}
 .wdm-e span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wdm-piu{font-size:8px;color:var(--d-muted);padding-left:4px}
+.wdm-piu{font-size:9px;font-weight:700;color:var(--d-muted);padding-left:4px;white-space:nowrap}
 @media(max-width:760px){
   .wdm-g{min-height:94px}
   .wdm-e{font-size:0;width:7px;height:7px;border-radius:50%;padding:0}
@@ -11398,11 +11412,20 @@ function renderWDCal() {
        aprirebbe il giorno perdendo per strada l'attivita' scelta. */
     const chip = e => `<button type="button" class="wdm-e ${wdsColore(e)}" title="${esc(e.titolo || '')}"
       onclick="event.stopPropagation();wdApriEvento('${esc(e.id)}','${ds}')"><span>${e.ora ? esc(e.ora) + ' ' : ''}${esc(e.titolo || '(senza titolo)')}</span></button>`;
-    html += `<button type="button" class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' wdm-oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
-      ${fuori ? '' : `onclick="wdApriGiorno('${ds}')"`} title="${fuori ? '' : 'Apri la giornata'}">
-      <span class="wdm-n">${g.getDate()}</span>
+    /* La cella e' un <div> e NON un <button>. Dentro ci sono le attivita', che
+       sono pulsanti: un <button> dentro un <button> e' HTML non valido, e il
+       browser non lo segnala — chiude la cella appena incontra quello interno,
+       e le attivita' finiscono fuori dal loro giorno. E' successo davvero, il
+       5/8/2026: ogni riquadro occupava una cella intera e il mese si vedeva a
+       pezzi.
+       Il clic sulla cella resta (si apre la giornata), e per la tastiera c'e'
+       il NUMERO del giorno, che e' un pulsante vero: un <div> con onclick i
+       tasti non lo vedono. */
+    html += `<div class="wdm-g${fuori ? ' fuori' : ''}${ds === oggiISO ? ' wdm-oggi' : ''}${ds === WD_CAL_DAY ? ' sel' : ''}"
+      ${fuori ? '' : `onclick="wdApriGiorno('${ds}')"`}>
+      <button type="button" class="wdm-n" ${fuori ? 'tabindex="-1"' : `onclick="event.stopPropagation();wdApriGiorno('${ds}')" title="Apri la giornata"`}>${g.getDate()}</button>
       ${ev.length ? `<span class="wdm-ev">${ev.slice(0,3).map(chip).join('')}${ev.length > 3 ? `<span class="wdm-piu">+${ev.length - 3} altre</span>` : ''}</span>` : ''}
-    </button>`;
+    </div>`;
   }
   document.getElementById('wd-cal-grid').innerHTML = html;
   // Mantieni il giorno aperto se appartiene al mese visualizzato, altrimenti svuota

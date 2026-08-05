@@ -9234,6 +9234,12 @@ async function analisiRevoca(b){
 // ═══════════════════════════════════════════════════════════════════════════════
 let AB_PASSO = 0;
 let AB_DATI = null;
+/* Identificativo della pratica sul motore. Resta null quando il motore non
+   risponde: in quel caso il questionario funziona lo stesso, in locale, e la
+   schermata del risultato lo dice invece di far credere che sia archiviato.
+   Cosi' quando il motore verra' pubblicato la funzione si completa da sola,
+   senza toccare una riga qui. */
+let AB_ANALISI_ID = null;
 
 const AB_PRODOTTI = [
   ['casa', 'Polizza casa', 'Abitazione, contenuto e responsabilità', 'ti-home-shield'],
@@ -9325,8 +9331,15 @@ function analisiAvvia(){
     interessi: [], note: '', contatto: 'Telefono', privacy: false, marketing: false,
   };
   AB_PASSO = 0;
+  AB_ANALISI_ID = null;
   abVista('quest');
   abDisegnaPasso(true);
+  /* Non si aspetta la risposta: il cliente e' seduto davanti, e non deve
+     guardare una schermata ferma perche' un server e' lento. */
+  mailFetch('/analisi-bisogni', { method: 'POST',
+    body: JSON.stringify({ anagrafica_id: AB_CLIENTE.id, modalita: 'agenzia' }) })
+    .then(function(a){ AB_ANALISI_ID = a && a.id; })
+    .catch(function(){ AB_ANALISI_ID = null; });
 }
 
 function abDisegnaPasso(scorri){
@@ -9466,6 +9479,14 @@ function abSalvaPasso(){
   }
 }
 
+/* Un salvataggio fallito non deve fermare chi compila: si riprova al passo
+   dopo, e comunque il risultato si calcola dalle risposte che sono qui. */
+function abSalvaSulMotore(){
+  if (!AB_ANALISI_ID) return;
+  mailFetch('/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/risposte',
+    { method: 'PATCH', body: JSON.stringify({ risposte: AB_DATI }) }).catch(function(){});
+}
+
 function abValida(){
   if (AB_PASSO === 0 && (!AB_DATI.anagrafica.nome || !AB_DATI.anagrafica.cognome)) return 'Servono almeno nome e cognome.';
   if (AB_PASSO === 1 && (!AB_DATI.famiglia || !AB_DATI.dipendenzaReddito)) return 'Rispondi a entrambe le domande.';
@@ -9478,6 +9499,7 @@ function abAvanti(){
   abSalvaPasso();
   const errore = abValida();
   if (errore) { abDisegnaPasso(); alert(errore); return; }
+  abSalvaSulMotore();
   if (AB_PASSO < AB_PASSI.length - 1) { AB_PASSO++; abDisegnaPasso(true); }
   else abEsito();
 }
@@ -9586,14 +9608,13 @@ function abEsito(){
           + '<ul>' + a.motivi.slice(0, 3).map(function(m){ return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>';
       }).join('') + '</div>'
 
-    /* Senza le rotte lato motore qui non si e' salvato niente e non si e'
-       firmato niente. Tacere lascerebbe chiudere la scheda convinti di aver
-       lasciato una traccia sul cliente: non c'e' niente di peggio di un
-       lavoro che si crede fatto. */
-    + '<div class="ab-avviso" style="margin-top:16px"><i class="ti ti-database-off"></i> '
-    + '<b>Questa analisi non è stata salvata.</b> Nessuna traccia è rimasta sulla scheda del cliente, non è stata firmata '
-    + 'e non è stato prodotto nessun report: l\'archiviazione, la firma OTP e i due PDF vivono lato motore, e quella parte '
-    + 'non c\'è ancora. Se ti serve, trascrivi adesso quello che conta.</div>'
+    /* Il riquadro qui sotto viene riscritto da abChiudiSulMotore(): finche'
+       non si sa se la pratica e' stata archiviata, si dice che si sta
+       verificando. Dare per buono un salvataggio non ancora avvenuto e' il
+       modo piu' rapido per far chiudere la scheda a chi crede di aver
+       lasciato una traccia sul cliente. */
+    + '<div id="ab-archivio" class="ab-avviso" style="margin-top:16px">'
+    + '<i class="ti ti-loader-2"></i> Verifico se l\'analisi è stata archiviata…</div>'
 
     + '<div class="ab-q-az"><button class="ab-b" type="button" onclick="abVista(\'quest\')">'
     + '<i class="ti ti-arrow-left"></i> Torna alle risposte</button>'
@@ -9603,6 +9624,57 @@ function abEsito(){
     + ' · questionario ' + esc(s.versioneQuestionario) + '</p>';
 
   abVista('esito');
+  abChiudiSulMotore();
+}
+
+/* Chiude la pratica sul motore e genera i due documenti. Se il motore non c'e'
+   — oggi non c'e', gira da un altro ramo — lo dice chiaro e tondo invece di
+   lasciare credere che sia tutto archiviato. */
+async function abChiudiSulMotore(){
+  const box = document.getElementById('ab-archivio');
+  if (!box) return;
+  if (!AB_ANALISI_ID) {
+    box.innerHTML = '<i class="ti ti-database-off"></i> <b>Questa analisi non è stata salvata.</b> '
+      + 'Nessuna traccia è rimasta sulla scheda del cliente e non è stato prodotto nessun documento: '
+      + 'l\'archiviazione vive lato motore, e quella parte non risponde. Se ti serve, trascrivi adesso quello che conta.';
+    return;
+  }
+  try {
+    await mailFetch('/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/risposte',
+      { method: 'PATCH', body: JSON.stringify({ risposte: AB_DATI }) });
+    await mailFetch('/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/completa', { method: 'POST' });
+    const r = await mailFetch('/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/report',
+      { method: 'POST', body: JSON.stringify({ tipi: ['cliente', 'agenzia'] }) });
+    const base = MAIL_API + '/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/report/';
+    box.className = 'ab-nota';
+    box.innerHTML = '<i class="ti ti-checks"></i> <b>Analisi archiviata sulla scheda del cliente</b> — report '
+      + esc(r.report_id) + '.<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+      + '<button class="ab-b sm pri" type="button" onclick="abApriReport(\'cliente\')">'
+      + '<i class="ti ti-file-text"></i> Report per il cliente</button>'
+      + '<button class="ab-b sm" type="button" onclick="abApriReport(\'agenzia\')">'
+      + '<i class="ti ti-lock"></i> Scheda interna</button></div>'
+      + '<div style="margin-top:9px;font-size:11px">La scheda interna contiene valutazioni operative e dati non verificati: '
+      + '<b>non va consegnata al cliente</b>. Dalla pagina che si apre si stampa o si salva in PDF.</div>';
+  } catch (e) {
+    box.innerHTML = '<i class="ti ti-database-off"></i> <b>Questa analisi non è stata archiviata.</b> '
+      + esc((e && e.message) || '') + ' Le risposte sono ancora qui sullo schermo: se ti servono, trascrivile prima di chiudere.';
+  }
+}
+
+/* Il documento si apre passando dal motore, che controlla chi sei: un
+   indirizzo pubblico permanente su un documento con la situazione familiare e
+   patrimoniale di una persona resterebbe raggiungibile per sempre da chiunque
+   ne indovinasse il percorso. */
+async function abApriReport(tipo){
+  try {
+    const tok = await mailToken();
+    const r = await fetch(MAIL_API + '/analisi-bisogni/' + encodeURIComponent(AB_ANALISI_ID) + '/report/' + tipo,
+      { headers: { 'Authorization': 'Bearer ' + (tok || '') } });
+    if (!r.ok) throw new Error('Documento non disponibile.');
+    const url = URL.createObjectURL(new Blob([await r.blob()], { type: 'text/html' }));
+    window.open(url, '_blank', 'noopener');
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  } catch (e) { alert((e && e.message) || 'Non è stato possibile aprire il documento.'); }
 }
 
 // ── Pallino notifiche: mail non lette in arrivo ─────────────────────────────────

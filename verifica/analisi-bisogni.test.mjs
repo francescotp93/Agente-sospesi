@@ -318,15 +318,35 @@ prova('non si va avanti senza le risposte necessarie', () => {
   deve(/casa/.test(f), 'il passo casa si può saltare vuoto');
 });
 
-prova('un\'analisi non firmata non si spaccia per archiviata', () => {
-  /* Senza le rotte lato motore qui non si salva niente e non si firma
-     niente. Se la schermata del risultato tacesse, l'operatore chiuderebbe
-     la scheda convinto di aver lasciato una traccia sul cliente — e non
-     c'è nulla di peggio di un lavoro che si crede fatto. */
-  const f = corpoDi('function abEsito()');
-  deve(f, 'manca abEsito');
-  deve(/non è stata salvata|non salvata|nessuna traccia/i.test(f),
-    'il risultato non dice che l\'analisi non è ancora archiviata');
+prova('non si dà per archiviata un\'analisi che non lo è', () => {
+  /* Il caso peggiore di tutta la funzione: l'operatore chiude la scheda
+     convinto di aver lasciato una traccia sul cliente, e non c'è niente. Un
+     lavoro che si crede fatto è peggio di un lavoro non fatto.
+
+     Perciò il risultato NON dice mai «archiviata» finché il motore non ha
+     risposto: parte da «verifico», e diventa una delle due cose solo dopo. */
+  const e = corpoDi('function abEsito()');
+  deve(e, 'manca abEsito');
+  deve(/Verifico se/.test(e), 'il risultato non parte da uno stato di attesa');
+  deve(!/archiviata sulla scheda/i.test(e), 'il risultato si dichiara archiviato prima di saperlo');
+  deve(/abChiudiSulMotore\(\)/.test(e), 'il risultato non verifica mai se l\'analisi è stata archiviata');
+
+  const c = corpoDi('async function abChiudiSulMotore()');
+  deve(c, 'manca abChiudiSulMotore');
+  deve(/!AB_ANALISI_ID/.test(c), 'senza pratica sul motore non viene detto niente');
+  deve(/non è stata salvata/i.test(c), 'quando il motore non risponde non si dice che nulla è stato salvato');
+  deve(/non è stata archiviata/i.test(c), 'se l\'archiviazione fallisce a metà, l\'errore non viene detto');
+  /* E che la buona notizia arrivi solo dopo aver davvero archiviato. */
+  const i = c.indexOf('/report'), j = c.indexOf('Analisi archiviata');
+  deve(i > 0 && j > i, 'si dichiara archiviata prima di aver generato i documenti');
+});
+
+prova('la scheda interna è marcata come da non consegnare', () => {
+  /* Contiene valutazioni operative, dati non verificati e la traccia del
+     colloquio. Basta un clic di troppo per mandarla al cliente. */
+  const c = corpoDi('async function abChiudiSulMotore()');
+  deve(c && /non va consegnata al cliente/i.test(c),
+    'la schermata non avverte che la scheda interna non si consegna');
 });
 
 prova('non indica una necessità principale se nessuna area la merita', () => {

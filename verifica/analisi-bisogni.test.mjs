@@ -203,7 +203,11 @@ prova('l\'indicatore non può uscire dallo schermo', () => {
      andare. Rimettere lo scorrimento sul pannello rifarebbe il difetto. */
   const pan = html.slice(html.indexOf('#panel-analisi{'), html.indexOf('}', html.indexOf('#panel-analisi{')));
   deve(/overflow:\s*hidden/.test(pan), 'il pannello è tornato a scorrere: la colonna scorrerebbe via con lui');
-  deve(/display:\s*flex/.test(pan), 'il pannello non è più una colonna flessibile: le viste non possono riempirlo');
+  /* Il display sta su .act, non sull'id: vedi la prova sui pannelli che si
+     coprono, qui sotto. Cercarlo nel blocco dell'id rimetterebbe in piedi
+     proprio l'errore che ha bloccato il gestionale. */
+  const att = html.slice(html.indexOf('#panel-analisi.act{'), html.indexOf('}', html.indexOf('#panel-analisi.act{')));
+  deve(/display:\s*flex/.test(att), 'il pannello non è più una colonna flessibile: le viste non possono riempirlo');
   for (const [sel, nome] of [['#panel-analisi .ab-lato{', 'la colonna'], ['#panel-analisi .ab-lato-cima{', 'la testa della colonna']]) {
     const b = html.slice(html.indexOf(sel), html.indexOf('}', html.indexOf(sel)));
     deve(!/position:\s*sticky/.test(b), nome + ' è tornata sticky: è la strada che ha già fallito due volte');

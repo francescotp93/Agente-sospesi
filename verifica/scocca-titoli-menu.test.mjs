@@ -85,9 +85,17 @@ e.prova('«Clienti» apre Anagrafiche, non Trattative', () => {
 
 // ── #7: la ricerca porta con sé il testo ────────────────────────────────────
 e.prova('la lente in alto non butta via quello che hai digitato', () => {
-  const i = src.indexOf("w1-cerca'");
-  const corpo = src.slice(src.indexOf('q.addEventListener'), src.indexOf('q.addEventListener') + 420);
-  deve(/cerca:\s*testo/.test(corpo), 'apre l\'elenco senza passare il testo cercato');
+  /* Questa prova cercava «q.addEventListener» dentro costruisciBarra1:
+     pretendeva il MEZZO (come si chiamava la variabile e dove stava il
+     gestore) invece del FINE (che il testo digitato arrivi alla ricerca
+     clienti). Quando il gestore è stato spostato in collegaRicerca — per
+     far cercare anche i prodotti — è diventata rossa su codice corretto.
+     Ora guarda il fine, e resta rossa se il testo si perde davvero. */
+  const i = src.indexOf('function collegaRicerca');
+  deve(i > 0, 'la barra di ricerca non è più collegata a niente');
+  const corpo = src.slice(i, src.indexOf('function costruisciBarra3'));
+  deve(/aprireQuoto\('anagrafiche'/.test(corpo), 'la ricerca non apre più l\'elenco clienti');
+  deve(/cerca:\s*(testo|r\.dato)\b/.test(corpo), 'apre l\'elenco senza passare il testo cercato');
 });
 
 e.prova('il testo cercato viaggia anche nell\'indirizzo', () => {

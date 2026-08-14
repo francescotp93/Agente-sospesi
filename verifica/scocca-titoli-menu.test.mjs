@@ -10,10 +10,29 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 import { RADICE, esiti, deve } from './banco.mjs';
 
 const src = fs.readFileSync(path.join(RADICE, 'withus-one.js'), 'utf8');
 const e = esiti('SCOCCA — titoli, briciole e capi-menu');
+
+/* Quando è stato modificato l'ultima volta un file, in forma AAAAMMGG —
+   la stessa forma delle versioni negli indirizzi, così si confrontano
+   come testo senza convertire niente. */
+function ultimaModifica(file) {
+  try {
+    const d = execSync('git log -1 --format=%cd --date=format:%Y%m%d -- ' + file,
+      { cwd: RADICE, encoding: 'utf8' }).trim();
+    return /^[0-9]{8}$/.test(d) ? d : null;
+  } catch { return null; }
+}
+
+function superficiale() {
+  try {
+    return execSync('git rev-parse --is-shallow-repository',
+      { cwd: RADICE, encoding: 'utf8' }).trim() === 'true';
+  } catch { return true; }
+}
 
 /* Le tabelle si leggono dal sorgente: sono dichiarazioni, non logica. */
 function tabella(nome) {
@@ -122,12 +141,31 @@ e.prova('i fogli collegati hanno una versione che cambia coi rilasci', () => {
      teneva la copia vecchia e un rilascio poteva non arrivare mai a chi il
      programma ce l'aveva gia' aperto. Si vedeva come «ho pubblicato ma non
      cambia niente», ed e' il modo piu' rapido di perdere un pomeriggio a
-     cercare un guasto che non c'e'. */
+     cercare un guasto che non c'e'.
+
+     Questa prova guardava solo che la versione ESISTESSE e fosse lunga.
+     Non bastava: il 14/08/2026 la ricerca dei prodotti e' stata pubblicata
+     con la versione ancora ferma al 04/08 — suite tutta verde, e in
+     produzione continuava a caricarsi il file vecchio. Adesso si controlla
+     anche che la versione non sia PIU' VECCHIA dell'ultima modifica al
+     file: e' esattamente il caso che era sfuggito. */
   const iam = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
   for (const f of ['withus-one.css', 'withus-one.js', 'withus-pictograms.css']) {
     const m = iam.match(new RegExp(f.replace('.', '\\.') + '\\?v=([0-9]+)'));
     deve(m, f + ' non ha una versione nell\'indirizzo');
     deve(m[1].length >= 6, f + ' ha una versione fissa e corta: il browser terrà la copia vecchia');
+
+    /* In una copia superficiale (git clone --depth 1) la storia non c'e':
+       ogni file risulta modificato dall'unico commit presente, e questa
+       verifica direbbe di aggiornare la versione a ogni rilascio anche di
+       file mai toccati. Meglio dirlo e saltarla che dare un verdetto
+       inventato. */
+    if (superficiale()) continue;
+    const ultima = ultimaModifica(f);
+    if (!ultima) continue;
+    deve(m[1] >= ultima,
+      f + ' è stato modificato il ' + ultima + ' ma nell\'indirizzo c\'è ancora v=' + m[1] +
+      ': chi ha il programma aperto continuerà a caricare la copia vecchia');
   }
 });
 

@@ -569,8 +569,11 @@
       '</div>' +
       '<div class="w1-gsearch">' +
         '<svg class="w1-i sm w1-si"><use href="#i-search"/></svg>' +
-        '<input id="w1-cerca" type="text" autocomplete="off" placeholder="Cerca cliente, targa, polizza o preventivo">' +
+        '<input id="w1-cerca" type="text" autocomplete="off" role="combobox" aria-expanded="false" ' +
+          'aria-controls="w1-gres" aria-autocomplete="list" ' +
+          'placeholder="Cerca un prodotto, un cliente, una targa o una polizza">' +
         '<span class="w1-kbd">Ctrl K</span>' +
+        '<div class="w1-gres" id="w1-gres" role="listbox" aria-label="Risultati"></div>' +
       '</div>' +
       '<div class="w1-tright">' +
         '<button class="w1-ibtn" id="w1-b-agenda" title="Agenda">' + ico('i-cal') + '</button>' +
@@ -599,14 +602,262 @@
       e.stopPropagation();
       tryCall('toggleUMenu');
     };
-    var q = top.querySelector('#w1-cerca');
-    q.addEventListener('keydown', function (e) {
-      if (e.key !== 'Enter') return;
-      var testo = q.value.trim();
-      if (!testo) return;
-      aprireQuoto('anagrafiche', { cerca: testo, titolo: ['Ricerca: ' + testo, 'Clienti'] });
-    });
+    collegaRicerca(top.querySelector('#w1-cerca'), top.querySelector('#w1-gres'));
     return top;
+  }
+
+  /* ═══ la barra di ricerca ═══════════════════════════════════════════
+     Prima cercava SOLO fra le anagrafiche, e solo premendo Invio: chi
+     scriveva «casa» o «moto» non otteneva niente e la dava per rotta.
+     Ora la stessa barra apre anche i prodotti.
+
+     L'elenco dei prodotti NON si riscrive qui: si legge da MEGA, che è
+     già la fonte del menu verde. Due liste separate divergono al primo
+     prodotto nuovo, e la ricerca comincia a promettere schermate che il
+     menu non ha più.                                                    */
+
+  function senzaAccenti(s) {
+    s = String(s || '').toLowerCase();
+    return s.replace(/[àáâä]/g, 'a').replace(/[èéêë]/g, 'e')
+            .replace(/[ìíîï]/g, 'i').replace(/[òóôö]/g, 'o')
+            .replace(/[ùúûü]/g, 'u').replace(/['’`]/g, ' ');
+  }
+
+  /* Parole che la gente digita davvero ma che non compaiono nell'etichetta.
+     Senza queste, «salute» non trova «Malattia» e «rca» non trova
+     «Autovetture»: il vocabolario dell'ufficio non è quello del menu. */
+  var SINONIMI = {
+    'Autovetture': 'auto rca rc auto macchina vettura targa',
+    'Moto e ciclomotori': 'moto scooter ciclomotore motorino',
+    'Autocarri': 'furgone camion autocarro mezzi',
+    'Imbarcazioni': 'barca natante nautica gommone',
+    'Infortuni al conducente': 'conducente guidatore',
+    'CVT e ARD': 'kasko furto incendio cristalli danni veicolo',
+    "Auto d'epoca": 'epoca storica storiche vintage sara',
+    'Infortuni': 'infortunio',
+    'Infortuni famiglia e LTC': 'famiglia ltc long term care nucleo',
+    'Malattia': 'salute malattie sanitaria rimborso spese mediche aglea',
+    'Vita e TCM': 'vita tcm temporanea caso morte mutuo previdenza tfr',
+    'Viaggio': 'viaggi vacanza estero bagaglio annullamento',
+    'Casa': 'abitazione fabbricato immobile appartamento globale casa',
+    'RC vita privata': 'rcvp capofamiglia responsabilita civile privata',
+    'Tutela legale': 'legale avvocato spese legali controversie',
+    'Animali domestici': 'cane gatto animale dottorpet pet coniglio',
+    'Fotovoltaico': 'pannelli solare impianto',
+    'Beni e oggetti di valore': 'gioielli oggetti preziosi valore',
+    'Multirischio impresa': 'azienda attivita negozio bottega impresa',
+    'Polizza medici': 'medico medici sanitario dottore',
+    'RC professionale': 'professionale rcprof professionisti studio',
+    'RC rischi diversi': 'rischi diversi rcrd',
+    'Cauzioni appalti': 'cauzione appalto gara ente pubblico',
+    'Cauzioni privati': 'cauzione privati affitto locazione',
+    'Fideiussioni': 'fideiussione garanzia',
+    'Preventivi salvati': 'preventivi storico salvati',
+    'Stato collegamenti compagnie': 'fonti compagnie collegamenti portali stato'
+  };
+
+  var INDICE = null;
+  function indiceProdotti() {
+    if (INDICE) return INDICE;
+    INDICE = [];
+    for (var c = 0; c < MEGA.cols.length; c++) {
+      var col = MEGA.cols[c];
+      for (var v = 0; v < col.v.length; v++) {
+        var voce = col.v[v];
+        INDICE.push({
+          l: voce.l, p: voce.p, prod: voce.prod || null, i: voce.i,
+          gruppo: col.t, titolo: null,
+          etichetta: senzaAccenti(voce.l),
+          sinonimi: senzaAccenti(SINONIMI[voce.l] || ''),
+          gruppoc: senzaAccenti(col.t)
+        });
+      }
+    }
+    for (var f = 0; f < MEGA.foot.length; f++) {
+      var fo = MEGA.foot[f];
+      INDICE.push({
+        l: fo.l, p: fo.p, prod: null, i: fo.i,
+        gruppo: 'Preventivatore', titolo: fo.titolo || null,
+        etichetta: senzaAccenti(fo.l),
+        sinonimi: senzaAccenti(SINONIMI[fo.l] || ''),
+        gruppoc: 'preventivatore'
+      });
+    }
+    return INDICE;
+  }
+
+  /* Dove combacia il testo dentro un campo: 0 all'inizio del campo,
+     1 all'inizio di una parola, 2 in mezzo a una parola, -1 se non c'è. */
+  function quanto(campo, t) {
+    var pos = campo.indexOf(t);
+    if (pos < 0) return -1;
+    if (pos === 0) return 0;
+    return campo.charAt(pos - 1) === ' ' ? 1 : 2;
+  }
+
+  /* Il punteggio: COME combacia conta più di DOVE combacia.
+
+     Due difetti trovati dalla prova, in quest'ordine:
+     · contando il gruppo alla pari dell'etichetta, «moto» apriva
+       «Autovetture» — la sua colonna si chiama «Motor»;
+     · facendo vincere sempre l'etichetta, «rca» apriva «Imbarcazioni»,
+       che contiene quelle tre lettere in mezzo a «imba-rca-zioni».
+
+     Quindi: chi combacia con l'inizio di una parola batte chi le ha in
+     mezzo, in qualunque campo; e a parità, l'etichetta batte i sinonimi,
+     che battono il gruppo. Nessuno cerca un prodotto per una sillaba
+     interna, e tutti lo cercano per una parola intera. */
+  function cercaProdotti(testo) {
+    var t = senzaAccenti(testo).trim();
+    if (t.length < 2) return [];
+    var tutti = indiceProdotti(), trovati = [], forti = 0;
+    for (var i = 0; i < tutti.length; i++) {
+      var p = tutti[i];
+      var dove = [quanto(p.etichetta, t), quanto(p.sinonimi, t), quanto(p.gruppoc, t)];
+      var peso = -1, campo = -1;
+      for (var c = 0; c < 3; c++) {
+        if (dove[c] < 0) continue;
+        var q = dove[c] * 3 + c;
+        if (peso < 0 || q < peso) { peso = q; campo = c; }
+      }
+      if (peso < 0) continue;
+      if (campo < 2) forti++;
+      trovati.push({ peso: peso, ord: i, gruppoSolo: campo === 2, v: p });
+    }
+    /* Chi combacia SOLO col nome della colonna si mostra solo se non c'è
+       di meglio. Cercando «casa» uscivano sei righe: Casa, e sotto RC vita
+       privata, Tutela legale, Animali, Fotovoltaico e Beni — tutte solo
+       perché stanno nella colonna «Casa e patrimonio». Cinque righe di
+       rumore sopra l'unica giusta, e la tendina che copre mezza pagina.
+       Cercando «patrimonio», che è soltanto un nome di colonna, invece
+       servono eccome: è l'unico modo di arrivarci. */
+    if (forti) {
+      trovati = trovati.filter(function (r) { return !r.gruppoSolo; });
+    }
+    /* A parità di peso vince l'ordine del menu: è quello che Francesco ha
+       deciso, e restare fedeli a un ordine noto vale più di un criterio
+       ingegnoso che cambia i risultati a ogni prodotto aggiunto. */
+    trovati.sort(function (a, b) { return a.peso - b.peso || a.ord - b.ord; });
+    var out = [];
+    for (var j = 0; j < trovati.length && j < 6; j++) out.push(trovati[j].v);
+    return out;
+  }
+
+  function chiudiRisultati() {
+    var b = document.getElementById('w1-gres');
+    if (b) b.classList.remove('open');
+    var i = document.getElementById('w1-cerca');
+    if (i) i.setAttribute('aria-expanded', 'false');
+  }
+
+  function collegaRicerca(input, box) {
+    if (!input || !box) return;
+    var righe = [], sel = 0;
+
+    /* La riga «cerca fra i clienti» c'è SEMPRE, anche quando ci sono
+       prodotti: è il comportamento di prima, e toglierlo per far posto ai
+       prodotti significherebbe barattare una funzione con un'altra. */
+    function disegna(testo) {
+      var pro = cercaProdotti(testo);
+      righe = [];
+      var h = '';
+      if (pro.length) {
+        h += '<div class="w1-gt">Prodotti</div>';
+        for (var i = 0; i < pro.length; i++) {
+          righe.push({ tipo: 'prodotto', dato: pro[i] });
+          h += '<div class="w1-gr" role="option" data-n="' + (righe.length - 1) + '">' +
+                 ico(pro[i].i) + '<span>' + pro[i].l + '</span>' +
+                 '<em>' + pro[i].gruppo + '</em></div>';
+        }
+      }
+      righe.push({ tipo: 'clienti', dato: testo });
+      h += '<div class="w1-gt">Archivio</div>' +
+           '<div class="w1-gr" role="option" data-n="' + (righe.length - 1) + '">' +
+             ico('i-users') + '<span>Cerca «' + testo.replace(/</g, '&lt;') + '» fra i clienti</span>' +
+             '<em>Clienti</em></div>';
+      box.innerHTML = h;
+      /* Il prodotto vince l'evidenziazione solo se c'è: scrivendo un
+         cognome si resta sulla ricerca clienti, come prima. */
+      sel = 0;
+      evidenzia();
+      box.classList.add('open');
+      input.setAttribute('aria-expanded', 'true');
+    }
+
+    function evidenzia() {
+      var r = box.querySelectorAll('.w1-gr');
+      for (var i = 0; i < r.length; i++) r[i].classList.toggle('sel', i === sel);
+    }
+
+    function apri(n) {
+      var r = righe[n];
+      if (!r) return;
+      chiudiRisultati();
+      input.blur();
+      if (r.tipo === 'prodotto') {
+        var d = r.dato;
+        aprireQuoto(d.p, {
+          prod: d.prod || null,
+          titolo: d.titolo || [d.l, d.gruppo]
+        });
+      } else {
+        aprireQuoto('anagrafiche', { cerca: r.dato, titolo: ['Ricerca: ' + r.dato, 'Clienti'] });
+      }
+    }
+
+    input.addEventListener('input', function () {
+      var t = input.value.trim();
+      if (!t) { chiudiRisultati(); return; }
+      disegna(t);
+    });
+
+    input.addEventListener('keydown', function (e) {
+      var aperta = box.classList.contains('open');
+      if (e.key === 'Escape' && aperta) {
+        /* Esc chiude la tendina ma lascia il testo: il gesto naturale è
+           «togli i suggerimenti», non «cancella quello che ho scritto». */
+        e.stopPropagation();
+        chiudiRisultati();
+        return;
+      }
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (!aperta) return;
+        e.preventDefault();
+        sel += (e.key === 'ArrowDown' ? 1 : -1);
+        if (sel < 0) sel = righe.length - 1;
+        if (sel >= righe.length) sel = 0;
+        evidenzia();
+        return;
+      }
+      if (e.key === 'Enter') {
+        var testo = input.value.trim();
+        if (!testo) return;
+        e.preventDefault();
+        /* Invio senza tendina aperta (incollato e invio di fretta): si
+           ricade sulla ricerca clienti, che è quello che faceva prima. */
+        if (!aperta) {
+          chiudiRisultati();
+          aprireQuoto('anagrafiche', { cerca: testo, titolo: ['Ricerca: ' + testo, 'Clienti'] });
+          return;
+        }
+        apri(sel);
+      }
+    });
+
+    /* mousedown e non click: il click arriva dopo il blur, e il blur
+       chiude la tendina — la riga sparirebbe un istante prima di essere
+       premuta, e il clic finirebbe nel vuoto. */
+    box.addEventListener('mousedown', function (e) {
+      var r = e.target.closest ? e.target.closest('.w1-gr') : null;
+      if (!r) return;
+      e.preventDefault();
+      apri(parseInt(r.getAttribute('data-n'), 10));
+    });
+
+    input.addEventListener('blur', function () { setTimeout(chiudiRisultati, 120); });
+    input.addEventListener('focus', function () {
+      if (input.value.trim()) disegna(input.value.trim());
+    });
   }
 
   function costruisciBarra3() {

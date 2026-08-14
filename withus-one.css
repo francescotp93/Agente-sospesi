@@ -93,6 +93,35 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
   background:#fff; font-family:inherit; pointer-events:none;
 }
 
+/* I risultati della ricerca: prodotti + ricerca clienti.
+   Sta sopra al riquadro del preventivatore (che è un iframe e in certi
+   browser si prende il davanti), quindi z-index alto e non «auto». */
+.w1-gres{
+  display:none; position:absolute; top:42px; left:0; right:0; z-index:520;
+  background:#fff; border:1px solid var(--w1-bordo); border-radius:var(--w1-r);
+  box-shadow:0 8px 24px rgba(16,30,44,.14); padding:4px 0; max-height:60vh;
+  overflow-y:auto;
+}
+.w1-gres.open{ display:block; }
+.w1-gres .w1-gt{
+  font-size:10px; text-transform:uppercase; letter-spacing:.6px;
+  color:var(--w1-txt3); padding:7px 12px 3px; font-weight:600;
+}
+.w1-gres .w1-gr{
+  display:flex; align-items:center; gap:9px; padding:7px 12px;
+  font-size:13px; color:var(--w1-txt); cursor:pointer;
+}
+.w1-gres .w1-gr span{ flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.w1-gres .w1-gr em{ font-style:normal; font-size:11px; color:var(--w1-txt3); flex:none; }
+.w1-gres .w1-gr .w1-i{ flex:none; width:16px; height:16px; color:var(--w1-txt2); }
+/* Una riga sola evidenziata, e la stessa sia col mouse sia con le frecce:
+   due evidenziazioni diverse insieme fanno sembrare che stia per aprirsi
+   la riga sbagliata. */
+.w1-gres .w1-gr.sel, .w1-gres .w1-gr:hover{
+  background:var(--w1-verde-tenue); color:var(--w1-verde-scuro);
+}
+.w1-gres .w1-gr.sel .w1-i, .w1-gres .w1-gr:hover .w1-i{ color:var(--w1-verde-scuro); }
+
 .w1-tright{ margin-left:auto; display:flex; align-items:center; gap:6px; }
 .w1-ibtn{
   width:36px; height:36px; border:1px solid transparent; border-radius:var(--w1-r);

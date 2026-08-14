@@ -58,6 +58,30 @@ prova('la vecchia navigazione resta nella pagina, solo nascosta', () => {
   return 'i permessi continuano a essere leggibili';
 });
 
+prova('i pulsanti nascosti che reggono i permessi non si cancellano', () => {
+  /* Il 14/08/2026, ripulendo i riferimenti a «Quoto», il pulsante nb-quoto
+     sembrava un residuo: e' nascosto (display:none) e il suo nome non si
+     legge da nessuna parte. Ma la scocca ci legge sopra se «Nuovo
+     preventivo» va mostrato nel menu scuro. Cancellarlo avrebbe fatto
+     sparire la voce dal menu di TUTTI, senza nessun errore — e il guasto
+     sarebbe sembrato un problema di permessi.
+
+     Vale per ogni voce con mirror/mirrorAny, non solo per quella: la
+     prova qui sotto li ricava dalla scocca invece di elencarli a mano,
+     cosi' copre anche le voci che verranno. */
+  const mirror = [...corpo.matchAll(/mirror:\s*'([^']+)'/g)].map(m => m[1]);
+  const mirrorAny = [...corpo.matchAll(/mirrorAny:\s*\[([^\]]+)\]/g)]
+    .flatMap(m => [...m[1].matchAll(/'([^']+)'/g)].map(x => x[1]));
+  const tutti = [...new Set([...mirror, ...mirrorAny])];
+  deve(tutti.length > 0, 'nessuna voce del menu legge piu i permessi da IAM');
+  for (const id of tutti) {
+    deve(idx.includes('id="' + id + '"'),
+      'la scocca legge i permessi da «' + id + '», che in IAM non esiste piu: ' +
+      'la voce del menu sparirebbe per tutti senza nessun errore');
+  }
+  return tutti.length + ' interruttori di permesso, tutti presenti in IAM';
+});
+
 prova('aprire il preventivatore non cambia piu indirizzo', () => {
   deve(!/window\.location\.href\s*=/.test(corpo), 'c e ancora un cambio di indirizzo nella scocca');
   deve(/fr\.src\s*=/.test(corpo), 'il riquadro non viene mai caricato');

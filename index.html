@@ -185,8 +185,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .panels{flex:1;overflow:hidden;position:relative;}
 .panel{position:absolute;inset:0;overflow-y:auto;display:none;-webkit-overflow-scrolling:touch;padding-bottom:env(safe-area-inset-bottom,16px);}
 .panel.act{display:block;}
-#panel-ai{display:none;flex-direction:column;}
-#panel-ai.act{display:flex;}
 
 /* ── CARDS ── */
 .card{background:var(--surf);border-radius:var(--r);box-shadow:var(--shd);margin:0 12px;overflow:hidden;border:1px solid var(--bord);transition:box-shadow .2s;}
@@ -202,7 +200,6 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .mval{font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1;}
 .msub{font-size:11px;color:var(--txt3);margin-top:4px;}
 @keyframes mIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@keyframes aiSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
 @keyframes ptrSpin{to{transform:rotate(360deg)}}
 #ptr-indicator{position:fixed;top:56px;left:50%;transform:translateX(-50%);
   background:var(--surf);border:1px solid var(--bord);border-radius:50px;
@@ -364,26 +361,6 @@ input[type=file]{display:none;}
 .chip{white-space:nowrap;padding:6px 13px;background:var(--surf);border:1.5px solid var(--bord);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;flex-shrink:0;transition:all .15s;box-shadow:var(--shd);}
 .chip:hover{border-color:var(--acc);color:var(--acc);}
 .chip.act{background:var(--acc);color:#fff;border-color:var(--acc);}
-
-/* ── CHAT ── */
-.cbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);}
-.cmsgs{padding:16px;display:flex;flex-direction:column;gap:12px;}
-.cmsg{display:flex;flex-direction:column;}
-.cmsg.user{align-items:flex-end;}
-.cmsg.agent{align-items:flex-start;}
-.clbl{font-size:10px;color:var(--txt3);margin-bottom:4px;padding:0 4px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.cbubble{padding:11px 15px;border-radius:16px;font-size:13px;line-height:1.55;max-width:88%;}
-.cmsg.user .cbubble{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3);}
-.cmsg.agent .cbubble{background:var(--surf);border:1px solid var(--bord);border-bottom-left-radius:4px;box-shadow:var(--shd);}
-.cbar{padding:12px;border-top:.5px solid var(--bord);display:flex;gap:8px;background:var(--surf);flex-shrink:0;}
-.cinp{flex:1;padding:11px 16px;background:var(--surf2);border:1.5px solid var(--bord);border-radius:24px;font-size:14px;color:var(--txt);font-family:inherit;transition:border-color .15s;}
-.cinp:focus{outline:none;border-color:var(--acc);}
-.csend{width:42px;height:42px;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:50%;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(var(--acc-rgb),.3);}
-.dl{display:inline-flex;gap:4px;align-items:center;padding:2px 0;}
-.dl span{width:6px;height:6px;border-radius:50%;background:var(--txt3);animation:bounce .9s infinite ease-in-out;}
-.dl span:nth-child(2){animation-delay:.15s;}
-.dl span:nth-child(3){animation-delay:.3s;}
-@keyframes bounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
 
 /* ── EMPTY ── */
 .empty{text-align:center;padding:48px 20px;color:var(--txt3);}
@@ -1296,17 +1273,6 @@ input[type=file]{display:none;}
   </button>
 </div>
 
-<!-- ── AI FAB (bottone flottante) ── -->
-<button id="ai-fab" onclick="toggleAIPanel()" aria-label="Assistente AI"
-  style="position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;
-    width:52px;height:52px;border-radius:50%;
-    background:linear-gradient(135deg,var(--acc),var(--acc2));
-    color:#fff;border:none;cursor:pointer;z-index:300;
-    box-shadow:0 4px 20px rgba(var(--acc-rgb),.45);
-    display:none;align-items:center;justify-content:center;
-    transition:transform .2s,box-shadow .2s;font-size:22px;">
-  <i class="ti ti-message-circle"></i>
-</button>
 
 <div class="panels">
 
@@ -2655,70 +2621,6 @@ input[type=file]{display:none;}
   </div>
 </div>
 
-<!-- AI CHAT OVERLAY (non è più un panel, ma un overlay fullscreen) -->
-<div id="ai-overlay" style="
-  display:none;position:fixed;inset:0;z-index:600;
-  background:var(--bg);flex-direction:column;
-  animation:aiSlideIn .25s ease;">
-  <!-- Header chat -->
-  <div style="
-    background:var(--surf);border-bottom:1px solid var(--bord);
-    padding:0 16px;height:56px;display:flex;align-items:center;
-    justify-content:space-between;flex-shrink:0;
-    box-shadow:0 1px 0 var(--bord);">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div style="width:34px;height:34px;border-radius:50%;
-        background:linear-gradient(135deg,var(--acc),var(--acc2));
-        display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <i id="ai-hdr-icon" class="ti ti-robot" style="color:#fff;font-size:17px;"></i>
-      </div>
-      <div>
-        <div style="font-size:14px;font-weight:700;" id="ai-hdr-title">IAM AI</div>
-        <div style="font-size:11px;color:var(--grn-txt);font-weight:600;" id="ai-hdr-sub">● Online</div>
-      </div>
-    </div>
-    <!-- Tab AI / Ticket -->
-    <div style="display:flex;align-items:center;gap:4px;background:var(--surf2);border-radius:20px;padding:3px;">
-      <button id="ai-tab-chat" onclick="selAITab('chat')"
-        style="font-size:11px;font-weight:700;padding:4px 12px;border-radius:18px;border:none;cursor:pointer;font-family:inherit;background:var(--acc);color:#fff;">
-        <i class="ti ti-message-circle"></i> Chat
-      </button>
-    </div>
-    <button onclick="chiudiAI()" style="
-      background:none;border:none;cursor:pointer;
-      width:36px;height:36px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      color:var(--txt2);font-size:20px;transition:background .15s;"
-      onmouseover="this.style.background='var(--surf2)'"
-      onmouseout="this.style.background='none'">
-      <i class="ti ti-x"></i>
-    </button>
-  </div>
-  <!-- Chips suggerimenti -->
-  <div class="chips" style="padding:10px 12px 6px;flex-shrink:0;background:var(--surf);border-bottom:.5px solid var(--bord);">
-    <div class="chip" onclick="sendChip('Ci sono sospesi spariti senza incasso?')">Sospesi spariti </div>
-    <div class="chip" onclick="sendChip('Quali sono i sospesi più vecchi?')">Sospesi anziani </div>
-    <div class="chip" onclick="sendChip('La cassa è in equilibrio?')">Cassa </div>
-    <div class="chip" onclick="sendChip('Anomalie critiche')">Anomalie </div>
-    <div class="chip" onclick="sendChip('Chi ha più sospesi aperti?')">Per produttore </div>
-    <div class="chip" onclick="sendChip('Dammi un riepilogo completo della situazione')">Riepilogo </div>
-  </div>
-  <!-- Messaggi -->
-  <div class="cbody" id="c-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
-    <div class="cmsgs" id="c-msgs">
-      <div class="cmsg agent">
-        <div class="clbl">IAM AI</div>
-        <div class="cbubble">Ciao! Sono l'assistente IAM <br>Carica i file nella sezione <b>Contabilità</b>, poi posso aiutarti ad analizzare sospesi, anomalie, cassa e molto altro.</div>
-      </div>
-    </div>
-  </div>
-  <!-- Input chat -->
-  <div id="ai-chat-input" class="cbar" style="padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px);">
-    <input class="cinp" id="c-inp" placeholder="Scrivi una domanda..."
-      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}">
-    <button class="csend" onclick="sendMsg()"><i class="ti ti-send" style="font-size:18px;"></i></button>
-  </div>
-</div>
 
 </div><!-- /panels -->
 </div><!-- /app -->
@@ -3339,7 +3241,6 @@ function onLogout() {
   ACCESSO_AVVIATO_PER = null;   // così al prossimo accesso l'avvio riparte
   ME = null;
   PIPE = [];
-  CHAT_HISTORY = [];
   if (WD_RT) { try { db.removeChannel(WD_RT); } catch(e) {} WD_RT = null; }
   localStorage.removeItem('iam_pipe');
   document.getElementById('app').style.display = 'none';
@@ -3526,39 +3427,6 @@ document.addEventListener('click', e => {
   });
 })();
 
-function toggleAIPanel() {
-  const overlay = document.getElementById('ai-overlay');
-  if (!overlay) return;
-  const isOpen = overlay.style.display === 'flex';
-  if (isOpen) {
-    chiudiAI();
-  } else {
-    apriAI();
-  }
-}
-
-function apriAI() {
-  const overlay = document.getElementById('ai-overlay');
-  if (!overlay) return;
-  overlay.style.display = 'flex';
-  overlay.style.flexDirection = 'column';
-  const fab = document.getElementById('ai-fab');
-  if (fab) fab.style.display = 'none';
-  // Assicura tab chat attivo
-  selAITab('chat');
-  setTimeout(() => document.getElementById('c-inp')?.focus(), 300);
-  // Carica badge ticket
-  setTimeout(() => loadTickets(), 500);
-}
-
-function chiudiAI() {
-  const overlay = document.getElementById('ai-overlay');
-  if (!overlay) return;
-  overlay.style.display = 'none';
-  const fab = document.getElementById('ai-fab');
-  if (fab) fab.style.display = 'flex';
-}
-
 // ─── SUPABASE DATA ─────────────────────────────────────────────────────────────
 async function saveSession(sospesi, incassi, dati) {
   if (!db) return;
@@ -3661,9 +3529,6 @@ async function loadLastSession() {
     // scrivania, e non si vede mai la fascia "sto calcolando".
     caricaDaFareOggi();
     // Vai a dashboard solo al primo login fresco, non su ogni ricarica pagina
-    // Mostra FAB AI
-    const fab = document.getElementById('ai-fab');
-    if (fab) fab.style.display = 'flex';
     ripristinaScheda();
     setTimeout(() => buildStorico(), 500);
 
@@ -3885,7 +3750,7 @@ function ripristinaScheda() {
     if (!lastTab) { goTab('dashboard'); return; }
     const contabSub = ['quadratura','caricafile','anomalie','sospesi','storico','conto'];
     if (contabSub.includes(lastTab)) { goTab('carica'); selContabTab(lastTab); }
-    else if (lastTab === 'ai' || lastTab === 'quoto') goTab('dashboard');
+    else if (lastTab === 'quoto') goTab('dashboard');
     else goTab(lastTab);
   } finally {
     RIPRISTINO_IN_CORSO = false;
@@ -3921,9 +3786,6 @@ function goTab(t) {
     loadLeadDB().then(() => renderLead());
   }
   sessionStorage.setItem('iam_last_tab', t);
-  // FAB AI sempre visibile tranne quando l'overlay è aperto
-  const fab = document.getElementById('ai-fab');
-  if (fab) fab.style.display = 'flex';
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
   if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
@@ -7034,120 +6896,6 @@ function exportICS(titolo, data, ora, note) {
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-// ─── AI CHAT ──────────────────────────────────────────────────────────────────
-function sendChip(t) { document.getElementById('c-inp').value=t; sendMsg(); }
-
-let CHAT_HISTORY = []; // memoria della conversazione AI (turni user/assistant)
-
-async function sendMsg() {
-  const inp = document.getElementById('c-inp');
-  const txt = inp.value.trim(); if (!txt) return;
-  inp.value = '';
-  addBubble('user', txt);
-  const lid = addLoader();
-  try {
-    const key = window.GROQ_API_KEY||'';
-    const hdrs = {'Content-Type':'application/json'};
-    if (key) hdrs['Authorization'] = 'Bearer '+key;
-    const isOperativo = PROFILO?.ruolo === 'collaboratore';
-    const ctx = buildCtx();
-    const oggi = new Date().toLocaleDateString('it-IT', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-    const sys = `Sei l'assistente AI dell'app IAM (Insurance Agency Management) per un'agenzia assicurativa italiana. Oggi è ${oggi}. Rispondi SEMPRE in italiano, in modo professionale, chiaro e conciso; usa elenchi puntati quando aiutano la lettura e il simbolo € per gli importi (formato italiano, es. 1.234,56 €). Basati ESCLUSIVAMENTE sui dati reali dell'agenzia nel JSON qui sotto: non inventare nulla e, se un dato richiesto non è presente, dillo esplicitamente. Mantieni il filo della conversazione precedente. Campi chiave: cassa.fondo_cassa=fondo cassa odierno, cassa.cassa_progressiva=totale accumulato, cassa.scostamento=differenza cassa-fondo, cassa.variazione_fondo=variazione fondo rispetto a ieri. ${isOperativo?'Utente con ruolo Collaboratore: parla solo di sospesi, team e pipeline di sua competenza.':''} Dati: ${ctx}`;
-    CHAT_HISTORY.push({ role:'user', content:txt });
-    if (CHAT_HISTORY.length > 12) CHAT_HISTORY = CHAT_HISTORY.slice(-12);
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method:'POST', headers:hdrs,
-      body:JSON.stringify({
-        model:'llama-3.3-70b-versatile',
-        temperature:0.35,
-        max_tokens:1200,
-        messages:[ {role:'system', content:sys}, ...CHAT_HISTORY ]
-      })
-    });
-    removeLoader(lid);
-    if (!res.ok) { const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||'Errore API '+res.status); }
-    const data = await res.json();
-    const reply = data.choices?.[0]?.message?.content||'Nessuna risposta.';
-    CHAT_HISTORY.push({ role:'assistant', content:reply });
-    addBubble('agent', reply);
-  } catch(e) {
-    removeLoader(lid);
-    // Rimuove l'ultimo turno utente fallito, così non "sporca" il contesto successivo
-    if (CHAT_HISTORY.length && CHAT_HISTORY[CHAT_HISTORY.length-1].role==='user') CHAT_HISTORY.pop();
-    if (e.message?.includes('401')||e.message?.includes('Unauthorized')) addBubble('agent',' Chiave API Groq non valida. Controlla il config.js.');
-    else addBubble('agent','Errore: '+e.message);
-  }
-}
-
-function buildCtx() {
-  const isOperativo = PROFILO?.ruolo === 'collaboratore';
-  const sosp = APP.sospesi.filter(s=>s.importo>=0);
-  const fondo = parseNum(g('i-fondo')) || APP.fondoCassa || 0;
-  const fondoIeri = APP.fondoIeri || fondo;
-  const varFondo = fondo - fondoIeri;
-  const saldoCumulativo = APP.saldoCumulativo || 0;
-  // Scostamento cumulativo = cassa progressiva - fondo cassa attuale
-  const scostamento = APP.saldoCumulativo - fondo;
-
-  // Delta rispetto a ieri
-  const cassaIeri = APP.fondoIeri || fondo;
-  const scostamentoIeri = (APP.saldoCumulativo - (parseNum(document.getElementById('i-cassa')?.value||0) + parseNum(document.getElementById('i-vers')?.value||0) - parseNum(document.getElementById('i-spese')?.value||0))) - cassaIeri;
-  const deltaScost = scostamento - scostamentoIeri;
-
-  const ctx = {
-    ruolo: PROFILO?.ruolo || 'collaboratore',
-    nome_utente: PROFILO ? ((PROFILO.nome||'')+' '+(PROFILO.cognome||'')).trim() : '',
-    data_sessione: g('i-data'),
-    sospesi: {
-      totale: sosp.length,
-      valore: sosp.reduce((a,s)=>a+s.importo,0).toFixed(2),
-      oltre60: sosp.filter(s=>s.gg>60).length,
-      tra30e60: sosp.filter(s=>s.gg>=30&&s.gg<=60).length,
-    },
-    cassa: {
-      contanti_oggi: parseNum(g('i-cassa')),
-      versamenti: parseNum(g('i-vers')),
-      spese: parseNum(g('i-spese')),
-      cassa_progressiva: saldoCumulativo,
-      fondo_cassa: fondo,
-      fondo_cassa_ieri: fondoIeri,
-      variazione_fondo: varFondo,
-      scostamento: scostamento,
-    },
-    pipeline: {
-      totale: PIPE.length,
-      valore: PIPE.reduce((a,t)=>a+(parseNum(t.importo)||0),0).toFixed(2),
-      chiuse: PIPE.filter(t=>t.status==='chiusa').length,
-      perse: PIPE.filter(t=>t.status==='persa').length,
-    },
-    team: { totale: TEAM.length },
-  };
-
-  if (!isOperativo) {
-    ctx.anomalie = APP.anomalie?.map(a=>({tipo:a.tipo,titolo:a.titolo}))||[];
-    ctx.incassato = APP.incassi.reduce((a,i)=>a+i.importo,0).toFixed(2);
-  }
-
-  return JSON.stringify(ctx);
-}
-
-let MID = 0;
-function addBubble(role, html) {
-  const d = document.createElement('div');
-  d.className = 'cmsg '+role;
-  d.innerHTML = `<div class="clbl">${role==='user'?'Tu':'IAM AI'}</div><div class="cbubble">${escNl(html)}</div>`;
-  document.getElementById('c-msgs').appendChild(d);
-  document.getElementById('c-body').scrollTop = 99999;
-}
-function addLoader() {
-  const id = ++MID; const d = document.createElement('div');
-  d.className='cmsg agent'; d.id='ld'+id;
-  d.innerHTML=`<div class="clbl">IAM AI</div><div class="cbubble"><div class="dl"><span></span><span></span><span></span></div></div>`;
-  document.getElementById('c-msgs').appendChild(d);
-  document.getElementById('c-body').scrollTop=99999; return id;
-}
-function removeLoader(id) { document.getElementById('ld'+id)?.remove(); }
-
 // ─── DEMO DATA ────────────────────────────────────────────────────────────────
 function loadDemo() {
   APP.sospesi = [
@@ -7295,7 +7043,6 @@ function applicaPermessi(ruolo) {
     'nb-pipeline':    perm.pipeline,
     'nb-workdiary':   perm.workdiary,
     'nb-performance': perm.performance,
-    'nb-ai':          false, // AI spostato su FAB flottante
   };
   Object.entries(tabs).forEach(([id, visibile]) => {
     const el = document.getElementById(id);
@@ -13263,7 +13010,6 @@ async function delREPos(id) {
 // ─── TICKET ───────────────────────────────────────────────────────────────────
 let TK_LIST   = [];
 let TK_FILTER = 'aperto';
-let AI_TAB    = 'chat';
 
 const TK_PRIORITA = {
   bassa:   { label:' Bassa',   color:'var(--grn-txt)',  bg:'var(--grn-bg)'  },
@@ -13282,20 +13028,6 @@ function escHTML(v) {
   return String(v ?? '').replace(/[&<>"']/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
-}
-
-function selAITab(tab) {
-  AI_TAB = 'chat';
-  document.getElementById('ai-hdr-icon').className = 'ti ti-robot';
-  document.getElementById('ai-hdr-title').textContent = 'IAM AI';
-  document.getElementById('ai-hdr-sub').textContent = '● Online';
-  document.getElementById('ai-hdr-sub').style.color = 'var(--grn-txt)';
-  const chatBody  = document.getElementById('c-body');
-  const chatInput = document.getElementById('ai-chat-input');
-  if (chatBody)  chatBody.style.display  = 'block';
-  if (chatInput) chatInput.style.display = 'flex';
-  const chips = document.querySelector('#ai-overlay .chips');
-  if (chips) chips.style.display = '';
 }
 
 async function loadTickets() {

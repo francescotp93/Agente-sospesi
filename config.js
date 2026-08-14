@@ -1,7 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
 //  CONFIGURAZIONE IAM — Insurance Agency Management
 // ═══════════════════════════════════════════════════════════════
-window.GROQ_API_KEY  = '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';
+/* La chat con l'assistente AI è stata rimossa il 14/08/2026, e con essa la
+   chiave Groq che stava qui in chiaro. Il repository è pubblico: quella
+   chiave è rimasta leggibile a chiunque per tutto il tempo in cui è stata
+   qui, quindi va REVOCATA su console.groq.com — toglierla dal file non la
+   disattiva. Se un domani serve di nuovo una chiave, non torna in questo
+   file: va in un secret (Supabase o GitHub) e la chiama il backend. */
 
 // ── SUPABASE ──────────────────────────────────────────────────
 window.SUPABASE_URL  = 'https://ekjxrnsfqxnfxzrthdcf.supabase.co';

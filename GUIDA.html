@@ -35,31 +35,15 @@ ol li{font-size:14px;color:var(--text2);}
 <div class="page">
 
 <h1>🛡 Guida Installazione</h1>
-<p class="subtitle">Agente Sospesi Assicurativi · Completamente gratuito con Groq AI</p>
+<p class="subtitle">Agente Sospesi Assicurativi</p>
 
 <div class="highlight">
-  ✅ <strong>Tutto gratuito:</strong> Groq offre AI gratuita senza carta di credito. Vercel ospita l'app gratis. Non paghi nulla.
+  ✅ <strong>Tutto gratuito:</strong> Vercel ospita l'app gratis. Non paghi nulla.
 </div>
 
 <!-- STEP 1 -->
 <div class="step">
   <div class="step-num">1</div>
-  <h2>Crea la tua API key Groq <span class="badge free">100% GRATUITO</span></h2>
-  <p>Groq è un servizio AI gratuito, velocissimo, senza bisogno di carta di credito.</p>
-  <ol>
-    <li>Vai su <a href="https://console.groq.com" target="_blank">console.groq.com</a></li>
-    <li>Clicca <strong>Sign Up</strong> — puoi registrarti con Google in un click</li>
-    <li>Una volta dentro, clicca <strong>API Keys</strong> nel menu a sinistra</li>
-    <li>Clicca <strong>Create API Key</strong>, dai un nome (es. "Agenzia") e conferma</li>
-    <li>Copia la chiave che appare — inizia con <code>gsk_...</code></li>
-  </ol>
-  <div class="important">⚠️ Copia subito la chiave e incollala nel Blocco Note: non la vedrai più dopo aver chiuso quella finestra.</div>
-  <div class="tip">💡 Il piano gratuito di Groq permette migliaia di domande al mese — più che sufficienti per uso quotidiano in agenzia.</div>
-</div>
-
-<!-- STEP 2 -->
-<div class="step">
-  <div class="step-num">2</div>
   <h2>Crea un account Vercel <span class="badge free">100% GRATUITO</span></h2>
   <p>Vercel è il servizio che mette la tua app online. Il piano gratuito è più che sufficiente.</p>
   <ol>
@@ -71,29 +55,9 @@ ol li{font-size:14px;color:var(--text2);}
   <div class="tip">💡 Non devi capire come funziona Vercel. È solo il "garage" dove carichi i 4 file dell'app.</div>
 </div>
 
-<!-- STEP 3 -->
+<!-- STEP 2 -->
 <div class="step">
-  <div class="step-num">3</div>
-  <h2>Incolla la chiave Groq nel file config.js</h2>
-  <p>Nella cartella <strong>agente-sospesi</strong> che hai scaricato, trovi il file <strong>config.js</strong>.</p>
-  <ol>
-    <li>Fai clic destro su <strong>config.js</strong> → <em>Apri con</em> → <strong>Blocco Note</strong> (Windows) oppure <strong>TextEdit</strong> (Mac)</li>
-    <li>Cerca questa riga:</li>
-  </ol>
-  <div class="code">window.GROQ_API_KEY = 'gsk_INSERISCI-QUI-LA-TUA-CHIAVE-GROQ';</div>
-  <ol start="3">
-    <li>Cancella <strong>gsk_INSERISCI-QUI-LA-TUA-CHIAVE-GROQ</strong> e incolla la tua chiave. Deve sembrare così:</li>
-  </ol>
-  <div class="code">window.GROQ_API_KEY = 'gsk_abc123defgh456...';</div>
-  <ol start="4">
-    <li>Salva il file (<strong>Ctrl+S</strong> su Windows, <strong>Cmd+S</strong> su Mac)</li>
-  </ol>
-  <div class="warn">⚠️ Attenzione: la chiave deve restare dentro i singoli apici ' ' senza spazi prima o dopo.</div>
-</div>
-
-<!-- STEP 4 -->
-<div class="step">
-  <div class="step-num">4</div>
+  <div class="step-num">2</div>
   <h2>Carica i file su Vercel e ottieni il link</h2>
   <p>Hai 4 file nella cartella: <strong>index.html</strong>, <strong>config.js</strong>, <strong>vercel.json</strong>, <strong>GUIDA.html</strong>.</p>
   <ol>
@@ -106,9 +70,9 @@ ol li{font-size:14px;color:var(--text2);}
   <div class="tip">💡 Copia quell'indirizzo e mandatelo a te stesso via WhatsApp o email. Aprilo dal telefono e aggiungilo alla schermata home come un'app vera.</div>
 </div>
 
-<!-- STEP 5 -->
+<!-- STEP 3 -->
 <div class="step">
-  <div class="step-num">5</div>
+  <div class="step-num">3</div>
   <h2>Aggiungi l'app alla schermata home del telefono</h2>
   <p>Così la trovi sempre a portata di mano, come un'app normale.</p>
   <p><strong>Su iPhone (Safari):</strong></p>
@@ -126,9 +90,9 @@ ol li{font-size:14px;color:var(--text2);}
   </ol>
 </div>
 
-<!-- STEP 6 -->
+<!-- STEP 4 -->
 <div class="step">
-  <div class="step-num">6</div>
+  <div class="step-num">4</div>
   <h2>Utilizzo quotidiano — cosa fare ogni mattina</h2>
   <ol>
     <li>Apri l'app dal telefono (o dal PC)</li>
@@ -146,9 +110,6 @@ ol li{font-size:14px;color:var(--text2);}
 <div class="step" style="border-left-color:var(--red)">
   <div class="step-num" style="background:var(--red)">!</div>
   <h2>Problemi comuni e soluzioni</h2>
-
-  <p><strong>🔴 La chat AI non risponde o dice "Unauthorized"</strong><br>
-  La chiave Groq è sbagliata o mancante. Riapri config.js, controlla che la chiave sia incollata correttamente tra gli apici, salva e ricarica i file su Vercel (ripeti il passo 4).</p>
 
   <p style="margin-top:14px"><strong>🔴 Il file Excel non viene riconosciuto</strong><br>
   Esporta il file direttamente dal gestionale senza modificare i nomi delle colonne. La prima riga deve contenere le intestazioni (Nominativo, Polizza, ecc.).</p>

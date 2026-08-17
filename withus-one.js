@@ -199,6 +199,19 @@
     setActive('quoto', page, opz.titolo);
   }
 
+  /* ═══ i prodotti gia' dentro IAM ════════════════════════════════════
+     Man mano che un prodotto esce dal riquadro e diventa una scheda di
+     IAM, la sua pagina si aggiunge QUI — e solo qui. Il menu continua a
+     mostrarlo dov'era: per chi lavora non cambia niente, cambia solo che
+     non si apre piu' un iframe.
+
+     Chi porta il prossimo prodotto deve fare tre cose: il pannello in
+     index.html, l'aggancio in goTab, e una riga in questa lista. Se se ne
+     dimentica una, la voce apre il riquadro come prima — cioe' il
+     comportamento vecchio, non un guasto. Fallire tornando indietro e'
+     voluto: un prodotto a meta' non deve lasciare una schermata bianca.  */
+  var IN_IAM = ['rcprof'];
+
   function Q(page, titolo) { return function () { aprireQuoto(page, { titolo: titolo }); }; }
 
   /* ═══ il mega-menu dei prodotti ═════════════════════════════════════
@@ -367,6 +380,13 @@
     utenti:      ['Utenti e permessi', 'Amministrazione'],
     azienda:     ['Azienda', 'Amministrazione'],
     agenti:      ['Agenti AI', 'Amministrazione'],
+    /* RC Professionale e' uscita dal riquadro: e' una scheda di IAM, quindi il
+       suo titolo va QUI. Restare in TITOLI_QUOTO non darebbe nessun errore —
+       darebbe una barra del titolo con il nome della schermata precedente,
+       che e' lo stesso difetto gia' capitato con le Fonti. La briciola dice
+       ancora «Preventivatore» perche' e' da li' che ci si arriva: il menu non
+       e' cambiato, e' cambiato solo dove gira il codice. */
+    rcprof:      ['RC professionale', 'Preventivatore'],
     profilo:     ['Il mio profilo', 'Account'],
     quoto:       ['Nuovo preventivo', 'Preventivatore'],
     /* Mancavano: senza la loro riga il titolo restava quello della schermata
@@ -501,7 +521,13 @@
       e.preventDefault(); e.stopPropagation();
       chiudiTendine(); chiudiCassetto();
       var t = a.getAttribute('data-t');
-      aprireQuoto(a.getAttribute('data-p'), { titolo: t ? t.split('|') : null, prod: a.getAttribute('data-prod') || null });
+      var pagina = a.getAttribute('data-p');
+      /* I prodotti gia' portati dentro IAM non aprono piu' il riquadro: sono
+         schede di IAM come le altre. L'elenco e' uno solo (IN_IAM) perche' a
+         ogni prodotto spostato si aggiunge una riga qui e non si va a cercare
+         un secondo posto da tenere allineato. */
+      if (IN_IAM.indexOf(pagina) >= 0) { vai(pagina); return; }
+      aprireQuoto(pagina, { titolo: t ? t.split('|') : null, prod: a.getAttribute('data-prod') || null });
     });
     return d;
   }

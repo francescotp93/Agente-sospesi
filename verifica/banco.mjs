@@ -30,7 +30,29 @@ export function sorgenteA(commit) {
   return execSync(`git show ${commit}:index.html`, { cwd: RADICE, maxBuffer: 64 * 1024 * 1024 }).toString();
 }
 
-/** Ritaglia una funzione dal sorgente, contando le parentesi graffe. */
+/**
+ * Ritaglia una funzione dal sorgente, contando le parentesi graffe.
+ *
+ * PERCHE' NON BASTA CONTARE LE GRAFFE. In questo file le funzioni scrivono
+ * HTML con i template literal, e dentro un template ci sono i buchi `${...}`
+ * che contengono ALTRO codice — a volte con altre stringhe, altri apici, altre
+ * graffe. Chi legge un backtick e salta fino al successivo si perde al primo
+ * buco che ne contiene uno: da li' in poi legge codice come se fosse testo, il
+ * conteggio va per conto suo, e la funzione torna lunga il doppio del dovuto.
+ *
+ * Non e' un difetto teorico: il 20/08/2026 `ritaglia(html, 'fontiScheda')`
+ * restituiva 109.883 caratteri per una funzione da 7.449 — cioe' mezzo file.
+ * Tutte le prove che ritagliavano quella funzione stavano guardando anche
+ * quello che veniva dopo, e una prova che guarda piu' di quello che dice non
+ * sta guardando: sta indovinando.
+ *
+ * Qui i buchi si attraversano davvero: dentro `${` si torna a leggere codice, e
+ * si esce solo alla graffa che chiude quel buco.
+ *
+ * E se il conto non torna, si torna NULL invece di una fetta a caso: chi
+ * chiama scrivera' «manca la funzione», che e' un errore vero e si va a
+ * guardare, invece di una prova verde su un ritaglio sbagliato.
+ */
 export function ritaglia(sorgente, nome) {
   const re = new RegExp(`(?:^|\\n)\\s*(?:async\\s+)?function\\s+${nome}\\s*\\(`, 'm');
   const m = re.exec(sorgente);
@@ -38,26 +60,43 @@ export function ritaglia(sorgente, nome) {
   const inizio = m.index + m[0].search(/(?:async\s+)?function\b/);
   let i = sorgente.indexOf('{', m.index + m[0].length - 1);
   if (i < 0) return null;
-  let liv = 0, dentroStringa = null, j = i;
-  for (; j < sorgente.length; j++) {
-    const c = sorgente[j], prec = sorgente[j - 1];
-    if (dentroStringa) {
-      if (c === dentroStringa && prec !== '\\') dentroStringa = null;
+
+  /* La pila tiene il posto: 'codice', una stringa aperta, o un template. Un
+     buco `${` dentro un template rimette 'codice' in cima, e la sua graffa di
+     chiusura lo toglie. */
+  const pila = [{ dove: 'codice', liv: 0 }];
+  for (let j = i; j < sorgente.length; j++) {
+    const cima = pila[pila.length - 1];
+    const c = sorgente[j], prec = sorgente[j - 1], prec2 = sorgente[j - 2];
+    const scappato = prec === '\\' && prec2 !== '\\';
+
+    if (cima.dove === 'stringa') {
+      if (c === cima.q && !scappato) pila.pop();
       continue;
     }
-    if (c === '"' || c === "'" || c === '`') { dentroStringa = c; continue; }
+    if (cima.dove === 'template') {
+      if (c === '`' && !scappato) { pila.pop(); continue; }
+      if (c === '$' && sorgente[j + 1] === '{' && !scappato) { pila.push({ dove: 'codice', liv: 1 }); j++; continue; }
+      continue;
+    }
+    /* dove === 'codice' */
+    if (c === '"' || c === "'") { pila.push({ dove: 'stringa', q: c }); continue; }
+    if (c === '`') { pila.push({ dove: 'template' }); continue; }
     if (c === '/' && sorgente[j + 1] === '/') { j = sorgente.indexOf('\n', j); if (j < 0) break; continue; }
-    /* I commenti /* *\/ vanno saltati come quelli di riga. Qui dentro si
-       scrive in italiano, e in italiano ci sono gli apostrofi: senza questo
-       salto un «non c'e'» dentro un commento veniva letto come apertura di
-       stringa, il conteggio delle graffe si perdeva, e la funzione tornava
-       tagliata a meta' — con un errore che parlava di sintassi e non del
-       commento. */
+    /* I commenti servono saltati come quelli di riga. Qui dentro si scrive in
+       italiano, e in italiano ci sono gli apostrofi: senza questo salto un
+       «non c'e'» dentro un commento veniva letto come apertura di stringa. */
     if (c === '/' && sorgente[j + 1] === '*') { j = sorgente.indexOf('*/', j + 2); if (j < 0) break; j++; continue; }
-    if (c === '{') liv++;
-    else if (c === '}') { liv--; if (liv === 0) { j++; break; } }
+    if (c === '{') { cima.liv++; continue; }
+    if (c === '}') {
+      cima.liv--;
+      if (cima.liv === 0) {
+        if (pila.length === 1) return sorgente.slice(inizio, j + 1);  // fine della funzione
+        pila.pop();                                                    // fine di un buco `${...}`
+      }
+    }
   }
-  return sorgente.slice(inizio, j);
+  return null;   // il conto non torna: meglio niente che una fetta a caso
 }
 
 /**
@@ -333,8 +372,25 @@ export function stanza(sorgente, nomi, extra = {}) {
 export function esiti(titolo) {
   const righe = [];
   return {
+    /* UNA PROVA ASINCRONA QUI DENTRO PASSAVA SEMPRE.
+       `fn()` non veniva atteso: se la prova era `async`, quello che tornava
+       era una promessa, il try/catch non vedeva niente e la riga finiva fra
+       le superate — anche quando falliva. La rottura arrivava dopo, come
+       «unhandled rejection», e in mezzo a un riepilogo verde nessuno la
+       collegava a quella riga.
+       Trovato il 20/08/2026 provando a rompere apposta il codice: tre prove
+       nuove restavano verdi. Adesso una prova asincrona qui si rifiuta e lo
+       dice: c'e' provaAsync, ed e' un errore rumoroso invece di un verde
+       silenzioso. */
     prova(nome, fn) {
-      try { fn(); righe.push({ nome, ok: true }); }
+      try {
+        const r = fn();
+        if (r && typeof r.then === 'function') {
+          r.catch(() => {});   // la promessa e' comunque governata: niente crolli a sorpresa
+          throw new Error('questa prova e\' asincrona e qui non verrebbe attesa: usa provaAsync');
+        }
+        righe.push({ nome, ok: true });
+      }
       catch (e) { righe.push({ nome, ok: false, perche: e.message }); }
     },
     async provaAsync(nome, fn) {

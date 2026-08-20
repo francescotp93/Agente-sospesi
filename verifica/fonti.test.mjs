@@ -25,6 +25,14 @@ const radice = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const html = fs.readFileSync(path.join(radice, 'index.html'), 'utf8');
 const scocca = fs.readFileSync(path.join(radice, 'withus-one.js'), 'utf8');
 
+/* Le funzioni di QUESTA schermata. Serve a non confondere il vecchio pannello
+   Fonti — che parla con /fonti sul motore — con «Stato collegamenti», che parla
+   con l'API v1 e usa un vocabolario diverso di proposito. */
+const FUNZIONI_PANNELLO = ['fontiStatoAccesso', 'fontiPuoEntrare', 'fontiCarica', 'fontiFiltro',
+  'fontiDisegna', 'fontiSomma', 'fontiInfo', 'fontiScheda', 'fontiApri', 'fontiEsito', 'fontiSalva',
+  'fontiNuovaApri', 'fontiCrea', 'fontiElimina', 'fontiStrumento', 'fontiAccedi', 'fontiAspetta',
+  'fontiApriCodice', 'fontiCodiceDiretto', 'fontiCodice', 'fontiAltroCodice', 'fontiVerifica'];
+
 const esiti = [];
 const prova = (nome, fn) => {
   try { const m = fn(); esiti.push([true, nome, m || '']); }
@@ -245,11 +253,22 @@ prova('lo stato del login si legge con i nomi veri del backend', () => {
      come faceva il pannello che funzionava. */
   deve(/Accesso in corso/.test(a), 'gli stati di passaggio non vengono mostrati mentre si aspetta');
   deve(/i < 60/.test(a), 'i tentativi sono meno di 60: un login lento verrebbe dato per fallito');
-  /* I campi inventati non devono tornare — nel CODICE. Il commento che
-     racconta il guasto li nomina, ed è il motivo per cui è scritto. */
-  const codice = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+  /* I campi inventati non devono tornare — nel CODICE DI QUESTO PANNELLO.
+     Il commento che racconta il guasto li nomina, ed è il motivo per cui è
+     scritto; per questo si tolgono i commenti prima di guardare.
+
+     E si guarda SOLO le funzioni di questa schermata, non tutto il file. Dal
+     20/08/2026 in IAM c'è anche «Stato collegamenti», che parla con l'API v1
+     di QUOTO: lì `serve_codice` NON è inventato — è uno dei cinque stati che
+     il contratto definisce e che il motore restituisce davvero
+     (CONTRATTO-API.md §5bis). Vietarlo in tutto il file vorrebbe dire vietare
+     a IAM di leggere il nome che il motore gli manda: il divieto vale per chi
+     parla col vecchio endpoint, che quei nomi non li conosce. */
+  const soloQui = FUNZIONI_PANNELLO.map(n => ritaglia(html, n) || '').join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+  deve(soloQui.length > 2000, 'non riesco a ritagliare le funzioni del pannello: ' + soloQui.length + ' caratteri');
   for (const finto of ['codice_richiesto', 'serve_codice']) {
-    deve(!codice.includes(finto), 'è tornato un campo che il backend non manda: ' + finto);
+    deve(!soloQui.includes(finto), 'è tornato un campo che il vecchio endpoint non manda: ' + finto);
   }
 });
 

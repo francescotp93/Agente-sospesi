@@ -316,6 +316,10 @@
            portali, cioe' amministrazione. Prima questa voce apriva il riquadro
            del preventivatore (IAM.md §4). */
         { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: function(){ vai('fonti'); } },
+        /* Due voci e non una, di proposito: qui si GUARDA come stanno i
+           collegamenti, nelle Fonti si SCRIVONO le credenziali. La schermata
+           che fa tutte e due le cose e' quella che nessuno capisce piu'. */
+        { l: 'Stato collegamenti', i: 'i-plug', act: 'collegamenti', go: function(){ vai('collegamenti'); } },
         { l: 'Campagne email', i: 'i-mail', go: Q('campagne') },
         /* Il pacchetto la collocava in «Strumenti > Marketing > Analisi dei
            bisogni», ma questo menu ha due livelli e non tre. Sta accanto alle
@@ -354,6 +358,7 @@
        effetto, perche' quella mappa si legge solo quando la scheda aperta e'
        il preventivatore: la barra restava a «IAM > IAM». */
     fonti:       ['Fonti compagnie', 'Strumenti'],
+    collegamenti:['Stato collegamenti', 'Strumenti'],
     /* Qui e non in TITOLI_QUOTO, per la stessa ragione scritta sopra per le
        Fonti: quella mappa si legge solo a preventivatore aperto. */
     analisi:     ['Analisi dei bisogni', 'Strumenti'],
@@ -427,7 +432,7 @@
     quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'clienti', lab: 'strumenti',
-    fonti: 'strumenti', analisi: 'strumenti',
+    fonti: 'strumenti', analisi: 'strumenti', collegamenti: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
   };
 

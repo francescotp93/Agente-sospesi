@@ -558,6 +558,68 @@ input[type=file]{display:none;}
   #panel-fonti .f-grid,#panel-fonti .f-adv-g{grid-template-columns:1fr}
   #panel-fonti .f-f.full{grid-column:auto}
 }
+/* ══ STATO COLLEGAMENTI ════════════════════════════════════════════════
+   La stessa domanda che si fa da riga di comando sulla macchina, portata
+   dentro IAM: chi è collegato, chi no, e che cosa manca per rimediare.
+
+   Non duplica «Fonti compagnie»: quella è la scheda dove si SCRIVONO le
+   credenziali, questa è dove si GUARDA come stanno. Due mestieri diversi,
+   e tenerli separati evita la schermata che fa tutto e non si capisce.
+
+   Tavolozza confinata come per le Fonti: superficie chiara fissa, che
+   libera sfonderebbe il tema scuro nel resto del gestionale. */
+#panel-collegamenti{
+  --f-green:#087747; --f-green-dark:#065d39; --f-green-soft:#e7f4ed;
+  --f-teal:#176d66; --f-ink:#17211d; --f-muted:#6b7771; --f-bg:#f4f7f5;
+  --f-line:#dfe6e2; --f-amber:#a76008; --f-amber-bg:#fff3df;
+  --f-red:#ad3a32; --f-red-bg:#fdecea;
+  background:var(--f-bg); color:var(--f-ink); padding:22px 16px 40px;
+}
+#panel-collegamenti .cl-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px;flex-wrap:wrap}
+#panel-collegamenti .cl-head h1{font-size:25px;line-height:1.15;margin:0 0 5px;letter-spacing:-.03em}
+#panel-collegamenti .cl-head p{margin:0;color:var(--f-muted);font-size:12px;max-width:56ch}
+#panel-collegamenti .cl-b{height:38px;border-radius:8px;padding:0 13px;border:1px solid var(--f-line);background:#fff;color:var(--f-ink);font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+#panel-collegamenti .cl-b:hover{border-color:#b9c8c0}
+#panel-collegamenti .cl-b.pri{background:var(--f-green);border-color:var(--f-green);color:#fff}
+#panel-collegamenti .cl-b:disabled{opacity:.55;cursor:wait}
+#panel-collegamenti .cl-somma{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:#fff;border:1px solid var(--f-line);border-radius:8px;margin-bottom:14px}
+#panel-collegamenti .cl-m{padding:13px 15px;border-right:1px solid var(--f-line);min-width:0}
+#panel-collegamenti .cl-m:last-child{border-right:0}
+#panel-collegamenti .cl-m b{display:block;font-size:20px;line-height:1.1}
+#panel-collegamenti .cl-m span{display:block;color:var(--f-muted);font-size:10px;margin-top:3px}
+#panel-collegamenti .cl-m.ok b{color:var(--f-green)}
+#panel-collegamenti .cl-m.male b{color:var(--f-red)}
+#panel-collegamenti .cl-manca{background:#fff;border:1px solid var(--f-line);border-left:3px solid var(--f-amber);border-radius:8px;padding:13px 15px;margin-bottom:14px}
+#panel-collegamenti .cl-manca h2{font-size:12px;margin:0 0 9px;display:flex;align-items:center;gap:7px}
+#panel-collegamenti .cl-manca h2 i{color:var(--f-amber)}
+#panel-collegamenti .cl-manca ul{margin:0;padding:0;list-style:none;display:grid;gap:9px}
+#panel-collegamenti .cl-manca li{font-size:11.5px;line-height:1.5}
+#panel-collegamenti .cl-manca li b{display:block}
+#panel-collegamenti .cl-manca li span{color:var(--f-muted)}
+#panel-collegamenti .cl-lista{display:grid;gap:9px}
+#panel-collegamenti .cl-f{background:#fff;border:1px solid var(--f-line);border-radius:8px;padding:13px 15px}
+#panel-collegamenti .cl-f-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#panel-collegamenti .cl-f-top b{font-size:13px;flex:1;min-width:120px}
+#panel-collegamenti .cl-tag{font-size:9.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:#eff3f1;color:var(--f-muted)}
+#panel-collegamenti .cl-tag.dentro{background:var(--f-green-soft);color:var(--f-green)}
+#panel-collegamenti .cl-tag.fuori{background:var(--f-amber-bg);color:var(--f-amber)}
+#panel-collegamenti .cl-tag.spento{background:var(--f-red-bg);color:var(--f-red)}
+#panel-collegamenti .cl-perche{margin:9px 0 0;font-size:11.5px;color:var(--f-muted);line-height:1.55}
+#panel-collegamenti .cl-fare{margin:7px 0 0;font-size:11.5px;line-height:1.55;color:var(--f-ink)}
+#panel-collegamenti .cl-fare i{color:var(--f-teal);margin-right:5px}
+#panel-collegamenti .cl-az{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+#panel-collegamenti .cl-az input{height:36px;width:130px;border:1px solid var(--f-line);border-radius:8px;padding:0 10px;font-size:14px;letter-spacing:.18em;text-align:center;outline:0}
+#panel-collegamenti .cl-az input:focus{border-color:var(--f-green);box-shadow:0 0 0 3px rgba(8,119,71,.1)}
+#panel-collegamenti .cl-esito{font-size:11px;color:var(--f-muted)}
+#panel-collegamenti .cl-vuoto{text-align:center;padding:40px 14px;color:var(--f-muted);font-size:11.5px;line-height:1.6}
+#panel-collegamenti .cl-vuoto i{display:block;font-size:26px;margin-bottom:7px}
+#panel-collegamenti .cl-vuoto b{display:block;color:var(--f-ink);font-size:12.5px;margin-bottom:4px}
+#panel-collegamenti .cl-nota{margin-top:16px;font-size:10.5px;color:var(--f-muted);line-height:1.6}
+@media(max-width:760px){
+  #panel-collegamenti .cl-somma{grid-template-columns:1fr 1fr}
+  #panel-collegamenti .cl-m:nth-child(2){border-right:0}
+  #panel-collegamenti .cl-az input{width:100%}
+}
 /* ══ SCRIVANIA — design consegnato il 4/8/2026 ═════════════════════════
    Applicato com'e' stato consegnato. I token sono quelli UFFICIALI With Us
    (--w1-*), gli stessi di withus-one-tokens.css: questo design, a differenza
@@ -2953,6 +3015,40 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+<!-- ══ STATO COLLEGAMENTI ═══════════════════════════════════════════════
+     Che cosa è, e perché non è la stessa cosa di «Fonti compagnie».
+
+     «Fonti compagnie» è dove si SCRIVONO le credenziali dei portali. Questa
+     è dove si GUARDA come stanno: chi è collegato, chi no, e che cosa manca
+     per rimediare. Due mestieri diversi, tenuti separati apposta — la
+     schermata che fa tutte e due le cose è quella che nessuno capisce più.
+
+     I dati arrivano dalle API di QUOTO, passando dal ponte (Edge Function
+     «quoto»): IAM non ha la chiave del motore e non deve averla, perché gira
+     nel browser. Qui viaggia solo la sessione dell'operatore; chi può fare
+     cosa lo decide il ponte leggendo iam_utenti, non questa pagina. -->
+<div class="panel" id="panel-collegamenti">
+  <section class="cl-head">
+    <div>
+      <h1>Stato collegamenti</h1>
+      <p>Se una compagnia non è collegata, il preventivo su quella compagnia non esce. Qui c'è il perché, compagnia per compagnia.</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="cl-b" type="button" id="cl-ric" onclick="collegCarica(true)"><i class="ti ti-refresh"></i> Aggiorna</button>
+    </div>
+  </section>
+
+  <section class="cl-somma" id="cl-somma"></section>
+  <section id="cl-manca"></section>
+  <section class="cl-lista" id="cl-lista"><div class="cl-vuoto"><i class="ti ti-loader"></i>Chiedo alle compagnie come stanno…</div></section>
+
+  <p class="cl-nota">
+    Le password non passano mai da qui: il motore dice solo se ci sono.
+    Dopo tre accessi falliti il freno ferma quella compagnia per un quarto d'ora —
+    è quello che ci evita di farci bloccare l'utenza, e da qui non si scavalca.
+  </p>
+</div>
+
 <!-- ══ ANALISI DEI BISOGNI ══════════════════════════════════════════════
      Strumento marketing-consulenziale: si parte da un cliente del
      portafoglio, si raccolgono poche informazioni e ne esce un indicatore
@@ -3761,6 +3857,10 @@ function goTab(t) {
      collegamento vecchio di dieci minuti e' peggio di nessuno stato, perche'
      si crede a un «attiva» che non c'e' piu'. */
   if (t === 'fonti') { fontiCarica(true); }
+  /* Lo stato dei collegamenti si rilegge a ogni apertura, per la stessa
+     ragione delle fonti: una compagnia che si e' scollegata mezz'ora fa e
+     risulta ancora verde e' peggio di nessuna informazione. */
+  if (t === 'collegamenti') { collegCarica(true); }
   /* L'analisi non carica niente da sola: partirebbe con l'elenco di tutti i
      clienti dell'agenzia aperto sullo schermo, e questa schermata si usa col
      cliente seduto davanti. Si mostra come si comincia e si aspetta. */
@@ -8756,6 +8856,248 @@ async function mailFetch(path, opts){
   let body = null; try { body = await res.json(); } catch(_) {}
   if (!res.ok) throw new Error((body && body.error) || ('Errore ' + res.status));
   return body;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  IL PONTE VERSO QUOTO
+//
+//  IAM non chiama il motore di QUOTO direttamente, e non è una complicazione
+//  gratuita: l'API di QUOTO si apre con una chiave interna, e IAM gira nel
+//  browser — dove un segreto non è un segreto, perché chiunque apra gli
+//  strumenti di sviluppo se lo legge, e il repository è pubblico.
+//
+//  In mezzo c'è una Edge Function di Supabase («quoto»), che è il pezzo di
+//  server dalla parte di IAM: riceve la sessione dell'operatore, che Supabase
+//  ha già verificato, ci mette la chiave e gira la domanda a QUOTO.
+//
+//  Di qui passa SOLO la sessione. Chi può fare cosa lo decide il ponte,
+//  leggendo il ruolo in iam_utenti a ogni chiamata: un permesso deciso nel
+//  browser è un permesso che si aggira con gli strumenti di sviluppo.
+//
+//  Il percorso dopo /quoto/ è esattamente la rotta dell'API v1: /products,
+//  /quote/casa, /fonti, /fonti/:id/accesso. Niente da imparare due volte.
+//  Si scrivono ESATTI: niente barra finale, niente maiuscole — il motore le
+//  rifiuta di proposito (CONTRATTO-API.md §5bis).
+// ═══════════════════════════════════════════════════════════════════════════════
+const QUOTO_PONTE = String(window.SUPABASE_URL || '').replace(/\/+$/, '') + '/functions/v1/quoto';
+
+async function quotoFetch(percorso, opzioni) {
+  opzioni = opzioni || {};
+  let tok = null;
+  try { const s = await db.auth.getSession(); tok = s && s.data && s.data.session && s.data.session.access_token; } catch (_) {}
+  if (!tok) throw new Error('Sessione non valida: esci e rientra.');
+  const r = await fetch(QUOTO_PONTE + percorso, {
+    method: opzioni.method || 'GET',
+    headers: Object.assign({
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + tok,
+      'apikey': window.SUPABASE_KEY || '',
+    }, opzioni.headers || {}),
+    body: opzioni.corpo != null ? JSON.stringify(opzioni.corpo) : undefined,
+  });
+  let corpo = null; try { corpo = await r.json(); } catch (_) {}
+  /* Il motore risponde sempre nella stessa forma: success true/false con un
+     error_code preso da una lista chiusa. Qui si porta il codice dentro
+     l'errore, così chi chiama può decidere senza leggere il messaggio. */
+  if (!r.ok || (corpo && corpo.success === false)) {
+    const e = new Error((corpo && corpo.message) || ('Il motore ha risposto ' + r.status + '.'));
+    e.codice = (corpo && corpo.error_code) || null;
+    e.stato = r.status;
+    throw e;
+  }
+  return corpo || {};
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  STATO COLLEGAMENTI — la schermata
+//
+//  Risponde a una domanda sola: se oggi provo a quotare, quali compagnie
+//  rispondono? Quelle che non rispondono hanno un perché, e il perché va detto
+//  in italiano, non con un pallino rosso.
+// ═══════════════════════════════════════════════════════════════════════════════
+let COLLEG = null, COLLEG_ULTIMO = 0, COLLEG_LAVORO = {};
+
+/* Il motore distingue «non è dentro» da «non lo dice», e la differenza conta:
+   la prima è una cosa da sistemare, la seconda vuol dire che non lo sappiamo.
+   Confonderle manderebbe a cercare un guasto dalla parte sbagliata. */
+function collegStato(f) {
+  if (!f.raggiungibile) return { chiave: 'spento', tag: 'non risponde', classe: 'spento' };
+  if (f.loggato === true) return { chiave: 'dentro', tag: 'collegata', classe: 'dentro' };
+  if (f.loggato === false) return { chiave: 'fuori', tag: 'da collegare', classe: 'fuori' };
+  return { chiave: 'boh', tag: 'non lo dice', classe: '' };
+}
+
+/* Fra le diagnosi del motore si mostra la più grave: metterle tutte
+   trasformerebbe la schermata in un registro da leggere invece che in una
+   risposta da guardare. */
+function collegDiagnosi(f) {
+  const d = (f && f.diagnosi) || [];
+  return d.find(x => x.gravita === 'alta') || d.find(x => x.gravita === 'media') || d[0] || null;
+}
+
+async function collegCarica(forza) {
+  const box = document.getElementById('cl-lista');
+  if (!box) return;
+  const ora = Date.now();
+  if (!forza && COLLEG && (ora - COLLEG_ULTIMO) < 20000) { collegDisegna(); return; }
+  const btn = document.getElementById('cl-ric');
+  if (btn) btn.disabled = true;
+  try {
+    /* forza=1 salta la cache del motore: è quello che serve dopo aver
+       sistemato una credenziale, altrimenti si rilegge la risposta vecchia e
+       sembra che non sia cambiato niente. */
+    COLLEG = await quotoFetch('/fonti/salute' + (forza ? '?forza=1' : ''));
+    COLLEG_ULTIMO = ora;
+    collegDisegna();
+  } catch (e) {
+    /* Tre guasti diversi con tre rimedi diversi: dirli tutti e tre «errore»
+       costringe ad aprire la console del browser per sapere quale sia. */
+    const spiega = e.codice === 'FORBIDDEN'
+        ? 'Questa schermata è riservata: serve il ruolo di amministratore.'
+      : e.codice === 'AUTH_FAILED'
+        ? 'La sessione non è più valida: esci e rientra.'
+      : e.codice === 'PROVIDER_UNAVAILABLE'
+        ? 'Il motore di QUOTO non risponde. Se è appena stato riavviato, riprova fra un minuto.'
+        : '';
+    box.innerHTML = '<div class="cl-vuoto"><i class="ti ti-plug-connected-x"></i>'
+      + '<b>Stato non caricato</b>'
+      + (spiega ? '<span>' + esc(spiega) + '</span>' : '')
+      + '<span style="opacity:.7">' + esc(String(e.message || e)) + '</span></div>';
+    const sm = document.getElementById('cl-somma'); if (sm) sm.innerHTML = '';
+    const mn = document.getElementById('cl-manca'); if (mn) mn.innerHTML = '';
+  } finally { if (btn) btn.disabled = false; }
+}
+
+function collegDisegna() {
+  const box = document.getElementById('cl-lista');
+  if (!box || !COLLEG) return;
+  const fonti = COLLEG.fonti || [];
+  const r = COLLEG.riepilogo || {};
+
+  const sm = document.getElementById('cl-somma');
+  if (sm) {
+    const dentro = fonti.filter(f => f.loggato === true).length;
+    const daFare = fonti.filter(f => f.loggato !== true).length;
+    sm.innerHTML =
+        '<div class="cl-m"><b>' + fonti.length + '</b><span>compagnie collegate al preventivatore</span></div>'
+      + '<div class="cl-m ok"><b>' + dentro + '</b><span>pronte a quotare adesso</span></div>'
+      + '<div class="cl-m' + (daFare ? ' male' : '') + '"><b>' + daFare + '</b><span>da collegare</span></div>'
+      + '<div class="cl-m"><b>' + (r.raggiungibili != null ? r.raggiungibili : fonti.filter(f => f.raggiungibile).length)
+      + '</b><span>servizi accesi</span></div>';
+  }
+
+  /* «Cosa manca» sta in cima e raccoglie solo i problemi gravi, con il rimedio
+     accanto: è la parte per cui si apre questa schermata. */
+  const mn = document.getElementById('cl-manca');
+  if (mn) {
+    const problemi = (COLLEG.problemi || []).slice(0, 6);
+    mn.innerHTML = problemi.length
+      ? '<div class="cl-manca"><h2><i class="ti ti-alert-triangle"></i> Cosa manca</h2><ul>'
+        + problemi.map(p => '<li><b>' + esc(p.fonte || '') + '</b>'
+            + '<span>' + esc(p.messaggio || '') + (p.cosa_fare ? ' — ' + esc(p.cosa_fare) : '') + '</span></li>').join('')
+        + '</ul></div>'
+      : '';
+  }
+
+  if (!fonti.length) {
+    box.innerHTML = '<div class="cl-vuoto"><i class="ti ti-plug"></i><b>Nessuna compagnia collegata</b>'
+      + '<span>Le fonti si aggiungono da «Fonti compagnie».</span></div>';
+    return;
+  }
+
+  /* Prima quelle da sistemare: chi apre questa schermata lo fa per quelle. */
+  const ordine = { spento: 0, fuori: 1, boh: 2, dentro: 3 };
+  const elenco = fonti.slice().sort((a, b) => ordine[collegStato(a).chiave] - ordine[collegStato(b).chiave]);
+
+  box.innerHTML = elenco.map(f => {
+    const st = collegStato(f);
+    const dg = collegDiagnosi(f);
+    const vs = f.visto_dal_servizio || {};
+    const lavoro = COLLEG_LAVORO[f.id] || {};
+    const puoAccedere = st.chiave !== 'dentro' && f.raggiungibile;
+    return '<article class="cl-f" data-fonte="' + esc(f.id) + '">'
+      + '<div class="cl-f-top"><b>' + esc(f.nome || f.id) + '</b>'
+      + '<span class="cl-tag ' + st.classe + '">' + esc(st.tag) + '</span></div>'
+      + (vs.ultimo_messaggio ? '<p class="cl-perche">' + esc(vs.ultimo_messaggio) + '</p>' : '')
+      + (dg && dg.cosa_fare ? '<p class="cl-fare"><i class="ti ti-arrow-right"></i>' + esc(dg.cosa_fare) + '</p>' : '')
+      + (puoAccedere
+        ? '<div class="cl-az">'
+          + '<button class="cl-b pri" type="button" onclick="collegAccedi(\'' + esc(f.id) + '\')"'
+          + (lavoro.inCorso ? ' disabled' : '') + '><i class="ti ti-login"></i> Collega</button>'
+          + (lavoro.stato === 'serve_codice'
+            ? '<input id="cl-cod-' + esc(f.id) + '" inputmode="numeric" maxlength="8" placeholder="000000">'
+              + '<button class="cl-b" type="button" onclick="collegCodice(\'' + esc(f.id) + '\')">Conferma codice</button>'
+            : '')
+          + '<span class="cl-esito">' + esc(lavoro.messaggio || '') + '</span>'
+          + '</div>'
+        : '')
+      + '</article>';
+  }).join('');
+}
+
+/* L'accesso guidato è in due tempi, come il resto dell'API: si avvia e non si
+   aspetta. Aspettare vorrebbe dire tenere una richiesta HTTP aperta finché
+   qualcuno legge un SMS — cioè finché il browser si annoia e la chiude. */
+async function collegAccedi(id) {
+  COLLEG_LAVORO[id] = { inCorso: true, messaggio: 'Avvio l\'accesso…' };
+  collegDisegna();
+  try {
+    await quotoFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
+    collegSegui(id);
+  } catch (e) {
+    COLLEG_LAVORO[id] = { inCorso: false, messaggio: String(e.message || e) };
+    collegDisegna();
+  }
+}
+
+/* Si guarda come va, ogni tre secondi, per un paio di minuti. I passi che gli
+   scraper usano sono una decina e cambiano da compagnia a compagnia: il motore
+   li traduce in cinque, e IAM conosce solo quei cinque — così una compagnia
+   nuova non è una modifica qui dentro. */
+async function collegSegui(id, giro) {
+  giro = giro || 0;
+  if (giro > 40) {
+    COLLEG_LAVORO[id] = { inCorso: false, messaggio: 'Ci sta mettendo troppo: riprova fra qualche minuto.' };
+    collegDisegna(); return;
+  }
+  let d;
+  try { d = await quotoFetch('/fonti/' + encodeURIComponent(id) + '/accesso'); }
+  catch (e) {
+    COLLEG_LAVORO[id] = { inCorso: false, messaggio: String(e.message || e) };
+    collegDisegna(); return;
+  }
+  const stato = d.stato;
+  if (stato === 'in_corso' || stato === 'pronto') {
+    COLLEG_LAVORO[id] = { inCorso: true, stato: stato, messaggio: d.messaggio || 'Sto entrando…' };
+    collegDisegna();
+    setTimeout(() => collegSegui(id, giro + 1), 3000);
+    return;
+  }
+  if (stato === 'serve_codice') {
+    COLLEG_LAVORO[id] = { inCorso: false, stato: 'serve_codice', messaggio: d.messaggio || 'Inserisci il codice ricevuto.' };
+    collegDisegna(); return;
+  }
+  /* 'completo' e 'fallito' li dice il MOTORE: qui non si scrive mai «riuscito»
+     solo perché la richiesta è partita. */
+  COLLEG_LAVORO[id] = { inCorso: false, stato: stato, messaggio: d.messaggio || (stato === 'completo' ? 'Collegata.' : 'Non riuscito.') };
+  collegDisegna();
+  if (stato === 'completo') collegCarica(true);
+}
+
+async function collegCodice(id) {
+  const campo = document.getElementById('cl-cod-' + id);
+  const codice = campo ? String(campo.value || '').trim() : '';
+  if (!codice) { COLLEG_LAVORO[id] = { stato: 'serve_codice', messaggio: 'Manca il codice.' }; collegDisegna(); return; }
+  COLLEG_LAVORO[id] = { inCorso: true, messaggio: 'Confermo il codice…' };
+  collegDisegna();
+  try {
+    await quotoFetch('/fonti/' + encodeURIComponent(id) + '/codice', { method: 'POST', corpo: { codice: codice } });
+    collegSegui(id);
+  } catch (e) {
+    COLLEG_LAVORO[id] = { inCorso: false, stato: 'serve_codice', messaggio: String(e.message || e) };
+    collegDisegna();
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -13875,7 +14217,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
-<script src="withus-one.js?v=20260817b"></script>
+<script src="withus-one.js?v=20260820"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

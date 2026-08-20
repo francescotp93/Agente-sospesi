@@ -151,7 +151,13 @@ e.prova('i fogli collegati hanno una versione che cambia coi rilasci', () => {
      file: e' esattamente il caso che era sfuggito. */
   const iam = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
   for (const f of ['withus-one.css', 'withus-one.js', 'withus-pictograms.css']) {
-    const m = iam.match(new RegExp(f.replace('.', '\\.') + '\\?v=([0-9]+)'));
+    /* La versione e' una data AAAAMMGG, con una lettera facoltativa per i
+       rilasci successivi dello STESSO giorno. Serve davvero: il 17/08/2026 un
+       lavoro e' stato pubblicato e poi annullato in giornata, e riusare
+       «20260817» avrebbe lasciato ai browser la copia intermedia — stesso
+       indirizzo, nessuna nuova richiesta. La lettera e' l'unico modo di dire
+       «stesso giorno, ma non la stessa cosa». */
+    const m = iam.match(new RegExp(f.replace('.', '\\.') + '\\?v=([0-9]+[a-z]?)'));
     deve(m, f + ' non ha una versione nell\'indirizzo');
     deve(m[1].length >= 6, f + ' ha una versione fissa e corta: il browser terrà la copia vecchia');
 
@@ -163,7 +169,7 @@ e.prova('i fogli collegati hanno una versione che cambia coi rilasci', () => {
     if (superficiale()) continue;
     const ultima = ultimaModifica(f);
     if (!ultima) continue;
-    deve(m[1] >= ultima,
+    deve(m[1].slice(0, 8) >= ultima,
       f + ' è stato modificato il ' + ultima + ' ma nell\'indirizzo c\'è ancora v=' + m[1] +
       ': chi ha il programma aperto continuerà a caricare la copia vecchia');
   }

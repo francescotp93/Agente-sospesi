@@ -1113,7 +1113,6 @@ input[type=file]{display:none;}
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
 <link rel="stylesheet" href="withus-one.css?v=20260814">
-<link rel="stylesheet" href="rc-professionale.css?v=20260817">
 </head>
 <body>
 
@@ -2467,17 +2466,6 @@ input[type=file]{display:none;}
     <div id="agenti-body" style="margin-top:18px;"><div style="color:var(--txt3);padding:20px;">Carico…</div></div>
   </div>
 </div>
-
-<!-- ── RC PROFESSIONALE ──────────────────────────────────────────────────────
-     Primo prodotto uscito dal riquadro del preventivatore: qui dentro non c'e'
-     nessun iframe. Il contenuto lo disegna rc-professionale.js, che porta il
-     motore di calcolo di QUOTO spostato identico — vedi l'intestazione di quel
-     file per la mappa della «colla». La schermata e' vuota di proposito: si
-     riempie da renderRcprof() quando si apre la scheda. -->
-<div class="panel" id="panel-rcprof" style="overflow-y:auto;">
-  <div id="rcprof-view"></div>
-</div>
-
 <!-- AZIENDA -->
 <div class="panel" id="panel-azienda">
   <div class="ptabs" id="az-tabs">
@@ -3742,11 +3730,6 @@ function goTab(t) {
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); caricaDaFareOggi(); }   // Blocco B
   if (t === 'agenti')    { loadAgentiAI(); }
-  /* RC Professionale vive DENTRO IAM: non apre il riquadro del preventivatore.
-     renderRcprof() sta in rc-professionale.js; il controllo su typeof evita che
-     un file non caricato faccia fallire tutta la navigazione — meglio una
-     schermata vuota che un menu che smette di funzionare. */
-  if (t === 'rcprof')    { if (typeof renderRcprof === 'function') renderRcprof(); }
   if (t === 'quoto') {
     // Splash screen fullscreen prima del redirect
     const ov = document.createElement('div');
@@ -13892,11 +13875,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
-<!-- RC Professionale: motore di calcolo portato da QUOTO. Va DOPO il grosso di
-     IAM perche' la sua colla legge db, ME e PROFILO, e prima della scocca, che
-     aggancia la voce di menu. -->
-<script src="rc-professionale.js?v=20260817"></script>
-<script src="withus-one.js?v=20260817"></script>
+<script src="withus-one.js?v=20260817b"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

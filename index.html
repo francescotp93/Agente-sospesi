@@ -8423,7 +8423,7 @@ async function fontiCarica(forza) {
   const btn = document.getElementById('f-ric');
   if (btn) btn.disabled = true;
   try {
-    const d = await mailFetch('/fonti');
+    const d = await quotoFetch('/fonti');
     FONTI = (d && d.fonti) || [];
     fontiDisegna();
   } catch (e) {
@@ -8608,8 +8608,8 @@ async function fontiSalva(id) {
   if (!Object.keys(corpo).length) { fontiEsito(id, 'Niente da salvare: tutti i campi sono vuoti.'); return; }
   fontiEsito(id, 'Salvo…');
   try {
-    await mailFetch('/fonti/' + encodeURIComponent(id) + '/credenziali',
-      { method: 'POST', body: JSON.stringify(corpo) });
+    await quotoFetch('/fonti/' + encodeURIComponent(id) + '/credenziali',
+      { method: 'POST', corpo: corpo });
     /* Il campo password si svuota subito: lasciarlo pieno fa credere che il
        valore sia «quello che si vede», e al salvataggio successivo lo si
        rimanderebbe senza volerlo. */
@@ -8636,9 +8636,9 @@ async function fontiCrea() {
   if (!nome) { if (box) { box.textContent = 'Il nome della compagnia è obbligatorio.'; box.style.color = 'var(--f-red)'; } return; }
   if (box) { box.textContent = 'Creo…'; box.style.color = 'var(--f-muted)'; }
   try {
-    await mailFetch('/fonti', { method: 'POST', body: JSON.stringify({
+    await quotoFetch('/fonti', { method: 'POST', corpo: {
       nome, url: gv('url') || undefined, username: gv('user') || undefined, password: gv('pw') || undefined
-    })});
+    }});
     ['nome','url','user','pw'].forEach(k => { const e = document.getElementById('f-n-' + k); if (e) e.value = ''; });
     fontiNuovaApri(false);
     fontiCarica(true);
@@ -8652,7 +8652,7 @@ async function fontiElimina(id) {
   if (!confirm('Eliminare questa fonte?\n\nSpariscono anche le credenziali salvate sul server. Non si torna indietro.')) return;
   fontiEsito(id, 'Elimino…');
   try {
-    await mailFetch('/fonti/' + encodeURIComponent(id), { method: 'DELETE' });
+    await quotoFetch('/fonti/' + encodeURIComponent(id), { method: 'DELETE' });
     FONTI_APERTA = null;
     fontiCarica(true);
   } catch (e) { fontiEsito(id, 'Non eliminata: ' + (e.message || ''), 'var(--f-red)'); }
@@ -8838,8 +8838,10 @@ async function fontiVerifica(id) {
       un collegamento che non funziona. */
   fontiEsito(id, 'Verifica in corso…');
   try {
-    const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/verifica', { method: 'POST' });
-    const ok = !!(r && (r.ok === true || r.stato === 'attiva'));
+    const r = await quotoFetch('/fonti/' + encodeURIComponent(id) + '/verifica', { method: 'POST' });
+    /* Sul ponte v1 l'involucro toglie il campo `ok`: il segnale vero e' lo
+       stato, che la verifica mette SEMPRE (attiva sul buono). */
+    const ok = !!(r && (r.stato === 'attiva' || r.ok === true));
     fontiEsito(id, ok ? 'Accesso confermato dal motore.' : (r && r.messaggio) || 'Il motore non ha confermato l\'accesso.',
       ok ? 'var(--f-green)' : 'var(--f-amber)');
     fontiCarica(true);

@@ -133,10 +133,50 @@ prova('gli endpoint restano quelli che c\'erano', () => {
   for (const e of ["'/fonti'", "/credenziali", "/verifica"]) {
     deve(html.includes(e), 'endpoint cambiato o mancante: ' + e);
   }
-  /* Passano dal fetch autenticato di IAM: senza token il backend risponde
-     403, e la schermata sembrerebbe rotta invece che chiusa. */
-  const c = ritaglia(html, 'fontiCarica');
-  deve(c && /mailFetch\(/.test(c), 'le fonti non passano dal fetch autenticato');
+});
+
+// ── 6b. Elenco e scritture passano dal PONTE, non più dritti al backend ──
+prova('elenco e scritture passano dal ponte pulito (Edge Function quoto)', () => {
+  /* Prima queste chiamate andavano con mailFetch dritte a
+     api.withusassicurazioni.it col token dell'utente: comodo, ma obbligava
+     QUOTO a saper leggere le sessioni di IAM. Ora passano da quotoFetch → la
+     Edge Function «quoto», che aggiunge la chiave interna (che nel browser non
+     arriva mai) e, per le scritture, l'operatore che sta agendo. Se un giorno
+     una di queste torna su mailFetch, la separazione è saltata e la prova lo
+     dice. */
+  const daPonte = {
+    fontiCarica:  "'/fonti'",
+    fontiSalva:   '/credenziali',
+    fontiCrea:    "'/fonti'",
+    fontiElimina: "'/fonti/'",
+    fontiVerifica:'/verifica',
+  };
+  for (const [fn, pezzo] of Object.entries(daPonte)) {
+    const b = ritaglia(html, fn);
+    deve(b, 'manca ' + fn);
+    deve(/quotoFetch\(/.test(b), fn + ' non passa dal ponte pulito (quotoFetch)');
+    deve(!/mailFetch\(\s*'\/fonti/.test(b), fn + ' parla ancora dritto al backend (mailFetch /fonti)');
+    deve(b.includes(pezzo), fn + ' non chiama più ' + pezzo);
+  }
+  /* Il ponte deve puntare DAVVERO alla Edge Function, con la sessione IAM in
+     Authorization e la apikey per il gateway — e mai la chiave interna, che
+     resta sul server. */
+  const qf = ritaglia(html, 'quotoFetch') || '';
+  deve(/functions\/v1\/quoto/.test(html), 'quotoFetch non punta alla Edge Function «quoto»');
+  deve(/Authorization/.test(qf) && /apikey/.test(qf), 'quotoFetch non manda la sessione IAM o la apikey');
+  deve(!/X-Internal-Key/i.test(qf), 'la chiave interna non deve MAI comparire nel browser');
+});
+
+// ── 6c. Login guidato e caselle email restano dov'erano (staging dichiarato) ──
+prova('login guidato e caselle email restano su mailFetch, per ora', () => {
+  /* La migrazione è a tappe: il login 2FA guidato (percorsi loginstate /
+     conferma-codice, che sul ponte hanno nomi diversi) e le caselle email
+     (che il ponte non espone ancora) restano sul percorso vecchio. Non è una
+     svista: è il confine dichiarato di QUESTO passo. Il pannello «Stato
+     collegamenti» fa già il login guidato sul ponte, con la sua prova. */
+  const acc = ritaglia(html, 'fontiAccedi') || '';
+  deve(/mailFetch\(/.test(acc), 'fontiAccedi è stato migrato senza la prova del flusso 2FA sul ponte');
+  deve(/caselle-mail/.test(html), 'le caselle email non ci sono più');
 });
 
 // ── 7. Lo stato non deve invecchiare in silenzio ─────────────────────────

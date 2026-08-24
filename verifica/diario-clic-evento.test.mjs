@@ -85,6 +85,23 @@ prova('il dettaglio ha sempre il pulsante per modificare', () => {
   deve(/idBox \|\| 'wds-det'/.test(f), 'il dettaglio scrive sempre nello stesso riquadro');
 });
 
+prova('dal dettaglio si completa senza aprire la scheda', () => {
+  /* Francesco voleva un tasto rapido: nel dettaglio, oltre a «Apri e
+     modifica», un «Completa» che segna fatto al volo. */
+  const f = corpoDi('function wdsDettaglio(id, idBox, idStato)');
+  deve(f, 'manca wdsDettaglio');
+  deve(/wdsCompleta\(/.test(f), 'nel dettaglio non c\'è il tasto rapido «Completa»');
+  deve(/Completa/.test(f) && /Riapri/.test(f),
+    'il tasto non passa fra «Completa» e «Riapri» a seconda dello stato');
+  deve(/canEdit/.test(f), 'chiunque potrebbe segnare fatte attività non sue');
+  /* E deve aggiornare QUESTO pannello: toggleWDDone ridisegna elenco e
+     calendario, ma il dettaglio aperto resterebbe su «Da fare». */
+  const c = corpoDi('async function wdsCompleta(id, idBox, idStato)');
+  deve(c, 'manca wdsCompleta');
+  deve(/toggleWDDone\(/.test(c), 'il tasto rapido non cambia davvero lo stato');
+  deve(/wdsDettaglio\(/.test(c), 'dopo aver completato il dettaglio non si aggiorna: resterebbe «Da fare»');
+});
+
 let ko = 0;
 console.log('\nDIARIO — cliccando un\'attività si apre quella');
 for (const [ok, nome, msg] of esiti) {

@@ -817,6 +817,13 @@ input[type=file]{display:none;}
 .wds-note{border:1px solid var(--d-line);background:var(--d-surf2);border-radius:7px;padding:9px;font-size:10px;color:var(--d-muted);margin:10px 0}
 .wds-apri{margin-top:10px;width:100%;background:var(--d-green);border:1px solid var(--d-green);color:#fff;border-radius:8px;min-height:36px;font-size:12px;font-weight:700;cursor:pointer}
 .wds-apri:hover{background:var(--d-green-deep)}
+.wds-azioni{display:flex;gap:8px;margin-top:10px}
+.wds-azioni .wds-apri{margin-top:0;flex:1}
+.wds-fatto{flex:1;border-radius:8px;min-height:36px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.wds-fatto.compl{background:var(--d-green-soft);border:1px solid var(--d-green);color:var(--d-green)}
+.wds-fatto.compl:hover{background:var(--d-green);color:#fff}
+.wds-fatto.riapri{background:var(--d-amber-soft);border:1px solid var(--d-amber);color:var(--d-amber)}
+.wds-fatto.riapri:hover{filter:brightness(.96)}
 
 /* La finestra «Nuova attività», nel disegno consegnato.
    Confinata a #modal-wd: le classi .modal/.fld sono condivise con le altre
@@ -11037,7 +11044,8 @@ function renderWDGiorno() {
 }
 
 function wdsDettaglio(id, idBox, idStato) {
-  const box = document.getElementById(idBox || 'wds-det'), st = document.getElementById(idStato || 'wds-stato');
+  const bx = idBox || 'wds-det', sx = idStato || 'wds-stato';
+  const box = document.getElementById(bx), st = document.getElementById(sx);
   if (!box) return;
   const w = (WD || []).find(x => String(x.id) === String(id));
   if (!w) {
@@ -11046,6 +11054,11 @@ function wdsDettaglio(id, idBox, idStato) {
     return;
   }
   if (st) { st.textContent = w.stato === 'completato' ? 'Completata' : 'Da fare'; st.className = 'wds-stato ' + (w.stato === 'completato' ? 'ok' : 'aperta'); }
+  /* Chi può segnare fatto: stessa regola dell'elenco (mia, condivisa con me,
+     o ruolo che gestisce il diario). Se non può, il tasto non compare. */
+  const isMine = !w.utente_id || w.utente_id === ME?.id;
+  const isCondiviso = (w.condivisi || []).includes(ME?.id);
+  const canEdit = isMine || isCondiviso || PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore';
   const riga = (e, v) => v ? `<div class="wds-r"><span>${e}</span><b>${esc(v)}</b></div>` : '';
   box.innerHTML = `<div class="wds-tit">${esc(w.titolo || '(senza titolo)')}</div>
     ${riga('Quando', (w.data || '') + (w.ora ? ' . ' + w.ora : '') + (w.ora_fine ? ' - ' + w.ora_fine : ''))}
@@ -11055,7 +11068,21 @@ function wdsDettaglio(id, idBox, idStato) {
     ${riga('Priorita', w.prior)}
     ${riga('Luogo', w.luogo)}
     ${w.note ? `<div class="wds-note">${escNl(w.note)}</div>` : ''}
-    <button class="wds-apri" onclick="openWDModal('${esc(w.id)}')"><i class="ti ti-pencil"></i> Apri e modifica</button>`;
+    <div class="wds-azioni">
+      ${canEdit ? (w.stato === 'completato'
+        ? `<button class="wds-fatto riapri" onclick="wdsCompleta('${esc(w.id)}','${bx}','${sx}')" title="Segna come da fare"><i class="ti ti-rotate-clockwise"></i> Riapri</button>`
+        : `<button class="wds-fatto compl" onclick="wdsCompleta('${esc(w.id)}','${bx}','${sx}')" title="Segna come completata"><i class="ti ti-check"></i> Completa</button>`) : ''}
+      <button class="wds-apri" onclick="openWDModal('${esc(w.id)}')"><i class="ti ti-pencil"></i> Apri e modifica</button>
+    </div>`;
+}
+
+/* Il tasto rapido «Completa» nel dettaglio: segna fatto/da fare senza aprire
+   la scheda intera, poi ridisegna QUESTO pannello cosi' l'etichetta di stato e
+   il tasto stesso passano subito a «Riapri» (toggleWDDone aggiorna elenco e
+   calendario, ma non il dettaglio aperto). */
+async function wdsCompleta(id, idBox, idStato) {
+  await toggleWDDone(id);
+  wdsDettaglio(id, idBox, idStato);
 }
 
 function selWDTab(t) {

@@ -322,8 +322,42 @@ prova('l\'esito di un\'azione non viene cancellato dal ridisegno', () => {
   const s = ritaglia(html, 'fontiScheda');
   deve(s && /FONTI_ESITI\[f\.id\]/.test(s), 'la scheda non ristampa l\'esito quando viene ricostruita');
   /* Anche il colore: un «salvato» verde che torna grigio dopo il ridisegno
-     fa dubitare che sia andata bene. */
-  deve(s && /colore/.test(s), 'il colore dell\'esito si perde nel ridisegno');
+     fa dubitare che sia andata bene. La scheda ora ristampa l'esito passando
+     dallo stesso helper che lo disegna dal vivo (fontiEsitoHTML), e quell'unico
+     punto deve portarsi dietro il colore. */
+  deve(s && /fontiEsitoHTML\(/.test(s), 'la scheda non riusa il disegno dell\'esito: rischia di divergere dal vivo');
+  const h = ritaglia(html, 'fontiEsitoHTML');
+  deve(h && /colore/.test(h) && /color:/.test(h), 'il colore dell\'esito si perde nel ridisegno');
+});
+
+// ── 13. La barra dice «a che punto siamo» ────────────────────────────────
+prova('l\'accesso mostra una barra che avanza con i passi del portale', () => {
+  /* Prima c'era solo una scritta ferma: HDI rientra in ~80s in sottofondo e
+     sembrava bloccato. La barra è DETERMINATA — ogni passo vale una
+     percentuale nota — e deve comparire solo quando c'è una percentuale. */
+  deve(/#panel-fonti \.f-prog\b/.test(html), 'manca lo stile della barra di avanzamento');
+  const h = ritaglia(html, 'fontiEsitoHTML');
+  deve(h && /f-prog/.test(h), 'la barra non viene disegnata insieme all\'esito');
+  deve(h && /typeof st\.perc === 'number'/.test(h), 'la barra compare anche senza una percentuale: sarebbe una barra a vuoto');
+  const p = ritaglia(html, 'fontiPassoPerc');
+  deve(p, 'manca la mappa passo→percentuale');
+  deve(/loggato[^]*100/.test(p), 'il passo «loggato» non arriva al 100%');
+  deve(/credenziali/.test(p) && /attesa_otp/.test(p), 'i passi veri del backend non sono mappati sulla barra');
+  const a = ritaglia(html, 'fontiAspetta');
+  deve(/fontiPassoPerc\(/.test(a), 'mentre si aspetta la barra non segue i passi');
+});
+
+// ── 14. «Controlla stato» non boccia un accesso ancora in volo ───────────
+prova('la verifica segue un login in corso invece di darlo per fallito', () => {
+  /* Il guasto di Francesco su HDI: «Controlla stato» faceva una verifica secca
+     mentre il login asincrono era ancora in corso, e rispondeva «Il motore non
+     ha confermato l'accesso» su un accesso che stava riuscendo. Ora prima
+     guarda /loginstate e, se c'è un accesso in volo, segue la barra. */
+  const v = ritaglia(html, 'fontiVerifica');
+  deve(v, 'manca fontiVerifica');
+  deve(/loginstate/.test(v), 'la verifica non guarda lo stato del login prima di sentenziare');
+  deve(/fontiAspetta\(/.test(v), 'un login ancora in corso non viene seguito: verrebbe dato per fallito');
+  deve(/running === true|fontiPassoPerc\(/.test(v), 'non si distingue un accesso in volo da uno fermo');
 });
 
 let ko = 0;

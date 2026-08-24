@@ -538,6 +538,9 @@ input[type=file]{display:none;}
 #panel-fonti .f-f input:focus{border-color:var(--f-green);box-shadow:0 0 0 3px rgba(8,119,71,.1)}
 #panel-fonti .f-hint{font-size:9.5px;color:var(--f-muted);line-height:1.5;margin-top:5px}
 #panel-fonti .f-az{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+#panel-fonti .f-prog{display:block;height:5px;width:100%;max-width:230px;background:#e6efe9;border-radius:4px;overflow:hidden;margin:5px 0 3px}
+#panel-fonti .f-prog>span{display:block;height:100%;width:0;background:var(--f-green);border-radius:4px;transition:width .5s ease}
+#panel-fonti .f-prog.err>span{background:#c0392b}
 #panel-fonti .f-adv{margin-top:12px;border:1px solid var(--f-line);border-radius:8px;background:#fff;overflow:hidden}
 #panel-fonti .f-adv summary{list-style:none;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
 #panel-fonti .f-adv summary::-webkit-details-marker{display:none}
@@ -8541,7 +8544,7 @@ function fontiScheda(f) {
           <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-refresh-dot"></i> Controlla stato</button>
           ${f.has2fa && !attesa ? `<button class="f-b" type="button" onclick="fontiApriCodice('${esc(f.id)}')"><i class="ti ti-device-mobile-check"></i> Accedi col codice</button>` : ''}
           ${f.custom ? `<button class="f-b" style="color:var(--f-red);border-color:#efc9c5" type="button" onclick="fontiElimina('${esc(f.id)}')"><i class="ti ti-trash"></i> Elimina</button>` : ''}
-          <span id="f-esito-${esc(f.id)}" style="font-size:11px;color:${esc((FONTI_ESITI[f.id] || {}).colore || 'var(--f-muted)')}">${esc((FONTI_ESITI[f.id] || {}).testo || '')}</span>
+          <span id="f-esito-${esc(f.id)}" style="font-size:11px">${fontiEsitoHTML(FONTI_ESITI[f.id])}</span>
         </div>
         ${attesa ? `<div class="f-card" style="margin-top:11px;border-color:var(--f-amber)">
           <div class="f-st"><i class="ti ti-mail-fast" style="background:var(--f-amber-bg);color:var(--f-amber)"></i><span><b>Codice dal portale</b><small>${esc((FONTI_ATTESA[f.id] && FONTI_ATTESA[f.id].msg) || 'Vale pochi minuti.')}</small></span></div>
@@ -8585,10 +8588,44 @@ function fontiApri(id) { FONTI_APERTA = (FONTI_APERTA === id) ? null : id; fonti
    ricostruita. */
 const FONTI_ESITI = {};
 
-function fontiEsito(id, testo, colore) {
-  FONTI_ESITI[id] = { testo: testo, colore: colore || 'var(--f-muted)' };
+/* La barra: dà al login un «a che punto siamo». È DETERMINATA — ogni passo del
+   portale vale una percentuale nota (avvio→credenziali→codice→loggato). Prima
+   c'era solo una scritta ferma, e un HDI che rientra in ~80s sembrava bloccato.
+   La barra non torna mai indietro mentre l'accesso avanza: un salto all'indietro
+   si legge come «è ripartito da capo». */
+function fontiPassoPerc(step) {
+  switch (String(step || '').toLowerCase()) {
+    case 'avvio': case 'start': case 'apertura': case 'probe': return 22;
+    case 'credenziali': case 'login': return 55;
+    case 'attesa_otp': case 'attesa_codice': return 80;
+    case 'loggato': case 'attiva': return 100;
+    default: return null; /* passo che non conosco: non tocco la barra */
+  }
+}
+
+function fontiEsitoHTML(st) {
+  st = st || {};
+  let bar = '';
+  if (typeof st.perc === 'number') {
+    const w = Math.max(0, Math.min(100, st.perc));
+    bar = '<span class="f-prog' + (st.err ? ' err' : '') + '"><span style="width:' + w + '%"></span></span>';
+  }
+  return bar + '<span style="color:' + (st.colore || 'var(--f-muted)') + '">' + esc(st.testo || '') + '</span>';
+}
+
+function fontiEsito(id, testo, colore, perc) {
+  const prev = FONTI_ESITI[id] || {};
+  const err = colore === 'var(--f-red)';
+  const st = { testo: testo, colore: colore || 'var(--f-muted)', err: err };
+  if (typeof perc === 'number') {
+    /* mentre avanza la barra sale e basta; un errore può fermarla dove vuole */
+    st.perc = err ? perc : Math.max(perc, typeof prev.perc === 'number' ? prev.perc : 0);
+  } else if (typeof prev.perc === 'number') {
+    st.perc = prev.perc; /* messaggio senza percentuale: la barra resta dov'è */
+  }
+  FONTI_ESITI[id] = st;
   const e = document.getElementById('f-esito-' + id);
-  if (e) { e.textContent = testo; e.style.color = FONTI_ESITI[id].colore; }
+  if (e) e.innerHTML = fontiEsitoHTML(st);
 }
 
 async function fontiSalva(id) {
@@ -8723,7 +8760,8 @@ const FONTI_PASSI_ROTTI = ['error', 'errore', 'non_loggato', 'senza_credenziali'
 async function fontiAccedi(id) {
   if (!fontiPuoEntrare()) return;
   FONTI_ATTESA[id] = { codice: false };
-  fontiEsito(id, 'Avvio l\'accesso al portale…');
+  FONTI_ESITI[id] = null; /* barra da capo: è un accesso nuovo */
+  fontiEsito(id, 'Avvio l\'accesso al portale…', null, 8);
   fontiDisegna();
   try {
     await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
@@ -8749,13 +8787,13 @@ async function fontiAspetta(id) {
 
     if (/^loggato$/i.test(passo)) {
       FONTI_ATTESA[id] = null;
-      fontiEsito(id, msg || 'Accesso eseguito.', 'var(--f-green)');
+      fontiEsito(id, msg || 'Accesso eseguito.', 'var(--f-green)', 100);
       fontiCarica(true);
       return;
     }
     if (FONTI_PASSO_CODICE.test(passo)) {
       FONTI_ATTESA[id] = { codice: true, msg: msg };
-      fontiEsito(id, msg || 'Inserisci il codice qui sotto e premi Conferma.', 'var(--f-amber)');
+      fontiEsito(id, msg || 'Inserisci il codice qui sotto e premi Conferma.', 'var(--f-amber)', 80);
       fontiDisegna();
       setTimeout(() => document.getElementById('f-cod-' + id)?.focus(), 60);
       return;
@@ -8765,8 +8803,9 @@ async function fontiAspetta(id) {
       fontiCarica(true);
       return;
     }
-    /* Stati di passaggio: si dice a che punto e' e si continua. */
-    fontiEsito(id, msg || 'Accesso in corso…');
+    /* Stati di passaggio: si dice a che punto e' (barra) e si continua. */
+    const p = fontiPassoPerc(passo);
+    fontiEsito(id, msg || 'Accesso in corso…', null, p == null ? undefined : p);
   }
   fontiEsito(id, 'Ci sta mettendo più del previsto: premi «Controlla stato» fra poco.', 'var(--f-amber)');
 }
@@ -8836,12 +8875,36 @@ async function fontiVerifica(id) {
   /* «Verifica in corso», non «riuscito»: il secondo lo puo' dire solo il
       backend, e dirlo prima e' il modo piu' rapido di far fidare qualcuno di
       un collegamento che non funziona. */
-  fontiEsito(id, 'Verifica in corso…');
+  fontiEsito(id, 'Verifica in corso…', null, 12);
+  /* Prima di sentenziare guardo se un accesso e' gia' in volo: HDI e AXA
+     rientrano in ~80s in sottofondo, e una verifica secca durante quell'attesa
+     diceva «non confermato» su un login che stava andando a buon fine — era
+     l'errore che vedeva Francesco. Se e' in corso, seguo la barra. */
+  let st = null;
+  try { st = await mailFetch('/fonti/' + encodeURIComponent(id) + '/loginstate'); } catch (_) {}
+  const passo = String((st && st.step) || '').toLowerCase();
+  if (passo === 'loggato') {
+    FONTI_ATTESA[id] = null;
+    fontiEsito(id, (st && st.msg) || 'Accesso confermato dal motore.', 'var(--f-green)', 100);
+    fontiCarica(true); return;
+  }
+  if (FONTI_PASSO_CODICE.test(passo)) {
+    FONTI_ATTESA[id] = { codice: true, msg: (st && st.msg) || '' };
+    fontiEsito(id, (st && st.msg) || 'Inserisci il codice qui sotto e premi Conferma.', 'var(--f-amber)', 80);
+    fontiDisegna();
+    setTimeout(() => document.getElementById('f-cod-' + id)?.focus(), 60);
+    return;
+  }
+  const inVolo = !!(st && (st.running === true || fontiPassoPerc(passo) != null));
+  if (inVolo) { await fontiAspetta(id); return; }
+  /* Nessun accesso in volo: chiedo al motore una verifica secca. L'esito lo
+     legge dalla risposta, mai dal fatto che la richiesta sia partita. */
   try {
     const r = await mailFetch('/fonti/' + encodeURIComponent(id) + '/verifica', { method: 'POST' });
     const ok = !!(r && (r.ok === true || r.stato === 'attiva'));
-    fontiEsito(id, ok ? 'Accesso confermato dal motore.' : (r && r.messaggio) || 'Il motore non ha confermato l\'accesso.',
-      ok ? 'var(--f-green)' : 'var(--f-amber)');
+    fontiEsito(id,
+      ok ? 'Accesso confermato dal motore.' : (r && r.messaggio) || (st && st.msg) || 'Il motore non ha confermato l\'accesso.',
+      ok ? 'var(--f-green)' : 'var(--f-amber)', ok ? 100 : undefined);
     fontiCarica(true);
   } catch (e) { fontiEsito(id, 'Verifica non riuscita: ' + (e.message || ''), 'var(--f-red)'); }
 }

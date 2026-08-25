@@ -92,6 +92,7 @@ function apparecchia() {
       },
     },
     sessionStorage: { setItem() {}, getItem: () => null },
+    setUltimoTab() {}, getUltimoTab: () => null, // dove-eri-rimasto: qui non serve ricordarlo
     buildStorico() {}, loadContoDB() {},
   };
   vm.createContext(ctx);

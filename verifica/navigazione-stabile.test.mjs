@@ -64,6 +64,11 @@ function apparecchia(schedaMemorizzata) {
         setItem: (k, v) => { memoria[k] = String(v); },
         removeItem: (k) => { delete memoria[k]; }
       },
+      /* Dove-eri-rimasto: goTab salva con setUltimoTab, ripristinaScheda legge
+         con getUltimoTab. In produzione scrivono sessione + localStorage; qui
+         basta la stessa memoria condivisa che usa il resto della prova. */
+      setUltimoTab: (t) => { memoria['iam_last_tab'] = String(t); },
+      getUltimoTab: () => ('iam_last_tab' in memoria ? memoria['iam_last_tab'] : null),
       // tutto cio' che goTab chiama e qui non interessa
       selContabTab: (t) => visitate.push('contab:' + t),
       buildStorico(){}, loadTeamDB: async()=>{}, renderTeam(){}, renderTratt(){},

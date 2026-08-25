@@ -3426,6 +3426,8 @@ async function doLogout() {
   if (!confirm('Vuoi uscire dal tuo account?\n\nDovrai reinserire le credenziali per rientrare.')) return;
   if (db) await db.auth.signOut();
   try { Object.keys(sessionStorage).forEach(k => { if (k.indexOf('mfa_ok_') === 0) sessionStorage.removeItem(k); }); } catch(e){}
+  // Chi entra dopo parte pulito: non deve ereditare l'ultima sezione di un altro.
+  try { localStorage.removeItem('iam_last_tab'); sessionStorage.removeItem('iam_last_tab'); } catch(e){}
   document.getElementById('umenu').style.display = 'none';
 }
 
@@ -3712,7 +3714,7 @@ function selContabTab(sub) {
     if (btn) btn.classList.toggle('act', s===sub);
     if (pnl) pnl.style.display = s===sub ? '' : 'none';
   });
-  sessionStorage.setItem('iam_last_tab', sub);
+  setUltimoTab(sub);
   if (sub==='storico') buildStorico();
   if (sub==='conto') loadContoDB(); // ricarica estratto + note condivise dal database
 }
@@ -3768,7 +3770,7 @@ async function quotoUrl() {
 function apriQuoto() {
   // La destinazione (con email e sessione) viene costruita da quotoUrl() al redirect.
   // Evita che al rientro da QUOTO l'app riapra il tab "quoto" (loop): salva la dashboard
-  sessionStorage.setItem('iam_last_tab', 'dashboard');
+  setUltimoTab('dashboard');
   // 1) Morph "radicale" dell'interfaccia IAM
   const app = document.getElementById('app');
   if (app) {
@@ -3811,13 +3813,30 @@ let RIPRISTINO_FATTO = false;
 let RIPRISTINO_IN_CORSO = false;
 let UTENTE_HA_SCELTO = false;
 
+/* Dove eri rimasto. Prima la scheda si salvava solo in sessionStorage, che vale
+   per quella singola scheda del browser e sparisce appena la si chiude o si va
+   altrove. Così, uscendo da IAM per un'altra pagina e rientrando (o riaprendo
+   l'app in una nuova scheda), l'app «azzerava» tornando alla dashboard.
+   Ora si salva anche in localStorage (resta tra sessioni e schede): al rientro
+   si ritrova il punto. In lettura viene prima sessionStorage — se stai già
+   lavorando in QUESTA scheda vince la sua posizione — e in mancanza si ricade su
+   localStorage, l'ultima sezione vista. (25/08/2026) */
+function setUltimoTab(t) {
+  try { sessionStorage.setItem('iam_last_tab', t); } catch (e) {}
+  try { localStorage.setItem('iam_last_tab', t); } catch (e) {}
+}
+function getUltimoTab() {
+  try { return sessionStorage.getItem('iam_last_tab') || localStorage.getItem('iam_last_tab'); }
+  catch (e) { return null; }
+}
+
 function ripristinaScheda() {
   if (RIPRISTINO_FATTO) return;
   RIPRISTINO_FATTO = true;
   /* Chi sta già lavorando non si sposta. Vale più il clic di una persona che
      un valore rimasto in memoria dalla visita precedente. */
   if (UTENTE_HA_SCELTO) return;
-  const lastTab = sessionStorage.getItem('iam_last_tab');
+  const lastTab = getUltimoTab();
   RIPRISTINO_IN_CORSO = true;
   try {
     if (!lastTab) { goTab('dashboard'); return; }
@@ -3847,6 +3866,7 @@ function goTab(t) {
   const pp = document.getElementById('panel-'+t);
   if (nb) nb.classList.add('act');
   if (pp) pp.classList.add('act');
+  setUltimoTab(t);
   if (t === 'storico')     buildStorico();
   if (t === 'team')        { loadTeamDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
@@ -3858,7 +3878,6 @@ function goTab(t) {
     renderLead();
     loadLeadDB().then(() => renderLead());
   }
-  sessionStorage.setItem('iam_last_tab', t);
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
   if (t === 'pagamenti')   { renderPagamenti(); }
   if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }

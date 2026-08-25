@@ -2029,9 +2029,8 @@ input[type=file]{display:none;}
           </label>
         </div>
         <div class="fld"><label>Condividi con (lascia vuoto = solo tu)</label>
-          <select id="wd-condividi-sel" multiple size="4" style="width:100%;padding:8px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;font-size:13px;color:var(--txt);font-family:inherit;">
-          </select>
-          <div style="font-size:10px;color:var(--txt3);margin-top:4px;">Tieni premuto (o Ctrl/Cmd) per scegliere più colleghi. Se non condividi, l'operazione resta privata.</div>
+          <div id="wd-condividi-box" style="width:100%;max-height:132px;overflow-y:auto;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;font-size:13px;color:var(--txt);padding:4px;"></div>
+          <div style="font-size:10px;color:var(--txt3);margin-top:4px;">Spunta i colleghi con cui condividere. Togli la spunta per non condividere più. Se non spunti nessuno, l'operazione resta privata.</div>
         </div>
       </div>
       <div class="fld"><label>Descrizione / Note</label><textarea id="wd-note" rows="3" placeholder="Dettagli operazione..."></textarea></div>
@@ -11560,16 +11559,20 @@ async function openWDModal(id) {
   const mapLinkEl = document.getElementById('wd-luogo-map-link');
   if (mapLinkEl) mapLinkEl.style.display = 'none';
 
-  // Popola condividi con select a tendina (escludi se stesso)
-  const sel = document.getElementById('wd-condividi-sel');
-  if (sel) {
+  // Popola «Condividi con» come spunte (escludi se stesso). Le caselle si
+  // accendono e SPENGONO con un clic: niente più Ctrl/Cmd per togliere una
+  // condivisione scelta per sbaglio (impossibile da trackpad/telefono).
+  const box = document.getElementById('wd-condividi-box');
+  if (box) {
     try {
       const condivisiAttuali = w?.condivisi || [];
       await caricaUtenti();
-      sel.innerHTML =
-        UTENTI_LISTA.filter(u => u.id !== ME?.id && u.attivo).map(u =>
-          `<option value="${u.id}" ${condivisiAttuali.includes(u.id)?'selected':''}>${esc(((u.nome||'')+' '+(u.cognome||'')).trim()||u.email)}</option>`
-        ).join('') || '<option value="" disabled>Nessun collega disponibile</option>';
+      const colleghi = UTENTI_LISTA.filter(u => u.id !== ME?.id && u.attivo);
+      box.innerHTML = colleghi.length ? colleghi.map(u => {
+        const nome = esc(((u.nome||'')+' '+(u.cognome||'')).trim() || u.email);
+        const on = condivisiAttuali.includes(u.id) ? 'checked' : '';
+        return `<label style="display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;cursor:pointer;"><input type="checkbox" class="wd-cond-cb" value="${esc(u.id)}" ${on} style="width:16px;height:16px;flex:none;cursor:pointer;"><span>${nome}</span></label>`;
+      }).join('') : '<div style="padding:8px;color:var(--txt3);font-size:12px;">Nessun collega disponibile.</div>';
     } catch(e) {
       console.warn('openWDModal utenti error:', e);
     }
@@ -11594,8 +11597,8 @@ function openWDFile(id) {
 
 function saveWD() {
   const gv = id => (document.getElementById(id)?.value||'').trim();
-  const _selCond = document.getElementById('wd-condividi-sel');
-  const condivisi = _selCond ? [..._selCond.selectedOptions].map(o=>o.value).filter(Boolean) : [];
+  const _condBox = document.getElementById('wd-condividi-box');
+  const condivisi = _condBox ? [..._condBox.querySelectorAll('.wd-cond-cb:checked')].map(cb=>cb.value).filter(Boolean) : [];
   const existing = WD_ID ? WD.find(x=>x.id===WD_ID) : null;
   const w = {
     id:        WD_ID||Date.now().toString(),

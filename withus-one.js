@@ -294,6 +294,7 @@
         { l: 'Sospesi', i: 'i-hour', go: function () { vai('sospesi'); } },
         { l: 'Storico movimenti', i: 'i-list', go: function () { vai('storico'); } },
         { l: 'Conto', i: 'i-bank', go: function () { vai('conto'); } },
+        { l: 'Link di pagamento', i: 'i-euro', act: 'pagamenti', go: function () { vai('pagamenti'); } },
         { hr: true },
         { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } }
       ] },

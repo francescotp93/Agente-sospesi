@@ -384,6 +384,7 @@
     sospesi:     ['Sospesi', 'Contabilità'],
     storico:     ['Storico movimenti', 'Contabilità'],
     conto:       ['Conto', 'Contabilità'],
+    pagamenti:   ['Link di pagamento', 'Contabilità'],
     ticket:      ['Ticket', 'Richieste'],
     posta:       ['Posta', 'Clienti'],
     agenda:      ['Agenda', 'Agenzia']

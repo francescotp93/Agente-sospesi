@@ -1339,6 +1339,34 @@ input[type=file]{display:none;}
 
 <div class="panels">
 
+<!-- Pagamenti: link Stripe da inviare al cliente per un importo libero.
+     DEVE stare DENTRO .panels (come gli altri pannelli): fuori di qui il pannello
+     si posiziona rispetto all'intera finestra e copre le barre / si sovrappone. -->
+<div class="panel" id="panel-pagamenti" style="overflow-y:auto;">
+  <div style="max-width:760px;margin:0 auto;padding:22px 6px 40px;">
+    <div style="margin-bottom:18px;">
+      <h1 style="font-size:24px;letter-spacing:-.03em;margin:0 0 5px;">Link di pagamento</h1>
+      <p style="margin:0;color:var(--txt2,#5a6b7c);font-size:12.5px;line-height:1.5;">Genera un link Stripe da inviare al cliente per un importo a piacere. Il cliente paga con carta; quando paga, qui il pagamento passa a «pagato».</p>
+    </div>
+    <div style="background:var(--surf,#fff);border:1px solid var(--bord2,#e4e9ee);border-radius:12px;padding:18px;">
+      <div style="display:grid;grid-template-columns:150px 1fr;gap:12px 14px;align-items:center;">
+        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Importo (€)</label>
+        <input id="pg-importo" type="text" inputmode="decimal" placeholder="es. 150,00" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
+        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Causale</label>
+        <input id="pg-causale" type="text" placeholder="es. RC Auto — Oddo Francesco" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
+        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Cliente <span style="font-weight:500;">(facoltativo)</span></label>
+        <input id="pg-cliente" type="text" placeholder="Nome del cliente" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap;">
+        <button id="pg-crea" onclick="pagCreaLink()" style="height:40px;border:none;border-radius:9px;background:var(--acc,#087747);color:#fff;font-weight:700;font-size:13px;padding:0 18px;cursor:pointer;">Genera link</button>
+        <span id="pg-esito" style="font-size:12.5px;color:var(--txt2,#5a6b7c);"></span>
+      </div>
+    </div>
+    <h2 style="font-size:15px;margin:26px 0 10px;">Ultimi link</h2>
+    <div id="pg-lista" style="display:flex;flex-direction:column;gap:8px;"><div style="color:var(--txt3,#8a9a92);font-size:12px;">—</div></div>
+  </div>
+</div>
+
 <!-- CONTABILITÀ -->
 <div class="panel act" id="panel-carica">
   <!-- Sotto-tab Contabilità -->
@@ -3065,33 +3093,6 @@ input[type=file]{display:none;}
      MOTIVATO delle aree da approfondire — non un preventivo e non una
      raccomandazione automatica.
      Specifica completa in docs/analisi-bisogni/. -->
-<!-- Pagamenti: link Stripe da inviare al cliente per un importo libero.
-     La chiave Stripe non sta qui: la funzione Edge 'stripe' la legge dai secret. -->
-<div class="panel" id="panel-pagamenti" style="overflow-y:auto;">
-  <div style="max-width:760px;margin:0 auto;padding:22px 6px 40px;">
-    <div style="margin-bottom:18px;">
-      <h1 style="font-size:24px;letter-spacing:-.03em;margin:0 0 5px;">Link di pagamento</h1>
-      <p style="margin:0;color:var(--txt2,#5a6b7c);font-size:12.5px;line-height:1.5;">Genera un link Stripe da inviare al cliente per un importo a piacere. Il cliente paga con carta; quando paga, qui il pagamento passa a «pagato».</p>
-    </div>
-    <div style="background:var(--surf,#fff);border:1px solid var(--bord2,#e4e9ee);border-radius:12px;padding:18px;">
-      <div style="display:grid;grid-template-columns:150px 1fr;gap:12px 14px;align-items:center;">
-        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Importo (€)</label>
-        <input id="pg-importo" type="text" inputmode="decimal" placeholder="es. 150,00" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
-        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Causale</label>
-        <input id="pg-causale" type="text" placeholder="es. RC Auto — Oddo Francesco" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
-        <label style="font-size:12px;font-weight:700;color:var(--txt2,#5a6b7c);">Cliente <span style="font-weight:500;">(facoltativo)</span></label>
-        <input id="pg-cliente" type="text" placeholder="Nome del cliente" style="height:40px;border:1px solid var(--bord2,#dfe6e2);border-radius:9px;padding:0 12px;font-size:14px;background:var(--surf2,#fff);color:var(--txt,#1a2b23);">
-      </div>
-      <div style="display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap;">
-        <button id="pg-crea" onclick="pagCreaLink()" style="height:40px;border:none;border-radius:9px;background:var(--acc,#087747);color:#fff;font-weight:700;font-size:13px;padding:0 18px;cursor:pointer;">Genera link</button>
-        <span id="pg-esito" style="font-size:12.5px;color:var(--txt2,#5a6b7c);"></span>
-      </div>
-    </div>
-    <h2 style="font-size:15px;margin:26px 0 10px;">Ultimi link</h2>
-    <div id="pg-lista" style="display:flex;flex-direction:column;gap:8px;"><div style="color:var(--txt3,#8a9a92);font-size:12px;">—</div></div>
-  </div>
-</div>
-
 <div class="panel" id="panel-analisi">
   <section class="ab-head">
     <div>

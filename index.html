@@ -8582,6 +8582,13 @@ function fontiScheda(f) {
     <div class="f-corpo">
       ${avviso}
       <div class="f-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;padding:10px 12px;border:1px solid var(--f-line);border-radius:9px;background:#f7faf8">
+          <span style="display:flex;flex-direction:column;gap:1px">
+            <b style="font-size:12.5px;color:#1f2733">Attiva nelle quotazioni</b>
+            <small style="font-size:10.5px;color:var(--f-muted)">${f.attiva === false ? 'Spenta: non esce nel confronto preventivi.' : 'Entra nel confronto preventivi.'}</small>
+          </span>
+          <label class="sw" style="margin:0"><input type="checkbox" ${f.attiva === false ? '' : 'checked'} onchange="fontiAttivaToggle('${esc(f.id)}', this)"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+        </div>
         <div class="f-st"><i class="ti ti-key"></i><span><b>Credenziali e accesso</b><small>I valori salvati restano sul server e non vengono mostrati.</small></span></div>
         <div class="f-grid">
           <div class="f-f full"><label>Link di accesso</label><input id="f-url-${esc(f.id)}" value="${esc(f.url || '')}" placeholder="https://portale.compagnia.it/login"${f.custom ? '' : ' disabled style="background:#f4f7f5;color:var(--f-muted)"'}>
@@ -8811,6 +8818,23 @@ let FONTI_ATTESA = {};
       messaggio e si continua ad aspettare. */
 const FONTI_PASSO_CODICE = /^(attesa_otp|attesa_codice)$/i;
 const FONTI_PASSI_ROTTI = ['error', 'errore', 'non_loggato', 'senza_credenziali', 'timeout_otp', 'totp_rifiutato'];
+
+/* Interruttore «entra nelle quotazioni»: spegne una compagnia nel confronto
+   preventivi senza toccarle le credenziali (utile quando un portale è rotto e
+   la si vuole parcheggiare, es. Prima). Aggiorna subito lo stato sul server;
+   se fallisce, rimette lo switch com'era. */
+async function fontiAttivaToggle(id, el) {
+  const on = !!(el && el.checked);
+  try {
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/attiva', { method: 'POST', body: JSON.stringify({ attiva: on }) });
+    fontiEsito(id, on ? 'Attiva: entra nel confronto preventivi.' : 'Spenta: non esce nelle quotazioni.', on ? 'var(--f-green)' : 'var(--f-amber)');
+    const sub = el && el.closest('div') && el.closest('div').querySelector('small');
+    if (sub) sub.textContent = on ? 'Entra nel confronto preventivi.' : 'Spenta: non esce nel confronto preventivi.';
+  } catch (e) {
+    if (el) el.checked = !on; // ripristino lo switch com'era
+    fontiEsito(id, 'Non salvato: ' + (e.message || ''), 'var(--f-red)');
+  }
+}
 
 async function fontiAccedi(id) {
   if (!fontiPuoEntrare()) return;

@@ -173,7 +173,12 @@
     var p = riquadro();
     if (!p) { setTimeout(function () { aprireQuoto(page, opz); }, 200); return; }
 
-    var pan = document.querySelectorAll('#app .panel');
+    /* '.panel' e non '#app .panel': alcuni pannelli (fonti, analisi, pagamenti)
+       vivono FUORI da #app, e goTab li attiva col selettore globale. Se qui li
+       cercassimo solo dentro #app resterebbero attivi e si sovrapporrebbero al
+       preventivatore (era il caso: aprendo Portafoglio da Link di pagamento, il
+       riquadro pagamenti restava sopra la tabella polizze). */
+    var pan = document.querySelectorAll('.panel');
     for (var i = 0; i < pan.length; i++) pan[i].classList.remove('act');
     var nb = document.querySelectorAll('#app .nav .nbtn');
     for (var j = 0; j < nb.length; j++) nb[j].classList.remove('act');

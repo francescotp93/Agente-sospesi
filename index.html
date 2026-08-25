@@ -8980,6 +8980,14 @@ function pagCopia(btn) {
   try { navigator.clipboard.writeText(url); const t = btn.textContent; btn.textContent = 'Copiato ✓'; setTimeout(() => { btn.textContent = t; }, 1500); } catch (e) {}
 }
 
+async function pagElimina(id) {
+  if (!confirm('Eliminare questo link di pagamento? Il link non sarà più pagabile.')) return;
+  try {
+    await stripeFetch('/elimina', { id: id });
+    renderPagamentiLista();
+  } catch (e) { alert('Non eliminato: ' + (e.message || e)); }
+}
+
 async function pagCreaLink() {
   const g = id => (document.getElementById(id)?.value || '').trim();
   const importo = g('pg-importo'), causale = g('pg-causale'), cliente = g('pg-cliente');
@@ -9018,6 +9026,7 @@ async function renderPagamentiLista() {
         '<div style="font-size:11px;color:var(--txt3,#8a9a92);margin-top:2px;">' + esc(quando) + (p.cliente ? ' · ' + esc(p.cliente) : '') + '</div></div>' +
         '<span style="font-size:11px;font-weight:700;color:' + st[1] + ';">' + esc(st[0]) + '</span>' +
         (p.stripe_url && p.stato === 'creato' ? ' <button type="button" data-url="' + esc(p.stripe_url) + '" onclick="pagCopia(this)" style="font-size:11px;padding:3px 9px;border:1px solid var(--bord2,#dfe6e2);border-radius:6px;background:var(--surf2,#fff);cursor:pointer;">Copia link</button>' : '') +
+        (p.stato !== 'pagato' ? ' <button type="button" onclick="pagElimina(\'' + esc(p.id) + '\')" title="Elimina" style="font-size:11px;padding:3px 9px;border:1px solid var(--red-bg,#fdecea);border-radius:6px;background:var(--red-bg,#fdecea);color:var(--red-txt,#ad3a32);cursor:pointer;">Elimina</button>' : '') +
         '</div>';
     }).join('');
   } catch (e) { box.innerHTML = '<div style="color:var(--red-txt,#ad3a32);font-size:12px;">Errore lettura: ' + esc(e.message || String(e)) + '</div>'; }

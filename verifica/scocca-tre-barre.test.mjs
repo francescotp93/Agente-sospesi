@@ -186,7 +186,7 @@ prova('nessuna emoji: solo icone vettoriali', () => {
 });
 
 prova('il riquadro ha il suo posto nel foglio di stile', () => {
-  for (const c of ['#panel-quoto-live', '.w1-stage', '.w1-frame', '.w1-load', '.w1-spin']) {
+  for (const c of ['#panel-quoto-live', '.w1-stage', '.w1-frame', '.w1-load', '.w1-load-logo']) {
     deve(css.includes(c), 'manca la regola per ' + c);
   }
   deve(/body\.theme-dark[\s\S]{0,120}\.w1-frame/.test(css), 'il riquadro non segue il tema scuro');

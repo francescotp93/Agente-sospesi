@@ -380,24 +380,45 @@ body.theme-dark .w1-dot{ border-color:var(--surf); }
   border:0; display:block; background:#fff;
 }
 
+/* Attesa del preventivatore. Al posto della rotellina c'e' il marchio:
+   e' lo stesso fotogramma che mostra QUOTO mentre si apre (#boot-screen),
+   cosi' il passaggio da IAM al preventivatore non ha stacchi — una sola
+   schermata bianca con il logo che respira, dall'inizio alla fine. */
 .w1-load{
   position:absolute; inset:0; z-index:2;
-  display:flex; align-items:center; justify-content:center; gap:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
   background:#fff;
-  font-size:13px; color:var(--w1-txt2);
+  font-size:12.5px; color:var(--w1-txt2);
   letter-spacing:.2px;
 }
 
-.w1-spin{
-  width:16px; height:16px; border-radius:50%;
-  border:2px solid var(--w1-bordo);
-  border-top-color:var(--w1-verde);
-  animation:w1-gira .7s linear infinite;
+.w1-load-logo{
+  width:164px; height:auto; display:block;
+  animation:w1-respiro 1.6s ease-in-out infinite;
 }
 
-@keyframes w1-gira{ to{ transform:rotate(360deg); } }
+/* La scritta resta nel documento ma non a schermo: sotto il marchio non serve
+   a chi vede (il logo che respira dice gia' che si sta aprendo), serve a chi
+   usa un lettore di schermo — e a lui la rotellina non avrebbe detto nulla. */
+.w1-load-txt{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap; border:0;
+}
+
+@keyframes w1-respiro{
+  0%,100%{ opacity:.45; transform:scale(.965); }
+  50%    { opacity:1;   transform:scale(1); }
+}
+
+/* Chi ha chiesto meno movimento vede il marchio fermo, non un vuoto. */
+@media (prefers-reduced-motion:reduce){
+  .w1-load-logo{ animation:none; opacity:1; }
+}
 
 body.theme-dark .w1-stage,
-body.theme-dark .w1-frame,
-body.theme-dark .w1-load{ background:var(--surf); }
-body.theme-dark .w1-load{ color:var(--txt2); }
+body.theme-dark .w1-frame{ background:var(--surf); }
+
+/* L'attesa resta bianca anche in tema scuro: il preventivatore che sta per
+   comparire dentro il riquadro e' chiaro, quindi un velo scuro qui vorrebbe
+   dire far lampeggiare lo schermo due volte in due secondi. Bianco e poi
+   bianco: il marchio e' l'unica cosa che si muove. */

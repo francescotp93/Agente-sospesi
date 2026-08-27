@@ -79,7 +79,10 @@
     p.id = 'panel-quoto-live';
     p.innerHTML =
       '<div class="w1-stage">' +
-      '<div class="w1-load" id="w1-qload"><span class="w1-spin"></span> Apertura preventivatore…</div>' +
+      '<div class="w1-load" id="w1-qload">' +
+      '<img class="w1-load-logo" src="withus-logo.png" alt="With Us">' +
+      '<span class="w1-load-txt">Apertura del preventivatore…</span>' +
+      '</div>' +
       /* `allow=""` toglie al riquadro tutte le funzioni delicate del browser
          (fotocamera, microfono, posizione, pagamenti): il preventivatore non ne
          usa nessuna e cosi' non puo' chiederle a nome di IAM.

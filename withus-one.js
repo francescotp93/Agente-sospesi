@@ -337,17 +337,19 @@
     { key: 'quoto', l: 'Nuovo preventivo', i: 'i-plus', mirror: 'nb-quoto',
       nuovo: true, mega: true },
 
-    /* Il capo-menu apre la PRIMA voce del suo elenco, non una a caso in mezzo:
-       prima «Clienti» portava alle Trattative. (bug del 30/07/2026) */
+    /* Un capo-menu con sotto-voci, cliccato, apre SOLTANTO la sua tendina: non
+       naviga da solo (IAM.md §11.5-6). Questo sostituisce la vecchia cura del
+       30/07/2026 («il capo-menu apre la PRIMA voce»), che nasceva dallo stesso
+       problema — Clienti che portava alle Trattative — e lo curava a metà.
+       Il `go` qui sotto serve solo quando la voce NON ha sotto-voci (o con
+       `vaiSubito`). */
     { key: 'clienti', l: 'Clienti', i: 'i-users', go: Q('anagrafiche'),
       sub: [
         { l: 'Anagrafiche', i: 'i-user', go: Q('anagrafiche') },
-        { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } },
-        /* «Lead» e' andata sotto Marketing: qui era un doppione (IAM.md §10).
-           «Documenti» era modulistica di prodotto, non roba del cliente: spostata
-           in Strumenti › Utility (era nel posto sbagliato sotto Clienti). */
-        { hr: true },
-        { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); setActive('posta'); } }
+        { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } }
+        /* «Lead» e' andata sotto Marketing, «Posta» sotto Strumenti, «Documenti»
+           sotto Strumenti › Utility: qui erano tutte nel posto sbagliato
+           (IAM.md §10, §11.1). */
       ] },
 
     { key: 'portafoglio', l: 'Portafoglio', i: 'i-case', go: Q('portafoglio'),
@@ -375,8 +377,12 @@
     { key: 'agenzia', l: 'Agenzia', i: 'i-build', go: function () { vai('team'); },
       sub: [
         { l: 'Collaboratori', i: 'i-users', act: 'team', mirror: 'nb-team', go: function () { vai('team'); } },
-        { l: 'Agenda', i: 'i-cal', go: function () { vai('dashboard'); tryCall('openAgendaModal'); setActive('agenda'); } },
-        { l: 'Diario di lavoro', i: 'i-note', act: 'workdiary', mirror: 'nb-workdiary', go: function () { vai('workdiary'); } },
+        /* La voce «Agenda» apriva la finestra dell'appuntamento: ora quel punto
+           d'ingresso porta al Diario di lavoro (IAM.md §11.4) — che è già qui
+           sotto. Averle tutte e due significava due nomi per lo stesso posto, il
+           doppione che il §2 vieta: resta il Diario. La finestra dell'appuntamento
+           si apre ancora col tasto «Nuovo» dentro il Diario. */
+        { l: 'Diario di lavoro', i: 'i-cal', act: 'workdiary', mirror: 'nb-workdiary', go: function () { vai('workdiary'); } },
         { l: 'KPI e gare', i: 'i-chart', act: 'performance', mirror: 'nb-performance', go: function () { vai('performance'); } },
         { hr: true },
         { l: 'Produzione e storico', i: 'i-trend', go: Q('storico') },
@@ -390,7 +396,10 @@
        (erano in Strumenti), Lead (era in Clienti). Il nome «Lab» sparisce: non
        e' un'altra applicazione, e' una sezione di IAM (IAM.md §10). Il cancello
        resta `lab_abilitato`, letto dal pulsante nascosto nb-marketing. */
-    { key: 'marketing', l: 'Marketing', i: 'i-flask', mirror: 'nb-marketing',
+    /* vaiSubito: eccezione alla regola §11.5-6 (un capo-menu con sotto-voci apre
+       solo la tendina). Marketing apre SUBITO la sua dashboard (IAM.md §10),
+       mostrando comunque le sotto-voci nella colonna. */
+    { key: 'marketing', l: 'Marketing', i: 'i-flask', mirror: 'nb-marketing', vaiSubito: true,
       go: function () { aprireMarketing(); },
       sub: [
         { l: 'Dashboard', i: 'i-grid', go: function () { aprireMarketing(); } },
@@ -419,6 +428,10 @@
           { l: 'Documenti utili',  i: 'i-file', go: Q('utility:documento') },
           { l: 'Link utili',       i: 'i-ext',  go: Q('utility:link') },
         ] },
+        /* «Posta» era sotto Clienti, ma non è roba del singolo cliente: è uno
+           strumento dell'agenzia. L'icona posta nella fascia resta dov'è, è una
+           scorciatoia (IAM.md §11.1). */
+        { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); setActive('posta'); } },
         { hr: true },
         { l: 'Banca dati ANIA', i: 'i-db', ext: ANIA },
         { l: 'AssiEasy', i: 'i-ext', ext: ASSIEASY }
@@ -472,7 +485,7 @@
     conto:       ['Conto', 'Contabilità'],
     pagamenti:   ['Link di pagamento', 'Contabilità'],
     ticket:      ['Ticket', 'Richieste'],
-    posta:       ['Posta', 'Clienti'],
+    posta:       ['Posta', 'Strumenti'],
     agenda:      ['Agenda', 'Agenzia']
   };
 
@@ -528,6 +541,7 @@
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'marketing',
     fonti: 'strumenti', analisi: 'marketing', collegamenti: 'strumenti',
+    posta: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
   };
 
@@ -658,10 +672,18 @@
         a.onclick = function (e) {
           e.preventDefault(); e.stopPropagation();
           var aperta = w.classList.contains('open');
+          var haSub = m.sub || m.mega;
           chiudiTendine();
-          if (m.sub || m.mega) { if (!aperta) w.classList.add('open'); }
-          if (typeof m.go === 'function') m.go();
-          if (!m.sub && !m.mega) chiudiCassetto();
+          if (haSub && !aperta) w.classList.add('open');
+          /* Capo-menu con sotto-voci: il clic apre SOLTANTO la tendina, non
+             naviga (IAM.md §11.5-6). Si naviga scegliendo una sotto-voce — così
+             sparisce anche il bug della tendina che restava aperta sopra l'elenco
+             (26/08/2026), perché non si naviga più nello stesso clic che apre.
+             Eccezione `vaiSubito` (Marketing, §10): apre subito la sua pagina. */
+          if (!haSub || m.vaiSubito) {
+            if (typeof m.go === 'function') m.go();
+            chiudiCassetto();
+          }
         };
       })(m, w, a);
 
@@ -721,9 +743,10 @@
         '<div class="w1-gres" id="w1-gres" role="listbox" aria-label="Risultati"></div>' +
       '</div>' +
       '<div class="w1-tright">' +
-        '<button class="w1-ibtn" id="w1-b-agenda" title="Agenda">' + ico('i-cal') + '</button>' +
+        '<button class="w1-ibtn" id="w1-b-agenda" title="Diario di lavoro">' + ico('i-cal') + '</button>' +
         '<button class="w1-ibtn" id="w1-b-posta" title="Posta" data-mirror="nb-posta">' + ico('i-mail') + '</button>' +
-        '<span class="w1-pill" id="w1-pill">In attesa</span>' +
+        /* Via la spia «OK» dalla fascia (IAM.md §11.3): era la copia di #s-pill.
+           L'originale nascosto in index.html resta — i permessi ci scrivono sopra. */
         '<div class="w1-user" id="w1-user">' +
           '<div class="w1-av" id="w1-av">?</div>' +
           '<div class="w1-uinfo"><b id="w1-uname">Utente</b><span id="w1-urole">—</span></div>' +
@@ -738,7 +761,10 @@
       if (b) b.classList.toggle('open');
       if (s) s.classList.toggle('open');
     };
-    top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
+    // L'icona calendario porta al Diario di lavoro, non più alla finestra di
+    // creazione appuntamento (IAM.md §11.4). L'appuntamento si crea col tasto
+    // «Nuovo» dentro il Diario.
+    top.querySelector('#w1-b-agenda').onclick = function () { vai('workdiary'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
        Serve fermare la propagazione, altrimenti il gestore di IAM che
@@ -1152,13 +1178,7 @@
 
   function mirrorHeader() {
     function sync() {
-      var pill = document.getElementById('s-pill');
-      var w1p = document.getElementById('w1-pill');
-      if (pill && w1p) {
-        w1p.textContent = pill.textContent.trim();
-        w1p.className = 'w1-pill' + (pill.classList.contains('warn') ? ' warn' :
-          (/pront|attiv|online|ok|collegat/i.test(pill.textContent) ? ' ok' : ''));
-      }
+      // La spia «OK» non è più nella fascia (IAM.md §11.3): niente da rispecchiare.
       var av = document.getElementById('u-av');
       var w1a = document.getElementById('w1-av');
       if (av && w1a) {

@@ -59,8 +59,10 @@ e.prova('Ticket, Posta e Agenda hanno il loro titolo', () => {
 
 e.prova('le voci che non passano da vai() dichiarano il titolo da sole', () => {
   /* Posta apre un pannello senza cambiare scheda: se non chiamasse setActive,
-     in alto resterebbe scritto il nome della pagina precedente. */
-  ['Posta', 'Agenda'].forEach(l => {
+     in alto resterebbe scritto il nome della pagina precedente.
+     «Agenda» non è più una voce di menu (IAM.md §11.4): la sua funzione l'ha
+     assorbita il Diario di lavoro, che passa da vai() e non ha questo problema. */
+  ['Posta'].forEach(l => {
     const riga = src.split('\n').find(r => r.includes("l: '" + l + "'"));
     deve(riga && /setActive\(/.test(riga), '«' + l + '» non aggiorna il titolo');
   });

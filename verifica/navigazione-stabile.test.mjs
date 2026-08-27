@@ -72,6 +72,7 @@ function apparecchia(schedaMemorizzata) {
       // tutto cio' che goTab chiama e qui non interessa
       selContabTab: (t) => visitate.push('contab:' + t),
       buildStorico(){}, loadTeamDB: async()=>{}, renderTeam(){}, renderTratt(){},
+      selOperativaTab: (t) => visitate.push('operativa:' + t),
       loadTrattDB: async()=>{}, renderLead(){}, loadLeadDB: async()=>{},
       loadWD_DB: async()=>{}, selWDTab(){}, renderWDCal(){}, subscribeWD(){},
       mostraResiduiKPI(){}, selPerfTab(){}, loadREFromDB(){}, loadAzienda(){},

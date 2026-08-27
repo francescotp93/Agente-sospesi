@@ -374,20 +374,18 @@
         { l: 'Estratto conto', i: 'i-dl', go: function () { tryCall('openEstrattoConto'); } }
       ] },
 
-    { key: 'agenzia', l: 'Agenzia', i: 'i-build', go: function () { vai('team'); },
+    { key: 'agenzia', l: 'Agenzia', i: 'i-build', go: function () { vai('workdiary'); },
       sub: [
-        { l: 'Collaboratori', i: 'i-users', act: 'team', mirror: 'nb-team', go: function () { vai('team'); } },
-        /* La voce «Agenda» apriva la finestra dell'appuntamento: ora quel punto
-           d'ingresso porta al Diario di lavoro (IAM.md §11.4) — che è già qui
-           sotto. Averle tutte e due significava due nomi per lo stesso posto, il
-           doppione che il §2 vieta: resta il Diario. La finestra dell'appuntamento
-           si apre ancora col tasto «Nuovo» dentro il Diario. */
+        /* «Collaboratori» e le due code «Emissioni» / «Richieste all'ufficio»
+           sono passate sotto Strumenti › Operativa, l'hub del rapporto con i
+           collaboratori (IAM.md §11.7). Qui resta l'agenzia in senso stretto.
+           La voce «Agenda» apriva la finestra dell'appuntamento: ora quel punto
+           d'ingresso porta al Diario di lavoro (§11.4), che è già qui sotto. La
+           finestra dell'appuntamento si apre col tasto «Nuovo» dentro il Diario. */
         { l: 'Diario di lavoro', i: 'i-cal', act: 'workdiary', mirror: 'nb-workdiary', go: function () { vai('workdiary'); } },
         { l: 'KPI e gare', i: 'i-chart', act: 'performance', mirror: 'nb-performance', go: function () { vai('performance'); } },
         { hr: true },
-        { l: 'Produzione e storico', i: 'i-trend', go: Q('storico') },
-        { l: 'Emissioni', i: 'i-checkc', go: Q('emissioni') },
-        { l: 'Richieste all\'ufficio', i: 'i-tick', go: Q('richieste') }
+        { l: 'Produzione e storico', i: 'i-trend', go: Q('storico') }
       ] },
 
     /* MARKETING (ex «Lab»): una voce propria. Cliccandola si apre subito la
@@ -419,6 +417,10 @@
            che fa tutte e due le cose e' quella che nessuno capisce piu'.
            Campagne email e Analisi dei bisogni sono passate sotto Marketing. */
         { l: 'Stato collegamenti', i: 'i-plug', act: 'collegamenti', go: function(){ vai('collegamenti'); } },
+        /* Operativa: l'hub del rapporto con i collaboratori — chi sono e cosa
+           mandano (Collaboratori, Emissioni, Preventivi, Supporto), in una pagina
+           a schede (IAM.md §11.7). Prima erano sparse fra Agenzia e le code. */
+        { l: 'Operativa', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
         /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
            sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su
            Utility le apre, un clic sulla categoria porta il preventivatore già
@@ -463,7 +465,8 @@
        Analisi dei bisogni e Lead sono passate sotto Marketing (IAM.md §10). */
     analisi:     ['Analisi dei bisogni', 'Marketing'],
     carica:      ['Contabilità', 'Contabilità'],
-    team:        ['Collaboratori', 'Agenzia'],
+    team:        ['Collaboratori', 'Operativa'],
+    operativa:   ['Operativa', 'Strumenti'],
     pipeline:    ['Trattative', 'Clienti'],
     lead:        ['Lead', 'Marketing'],
     workdiary:   ['Diario di lavoro', 'Agenzia'],
@@ -538,7 +541,8 @@
   var TAB2MENU = {
     dashboard: 'dashboard', carica: 'carica', anomalie: 'carica', sospesi: 'carica',
     quadratura: 'carica', caricafile: 'carica',
-    storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
+    storico: 'carica', conto: 'carica', team: 'strumenti', operativa: 'strumenti',
+    workdiary: 'agenzia',
     performance: 'agenzia', pipeline: 'clienti', lead: 'marketing',
     fonti: 'strumenti', analisi: 'marketing', collegamenti: 'strumenti',
     posta: 'strumenti',

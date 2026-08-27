@@ -176,7 +176,10 @@ prova('ogni voce del menu apre una pagina che nel preventivatore esiste', () => 
   // almeno che ogni voce dichiari una pagina e che non ci siano doppioni
   // involontari verso la stessa destinazione con etichette diverse.
   const dest = [...corpo.matchAll(/go: Q\('([a-z-]+)'\)/g)].map(m => m[1]);
-  deve(dest.length >= 10, 'poche voci collegate al preventivatore: ' + dest.length);
+  // Emissioni e Preventivi non sono più voci Q() del menu: sono schede di
+  // Operativa, aperte da selOperativaTab con withusOneApri (§11.7). Perciò il
+  // conteggio delle voci Q() dirette è sceso — la soglia segue.
+  deve(dest.length >= 8, 'poche voci collegate al preventivatore: ' + dest.length);
   deve(dest.includes('portafoglio'), 'manca la voce del portafoglio');
   deve(dest.includes('scadenzario'), 'la voce Scadenzario non porta allo scadenzario');
   // ogni destinazione deve avere titolo e briciole, altrimenti la terza barra

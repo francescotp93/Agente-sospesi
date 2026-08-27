@@ -1086,7 +1086,33 @@
     app.insertBefore(costruisciBarra2(), app.firstChild);
     app.insertBefore(costruisciBarra1(), app.firstChild);
 
+    /* ═══ CHIUSURA DELLE TENDINE ══════════════════════════════════════
+       Il click sul documento da solo NON basta. Il contenuto di IAM vive in un
+       iframe su un altro dominio (quoto.withusassicurazioni.it): i click dentro
+       quel riquadro non arrivano mai a questo documento, quindi una tendina
+       aperta restava aperta SOPRA l'elenco clienti anche mentre ci si stava
+       lavorando dentro (segnalato il 26/08/2026 su «Clienti»).
+       Non e' un difetto della sola voce Clienti: sono sei le voci che navigano
+       e aprono la tendina nello stesso clic (go + sub) — Clienti, Portafoglio,
+       Contabilita', Agenzia, Strumenti, Amministrazione — piu' il mega-menu
+       «Nuovo preventivo». Per questo il rimedio sta qui, in un posto solo.
+       NB: niente 'pointerdown' sul documento: scatterebbe PRIMA del click che
+       apre la voce, e la tendina non si aprirebbe piu'. */
     document.addEventListener('click', chiudiTendine);
+
+    /* Il puntatore ha lasciato la barra: la tendina ha finito il suo lavoro.
+       Scendere sulle voci NON la chiude, perche' la tendina e' figlia della
+       barra e mouseleave non scatta verso i propri discendenti. */
+    var barraMenu = document.getElementById('w1-mbar');
+    if (barraMenu) barraMenu.addEventListener('mouseleave', chiudiTendine);
+
+    /* Il fuoco e' passato dentro il riquadro del preventivatore: e' il segnale
+       che l'agente sta lavorando li' dentro, e li' la tendina da' solo fastidio.
+       E' questa la rete che prende il caso segnalato. */
+    window.addEventListener('blur', function () {
+      var a = document.activeElement;
+      if (a && a.tagName === 'IFRAME') chiudiTendine();
+    });
     document.addEventListener('keydown', function (e) {
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();

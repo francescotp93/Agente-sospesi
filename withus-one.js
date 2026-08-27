@@ -376,10 +376,15 @@
            menu di tutto il gestionale. */
         { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function(){ vai('analisi'); } },
         { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
-        /* Materiale di consultazione dell'agenzia: note informative, documenti
-           di prodotto e link utili (tre schede DENTRO la pagina, non tre voci:
-           il menu resta a due livelli). Prima stava sotto Clienti › Documenti. */
-        { l: 'Utility', i: 'i-fold', go: Q('utility') },
+        /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
+           sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su
+           Utility le apre, un clic sulla categoria porta il preventivatore già
+           su quella scheda (page «utility:<categoria>»). */
+        { l: 'Utility', i: 'i-fold', sub: [
+          { l: 'Note informative', i: 'i-file', go: Q('utility:nota') },
+          { l: 'Documenti utili',  i: 'i-file', go: Q('utility:documento') },
+          { l: 'Link utili',       i: 'i-ext',  go: Q('utility:link') },
+        ] },
         { hr: true },
         { l: 'Banca dati ANIA', i: 'i-db', ext: ANIA },
         { l: 'AssiEasy', i: 'i-ext', ext: ASSIEASY }
@@ -461,6 +466,9 @@
     cauzioni:    ['Fideiussioni', 'Preventivatore'],
     anagrafiche: ['Anagrafiche clienti', 'Clienti'],
     utility:     ['Utility', 'Strumenti'],
+    'utility:nota':      ['Note informative', 'Strumenti'],
+    'utility:documento': ['Documenti utili', 'Strumenti'],
+    'utility:link':      ['Link utili', 'Strumenti'],
     /* Compatibilità: una QUOTO vecchia (o una scorciatoia salvata) riporta ancora
        «documenti». Tiene la briciola giusta (Utility › Strumenti), non l'ex Clienti.
        Da togliere quando la compat lato QUOTO sarà chiusa. */
@@ -502,34 +510,45 @@
     if (s) s.classList.remove('open');
   }
 
-  function voceLink(v) {
-    if (v.hr) return '<hr>';
-    var mir = v.mirror ? ' data-mirror="' + v.mirror + '"' : '';
-    return '<a href="javascript:void(0)"' + mir + '>' +
-      ico(v.i || 'i-right', 'sm') + '<span>' + v.l + '</span>' +
+  /* Una voce della tendina come NODO (non stringa), così una voce può a sua
+     volta avere un sotto-elenco (3° livello, es. Utility con Note/Documenti/Link):
+     cliccandola non naviga, apre/chiude i suoi figli qui sotto (a fisarmonica,
+     uguale su desktop e su telefono — niente flyout laterale fragile). */
+  function voceNodo(v) {
+    if (v.hr) return document.createElement('hr');
+    var a = document.createElement('a');
+    a.href = 'javascript:void(0)';
+    if (v.mirror) a.setAttribute('data-mirror', v.mirror);
+    a.innerHTML = ico(v.i || 'i-right', 'sm') + '<span>' + v.l + '</span>' +
       (v.tag ? '<span class="w1-tag c">' + v.tag + '</span>' : '') +
-      '</a>';
+      (v.sub ? '<svg class="w1-i sm w1-ch w1-subch"><use href="#i-down"/></svg>' : '');
+
+    if (v.sub) {
+      var wrap = document.createElement('div');
+      wrap.className = 'w1-subwrap';
+      a.className = 'w1-has-sub';
+      wrap.appendChild(a);
+      var dd = document.createElement('div');
+      dd.className = 'w1-subdd';
+      for (var i = 0; i < v.sub.length; i++) dd.appendChild(voceNodo(v.sub[i]));
+      wrap.appendChild(dd);
+      a.onclick = function (e) { e.preventDefault(); e.stopPropagation(); wrap.classList.toggle('open'); };
+      return wrap;
+    }
+
+    a.onclick = function (e) {
+      e.preventDefault(); e.stopPropagation();
+      chiudiTendine(); chiudiCassetto();
+      if (v.ext) { window.open(v.ext, '_blank', 'noopener'); return; }
+      if (typeof v.go === 'function') v.go();
+    };
+    return a;
   }
 
   function costruisciTendina(m) {
     var d = document.createElement('div');
     d.className = 'w1-dd' + (m.destra ? ' right' : '');
-    var h = '';
-    for (var i = 0; i < m.sub.length; i++) h += voceLink(m.sub[i]);
-    d.innerHTML = h;
-    var a = d.querySelectorAll('a');
-    var idx = 0;
-    for (var j = 0; j < m.sub.length; j++) {
-      if (m.sub[j].hr) continue;
-      (function (v, el) {
-        el.onclick = function (e) {
-          e.preventDefault(); e.stopPropagation();
-          chiudiTendine(); chiudiCassetto();
-          if (v.ext) { window.open(v.ext, '_blank', 'noopener'); return; }
-          if (typeof v.go === 'function') v.go();
-        };
-      })(m.sub[j], a[idx++]);
-    }
+    for (var i = 0; i < m.sub.length; i++) d.appendChild(voceNodo(m.sub[i]));
     return d;
   }
 

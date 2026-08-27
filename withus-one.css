@@ -220,6 +220,17 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
   color:var(--w1-txt3); text-transform:uppercase;
 }
 .w1-dd hr{ border:none; border-top:1px solid var(--w1-bordo2); margin:6px 0; }
+/* Sotto-elenco (3° livello) dentro una voce della tendina — a fisarmonica.
+   Uguale su desktop e su telefono: un clic apre/chiude i figli qui sotto, niente
+   flyout laterale (che a schermo stretto e dentro il cassetto si romperebbe). */
+.w1-subwrap{ display:block; }
+.w1-has-sub{ cursor:pointer; }
+.w1-has-sub .w1-subch{ margin-left:auto; opacity:.5; transition:transform .15s; }
+.w1-subwrap.open > .w1-has-sub .w1-subch{ transform:rotate(180deg); }
+.w1-subwrap.open > .w1-has-sub{ background:var(--w1-verde-tenue); color:var(--w1-verde-scuro); }
+.w1-subdd{ display:none; }
+.w1-subwrap.open > .w1-subdd{ display:block; }
+.w1-subdd a{ padding-left:40px; }
 .w1-bdg{
   margin-left:auto; background:#f0f3f6; color:var(--w1-txt2); font-size:10px;
   font-weight:700; border-radius:9px; padding:1px 7px; white-space:nowrap;

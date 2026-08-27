@@ -329,10 +329,12 @@ body.w1-min{ --w1-sidew:66px; }
 }
 .w1-side-head{
   flex:0 0 auto; height:var(--w1-h1); display:flex; align-items:center;
-  gap:8px; padding:0 12px; border-bottom:1px solid rgba(255,255,255,.08);
-  overflow:hidden;
+  justify-content:center; gap:8px; padding:0 12px;
+  border-bottom:1px solid rgba(255,255,255,.08); overflow:hidden;
 }
-.w1-side-head .w1-logo-btn{ height:auto; padding:0 6px; }
+/* In cima alla colonna il logo non è una «voce di menu»: niente sottolineatura
+   verde di stato (la striscia sotto sembrava una selezione a caso). */
+.w1-side-head .w1-logo-btn{ height:auto; padding:0 6px; border-bottom:none; }
 /* Il marchio With Us verde su trasparente (niente riquadro bianco), più grande:
    è la prima cosa che si legge in cima alla colonna. */
 .w1-side-head .w1-logo{ height:40px; width:auto; display:block; }

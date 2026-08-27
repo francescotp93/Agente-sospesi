@@ -318,7 +318,8 @@
         { l: 'Anagrafiche', i: 'i-user', go: Q('anagrafiche') },
         { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } },
         { l: 'Lead', i: 'i-bolt', act: 'lead', go: function () { vai('lead'); } },
-        { l: 'Documenti', i: 'i-file', go: Q('documenti') },
+        /* «Documenti» era modulistica di prodotto, non roba del cliente: spostata
+           in Strumenti › Utility (era nel posto sbagliato sotto Clienti). */
         { hr: true },
         { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); setActive('posta'); } }
       ] },
@@ -375,6 +376,10 @@
            menu di tutto il gestionale. */
         { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function(){ vai('analisi'); } },
         { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
+        /* Materiale di consultazione dell'agenzia: note informative, documenti
+           di prodotto e link utili (tre schede DENTRO la pagina, non tre voci:
+           il menu resta a due livelli). Prima stava sotto Clienti › Documenti. */
+        { l: 'Utility', i: 'i-fold', go: Q('utility') },
         { hr: true },
         { l: 'Banca dati ANIA', i: 'i-db', ext: ANIA },
         { l: 'AssiEasy', i: 'i-ext', ext: ASSIEASY }
@@ -460,7 +465,11 @@
     'cauzioni-privati': ['Cauzioni privati', 'Preventivatore'],
     cauzioni:    ['Fideiussioni', 'Preventivatore'],
     anagrafiche: ['Anagrafiche clienti', 'Clienti'],
-    documenti:   ['Documenti', 'Clienti'],
+    utility:     ['Utility', 'Strumenti'],
+    /* Compatibilità: una QUOTO vecchia (o una scorciatoia salvata) riporta ancora
+       «documenti». Tiene la briciola giusta (Utility › Strumenti), non l'ex Clienti.
+       Da togliere quando la compat lato QUOTO sarà chiusa. */
+    documenti:   ['Utility', 'Strumenti'],
     portafoglio: ['Portafoglio polizze', 'Portafoglio'],
     scadenzario: ['Scadenzario e rinnovi', 'Portafoglio'],
     titoli:      ['Titoli e quietanze', 'Portafoglio'],

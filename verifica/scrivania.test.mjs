@@ -1,15 +1,16 @@
 // ═══════════════════════════════════════
-//  SCRIVANIA — il design consegnato il 4/8/2026
+//  SCRIVANIA — il design 4/8/2026, rivisto con la veste unica (§13.3)
 //
-//  La cosa che queste prove sorvegliano davvero è UNA: che i quattro
-//  indicatori in cima dicano il vero.
+//  La striscia di quattro indicatori in cima è stata TOLTA: ripeteva, a cento
+//  pixel di distanza, gli stessi numeri di «Da fare oggi». Ora i numeri stanno
+//  una volta sola, dentro «Da fare oggi», dove ogni voce porta all'elenco già
+//  filtrato — cioè fa qualcosa, non decora.
 //
-//  Il disegno consegnato li mostrava con numeri d'esempio — € 8.420, 27, 5,
-//  14. Copiarli avrebbe dato una scrivania bellissima che mente a chi apre il
-//  gestionale la mattina, e non c'è niente di peggio di un cruscotto
-//  credibile e sbagliato: uno vuoto lo si ignora, uno falso lo si segue.
-//  Gli indicatori si disegnano dalle STESSE voci di «da fare oggi», così non
-//  possono nemmeno smentire quello che sta scritto sotto.
+//  Quello che queste prove sorvegliano:
+//   · che la striscia non torni (né la funzione, né il contenitore #d-kpi);
+//   · che i numeri restino nel «Da fare oggi», cliccabili e presi dai dati veri;
+//   · che i numeri d'esempio del mockup non rientrino mai;
+//   · che #d-content porti la stessa veste sobria della parte alta (§13.3).
 // ═══════════════════════════════════════
 import fs from 'fs';
 import path from 'path';
@@ -38,10 +39,10 @@ function corpoDi(firma) {
 }
 
 // ── 1. Nessun numero inventato ───────────────────────────────────────────
-prova('gli indicatori non contengono i numeri d\'esempio del disegno', () => {
-  /* Se qualcuno reincollasse il mockup, questi rientrerebbero. Si guarda
-     dove i numeri verrebbero DISEGNATI, non tutto il file: il commento che
-     spiega perché non si usano li nomina, ed è giusto che lo faccia. */
+prova('i numeri d\'esempio del mockup non rientrano', () => {
+  /* Se qualcuno reincollasse il mockup, questi rientrerebbero. Si guarda il
+     file senza commenti: un commento che spiega perché non si usano può
+     nominarli, ed è giusto che lo faccia. */
   const senzaCommenti = html
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/<!--[\s\S]*?-->/g, '');
@@ -50,27 +51,31 @@ prova('gli indicatori non contengono i numeri d\'esempio del disegno', () => {
   }
 });
 
-prova('gli indicatori vengono dai dati veri, non da una lista scritta a mano', () => {
-  const f = corpoDi('function oggiIndicatori(voci)');
-  deve(f, 'manca oggiIndicatori');
-  deve(/voci\.slice\(0,\s*4\)/.test(f), 'gli indicatori non sono presi dalle voci calcolate');
-  deve(/v\.n/.test(f) && /v\.l/.test(f), 'gli indicatori non leggono numero ed etichetta dalle voci');
-  /* Stessa sorgente del riquadro sotto: due interrogazioni separate possono
-     rispondere in momenti diversi e mostrare due verità nella stessa
-     schermata. */
+// ── 2. La striscia di indicatori in cima è stata tolta (§13.3) ───────────
+prova('la striscia di indicatori in cima non c\'è più', () => {
+  deve(!/function oggiIndicatori\b/.test(html), 'è tornata la funzione oggiIndicatori (la striscia doppione)');
+  deve(!/id="d-kpi"/.test(html), 'è tornato il contenitore #d-kpi della striscia in cima');
+});
+
+// ── 3. I numeri stanno una volta sola, dentro «Da fare oggi» ─────────────
+prova('«Da fare oggi» disegna i numeri dai dati veri, cliccabili', () => {
   const d = corpoDi('function oggiDisegna(voci)');
-  deve(d && /oggiIndicatori\(/.test(d), 'gli indicatori non si aggiornano insieme al «da fare oggi»');
+  deve(d, 'manca oggiDisegna');
+  deve(/<button/.test(d), 'le voci non sono pulsanti: da tastiera non si raggiungono');
+  deve(/oggi-v/.test(d), 'le voci non usano la scheda «da fare oggi»');
+  deve(/\$\{v\.n\}/.test(d), 'la voce non mostra il numero calcolato');
+  deve(/__OGGI\[\$\{i\}\]\.va\s*&&/.test(d), 'una voce senza destinazione proverebbe ad aprire il nulla');
 });
 
 prova('senza niente da fare la scrivania lo dice, e non mostra un vuoto', () => {
-  const f = corpoDi('function oggiIndicatori(voci)');
-  deve(f && /!voci\.length/.test(f), 'con zero voci la fascia degli indicatori resta vuota');
-  deve(/Lavoro in pari/.test(f), 'non viene detto che il lavoro è in pari');
+  const d = corpoDi('function oggiDisegna(voci)');
+  deve(d && /!window\.__OGGI\.length/.test(d), 'con zero voci non c\'è il caso «niente da fare»');
+  deve(/in pari/.test(d), 'non viene detto che il lavoro è in pari');
 });
 
-// ── 2. La struttura del disegno ──────────────────────────────────────────
-prova('intestazione, indicatori e griglia a due colonne', () => {
-  for (const c of ['page-head', 'kpi-grid', 'dashboard-grid', 'stack', 'card-head', 'card-title', 'pictogram']) {
+// ── 4. La struttura del disegno (senza la striscia) ──────────────────────
+prova('intestazione e griglia a due colonne', () => {
+  for (const c of ['page-head', 'dashboard-grid', 'stack', 'card-head', 'card-title', 'pictogram']) {
     deve(html.includes(c), 'manca il blocco del disegno: ' + c);
   }
   deve(/grid-template-columns:minmax\(0,1\.45fr\) minmax\(310px,\.8fr\)/.test(html),
@@ -95,7 +100,24 @@ prova('la tavolozza chiara non esce dalla scrivania', () => {
   deve(/--w1-/.test(blocco), 'i token non sono dichiarati dentro il confine');
 });
 
-// ── 3. Il saluto non deve dire il falso ──────────────────────────────────
+// ── 5. Veste unica: anche la metà bassa (§13.3) ──────────────────────────
+prova('la metà bassa porta la stessa veste sobria della parte alta', () => {
+  /* I titoloni centrati bicolori erano la firma della vecchia veste: ora sono
+     allineati a sinistra e di un colore solo, come «Da fare oggi». */
+  deve(/\.dash-section-title\{[^}]*text-align:left/.test(html),
+    'i titoli di sezione sono ancora centrati');
+  deve(/\.dash-section-title span\{color:inherit/.test(html),
+    'i titoli di sezione sono ancora bicolori');
+  /* Le schede di sotto usano la scheda bianca a bordo sottile (--w1-bordo),
+     non più il bordo verde spesso. */
+  deve(/\.dash-card\{[^}]*--w1-bordo/.test(html),
+    'le schede di #d-content non hanno la veste a bordo sottile della parte alta');
+  /* La lista di scorciatoie doppia è stata tolta: ne resta una, «Azioni rapide». */
+  deve(!/dash-card-title">\s*Funzioni/.test(html),
+    'è tornata «Funzioni più utilizzate», doppione di «Azioni rapide»');
+});
+
+// ── 6. Il saluto non deve dire il falso ──────────────────────────────────
 prova('il saluto segue l\'ora e non inventa un nome', () => {
   const f = corpoDi('function oggiSaluto()');
   deve(f, 'manca oggiSaluto');
@@ -109,23 +131,13 @@ prova('il saluto segue l\'ora e non inventa un nome', () => {
   deve(/PROFILO/.test(f) && /nome \?/.test(f), 'il nome non viene dal profilo di chi è entrato');
 });
 
-// ── 4. Niente emoji di sistema ───────────────────────────────────────────
+// ── 7. Niente emoji di sistema ───────────────────────────────────────────
 prova('la scrivania non usa emoji di sistema', () => {
   /* La stessa faccina è gialla su un telefono, piatta su Windows e diversa
-     su un Mac: in un gestionale non è un simbolo. Ce n'era una nello stato
-     «lavoro in pari». */
+     su un Mac: in un gestionale non è un simbolo. */
   const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
-  const i = html.indexOf('function oggiDisegna(voci)');
-  const zona = html.slice(html.indexOf('function oggiIndicatori'), i + 2500);
+  const zona = corpoDi('function oggiDisegna(voci)') || '';
   deve(!emoji.test(zona), 'c\'è ancora un\'emoji di sistema nella scrivania');
-});
-
-// ── 5. Gli indicatori portano dove serve ─────────────────────────────────
-prova('un indicatore si clicca e apre l\'elenco filtrato', () => {
-  const f = corpoDi('function oggiIndicatori(voci)');
-  deve(f && /__OGGI\[\$\{i\}\]/.test(f), 'gli indicatori non sono cliccabili');
-  deve(/\.va\s*&&/.test(f), 'un indicatore senza destinazione proverebbe ad aprire il nulla');
-  deve(/<button/.test(f), 'gli indicatori non sono pulsanti: da tastiera non si raggiungono');
 });
 
 let ko = 0;

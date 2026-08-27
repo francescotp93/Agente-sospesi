@@ -167,80 +167,91 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .mcard:nth-child(3){animation-delay:.15s}.mcard:nth-child(4){animation-delay:.2s}
 .mcard:nth-child(5){animation-delay:.25s}.mcard:nth-child(6){animation-delay:.3s}
 
-/* ── PROFESSIONAL DASHBOARD ── */
-.dash-pro{padding:18px 18px 24px;background:linear-gradient(180deg,var(--surf3) 0%,var(--bg) 100%);min-height:100%;}
-.dash-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px;}
-.dash-title{font-size:25px;font-weight:700;color:var(--txt);letter-spacing:0;}
-.dash-action{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 8px 18px rgba(var(--acc-rgb),.22);}
-.dash-section-title{text-align:center;font-size:28px;font-weight:500;color:var(--acc);margin:18px 0 14px;letter-spacing:0;}
-.dash-section-title span{color:var(--blu-txt);}
-.dash-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:24px;}
-.dash-card{background:var(--surf);border:1.5px solid rgba(var(--acc-rgb),.78);border-radius:8px;padding:18px 20px;box-shadow:var(--shd);min-height:170px;position:relative;overflow:hidden;}
-.dash-card-title{font-size:21px;font-weight:500;color:var(--acc);margin-bottom:12px;letter-spacing:0;}
-.dash-card-title span{color:var(--blu-txt);}
-.dash-ribbon{position:absolute;top:20px;right:0;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:8px 22px 8px 28px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);}
-.dash-news{font-size:13px;line-height:1.55;color:var(--txt2);font-weight:600;max-width:92%;}
+/* ── PROFESSIONAL DASHBOARD ──
+   Veste unificata (§13.3): tutto #d-content usa la stessa scheda bianca a
+   bordo sottile 1px, angoli poco arrotondati e testo sobrio della parte alta
+   (.d-card). Via i titoli verdi bicolori e le schede dal bordo colorato. I
+   token --w1-* sono quelli fissi-chiari dichiarati su #panel-dashboard: così
+   anche la metà bassa resta chiara in tema scuro, come quella in cima. */
+.dash-pro{padding:18px 18px 24px;background:transparent;min-height:100%;}
+.dash-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.dash-title{font-size:16px;font-weight:700;color:var(--w1-testo);letter-spacing:-.01em;}
+.dash-action{display:flex;align-items:center;gap:8px;padding:0 14px;height:34px;background:var(--w1-verde);color:#fff;border:none;border-radius:var(--w1-raggio);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.dash-action:hover{background:var(--w1-verde-scuro);}
+/* Titolo di sezione: sobrio e allineato a sinistra, come «Da fare oggi».
+   Prima era centrato, grande e bicolore: la firma della vecchia veste. */
+.dash-section-title{text-align:left;font-size:13px;font-weight:700;color:var(--w1-testo);margin:22px 0 11px;letter-spacing:.01em;}
+.dash-section-title span{color:inherit;}
+.dash-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:20px;}
+.dash-card{background:#fff;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);padding:15px 16px;box-shadow:var(--w1-ombra);position:relative;overflow:hidden;}
+.dash-card-title{font-size:13px;font-weight:700;color:var(--w1-testo);margin-bottom:12px;letter-spacing:0;}
+.dash-card-title span{color:inherit;}
+/* «Novità»: da fascia verde piena a pastiglia tenue, in linea con la veste. */
+.dash-ribbon{position:absolute;top:14px;right:14px;background:var(--w1-verde-tenue);color:var(--w1-verde-scuro);font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em;}
+.dash-news{font-size:13px;line-height:1.55;color:var(--w1-testo2);font-weight:500;max-width:92%;}
 .dash-updates{display:grid;gap:9px;max-width:100%;}
-.dash-update{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--bord);}
+.dash-update{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--w1-bordo);}
 .dash-update:first-child{border-top:none;padding-top:0;}
-.dash-update-date{font-size:10px;font-weight:850;color:#fff;background:var(--acc);border-radius:999px;padding:3px 8px;white-space:nowrap;line-height:1.2;}
-.dash-update-text{font-size:12px;line-height:1.45;color:var(--txt2);font-weight:650;}
-.dash-update-text b{color:var(--txt);}
-.dash-list{border:1px solid var(--bord2);border-radius:8px;overflow:hidden;background:var(--surf2);}
-.dash-list-row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--bord);font-size:14px;color:var(--txt2);cursor:pointer;transition:background .15s,color .15s;}
+.dash-update-date{font-size:10px;font-weight:700;color:var(--w1-verde-scuro);background:var(--w1-verde-tenue);border-radius:999px;padding:3px 8px;white-space:nowrap;line-height:1.2;}
+.dash-update-text{font-size:12px;line-height:1.45;color:var(--w1-testo2);font-weight:500;}
+.dash-update-text b{color:var(--w1-testo);}
+.dash-list{border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);overflow:hidden;background:#fff;}
+.dash-list-row{display:flex;align-items:center;gap:12px;padding:12px 13px;border-top:1px solid var(--w1-bordo);font-size:13px;color:var(--w1-testo2);cursor:pointer;transition:background .15s,color .15s;}
 .dash-list-row:first-child{border-top:none;}
-.dash-list-row:hover{background:rgba(var(--acc-rgb),.08);color:var(--txt);}
-.dash-list-row i{font-size:18px;color:var(--txt2);}
-.dash-pill{margin-left:auto;min-width:32px;text-align:center;border-radius:999px;background:var(--acc);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;}
-.dash-metrics{display:grid;grid-template-columns:1fr;gap:14px;}
-.dash-metric-card{background:var(--surf);border:1.5px solid rgba(var(--acc-rgb),.78);border-radius:8px;padding:18px 20px;box-shadow:var(--shd);min-height:170px;}
-.dash-metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
-.dash-metric-title{font-size:20px;font-weight:500;color:var(--acc);}
-.dash-metric-title span{color:var(--blu-txt);}
-.dash-metric-icon{color:var(--acc);font-size:20px;}
-.dash-help{position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:0;background:transparent;color:var(--acc);cursor:help;padding:0;border-radius:8px;}
-.dash-help i{font-size:20px;}
-.dash-help:focus-visible{outline:2px solid rgba(var(--acc-rgb),.35);outline-offset:2px;}
-.dash-help:after{content:attr(data-tip);position:absolute;right:0;top:calc(100% + 8px);width:min(300px,72vw);padding:10px 12px;background:var(--txt);color:var(--surf);border-radius:8px;font-size:11px;font-weight:600;line-height:1.4;text-align:left;box-shadow:var(--shd);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s;z-index:20;}
+.dash-list-row:hover{background:var(--w1-verde-tenue);color:var(--w1-testo);}
+.dash-list-row i{font-size:17px;color:var(--w1-testo3);}
+.dash-pill{margin-left:auto;min-width:32px;text-align:center;border-radius:999px;background:var(--w1-verde);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;}
+.dash-metrics{display:grid;grid-template-columns:1fr;gap:12px;}
+.dash-metric-card{background:#fff;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);padding:15px 16px;box-shadow:var(--w1-ombra);}
+.dash-metric-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px;}
+.dash-metric-title{font-size:13px;font-weight:700;color:var(--w1-testo);}
+.dash-metric-title span{color:inherit;}
+.dash-metric-icon{color:var(--w1-testo3);font-size:18px;}
+.dash-help{position:relative;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border:0;background:transparent;color:var(--w1-testo3);cursor:help;padding:0;border-radius:var(--w1-raggio);}
+.dash-help i{font-size:18px;}
+.dash-help:focus-visible{outline:2px solid rgba(2,152,78,.35);outline-offset:2px;}
+.dash-help:after{content:attr(data-tip);position:absolute;right:0;top:calc(100% + 8px);width:min(300px,72vw);padding:10px 12px;background:var(--w1-testo);color:#fff;border-radius:var(--w1-raggio);font-size:11px;font-weight:500;line-height:1.4;text-align:left;box-shadow:var(--w1-ombra);opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .15s,transform .15s;z-index:20;}
 .dash-help:hover:after,.dash-help:focus:after{opacity:1;transform:translateY(0);}
 #d-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;background:transparent;}
-.dash-stat-list{border:1px solid var(--bord);border-radius:8px;overflow:hidden;background:var(--surf2);}
-.dash-stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:7px;min-height:82px;padding:11px 12px;border:1px solid var(--bord);border-radius:8px;background:var(--surf2);transition:background .15s,border-color .15s,transform .15s;}
+.dash-stat-list{border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);overflow:hidden;background:#fff;}
+.dash-stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:7px;min-height:80px;padding:11px 12px;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);background:#fff;transition:background .15s,border-color .15s;}
 .dash-stat[onclick]{cursor:pointer;}
-.dash-stat[onclick]:hover{background:rgba(var(--acc-rgb),.06);border-color:rgba(var(--acc-rgb),.28);transform:translateY(-1px);}
+.dash-stat[onclick]:hover{background:var(--w1-verde-tenue);border-color:#c9d3da;}
 .dash-stat-left{display:flex;align-items:center;gap:8px;min-width:0;width:100%;}
-.dash-dot{width:11px;height:11px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 4px rgba(var(--acc-rgb),.12);flex-shrink:0;animation:dashDotBlink 1s ease-in-out infinite;}
-@keyframes dashDotBlink{0%,100%{opacity:1;transform:scale(1.12)}50%{opacity:.1;transform:scale(.5)}}
-.dash-stat-label{font-size:11px;font-weight:800;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;letter-spacing:.3px;}
-.dash-stat-value{font-size:18px;font-weight:850;color:var(--acc);white-space:nowrap;letter-spacing:0;}
-.dash-stat-sub{font-size:11px;color:var(--txt3);line-height:1.25;min-height:14px;}
-.dash-data-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px;}
+/* Pallino di stato fermo, non lampeggiante: la veste sobria non ha animazioni
+   decorative (§13.3). */
+.dash-dot{width:9px;height:9px;border-radius:50%;background:var(--w1-verde);flex-shrink:0;}
+.dash-stat-label{font-size:11px;font-weight:600;color:var(--w1-testo3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em;}
+.dash-stat-value{font-size:19px;font-weight:700;color:var(--w1-testo);white-space:nowrap;letter-spacing:-.02em;}
+.dash-stat-sub{font-size:11px;color:var(--w1-testo3);line-height:1.25;min-height:14px;}
+.dash-data-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;}
 .dash-ticket-form{display:grid;gap:8px;margin-bottom:12px;}
-.dash-ticket-field{width:100%;padding:10px 12px;background:var(--surf2);border:1px solid var(--bord2);border-radius:8px;color:var(--txt);font-size:13px;font-family:inherit;outline:none;}
-.dash-ticket-field:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(var(--acc-rgb),.1);}
+.dash-ticket-field{width:100%;padding:9px 11px;background:#fff;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);color:var(--w1-testo);font-size:13px;font-family:inherit;outline:none;}
+.dash-ticket-field:focus{border-color:var(--w1-verde);box-shadow:0 0 0 3px rgba(2,152,78,.12);}
 .dash-ticket-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .dash-ticket-actions{display:flex;gap:8px;align-items:center;}
-.dash-ticket-submit{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap;}
-.dash-ticket-link{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 12px;background:var(--surf2);color:var(--txt2);border:1px solid var(--bord2);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
-.dash-ticket-list{border:1px solid var(--bord);border-radius:8px;overflow:hidden;background:var(--surf2);max-height:220px;overflow-y:auto;}
-.dash-ticket-item{padding:10px 12px;border-top:1px solid var(--bord);cursor:pointer;transition:background .15s;}
+.dash-ticket-submit{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 14px;background:var(--w1-verde);color:#fff;border:none;border-radius:var(--w1-raggio);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.dash-ticket-submit:hover{background:var(--w1-verde-scuro);}
+.dash-ticket-link{display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 12px;background:#fff;color:var(--w1-testo2);border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.dash-ticket-link:hover{background:var(--w1-sfondo);}
+.dash-ticket-list{border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);overflow:hidden;background:#fff;max-height:220px;overflow-y:auto;}
+.dash-ticket-item{padding:10px 12px;border-top:1px solid var(--w1-bordo);cursor:pointer;transition:background .15s;}
 .dash-ticket-item:first-child{border-top:none;}
-.dash-ticket-item:hover{background:rgba(var(--acc-rgb),.07);}
-.dash-ticket-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;color:var(--txt);}
-.dash-ticket-meta{font-size:10px;color:var(--txt3);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;}
+.dash-ticket-item:hover{background:var(--w1-verde-tenue);}
+.dash-ticket-title{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--w1-testo);}
+.dash-ticket-meta{font-size:10px;color:var(--w1-testo3);margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;}
 .dash-alerts{display:grid;gap:10px;}
-.dash-alert-tile{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:1px solid var(--bord2);border-radius:8px;background:var(--surf2);color:var(--txt);text-align:left;cursor:pointer;font-family:inherit;position:relative;overflow:hidden;}
-.dash-alert-tile:before{content:'';width:11px;height:11px;border-radius:50%;background:var(--amb);box-shadow:0 0 0 0 rgba(245,158,11,.42);animation:alertPulse 1.25s ease-out infinite;flex-shrink:0;}
-.dash-alert-tile.crit:before{background:var(--red);box-shadow:0 0 0 0 rgba(239,68,68,.46);}
+.dash-alert-tile{display:flex;align-items:center;gap:12px;width:100%;padding:12px 13px;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);background:#fff;color:var(--w1-testo);text-align:left;cursor:pointer;font-family:inherit;position:relative;overflow:hidden;}
+.dash-alert-tile:before{content:'';width:9px;height:9px;border-radius:50%;background:var(--w1-ambra);flex-shrink:0;}
+.dash-alert-tile.crit:before{background:var(--w1-rosso);}
 .dash-alert-tile.ok{cursor:default;}
-.dash-alert-tile.ok:before{background:var(--grn);color:var(--grn);animation:alertPulse 1.25s ease-out infinite;}
+.dash-alert-tile.ok:before{background:var(--w1-verde);}
 .dash-alert-main{flex:1;min-width:0;}
-.dash-alert-title{font-size:13px;font-weight:850;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.dash-alert-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
-.dash-alert-count{min-width:30px;text-align:center;border-radius:999px;background:var(--acc);color:#fff;font-size:12px;font-weight:850;padding:4px 8px;}
-@keyframes alertPulse{0%{box-shadow:0 0 0 0 currentColor;opacity:1}70%{box-shadow:0 0 0 8px transparent;opacity:.72}100%{box-shadow:0 0 0 0 transparent;opacity:1}}
-@media(min-width:860px){.dash-grid{grid-template-columns:1fr 1fr 1fr}.dash-metrics{grid-template-columns:1fr 1.45fr}.dash-data-grid{grid-template-columns:1fr 1fr 1fr}.dash-pro{padding:24px 30px 30px}}
-@media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-section-title{font-size:24px}.dash-card,.dash-metric-card{padding:16px}.dash-ribbon{position:static;clip-path:none;border-radius:6px;margin:-4px 0 12px;width:max-content}.dash-news{max-width:100%}#d-metrics{grid-template-columns:1fr}}
+.dash-alert-title{font-size:13px;font-weight:700;color:var(--w1-testo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-alert-sub{font-size:11px;color:var(--w1-testo3);margin-top:2px;}
+.dash-alert-count{min-width:30px;text-align:center;border-radius:999px;background:var(--w1-verde);color:#fff;font-size:12px;font-weight:700;padding:4px 8px;}
+@media(min-width:860px){.dash-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.dash-metrics{grid-template-columns:1fr 1.45fr}.dash-data-grid{grid-template-columns:1fr 1fr 1fr}.dash-pro{padding:22px 24px 28px}}
+@media(max-width:520px){.dash-top{align-items:flex-start;flex-direction:column}.dash-card,.dash-metric-card{padding:14px}.dash-ribbon{position:static;margin:0 0 10px;width:max-content}.dash-news{max-width:100%}#d-metrics{grid-template-columns:1fr}}
 
 /* ── ALERTS ── */
 .alert{display:flex;gap:10px;padding:13px 16px;border-left:3px solid transparent;cursor:default;}
@@ -605,13 +616,9 @@ input[type=file]{display:none;}
 #panel-dashboard .d-btn:focus-visible{outline:none;box-shadow:var(--w1-focus)}
 #panel-dashboard .d-btn.primario{border-color:var(--w1-verde);background:var(--w1-verde);color:#fff}
 #panel-dashboard .d-btn.primario:hover{background:var(--w1-verde-scuro)}
-#panel-dashboard .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px;padding:0 16px}
 #panel-dashboard .d-card{background:#fff;border:1px solid var(--w1-bordo);border-radius:var(--w1-raggio);box-shadow:var(--w1-ombra)}
-#panel-dashboard .kpi{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:14px 15px;width:100%;text-align:left;cursor:pointer;font:inherit}
-#panel-dashboard .kpi:hover{border-color:#c9d3da}
-#panel-dashboard .kpi-label{color:var(--w1-testo2);font-weight:600;font-size:12px}
-#panel-dashboard .kpi-value{font-size:23px;font-weight:700;letter-spacing:-.03em;margin-top:8px}
-#panel-dashboard .kpi-note{margin-top:6px;color:var(--w1-testo3);font-size:11px}
+/* Le classi .kpi* (striscia di indicatori in cima) sono state tolte con la
+   striscia stessa (§13.3): i numeri restano solo dentro «Da fare oggi». */
 #panel-dashboard .pictogram{width:32px;height:32px;border-radius:7px;display:grid;place-items:center;background:var(--w1-verde-tenue);color:var(--w1-verde-scuro);flex:none}
 #panel-dashboard .pictogram i{font-size:18px}
 #panel-dashboard .pictogram.amber{background:var(--w1-ambra-bg);color:var(--w1-ambra)}
@@ -623,10 +630,13 @@ input[type=file]{display:none;}
 #panel-dashboard .card-title{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:700}
 #panel-dashboard .card-title .pictogram{width:28px;height:28px}
 #panel-dashboard .card-body{padding:14px 15px}
-/* Sotto i 1100px le colonne si impilano; sotto i 720 anche i KPI. */
-@media(max-width:1100px){#panel-dashboard .dashboard-grid{grid-template-columns:1fr}#panel-dashboard .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:720px){#panel-dashboard .kpi-grid{grid-template-columns:1fr}#panel-dashboard .page-head{flex-direction:column}#panel-dashboard .head-actions{width:100%}#panel-dashboard .head-actions .d-btn{flex:1}}
-.oggi-corpo{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));background:var(--surf);}
+/* Sotto i 1100px le due colonne si impilano. */
+@media(max-width:1100px){#panel-dashboard .dashboard-grid{grid-template-columns:1fr}}
+@media(max-width:720px){#panel-dashboard .page-head{flex-direction:column}#panel-dashboard .head-actions{width:100%}#panel-dashboard .head-actions .d-btn{flex:1}}
+/* minmax(min(100%,258px),…): la colonna minima non supera mai la larghezza
+   disponibile, così la griglia di «Da fare oggi» non sborda oltre la sua
+   colonna e non finisce sotto/sopra «Azioni rapide» accanto (§13.3). */
+.oggi-corpo{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,258px),1fr));background:var(--surf);}
 .oggi-attesa,.oggi-vuoto{grid-column:1/-1;padding:20px 16px;font-size:13px;color:var(--txt3);background:var(--surf);}
 .oggi-vuoto{color:#02984e;font-weight:600;}
 /* una voce = un'azione: conteggio grande, cosa fare, e dove porta */
@@ -1489,10 +1499,11 @@ input[type=file]{display:none;}
        Non mostra numeri: mostra AZIONI, ognuna con il suo conteggio e il
        collegamento a un elenco già filtrato. Chi apre il programma la mattina
        deve sapere cosa fare senza cercarlo. ──────────────────────────────── -->
-  <!-- Intestazione, indicatori e griglia: design consegnato il 4/8/2026.
-       I quattro indicatori NON sono i numeri del mockup: sono le metriche
-       che «Da fare oggi» gia' calcolava. Mostrare i numeri d'esempio del
-       disegno su un gestionale in uso sarebbe mostrare dati falsi. -->
+  <!-- Intestazione e griglia: design consegnato il 4/8/2026.
+       La striscia di quattro indicatori in cima è stata tolta (§13.3):
+       ripeteva gli stessi numeri di «Da fare oggi» a cento pixel di distanza.
+       I numeri restano una volta sola, dentro «Da fare oggi», dove ogni voce
+       porta all'elenco già filtrato — cioè fa qualcosa, non decora. -->
   <section class="page-head">
     <div>
       <div class="eyebrow" id="d-eyebrow"></div>
@@ -1504,8 +1515,6 @@ input[type=file]{display:none;}
       <button class="d-btn primario" type="button" onclick="openWDModal(null)"><i class="ti ti-plus"></i> Inizia una nuova attività</button>
     </div>
   </section>
-
-  <section class="kpi-grid" id="d-kpi" aria-label="Indicatori principali"></section>
 
   <section class="dashboard-grid">
     <div class="stack">
@@ -1549,14 +1558,9 @@ input[type=file]{display:none;}
           <div class="dash-card-title">In <span>evidenza</span></div>
           <div id="d-evidenza" class="dash-news"></div>
         </div>
-        <div class="dash-card">
-          <div class="dash-card-title">Funzioni più <span>utilizzate</span></div>
-          <div class="dash-list">
-            <div class="dash-list-row" onclick="goTab('sospesi')"><i class="ti ti-file-invoice"></i><span>Controlla sospesi</span></div>
-            <div class="dash-list-row" onclick="goTab('pipeline')"><i class="ti ti-chart-arrows-vertical"></i><span>Apri pipeline</span></div>
-            <div class="dash-list-row" onclick="goTab('conto')"><i class="ti ti-building-bank"></i><span>Chiudi estratto conto</span></div>
-          </div>
-        </div>
+        <!-- «Funzioni più utilizzate» tolta (§13.3): era un elenco fisso identico
+             ad «Azioni rapide» in cima alla Scrivania. Una lista di scorciatoie
+             sola, quella che sta sempre visibile. -->
         <div class="dash-card">
           <div class="dash-card-title">Alert</div>
           <div id="d-suggerimenti" class="dash-list"></div>
@@ -4433,32 +4437,9 @@ function selOperativaTab(t) {
    passa forza=true e non aspetta. */
 /* Il disegno sta separato dalla raccolta: così si può ridisegnare senza
    reinterrogare, e si può verificare la resa senza un database. */
-/* I quattro indicatori in cima, disegnati DALLE STESSE voci del «da fare
-   oggi»: nessuna interrogazione in piu', e soprattutto nessun numero che
-   possa smentire quello scritto sotto. Nel disegno consegnato gli indicatori
-   erano d'esempio (€ 8.420, 27, 5, 14): metterli davvero vorrebbe dire
-   mostrare dati falsi a chi apre il gestionale la mattina. */
-function oggiIndicatori(voci) {
-  const box = document.getElementById('d-kpi');
-  if (!box) return;
-  const pitto = { urg: 'red', att: 'amber' };
-  const icona = { urg: 'ti-alert-triangle', att: 'ti-clock', '': 'ti-chart-bar' };
-  if (!voci.length) {
-    box.innerHTML = '<article class="d-card kpi"><div><div class="kpi-label">Lavoro in pari</div>'
-      + '<div class="kpi-value">0</div><div class="kpi-note">niente in scadenza né in sospeso</div></div>'
-      + '<div class="pictogram"><i class="ti ti-circle-check"></i></div></article>';
-    return;
-  }
-  /* Le prime quattro: le voci arrivano gia' in ordine di urgenza, quindi
-     tagliare in fondo toglie le meno gravi, non a caso. */
-  box.innerHTML = voci.slice(0, 4).map((v, i) =>
-    `<button class="d-card kpi" type="button" onclick="__OGGI[${i}] && __OGGI[${i}].va && __OGGI[${i}].va()">
-       <span><span class="kpi-label">${v.l}</span>
-       <span class="kpi-value" style="display:block">${v.n}</span>
-       <span class="kpi-note" style="display:block">${v.s || ''}</span></span>
-       <span class="pictogram ${pitto[v.cls] || 'gray'}"><i class="ti ${icona[v.cls] || icona['']}"></i></span>
-     </button>`).join('');
-}
+/* La striscia di quattro indicatori in cima è stata tolta (§13.3): ripeteva i
+   numeri di «Da fare oggi». Il disegno resta separato dalla raccolta, così si
+   ridisegna senza reinterrogare. */
 
 /* Il saluto cambia con l'ora: chi apre il programma alle otto di sera non
    deve leggere «buongiorno». */
@@ -4478,7 +4459,6 @@ function oggiDisegna(voci) {
   if (!box) return;
   window.__OGGI = voci || [];
   oggiSaluto();
-  oggiIndicatori(window.__OGGI);
   if (!window.__OGGI.length) {
     box.innerHTML = '<div class="oggi-vuoto">Non c\'è niente in scadenza né in sospeso: il lavoro è in pari.</div>';
     return;

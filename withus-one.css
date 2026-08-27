@@ -131,6 +131,14 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
 }
 .w1-gres .w1-gr.sel .w1-i, .w1-gres .w1-gr:hover .w1-i{ color:var(--w1-verde-scuro); }
 
+/* Lo spaziatore che spinge ricerca, icone e utente contro il margine destro.
+   C'e' sempre stato nel markup (`<div class="w1-spacer">` dentro .w1-top) ma
+   l'unica regola scritta era `.w1-mbar .w1-spacer`: quello di primo livello
+   restava senza crescita, si schiacciava a zero, e il chip con l'indirizzo
+   dell'utente finiva a meta' barra con un vuoto di trecento pixel alla sua
+   destra. (27/08/2026) */
+.w1-top > .w1-spacer{ flex:1 1 auto; min-width:12px; }
+
 .w1-tright{ margin-left:0; display:flex; align-items:center; gap:6px; flex:0 0 auto; }
 .w1-ibtn{
   width:34px; height:34px; border:1px solid transparent; border-radius:var(--w1-r);
@@ -185,13 +193,24 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
 .w1-m > a:hover, .w1-m.open > a{ background:var(--w1-scuro2); color:#fff; }
 .w1-m.act > a{ color:#fff; border-bottom-color:var(--w1-verde2); }
 .w1-m > a .w1-ch{ opacity:.55; width:12px; height:12px; stroke-width:2.2; }
+/* Il tasto principale del gestionale. Rifatto il 27/08/2026.
+   Prima: maiuscolo a 11,5px con la spaziatura allargata. Due parole lunghe
+   scritte cosi' si leggono lettera per lettera invece che a colpo d'occhio —
+   su un tasto premuto cento volte al giorno e' tempo buttato. Ora e' in tondo
+   a 13px: stessa larghezza, lettura immediata.
+   Via anche il gradiente: su fondo scuro sporcava il verde dell'agenzia, e il
+   verde pieno e' il colore del marchio. Pastiglia tonda per distinguerlo dalle
+   voci di menu, che sono squadrate e sottolineate. */
 .w1-m.nuovo > a{
-  background:linear-gradient(135deg,var(--w1-verde),var(--w1-verde2));
-  color:#fff; font-weight:600; margin:6px 10px 6px 4px; height:32px;
-  border-radius:var(--w1-r); padding:0 15px; border-bottom:none;
-  letter-spacing:.4px; text-transform:uppercase; font-size:11.5px;
+  background:var(--w1-verde);
+  color:#fff; font-weight:600; margin:0 12px 0 6px; height:36px;
+  border-radius:999px; padding:0 16px 0 13px; border-bottom:none;
+  letter-spacing:.1px; text-transform:none; font-size:13px; gap:8px;
+  transition:background .15s;
 }
-.w1-m.nuovo > a:hover{ filter:brightness(1.07); }
+.w1-m.nuovo > a .w1-i{ width:15px; height:15px; }
+.w1-m.nuovo > a:hover{ background:#03ab59; }
+.w1-m.nuovo > a:active{ background:var(--w1-verde-scuro); }
 .w1-mbar .w1-spacer{ flex:1 1 auto; }
 .w1-mtick{
   background:var(--w1-rosso); color:#fff; margin-left:6px; font-size:10px;
@@ -353,7 +372,7 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
   .w1-m{ display:block; }
   .w1-m > a{ height:42px; border-bottom:none; border-left:3px solid transparent; }
   .w1-m.act > a{ border-bottom-color:transparent; border-left-color:var(--w1-verde2); }
-  .w1-m.nuovo > a{ margin:8px 10px; }
+  .w1-m.nuovo > a{ margin:8px 10px; height:38px; }
   .w1-mbar .w1-spacer{ display:none; }
   .w1-dd, .w1-mega{
     position:static; width:auto; min-width:0; box-shadow:none; border:none;
@@ -399,6 +418,19 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
    e' lo stesso fotogramma che mostra QUOTO mentre si apre (#boot-screen),
    cosi' il passaggio da IAM al preventivatore non ha stacchi — una sola
    schermata bianca con il logo che respira, dall'inizio alla fine. */
+/* ═══ I PANNELLI CHE VIVONO FUORI DA #app ══════════════════════════
+   Fonti compagnie, Stato collegamenti e Analisi dei bisogni sono figli di
+   <body>, non di #app. La regola `.panel{position:absolute;inset:0}` li
+   ancora all'angolo della finestra, cioe' SOTTO la fascia: il loro titolo e
+   la riga dei conteggi restavano coperti, e non c'era modo di scoprirli
+   perche' il pannello e' gia' in cima al proprio scorrimento — si scorreva
+   e non succedeva niente. (27/08/2026)
+   L'altezza arriva da misuraTesta() in withus-one.js e non e' scritta a
+   mano: la fascia cambia altezza quando le voci vanno a capo, e un numero
+   fisso oggi e' un ritaglio domani. Il valore di scorta serve solo al primo
+   fotogramma, prima che la misura sia stata presa. */
+.w1-fuori{ top:var(--w1-testa, 118px); }
+
 .w1-load{
   position:absolute; inset:0; z-index:2;
   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;

@@ -1157,6 +1157,33 @@
     app.insertBefore(costruisciBarra3(), app.firstChild);
     app.insertBefore(costruisciBarra1(), app.firstChild);
 
+    /* ═══ I PANNELLI CHE VIVONO FUORI DA #app ══════════════════════════
+       Fonti compagnie, Stato collegamenti e Analisi dei bisogni sono figli
+       di <body>, non di #app: la regola `.panel{position:absolute;inset:0}`
+       li ancora all'angolo della finestra, cioe' SOTTO la fascia. Il titolo
+       e la riga dei conteggi restavano coperti, e non c'era modo di tirarli
+       fuori — il pannello e' gia' in cima al proprio scorrimento, quindi
+       scorrere non faceva niente. (segnalato il 27/08/2026 su «Fonti»)
+
+       L'altezza si MISURA e non si scrive: la fascia cresce quando le voci
+       vanno a capo, e un numero fisso oggi diventa un ritaglio domani. */
+    function misuraTesta() {
+      var giu = document.querySelector('.w1-pbar') || document.querySelector('.w1-top');
+      if (!giu) return;
+      var h = Math.round(giu.getBoundingClientRect().bottom);
+      if (h > 0) document.documentElement.style.setProperty('--w1-testa', h + 'px');
+    }
+    function segnaPannelliFuori() {
+      var dentro = document.getElementById('app');
+      var tutti = document.querySelectorAll('.panel');
+      for (var i = 0; i < tutti.length; i++) {
+        if (!dentro || !dentro.contains(tutti[i])) tutti[i].classList.add('w1-fuori');
+      }
+    }
+    segnaPannelliFuori();
+    misuraTesta();
+    window.addEventListener('resize', misuraTesta);
+
     /* ═══ CHIUSURA DELLE TENDINE ══════════════════════════════════════
        Il click sul documento da solo NON basta. Il contenuto di IAM vive in un
        iframe su un altro dominio (quoto.withusassicurazioni.it): i click dentro

@@ -191,15 +191,19 @@ e.prova('la ricerca fra i clienti resta sempre disponibile', () => {
 });
 
 // ── 8. quello che la barra promette è quello che fa ────────────────────────
-e.prova('il testo dentro la barra promette i prodotti', () => {
-  /* Il difetto originale era anche questo: il segnaposto prometteva quattro
-     cose e ne faceva una. Se torna a nominare solo clienti e polizze mentre
-     la ricerca fa i prodotti, siamo punto e a capo. */
-  const riga = src.split('\n').find((r) => r.includes('id="w1-cerca"')) || '';
-  const seg = (src.match(/placeholder="([^"]*)"/) || [])[1] || '';
-  deve(/prodotto/i.test(seg), 'il segnaposto non nomina i prodotti: «' + seg + '»');
-  deve(/combobox/.test(riga) || /combobox/.test(src.slice(src.indexOf('id="w1-cerca"') - 200, src.indexOf('id="w1-cerca"') + 300)),
-    'la barra non si annuncia come elenco a chi usa il lettore di schermo');
+e.prova('la barra cerca i prodotti, e il segnaposto non mente', () => {
+  /* Il difetto originale: il segnaposto prometteva quattro cose e ne faceva una.
+     §5 ha accorciato l'invito a «Cerca» — generico e onesto: la ricerca fa
+     prodotti, clienti e polizze insieme, quindi non deve nominarne solo una
+     parte. Il difetto vero da sorvegliare resta che la ricerca FACCIA i prodotti. */
+  const seg = (src.match(/id="w1-cerca"[\s\S]{0,260}?placeholder="([^"]*)"/) || [])[1] || '';
+  deve(seg.length > 0, 'la barra di ricerca non ha un segnaposto');
+  deve(!/^cerca\s+(un\s+)?(client|polizz)/i.test(seg.trim()),
+    'il segnaposto promette solo clienti/polizze mentre la ricerca fa anche i prodotti: «' + seg + '»');
+  deve(/function collegaRicerca\b/.test(src),
+    'la ricerca non è più agganciata al campo (collegaRicerca)');
+  const near = src.slice(src.indexOf('id="w1-cerca"') - 60, src.indexOf('id="w1-cerca"') + 200);
+  deve(/combobox/.test(near), 'la barra non si annuncia come elenco a chi usa il lettore di schermo');
 });
 
 e.stampa();

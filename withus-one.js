@@ -570,6 +570,8 @@
 
     for (var i = 0; i < MENU.length; i++) {
       var m = MENU[i];
+      // «Scrivania» non è più una voce: la fa il logo (a sinistra della fascia).
+      if (m.key === 'dashboard') continue;
       if (m.spacer) {
         var sp = document.createElement('div');
         sp.className = 'w1-spacer';
@@ -607,28 +609,29 @@
     return bar;
   }
 
+  /* UNA FASCIA SOLA. Prima erano due (BARRA 1 bianca alta 60 + BARRA 2 scura alta
+     44 = 104 px di cornice). Ora è una fascia scura sola alta 56: logo, voci di
+     menu, ricerca, icone e chip utente sulla stessa riga. Il menu (BARRA 2) non è
+     più un fratello: lo si costruisce come prima e lo si annida qui dentro, così
+     la logica del cassetto mobile (#w1-mbar) e degli specchi dei permessi resta
+     identica. Il blocco «PIATTAFORMA / IAM» sparisce: il logo dice già chi siamo. */
   function costruisciBarra1() {
     var top = document.createElement('header');
     top.className = 'w1-top';
     top.innerHTML =
       '<button class="w1-burger" id="w1-burger" aria-label="Menu">' + ico('i-list') + '</button>' +
-      '<img class="w1-logo" src="withus-logo.png" alt="With Us">' +
-      '<div class="w1-sep"></div>' +
-            /* Sta in una barra alta 56 px: quattro righe impilate non ci stanno, e
-         il primo tentativo si leggeva male. Qui «IAM» resta grande come il
-         nome che e', e le tre parole gli stanno accanto su una riga sola, in
-         piccolo. Per esteso si legge anche passandoci sopra col mouse. */
-      '<div class="w1-appname" title="Insurance Agency Management">' +
-        '<span class="w1-appname-t">Piattaforma</span>' +
-        '<span class="w1-iam"><b>IAM</b>' +
-          '<span class="w1-iam-e">Insurance&#8202;·&#8202;Agency&#8202;·&#8202;Management</span>' +
-        '</span>' +
-      '</div>' +
+      // Il logo prende il posto della voce «Scrivania»: cliccabile, porta a casa.
+      // Il nome resta per chi non vede (title + aria-label) e nella briciola in alto.
+      '<a class="w1-logo-btn" id="w1-logo-home" href="javascript:void(0)" title="Scrivania" aria-label="Scrivania">' +
+        '<img class="w1-logo" src="withus-logo-white.png" alt="With Us"></a>';
+    // le voci di menu (ex BARRA 2) ora vivono DENTRO questa fascia
+    top.appendChild(costruisciBarra2());
+    top.insertAdjacentHTML('beforeend',
+      '<div class="w1-spacer"></div>' +
       '<div class="w1-gsearch">' +
         '<svg class="w1-i sm w1-si"><use href="#i-search"/></svg>' +
         '<input id="w1-cerca" type="text" autocomplete="off" role="combobox" aria-expanded="false" ' +
-          'aria-controls="w1-gres" aria-autocomplete="list" ' +
-          'placeholder="Cerca un prodotto, un cliente, una targa o una polizza">' +
+          'aria-controls="w1-gres" aria-autocomplete="list" placeholder="Cerca">' +
         '<span class="w1-kbd">Ctrl K</span>' +
         '<div class="w1-gres" id="w1-gres" role="listbox" aria-label="Risultati"></div>' +
       '</div>' +
@@ -641,7 +644,7 @@
           '<div class="w1-uinfo"><b id="w1-uname">Utente</b><span id="w1-urole">—</span></div>' +
           '<svg class="w1-i sm"><use href="#i-down"/></svg>' +
         '</div>' +
-      '</div>';
+      '</div>');
 
     top.querySelector('#w1-burger').onclick = function (e) {
       e.stopPropagation();
@@ -650,6 +653,7 @@
       if (b) b.classList.toggle('open');
       if (s) s.classList.toggle('open');
     };
+    top.querySelector('#w1-logo-home').onclick = function (e) { e.preventDefault(); chiudiCassetto(); vai('dashboard'); };
     top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
@@ -955,6 +959,9 @@
     for (var i = 0; i < v.length; i++) {
       v[i].classList.toggle('act', v[i].getAttribute('data-key') === k);
     }
+    // Il logo fa da voce «Scrivania»: si accende quando si è sulla dashboard.
+    var lg = document.getElementById('w1-logo-home');
+    if (lg) lg.classList.toggle('act', k === 'dashboard');
     var t = document.getElementById('w1-titolo');
     var c = document.getElementById('w1-crumb');
     if (!t || !c) return;
@@ -1126,9 +1133,9 @@
     scrim.onclick = chiudiCassetto;
     document.body.appendChild(scrim);
 
-    /* le tre barre in testa a #app, nell'ordine giusto */
+    /* In testa a #app: la fascia unica (BARRA 1, che si porta dentro le voci di
+       menu della ex BARRA 2) e sotto la riga del titolo (BARRA 3). */
     app.insertBefore(costruisciBarra3(), app.firstChild);
-    app.insertBefore(costruisciBarra2(), app.firstChild);
     app.insertBefore(costruisciBarra1(), app.firstChild);
 
     /* ═══ CHIUSURA DELLE TENDINE ══════════════════════════════════════

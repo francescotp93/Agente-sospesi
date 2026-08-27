@@ -34,20 +34,26 @@ const idx = leggi('index.html');
 // lungo e non deve inquinare le ricerche di testo.
 const corpo = one.replace(/var SPRITE = '[\s\S]*?';/, "var SPRITE = '';");
 
-prova('la scocca costruisce le tre barre', () => {
+prova('la scocca costruisce le sue barre', () => {
+  // Le tre funzioni esistono ancora tutte. Dopo la fusione (§5) la fascia unica è
+  // BARRA 1, che si porta DENTRO le voci di menu (BARRA 2, appendChild); nella
+  // pagina si inseriscono la fascia unica e la riga del titolo (BARRA 3).
   for (const f of ['costruisciBarra1', 'costruisciBarra2', 'costruisciBarra3']) {
     deve(new RegExp('function ' + f + '\\b').test(corpo), 'manca ' + f);
-    deve(new RegExp('insertBefore\\(' + f + '\\(\\)').test(corpo), f + ' non viene mai messa nella pagina');
   }
-  return 'intestazione, menu, riga del titolo';
+  deve(/appendChild\(costruisciBarra2\(\)\)/.test(corpo), 'la fascia unica non porta dentro le voci di menu (BARRA 2)');
+  deve(new RegExp('insertBefore\\(costruisciBarra1\\(\\)').test(corpo), 'la fascia unica non viene messa nella pagina');
+  deve(new RegExp('insertBefore\\(costruisciBarra3\\(\\)').test(corpo), 'la riga del titolo non viene messa nella pagina');
+  return 'fascia unica (con dentro il menu) + riga del titolo';
 });
 
 prova('le barre entrano nell ordine giusto', () => {
   // insertBefore(x, primo figlio) mette in cima: l ultima inserita finisce prima.
+  // Ora si inseriscono solo BARRA 3 e BARRA 1 (la 2 è annidata nella 1).
   const ord = [...corpo.matchAll(/insertBefore\((costruisciBarra\d)\(\)/g)].map(m => m[1]);
-  deve(ord.join(',') === 'costruisciBarra3,costruisciBarra2,costruisciBarra1',
+  deve(ord.join(',') === 'costruisciBarra3,costruisciBarra1',
     'ordine di inserimento sbagliato: ' + ord.join(','));
-  return 'in alto la 1, poi la 2, poi la 3';
+  return 'in alto la fascia unica, poi la riga del titolo';
 });
 
 prova('la vecchia navigazione resta nella pagina, solo nascosta', () => {

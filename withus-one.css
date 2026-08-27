@@ -338,6 +338,8 @@ body.w1-min{ --w1-sidew:66px; }
 /* Il marchio With Us verde su trasparente (niente riquadro bianco), più grande:
    è la prima cosa che si legge in cima alla colonna. */
 .w1-side-head .w1-logo{ height:40px; width:auto; display:block; }
+/* Il quadratino-casa si vede solo a sidebar compressa (vedi body.w1-min). */
+.w1-logo-min{ display:none; }
 .w1-side-nav{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:8px 0; min-height:0; }
 .w1-side-foot{ flex:0 0 auto; border-top:1px solid rgba(255,255,255,.08); padding:6px 8px; }
 .w1-side-toggle{
@@ -397,6 +399,15 @@ body.w1-min .w1-mbar{ overflow:visible; }
 body.w1-min .w1-side-nav{ overflow:visible; }
 body.w1-min .w1-side-head{ justify-content:center; padding:0; }
 body.w1-min .w1-side-head .w1-logo{ display:none; }
+/* Compressa: al posto del marchio (troppo largo per la barra stretta) un
+   quadratino verde cliccabile con l'icona casa — così si torna alla Scrivania
+   anche da compressa (prima il logo spariva e non c'era più modo). */
+body.w1-min .w1-logo-min{ display:block; width:22px; height:22px; color:#fff; }
+body.w1-min .w1-side-head .w1-logo-btn{
+  width:40px; height:40px; padding:0; border-radius:11px;
+  background:var(--w1-verde); align-items:center; justify-content:center;
+}
+body.w1-min .w1-side-head .w1-logo-btn:hover{ background:#03ab59; }
 body.w1-min .w1-side-toggle{ justify-content:center; gap:0; }
 body.w1-min .w1-side-toggle span{ display:none; }
 body.w1-min .w1-side-toggle .w1-side-ch{ transform:rotate(0deg); }  /* » quando è stretta */
@@ -499,6 +510,8 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
   body.w1-min .w1-mbar{ width:272px; }
   body.w1-min .w1-side-head{ justify-content:flex-start; padding:0 12px; }
   body.w1-min .w1-side-head .w1-logo{ display:block; }
+  body.w1-min .w1-logo-min{ display:none; }
+  body.w1-min .w1-side-head .w1-logo-btn{ width:auto; height:auto; padding:0 6px; background:none; border-radius:var(--w1-r); }
   body.w1-min .w1-mbar .w1-m > a{ justify-content:flex-start; padding:0 16px; }
   body.w1-min .w1-mbar .w1-m > a > span,
   body.w1-min .w1-mbar .w1-m > a .w1-ch{ display:inline; }

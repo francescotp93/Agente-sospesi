@@ -647,7 +647,10 @@
     head.className = 'w1-side-head';
     head.innerHTML =
       '<a class="w1-logo-btn" id="w1-logo-home" href="javascript:void(0)" title="Scrivania" aria-label="Scrivania">' +
-        '<img class="w1-logo" src="withus-logo-green.png" alt="With Us"></a>';
+        '<img class="w1-logo" src="withus-logo-green.png" alt="With Us">' +
+        // Da compressa il marchio (largo) sparisce: resta questo quadratino
+        // cliccabile, così si torna sempre alla Scrivania.
+        '<svg class="w1-i w1-logo-min"><use href="#i-home"/></svg></a>';
     side.appendChild(head);
 
     var nav = document.createElement('nav');

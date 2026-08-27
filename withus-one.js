@@ -389,17 +389,12 @@
        nella scrivania, e averla anche qui era la stessa cosa scritta due
        volte. Resta il pulsante rapido nella barra in alto. */
 
-    { spacer: true },
-
-    { key: 'admin', l: 'Amministrazione', i: 'i-cog', destra: true, mirrorAny: ['um-btn-utenti'],
-      go: function () { vai('utenti'); },
-      sub: [
-        { l: 'Utenti e permessi', i: 'i-key', act: 'utenti', go: function () { vai('utenti'); } },
-        { l: 'Azienda', i: 'i-build', act: 'azienda', go: function () { vai('azienda'); } },
-        { l: 'Agenti AI', i: 'i-bot', act: 'agenti', mirror: 'nb-agenti', go: function () { vai('agenti'); } },
-        { hr: true },
-        { l: 'Esci dall\'account', i: 'i-lock', go: function () { tryCall('doLogout'); } }
-      ] }
+    /* «Amministrazione» non e' piu' una voce della barra scura: le sue sezioni
+       (Utenti e permessi, Azienda, Agenti AI, Esci) vivono ora nell'area personale,
+       che si apre dal proprio nome in alto a destra — una porta sola invece di due.
+       Con il blocco spariscono anche i suoi specchi (mirrorAny um-btn-utenti,
+       mirror nb-agenti) e lo spacer che lo spingeva a destra: non restano
+       riferimenti appesi a bottoni che non esistono piu'. */
   ];
 
   /* Titolo e briciole di pane della terza barra */

@@ -1260,7 +1260,8 @@ input[type=file]{display:none;}
   <button class="umenu-item" onclick="goTab('profilo');document.getElementById('umenu').style.display='none';"><i class="ti ti-user-circle" style="font-size:16px;color:var(--txt3);"></i> Il mio profilo</button>
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
   <button class="umenu-item" id="um-btn-estratto" onclick="openEstrattoConto();document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-file-invoice" style="font-size:16px;color:var(--txt3);"></i> Estratto conto</button>
-  <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
+  <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
+  <button class="umenu-item" id="um-btn-agenti" onclick="goTab('agenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-robot" style="font-size:16px;color:var(--txt3);"></i> Agenti AI</button>
   <div class="umenu-sep"></div>
   <div class="umenu-section-title"> Aspetto</div>
   <div style="padding:4px 10px 8px;display:flex;align-items:center;justify-content:space-between;">
@@ -3852,6 +3853,16 @@ function goTab(t) {
   /* Se la navigazione non arriva dal ripristino, è una persona che ha cliccato:
      da quel momento nessun caricamento in ritardo può più spostarla. */
   if (!RIPRISTINO_IN_CORSO) UTENTE_HA_SCELTO = true;
+  /* Sezioni riservate dell'area personale: il diritto si legge dal RUOLO, non dal
+     bottone nascosto. Chi forza goTab('utenti') dalla console senza diritto non apre
+     niente di utile — torna al profilo. Fail-closed: se il profilo non è ancora
+     caricato, si blocca. (È il vero controllo dietro l'area personale unificata.) */
+  const RISERVATE = {
+    utenti:  () => !!PERMESSI[PROFILO?.ruolo]?.utenti,
+    azienda: () => !!PERMESSI[PROFILO?.ruolo]?.utenti,
+    agenti:  () => isSuperAdmin(),
+  };
+  if (RISERVATE[t] && !RISERVATE[t]()) { if (t !== 'profilo') goTab('profilo'); return; }
   // Le voci di Contabilità aprono il pannello con la loro sotto-scheda
   const contabSub = ['quadratura','caricafile','anomalie','sospesi','storico','conto'];
   if (contabSub.includes(t)) {
@@ -7175,11 +7186,17 @@ function mostraBadgeRuolo() {
   // Badge nel menu
   const umBadge = document.getElementById('um-ruolo-badge');
   if (umBadge) umBadge.innerHTML = `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${r.bg};color:${r.color};">${lbl}</span>`;
-  // Mostra/nasconde pulsante gestione utenti nel menu
-  const btnUtenti = document.getElementById('um-btn-utenti');
-  if (btnUtenti) btnUtenti.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
-  const btnEstr = document.getElementById('um-btn-estratto');
-  if (btnEstr) btnEstr.style.display = PERMESSI[PROFILO.ruolo]?.utenti ? 'flex' : 'none';
+  // L'area personale (menu del nome) è l'UNICA porta per l'amministrazione: la voce
+  // «Amministrazione» della barra scura è stata tolta. Le sezioni riservate compaiono
+  // qui in base al RUOLO (non allo stato CSS di un altro bottone): Utenti/Estratto/
+  // Azienda per chi gestisce gli utenti; Agenti AI solo per il Super Admin. Chi non
+  // ha diritto vede solo Profilo, Aspetto ed Esci. Il blocco vero è in goTab().
+  const puoAmministrare = !!PERMESSI[PROFILO.ruolo]?.utenti;
+  const setVis = (id, ok) => { const el = document.getElementById(id); if (el) el.style.display = ok ? 'flex' : 'none'; };
+  setVis('um-btn-utenti', puoAmministrare);
+  setVis('um-btn-estratto', puoAmministrare);
+  setVis('um-btn-azienda', puoAmministrare);
+  setVis('um-btn-agenti', isSuperAdmin());
   // Aggiorna avatar nel menu
   const av2 = document.getElementById('um-av2');
   if (av2) av2.textContent = (PROFILO.nome||ME?.email||'?')[0].toUpperCase();
@@ -14454,7 +14471,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
-<script src="withus-one.js?v=20260827c"></script>
+<script src="withus-one.js?v=20260827d"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

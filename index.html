@@ -1184,7 +1184,7 @@ input[type=file]{display:none;}
 }
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
-<link rel="stylesheet" href="withus-one.css?v=20260827g">
+<link rel="stylesheet" href="withus-one.css?v=20260827h">
 </head>
 <body>
 
@@ -3266,6 +3266,29 @@ async function onLogin(user) {
   // Carica profilo e applica permessi
   caricaProfilo(user.id).then(async profilo => {
     PROFILO = profilo;
+
+    /* Il nome, non l'indirizzo. Qui sopra `nm` ripiega sull'email quando
+       user_metadata.full_name non c'e' — e non c'e' quasi mai, perche' gli
+       utenti li crea l'agenzia, non un'iscrizione con nome e cognome. Il
+       risultato era trenta caratteri di email in cima allo schermo, che
+       nessuno legge e che allargano la fascia.
+       `iam_utenti` nome e cognome ce li ha gia': appena il profilo arriva si
+       riscrive l'etichetta. Se sono vuoti non si tocca niente e resta il
+       ripiego di prima: meglio un indirizzo che un riquadro senza nome.
+       (27/08/2026) */
+    const nomeVero = [profilo && profilo.nome, profilo && profilo.cognome]
+      .filter(Boolean).join(' ').trim();
+    if (nomeVero) {
+      const el = document.getElementById('um-name');
+      if (el) el.textContent = nomeVero;
+      /* Le iniziali seguono il nome. Non si tocca chi ha una foto. */
+      const avEl = document.getElementById('u-av');
+      if (avEl && !(user.user_metadata && user.user_metadata.avatar_url)) {
+        const ini = ((profilo.nome || '').charAt(0) + (profilo.cognome || '').charAt(0)).toUpperCase();
+        if (ini) avEl.textContent = ini;
+      }
+    }
+
     // Instradamento per accesso: utente "solo QUOTO" -> va dritto a QUOTO; nessun accesso -> stop
     if (PROFILO && !isSuperAdmin()) {
       if (PROFILO.attivo === false) {
@@ -14471,7 +14494,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
-<script src="withus-one.js?v=20260827g"></script>
+<script src="withus-one.js?v=20260827h"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

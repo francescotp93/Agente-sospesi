@@ -160,21 +160,32 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
 .w1-pill.ok{ background:rgba(1,192,97,.20); color:#8ff0bf; border-color:rgba(1,192,97,.35); }
 .w1-pill.warn{ background:rgba(201,42,42,.22); color:#ffb3b3; border-color:rgba(201,42,42,.4); }
 
+/* Il riquadro dell'utente. Rifatto nella stessa lingua del tasto «Nuovo
+   preventivo» (pastiglia tonda, avatar rotondo) ma in tono minore: fondo appena
+   schiarito, non il verde pieno. Il tasto è un'azione, questo dice solo dove sei.
+   La riga in alto porta il NOME, non l'indirizzo (vedi onLogin): trenta caratteri
+   di email non li leggeva nessuno e rubavano spazio. L'indirizzo resta nel menu. */
 .w1-user{
-  display:flex; align-items:center; gap:9px; padding:4px 8px 4px 4px;
-  border:1px solid rgba(255,255,255,.16); border-radius:var(--w1-r);
-  cursor:pointer; background:rgba(255,255,255,.08); margin-left:6px; flex:0 0 auto;
+  display:flex; align-items:center; gap:9px; padding:3px 12px 3px 3px;
+  border:1px solid rgba(255,255,255,.14); border-radius:999px;
+  cursor:pointer; background:rgba(255,255,255,.07); margin-left:6px; flex:0 0 auto;
+  transition:background .15s, border-color .15s;
 }
-.w1-user:hover{ background:rgba(255,255,255,.16); }
+.w1-user:hover{ background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.26); }
 .w1-av{
-  width:30px; height:30px; border-radius:var(--w1-r);
+  width:30px; height:30px; border-radius:50%;
   background:linear-gradient(135deg,var(--w1-verde),var(--w1-verde2));
   color:#fff; font-weight:700; font-size:11px; display:flex;
   align-items:center; justify-content:center; letter-spacing:.5px;
   background-size:cover; background-position:center; flex:0 0 auto;
 }
-.w1-uinfo{ line-height:1.25; text-align:left; }
-.w1-uinfo b{ display:block; font-size:12px; font-weight:600; color:#fff; }
+.w1-uinfo{ line-height:1.25; text-align:left; min-width:0; }
+/* Il taglio con i puntini è una rete di sicurezza: un cognome lungo (o chi resta
+   senza nome e ricade sull'indirizzo) non deve allargare la fascia per tutti. */
+.w1-uinfo b{
+  display:block; font-size:12px; font-weight:600; color:#fff;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:190px;
+}
 .w1-uinfo span{ font-size:10.5px; color:#c7d2dd; }
 
 /* ═══ Voci di menu — ora annidate nella fascia unica (niente più barra propria) */

@@ -3755,6 +3755,17 @@ const QUOTO_URL = 'https://quoto.withusassicurazioni.it/';
 // Il passaggio della sessione nell'hash (#at/#rt) resta com'era: ora che il
 // dominio è uno solo il login sarebbe già condiviso, ma lasciarlo garantisce che
 // tutto continui a funzionare anche se la riscrittura viene disattivata.
+/* ⚠️ ULTIMO PUNTO in cui i token viaggiano ancora dentro un indirizzo.
+   Il riquadro dentro la scocca (withus-one.js) NON usa piu' questa funzione:
+   li' la sessione passa da finestra a finestra (postMessage) e nell'indirizzo
+   non resta niente. Qui resta solo il salto a PAGINA INTERA, che serve a un
+   caso unico: il collaboratore con `accesso_iam = false` e `accesso_quoto =
+   true`, che non ha una scocca da cui parlare.
+   In quel caso non esiste una finestra padre, quindi postMessage non e' una
+   strada: le due uscite possibili sono (a) togliere il ponte e far fare a quel
+   collaboratore il normale accesso su QUOTO con l'email gia' scritta, oppure
+   (b) il biglietto monouso scambiato lato server. Decisione da prendere —
+   INTERFACCIA-QUOTO-IAM.md §2.4, "Strada residua". */
 async function quotoUrl() {
   let url = QUOTO_URL + '?from=iam' + (ME?.email ? ('&email=' + encodeURIComponent(ME.email)) : '');
   try {
@@ -7971,7 +7982,12 @@ async function openLab() {
   iframe.style.display = 'block';
   iframe.style.animation = '';
   // SSO completo via hash #at/#rt (sessione persistente nel Lab, come per QUOTO)
-  let src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}&token=${token}`;
+  /* Il token NON sta piu' nella QUERY STRING: la query finisce nei log del
+     server e nei referrer delle richieste che partono dalla pagina, l'hash no.
+     L'hash #at/#rt resta (e' la strada che bootAuth del Lab prova per prima) e
+     il postMessage qui sotto resta quella preferita. Il duplicato `&token=` era
+     solo il residuo della vecchia modalita' "header". */
+  let src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}`;
   if (token && refresh) src += `#at=${encodeURIComponent(token)}&rt=${encodeURIComponent(refresh)}`;
   iframe.src = src;
 
@@ -14458,7 +14474,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="ir-bar"><i></i></div>
 </div>
 
-<script src="withus-one.js?v=20260827"></script>
+<script src="withus-one.js?v=20260827a"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

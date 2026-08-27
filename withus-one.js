@@ -80,7 +80,19 @@
     p.innerHTML =
       '<div class="w1-stage">' +
       '<div class="w1-load" id="w1-qload"><span class="w1-spin"></span> Apertura preventivatore…</div>' +
-      '<iframe class="w1-frame" id="w1-qframe" title="Preventivatore With Us"></iframe>' +
+      /* `allow=""` toglie al riquadro tutte le funzioni delicate del browser
+         (fotocamera, microfono, posizione, pagamenti): il preventivatore non ne
+         usa nessuna e cosi' non puo' chiederle a nome di IAM.
+         `referrerpolicy="origin"` fa sapere al preventivatore CHI lo apre — la
+         guardia lato QUOTO si basa su questo — senza mandargli il resto
+         dell'indirizzo di IAM.
+         Sandbox: NON messa qui. QUOTO ha bisogno di `allow-scripts` e
+         `allow-same-origin` insieme (usa il proprio localStorage), e quei due
+         insieme annullano quasi tutta la protezione; le voci che servirebbero
+         davvero (finestre di pagamento, scarico PDF, stampa) vanno collaudate
+         una per una prima di stringere. Vedi INTERFACCIA-QUOTO-IAM.md §2. */
+      '<iframe class="w1-frame" id="w1-qframe" title="Preventivatore With Us"' +
+      ' allow="" referrerpolicy="origin"></iframe>' +
       '</div>';
     panels.appendChild(p);
     return p;
@@ -103,20 +115,13 @@
     } catch (e) { return false; }
   }
 
+  /* Si naviga per messaggio, non entrando nel DOM del riquadro. In produzione
+     IAM e QUOTO sono due origini diverse: `fr.contentWindow.showPage` non si
+     puo' nemmeno leggere, la lettura andava sempre in eccezione e si finiva a
+     ricaricare il riquadro (perdendo la compilazione in corso). */
   function vaiPagina(fr, page, cerca, prod) {
-    if (!page) return;
-    try {
-      var w = fr.contentWindow;
-      if (w && typeof w.showPage === 'function' && w.document.getElementById('page-' + page)) {
-        w.showPage(page);
-        /* Il prodotto si apre DOPO la pagina: apriProdotto porta gia' dove
-           deve, e senza ricaricare il riquadro non si perde la sessione. */
-        if (prod && typeof w.apriProdotto === 'function') w.apriProdotto(prod);
-        if (cerca) applicaRicerca(w, cerca);
-        return;
-      }
-    } catch (e) { /* se non si può leggere dentro, si ricarica con il parametro */ }
-    caricaFrame(fr, page, cerca, prod);
+    if (!page && !cerca && !prod) return;
+    inviaAlRiquadro({ w1: 'quoto-nav', v: 1, page: page, prod: prod, q: cerca });
   }
 
   /* Scrive il testo nel campo di ricerca del preventivatore e lancia la ricerca.
@@ -135,36 +140,69 @@
     } catch (e) { /* riquadro su un altro dominio: ci pensa il parametro q= */ }
   }
 
+  /* ═══ IL CANALE VERSO IL PREVENTIVATORE ════════════════════════════════
+     La sessione non viaggia piu' nell'indirizzo del riquadro. QUOTO, appena
+     pronto, chiede ('quoto-ready') e la scocca risponde ('quoto-session')
+     direttamente da finestra a finestra, dichiarando a chi sta parlando
+     (targetOrigin) e verificando chi le ha parlato (event.origin).
+     Nell'indirizzo restano solo `from`, `page` e `prod`: nessun token,
+     nessuna email, nessun nome di cliente. */
+  var QUOTO_ORIGIN = (function () { try { return new URL(QUOTO, location.href).origin; } catch (e) { return QUOTO; } })();
+  var ATTESA = null;   // { page, prod, cerca } da consegnare quando QUOTO chiama
+
+  function sessionePerQuoto() {
+    /* `db` e `ME` in IAM sono dichiarati con `let` in cima allo script della
+       pagina: vivono nell'ambito globale ma NON sono proprieta' di `window`.
+       Vanno quindi guardati con `typeof`, non con `window.db`. */
+    if (typeof db === 'undefined' || !db || !db.auth || typeof db.auth.getSession !== 'function') return Promise.resolve(null);
+    return db.auth.getSession().then(function (r) {
+      var s = r && r.data && r.data.session;
+      if (!s || !s.access_token || !s.refresh_token) return null;
+      return { at: s.access_token, rt: s.refresh_token };
+    }).catch(function () { return null; });
+  }
+
+  function inviaAlRiquadro(msg) {
+    var fr = document.getElementById('w1-qframe');
+    if (!fr || !fr.contentWindow) return;
+    try { fr.contentWindow.postMessage(msg, QUOTO_ORIGIN); } catch (e) {}
+  }
+
+  /* Un solo ascoltatore per tutta la vita della pagina. Primo controllo:
+     l'origine. Un ascoltatore che non guarda ev.origin accetta ordini da
+     qualsiasi pagina che abbia un riferimento a questa finestra. */
+  window.addEventListener('message', function (ev) {
+    if (ev.origin !== QUOTO_ORIGIN) return;
+    var fr = document.getElementById('w1-qframe');
+    if (!fr || ev.source !== fr.contentWindow) return;
+    var d = ev.data; if (!d || d.w1 !== 'quoto-ready') return;
+    sessionePerQuoto().then(function (sess) {
+      var msg = { w1: 'quoto-session', v: 1, email: (typeof ME !== 'undefined' && ME && ME.email) || '' };
+      if (sess) { msg.at = sess.at; msg.rt = sess.rt; }
+      if (ATTESA) { msg.page = ATTESA.page; msg.prod = ATTESA.prod; msg.q = ATTESA.cerca; ATTESA = null; }
+      inviaAlRiquadro(msg);
+      FRAME_PRONTO = true;
+      var l = document.getElementById('w1-qload');
+      if (l) l.style.display = 'none';
+    });
+  });
+
   function caricaFrame(fr, page, cerca, prod) {
     var load = document.getElementById('w1-qload');
     if (load) load.style.display = '';
     FRAME_PRONTO = false;
 
-    var applica = function (u) {
-      var i = u.indexOf('#');
-      var base = i < 0 ? u : u.slice(0, i);
-      var hash = i < 0 ? '' : u.slice(i);
-      if (page) base += (base.indexOf('?') < 0 ? '?' : '&') + 'page=' + encodeURIComponent(page);
-      /* Il testo cercato viaggia nell'indirizzo perche' il riquadro puo' stare
-         su un altro dominio: da fuori non si puo' scrivere dentro. Cosi'
-         funziona sia a dominio unico sia a domini separati. */
-      if (cerca) base += (base.indexOf('?') < 0 ? '?' : '&') + 'q=' + encodeURIComponent(cerca);
-      /* Il prodotto viaggia nell'indirizzo come il testo cercato: cosi' ogni
-         voce di menu porta al SUO prodotto invece che alla pagina che li
-         contiene tutti, e funziona sia a dominio unico sia a domini separati. */
-      if (prod) base += (base.indexOf('?') < 0 ? '?' : '&') + 'prod=' + encodeURIComponent(prod);
-      fr.src = base + hash;
-    };
-
-    if (typeof window.quotoUrl === 'function') {
-      try {
-        window.quotoUrl().then(applica).catch(function () {
-          applica(QUOTO + '?from=iam');
-        });
-        return;
-      } catch (e) { /* si prosegue con l'indirizzo semplice */ }
-    }
-    applica(QUOTO + '?from=iam');
+    /* Nell'indirizzo restano solo cose che non dicono nulla su nessuno:
+       `from` (accende la veste dentro IAM), `page` e `prod` (quale schermata
+       aprire, cosi' non c'e' lo sfarfallio della schermata sbagliata).
+       Il testo cercato NON e' piu' qui: e' quasi sempre il nome o il codice
+       fiscale di un cliente e finiva nei log del server e nella cronologia.
+       Va nel messaggio, insieme alla sessione. */
+    var base = QUOTO + '?from=iam';
+    if (page) base += '&page=' + encodeURIComponent(page);
+    if (prod) base += '&prod=' + encodeURIComponent(prod);
+    ATTESA = { page: page, prod: prod, cerca: cerca };
+    fr.src = base;
   }
 
   /* opz = { titolo: ['Titolo','Area'], cerca: 'testo' } */

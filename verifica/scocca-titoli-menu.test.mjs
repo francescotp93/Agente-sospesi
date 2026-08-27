@@ -117,10 +117,13 @@ e.prova('la lente in alto non butta via quello che hai digitato', () => {
   deve(/cerca:\s*(testo|r\.dato)\b/.test(corpo), 'apre l\'elenco senza passare il testo cercato');
 });
 
-e.prova('il testo cercato viaggia anche nell\'indirizzo', () => {
-  /* Il riquadro puo' stare su un altro dominio: da fuori non si puo' scrivere
-     dentro, quindi serve il parametro nell'indirizzo. */
-  deve(/'q=' \+ encodeURIComponent\(cerca\)/.test(src), 'manca il parametro q= nell\'indirizzo');
+e.prova('il testo cercato viaggia sul canale, non nell\'indirizzo', () => {
+  /* Il testo cercato e' quasi sempre il nome o il codice fiscale di un cliente:
+     nell'indirizzo finirebbe nei log del server e nella cronologia. Da oggi
+     viaggia nel messaggio postMessage verso il riquadro (quoto-nav, e nella
+     risposta quoto-session al primo caricamento), con l'origine dichiarata. */
+  deve(!/'q=' \+ encodeURIComponent\(cerca\)/.test(src), 'il testo cercato e\' tornato nell\'indirizzo (q=)');
+  deve(/quoto-nav/.test(src) && /q:\s*cerca/.test(src), 'il testo cercato non viaggia sul canale (quoto-nav con q)');
   deve(/function applicaRicerca/.test(src), 'manca la scrittura diretta quando il dominio e\' lo stesso');
 });
 

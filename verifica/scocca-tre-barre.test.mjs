@@ -98,11 +98,15 @@ prova('la vecchia schermata di passaggio non parte piu', () => {
   return 'intercettato prima di IAM';
 });
 
-prova('il ponte con il preventivatore porta con se la sessione', () => {
-  deve(/window\.quotoUrl\(\)\.then\(applica\)/.test(corpo),
-    'il riquadro non usa quotoUrl(): dentro il preventivatore si dovrebbe rifare l accesso');
-  deve(/applica\(QUOTO \+ '\?from=iam'\)/.test(corpo), 'manca la via di riserva se quotoUrl non risponde');
-  return 'stessa sessione dentro e fuori';
+prova('il ponte con il preventivatore porta con se la sessione (sul canale)', () => {
+  /* La sessione non passa piu' nell'indirizzo (quotoUrl/#at/#rt) ma sul canale
+     postMessage: QUOTO chiede 'quoto-ready', la scocca risponde 'quoto-session'
+     con at/rt letti da db.auth.getSession(), verificando prima l'origine. Cosi'
+     i token non restano nell'indirizzo del riquadro. */
+  deve(/sessionePerQuoto/.test(corpo), 'la scocca non prepara la sessione da mandare al riquadro');
+  deve(/w1:\s*'quoto-session'/.test(corpo), 'la scocca non risponde con la sessione sul canale');
+  deve(/from=iam/.test(corpo), 'il riquadro non si apre piu con from=iam');
+  return 'stessa sessione, ma sul canale';
 });
 
 prova('dentro il riquadro il preventivatore non mostra il suo menu', () => {

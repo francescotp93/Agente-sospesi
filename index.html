@@ -4565,6 +4565,24 @@ async function caricaDaFareOggi(forza) {
                 s: 'una telefonata vale più di una campagna', va: () => oggiApri('anagrafiche') });
   });
 
+  /* 6b. Il «buco» del marketing (§12A): un cliente senza email non riceve
+     campagne, uno senza consenso non può riceverne per legge. Renderlo un
+     numero nella scrivania è il primo passo per colmarlo. Un clic apre i
+     Clienti già filtrati su quel buco (page «anagrafiche:<filtro>»). */
+  await conta(async () => {
+    const { data, error } = await db.from('quote_anagrafiche').select('email,lead,note,privacy_firma');
+    if (error) throw error;
+    const isLead = a => a.lead === true || /\bLEAD\b/i.test(a.note || '');
+    const clienti = (data || []).filter(a => !isLead(a));
+    const senzaMail = clienti.filter(a => !(a.email && String(a.email).trim())).length;
+    if (senzaMail) voci.push({ n: senzaMail, cls: '', l: senzaMail === 1 ? 'cliente senza email' : 'clienti senza email',
+                s: 'senza indirizzo non parte nessuna campagna', va: () => oggiApri('anagrafiche:senza-email') });
+    const consensoOk = a => { const pf = a.privacy_firma; return !!(pf && pf.stato === 'firmata' && pf.consensi && pf.consensi.marketing_elettronico === true); };
+    const senzaCons = clienti.filter(a => !consensoOk(a)).length;
+    if (senzaCons) voci.push({ n: senzaCons, cls: '', l: senzaCons === 1 ? 'cliente senza consenso marketing' : 'clienti senza consenso marketing',
+                s: 'niente email marketing finché manca', va: () => oggiApri('anagrafiche:senza-consenso') });
+  });
+
   // 7. Sospesi della contabilità collaboratori: dato già in casa a IAM
   await conta(async () => {
     if (!window.APP || !Array.isArray(APP.sospesi)) return;

@@ -333,9 +333,9 @@ body.w1-min{ --w1-sidew:66px; }
   overflow:hidden;
 }
 .w1-side-head .w1-logo-btn{ height:auto; padding:0 6px; }
-/* Il marchio With Us verde (non il bianco), più grande: è la prima cosa che si
-   legge in cima alla colonna. */
-.w1-side-head .w1-logo{ height:34px; width:auto; display:block; }
+/* Il marchio With Us verde su trasparente (niente riquadro bianco), più grande:
+   è la prima cosa che si legge in cima alla colonna. */
+.w1-side-head .w1-logo{ height:40px; width:auto; display:block; }
 .w1-side-nav{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:8px 0; min-height:0; }
 .w1-side-foot{ flex:0 0 auto; border-top:1px solid rgba(255,255,255,.08); padding:6px 8px; }
 .w1-side-toggle{

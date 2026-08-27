@@ -643,7 +643,7 @@
     head.className = 'w1-side-head';
     head.innerHTML =
       '<a class="w1-logo-btn" id="w1-logo-home" href="javascript:void(0)" title="Scrivania" aria-label="Scrivania">' +
-        '<img class="w1-logo" src="withus-logo.png" alt="With Us"></a>';
+        '<img class="w1-logo" src="withus-logo-green.png" alt="With Us"></a>';
     side.appendChild(head);
 
     var nav = document.createElement('nav');

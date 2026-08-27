@@ -11564,7 +11564,10 @@ async function openWDModal(id) {
   const w = id ? WD.find(x=>x.id===id) : null;
   document.getElementById('wd-modal-title').textContent = w ? w.titolo||'Modifica' : 'Nuova operazione';
   const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
-  sv('wd-titolo', w?.titolo); sv('wd-note', w?.note); sv('wd-data', w?.data);
+  // Nuova attività: la data parte da OGGI (il giorno in cui la si crea), così non
+  // si deve ricordare di compilarla. In modifica resta la data già salvata.
+  sv('wd-titolo', w?.titolo); sv('wd-note', w?.note);
+  sv('wd-data', w?.data || (id ? '' : wdsISO(new Date())));
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   sv('wd-ora-fine', w?.ora_fine); sv('wd-cliente', w?.cliente); sv('wd-prodotto', w?.prodotto);

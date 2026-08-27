@@ -50,12 +50,12 @@ body.theme-light {
   --blu:#2563eb;--blu-bg:#eff6ff;--blu-txt:#1d4ed8;
 }
 /* ── ACCENT COLORS ── */
-body, body.accent-orange { --acc:#E8500A;--acc2:#c44008;--acc-rgb:232,80,10; }
-body.accent-blue   { --acc:#2563EB;--acc2:#1d4ed8;--acc-rgb:37,99,235; }
-body.accent-green  { --acc:#16A34A;--acc2:#15803d;--acc-rgb:22,163,74; }
-body.accent-purple { --acc:#7C3AED;--acc2:#6d28d9;--acc-rgb:124,58,237; }
-body.accent-red    { --acc:#DC2626;--acc2:#b91c1c;--acc-rgb:220,38,38; }
-body.accent-teal   { --acc:#0D9488;--acc2:#0f766e;--acc-rgb:13,148,136; }
+/* Colore d'accento fisso: verde With Us. Il selettore dei sei colori è stato
+   tolto (restano solo tema chiaro/scuro). --acc/--acc2/--acc-rgb sono usati
+   ovunque nella pagina, quindi il token resta — cambia solo che ora ha un solo
+   valore, lo stesso di withus-one.css (body.accent-green), così non c'è più il
+   conflitto fra due verdi diversi. */
+body { --acc:#02984e;--acc2:#016b38;--acc-rgb:2,152,78; }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
@@ -1268,17 +1268,6 @@ input[type=file]{display:none;}
     <div style="display:flex;gap:4px;">
       <button onclick="setTheme('dark')" id="theme-btn-dark" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;"> Scuro</button>
       <button onclick="setTheme('light')" id="theme-btn-light" style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:8px;border:1.5px solid var(--bord2);background:var(--surf3);color:var(--txt2);cursor:pointer;font-family:inherit;transition:all .15s;"> Chiaro</button>
-    </div>
-  </div>
-  <div style="padding:2px 10px 10px;display:flex;align-items:center;gap:10px;">
-    <span style="font-size:12px;color:var(--txt2);">Colore</span>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button onclick="setAccent('orange')" title="Arancione" style="width:22px;height:22px;border-radius:50%;background:#E8500A;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-orange"></button>
-      <button onclick="setAccent('blue')"   title="Blu"       style="width:22px;height:22px;border-radius:50%;background:#2563EB;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-blue"></button>
-      <button onclick="setAccent('green')"  title="Verde"     style="width:22px;height:22px;border-radius:50%;background:#16A34A;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-green"></button>
-      <button onclick="setAccent('purple')" title="Viola"     style="width:22px;height:22px;border-radius:50%;background:#7C3AED;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-purple"></button>
-      <button onclick="setAccent('red')"    title="Rosso"     style="width:22px;height:22px;border-radius:50%;background:#DC2626;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-red"></button>
-      <button onclick="setAccent('teal')"   title="Teal"      style="width:22px;height:22px;border-radius:50%;background:#0D9488;border:2px solid transparent;cursor:pointer;transition:transform .15s;" id="acc-btn-teal"></button>
     </div>
   </div>
   <div class="umenu-sep"></div>
@@ -14358,15 +14347,13 @@ function setTheme(mode) {
   document.body.classList.add('theme-'+mode);
   localStorage.setItem('iam-theme', mode);
   updateThemeButtons();
-  saveThemeToDB(mode, localStorage.getItem('iam-accent')||'green');
+  saveThemeToDB(mode);
 }
-function setAccent(color) {
-  document.body.className = document.body.className.replace(/accent-\S+/g,'').trim();
-  document.body.classList.add('accent-'+color);
-  localStorage.setItem('iam-accent', color);
-  updateAccentButtons();
-  saveThemeToDB(localStorage.getItem('iam-theme')||'light', color);
-}
+/* Il colore d'accento non è più scegliibile: è il verde With Us, fisso nel CSS
+   (--acc su body). Tolti setAccent() e updateAccentButtons(): il token --acc
+   resta usato ovunque, ma ha un valore solo. La colonna `accent` di iam_utenti
+   NON si cancella — semplicemente non la scriviamo più (torna utile se un giorno
+   servisse un tema per rete o per agenzia). */
 function updateThemeButtons() {
   const cur = localStorage.getItem('iam-theme')||'light';
   ['dark','light'].forEach(m => {
@@ -14374,35 +14361,25 @@ function updateThemeButtons() {
     if (btn) { btn.style.background = cur===m ? 'var(--acc)' : 'var(--surf3)'; btn.style.color = cur===m ? '#fff' : 'var(--txt2)'; btn.style.borderColor = cur===m ? 'var(--acc)' : 'var(--bord2)'; }
   });
 }
-function updateAccentButtons() {
-  const cur = localStorage.getItem('iam-accent')||'orange';
-  ['orange','blue','green','purple','red','teal'].forEach(c => {
-    const btn = document.getElementById('acc-btn-'+c);
-    if (btn) btn.style.border = cur===c ? '2px solid var(--txt)' : '2px solid transparent';
-  });
-}
 async function applyStoredTheme() {
-  // IAM: chi non ha mai scelto parte con il tema chiaro e il verde With Us.
-  // Resta cambiabile in un clic dal menu utente (Aspetto).
-  const theme  = localStorage.getItem('iam-theme')  || 'light';
-  const accent = localStorage.getItem('iam-accent') || 'green';
+  // IAM: chi non ha mai scelto parte con il tema chiaro. L'accento è sempre il
+  // verde With Us (nel CSS). Resta cambiabile il tema in un clic (Aspetto).
+  const theme = localStorage.getItem('iam-theme') || 'light';
   document.body.classList.add('theme-'+theme);
-  document.body.classList.add('accent-'+accent);
 }
 
 async function syncThemeFromDB() {
   if (!db || !ME) return;
   try {
-    const { data } = await db.from('iam_utenti').select('tema,accent').eq('id', ME.id).single();
-    if (data?.tema)   { localStorage.setItem('iam-theme', data.tema);   setTheme(data.tema); }
-    if (data?.accent) { localStorage.setItem('iam-accent', data.accent); setAccent(data.accent); }
+    const { data } = await db.from('iam_utenti').select('tema').eq('id', ME.id).single();
+    if (data?.tema) { localStorage.setItem('iam-theme', data.tema); setTheme(data.tema); }
   } catch(e) {}
 }
 
-async function saveThemeToDB(tema, accent) {
+async function saveThemeToDB(tema) {
   if (!db || !ME) return;
   try {
-    await db.from('iam_utenti').update({ tema, accent, aggiornato_il: new Date().toISOString() }).eq('id', ME.id);
+    await db.from('iam_utenti').update({ tema, aggiornato_il: new Date().toISOString() }).eq('id', ME.id);
   } catch(e) {}
 }
 

@@ -333,7 +333,9 @@ body.w1-min{ --w1-sidew:66px; }
   overflow:hidden;
 }
 .w1-side-head .w1-logo-btn{ height:auto; padding:0 6px; }
-.w1-side-head .w1-logo{ height:26px; width:auto; display:block; }
+/* Il marchio With Us verde (non il bianco), più grande: è la prima cosa che si
+   legge in cima alla colonna. */
+.w1-side-head .w1-logo{ height:34px; width:auto; display:block; }
 .w1-side-nav{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:8px 0; min-height:0; }
 .w1-side-foot{ flex:0 0 auto; border-top:1px solid rgba(255,255,255,.08); padding:6px 8px; }
 .w1-side-toggle{
@@ -348,17 +350,25 @@ body.w1-min{ --w1-sidew:66px; }
 .w1-mbar .w1-m{ display:block; position:relative; }
 .w1-mbar .w1-m > a{
   height:44px; padding:0 16px; border-bottom:none; border-left:3px solid transparent;
-  white-space:nowrap; overflow:hidden;
+  white-space:nowrap; overflow:hidden; text-decoration:none;
 }
 .w1-mbar .w1-m > a > span{ flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; }
 .w1-mbar .w1-m.act > a{ color:#fff; border-bottom-color:transparent; border-left-color:var(--w1-verde2); background:rgba(255,255,255,.05); }
 .w1-mbar .w1-m > a .w1-ch{ margin-left:auto; flex:0 0 auto; transition:transform .15s; }
 .w1-mbar .w1-m.open > a .w1-ch{ transform:rotate(180deg); }
-/* «Nuovo preventivo»: resta il verde pieno del marchio, in cima alla colonna */
+/* «Nuovo preventivo»: pastiglia verde piena, in cima alla colonna. NON prende
+   il trattamento «attivo» delle altre voci (bordo verde a sinistra + fondo
+   schiarito): sulla pastiglia tonda quel bordo diventava un arco verde storto e
+   il fondo copriva il verde. È un'azione, non una posizione: resta sempre verde. */
 .w1-mbar .w1-m.nuovo > a{
   margin:2px 10px 10px; height:40px; border-radius:999px; padding:0 14px;
   justify-content:flex-start; text-transform:none; font-size:13px; letter-spacing:.1px;
 }
+.w1-mbar .w1-m.nuovo > a,
+.w1-mbar .w1-m.nuovo.act > a,
+.w1-mbar .w1-m.nuovo.open > a{ background:var(--w1-verde); border-left-color:transparent; color:#fff; }
+.w1-mbar .w1-m.nuovo > a:hover{ background:#03ab59; }
+.w1-mbar .w1-m.nuovo.act > a{ background:var(--w1-verde-scuro); }   /* attivo = verde scuro, niente arco */
 
 /* Tendine e mega-menu: fisarmonica scura DENTRO la colonna */
 .w1-mbar .w1-dd, .w1-mbar .w1-mega{

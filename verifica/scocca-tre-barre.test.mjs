@@ -35,25 +35,30 @@ const idx = leggi('index.html');
 const corpo = one.replace(/var SPRITE = '[\s\S]*?';/, "var SPRITE = '';");
 
 prova('la scocca costruisce le sue barre', () => {
-  // Le tre funzioni esistono ancora tutte. Dopo la fusione (§5) la fascia unica è
-  // BARRA 1, che si porta DENTRO le voci di menu (BARRA 2, appendChild); nella
-  // pagina si inseriscono la fascia unica e la riga del titolo (BARRA 3).
+  // Le tre funzioni esistono ancora tutte. Dopo il passaggio alla sidebar
+  // (nav laterale come i CRM), BARRA 2 è la colonna a sinistra: non è più
+  // annidata nella fascia, ma inserita nella pagina come le altre due.
   for (const f of ['costruisciBarra1', 'costruisciBarra2', 'costruisciBarra3']) {
     deve(new RegExp('function ' + f + '\\b').test(corpo), 'manca ' + f);
   }
-  deve(/appendChild\(costruisciBarra2\(\)\)/.test(corpo), 'la fascia unica non porta dentro le voci di menu (BARRA 2)');
-  deve(new RegExp('insertBefore\\(costruisciBarra1\\(\\)').test(corpo), 'la fascia unica non viene messa nella pagina');
+  deve(new RegExp('insertBefore\\(costruisciBarra2\\(\\)').test(corpo), 'la sidebar (BARRA 2) non viene messa nella pagina');
+  deve(new RegExp('insertBefore\\(costruisciBarra1\\(\\)').test(corpo), 'la fascia in alto non viene messa nella pagina');
   deve(new RegExp('insertBefore\\(costruisciBarra3\\(\\)').test(corpo), 'la riga del titolo non viene messa nella pagina');
-  return 'fascia unica (con dentro il menu) + riga del titolo';
+  // La sidebar è fissa a sinistra: #app le lascia il posto con un padding.
+  deve(/#app\.w1\{[^}]*padding-left:var\(--w1-sidew\)/.test(css.replace(/\s+/g, '')) ||
+       /#app\.w1\{padding-left:var\(--w1-sidew\)/.test(css.replace(/\s+/g, '')),
+    'il contenuto non lascia il posto alla sidebar (manca il padding a sinistra)');
+  return 'sidebar + fascia in alto + riga del titolo';
 });
 
 prova('le barre entrano nell ordine giusto', () => {
   // insertBefore(x, primo figlio) mette in cima: l ultima inserita finisce prima.
-  // Ora si inseriscono solo BARRA 3 e BARRA 1 (la 2 è annidata nella 1).
+  // Ora si inseriscono tutte e tre: la sidebar (BARRA 2, position:fixed) finisce
+  // prima nel DOM ma è fuori flusso; nella colonna restano fascia e titolo.
   const ord = [...corpo.matchAll(/insertBefore\((costruisciBarra\d)\(\)/g)].map(m => m[1]);
-  deve(ord.join(',') === 'costruisciBarra3,costruisciBarra1',
+  deve(ord.join(',') === 'costruisciBarra3,costruisciBarra1,costruisciBarra2',
     'ordine di inserimento sbagliato: ' + ord.join(','));
-  return 'in alto la fascia unica, poi la riga del titolo';
+  return 'sidebar a sinistra, fascia in alto, riga del titolo';
 });
 
 prova('la vecchia navigazione resta nella pagina, solo nascosta', () => {

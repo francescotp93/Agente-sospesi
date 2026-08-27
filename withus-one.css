@@ -35,6 +35,15 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
 #app.w1 > .hdr,
 #app.w1 > .nav { display:none !important; }
 
+/* ═══ SIDEBAR + FASCIA — la navigazione a sinistra, gli strumenti in alto ═══
+   A 1280px sette voci di menu in una riga si accavallavano con la ricerca.
+   Come i CRM: le voci vanno in una colonna a sinistra (comprimibile a icone,
+   la scelta si ricorda) e in alto resta solo ricerca + agenda + posta + stato
+   + utente. Il contenuto scorre a destra della sidebar. */
+:root{ --w1-sidew:238px; }
+body.w1-min{ --w1-sidew:66px; }
+#app.w1{ padding-left:var(--w1-sidew); box-sizing:border-box; transition:padding-left .18s ease; }
+
 /* ═══ FASCIA UNICA — logo + menu + ricerca + chip, tutto scuro ═══════ */
 .w1-top{
   flex:0 0 auto; height:var(--w1-h1); box-sizing:border-box;
@@ -304,6 +313,98 @@ body.accent-green{ --acc:#02984e; --acc2:#016b38; --acc-rgb:2,152,78; }
 .w1-mega .w1-foot a{ color:var(--w1-verde-scuro); font-weight:600; padding:0; }
 .w1-mega .w1-foot a:hover{ background:none; text-decoration:underline; }
 
+/* ═══════════════════════════════════════════════════════════════════
+   LA NAVIGAZIONE COME SIDEBAR (colonna a sinistra, scura, comprimibile)
+   Sovrascrive le regole orizzontali qui sopra: .w1-mbar diventa una barra
+   fissa a tutta altezza; le voci vanno in colonna; le tendine e il mega-menu
+   diventano fisarmoniche scure dentro la colonna. Da compressa (icone),
+   escono come flyout al passaggio del mouse.
+   ═══════════════════════════════════════════════════════════════════ */
+.w1-mbar{
+  position:fixed; left:0; top:0; bottom:0; width:var(--w1-sidew); height:auto;
+  flex-direction:column; align-items:stretch; justify-content:flex-start;
+  background:var(--w1-scuro); padding:0; z-index:240; box-shadow:none;
+  overflow:hidden; transition:width .18s ease;
+  border-right:1px solid rgba(0,0,0,.22);
+}
+.w1-side-head{
+  flex:0 0 auto; height:var(--w1-h1); display:flex; align-items:center;
+  gap:8px; padding:0 12px; border-bottom:1px solid rgba(255,255,255,.08);
+  overflow:hidden;
+}
+.w1-side-head .w1-logo-btn{ height:auto; padding:0 6px; }
+.w1-side-head .w1-logo{ height:26px; width:auto; display:block; }
+.w1-side-nav{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:8px 0; min-height:0; }
+.w1-side-foot{ flex:0 0 auto; border-top:1px solid rgba(255,255,255,.08); padding:6px 8px; }
+.w1-side-toggle{
+  width:100%; display:flex; align-items:center; gap:12px; height:36px; padding:0 12px;
+  background:none; border:none; color:var(--w1-txt3); font-family:inherit;
+  font-size:12px; cursor:pointer; border-radius:var(--w1-r); white-space:nowrap;
+}
+.w1-side-toggle:hover{ background:var(--w1-scuro2); color:#fff; }
+.w1-side-toggle .w1-side-ch{ transform:rotate(180deg); flex:0 0 auto; }  /* « quando è larga */
+
+/* Voci in colonna */
+.w1-mbar .w1-m{ display:block; position:relative; }
+.w1-mbar .w1-m > a{
+  height:44px; padding:0 16px; border-bottom:none; border-left:3px solid transparent;
+  white-space:nowrap; overflow:hidden;
+}
+.w1-mbar .w1-m > a > span{ flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; }
+.w1-mbar .w1-m.act > a{ color:#fff; border-bottom-color:transparent; border-left-color:var(--w1-verde2); background:rgba(255,255,255,.05); }
+.w1-mbar .w1-m > a .w1-ch{ margin-left:auto; flex:0 0 auto; transition:transform .15s; }
+.w1-mbar .w1-m.open > a .w1-ch{ transform:rotate(180deg); }
+/* «Nuovo preventivo»: resta il verde pieno del marchio, in cima alla colonna */
+.w1-mbar .w1-m.nuovo > a{
+  margin:2px 10px 10px; height:40px; border-radius:999px; padding:0 14px;
+  justify-content:flex-start; text-transform:none; font-size:13px; letter-spacing:.1px;
+}
+
+/* Tendine e mega-menu: fisarmonica scura DENTRO la colonna */
+.w1-mbar .w1-dd, .w1-mbar .w1-mega{
+  position:static; top:auto; left:auto; right:auto; width:auto; min-width:0;
+  box-shadow:none; border:none; border-radius:0;
+  border-top:1px solid rgba(255,255,255,.06);
+  background:rgba(0,0,0,.22); padding:4px 0; z-index:auto;
+}
+.w1-mbar .w1-dd a, .w1-mbar .w1-mega a{ color:#c7d2dd; padding:8px 16px 8px 42px; }
+.w1-mbar .w1-dd a:hover, .w1-mbar .w1-mega a:hover{ background:rgba(255,255,255,.06); color:#fff; }
+.w1-mbar .w1-dd a svg, .w1-mbar .w1-mega a svg{ color:rgba(255,255,255,.5); }
+.w1-mbar .w1-dd a:hover svg, .w1-mbar .w1-mega a:hover svg{ color:var(--w1-verde2); }
+.w1-mbar .w1-dd .w1-t, .w1-mbar .w1-mega h5{ color:rgba(255,255,255,.4); border-bottom:none; padding:9px 16px 5px; }
+.w1-mbar .w1-dd hr{ border-top-color:rgba(255,255,255,.08); }
+.w1-mbar .w1-mega{ width:auto; padding:4px 0; }
+.w1-mbar .w1-mega .w1-cols{ display:block; }
+.w1-mbar .w1-mega .w1-foot{ display:none; }
+.w1-mbar .w1-bdg{ background:rgba(255,255,255,.12); color:#fff; }
+.w1-mbar .w1-subwrap.open > .w1-has-sub{ background:rgba(255,255,255,.06); color:#fff; }
+.w1-mbar .w1-subdd a{ padding-left:58px; }
+
+/* ── Sidebar compressa: sole icone, i sotto-menu escono come flyout ── */
+body.w1-min .w1-mbar{ overflow:visible; }
+body.w1-min .w1-side-nav{ overflow:visible; }
+body.w1-min .w1-side-head{ justify-content:center; padding:0; }
+body.w1-min .w1-side-head .w1-logo{ display:none; }
+body.w1-min .w1-side-toggle{ justify-content:center; gap:0; }
+body.w1-min .w1-side-toggle span{ display:none; }
+body.w1-min .w1-side-toggle .w1-side-ch{ transform:rotate(0deg); }  /* » quando è stretta */
+body.w1-min .w1-mbar .w1-m > a{ justify-content:center; padding:0; }
+body.w1-min .w1-mbar .w1-m > a > span,
+body.w1-min .w1-mbar .w1-m > a .w1-ch{ display:none; }
+body.w1-min .w1-mbar .w1-m.nuovo > a{ margin:2px 12px 10px; padding:0; }
+/* i sotto-menu: nascosti da fermi, escono a destra al passaggio del mouse */
+body.w1-min .w1-mbar .w1-m.open > .w1-dd,
+body.w1-min .w1-mbar .w1-m.open > .w1-mega{ display:none; }
+body.w1-min .w1-mbar .w1-m:hover > .w1-dd,
+body.w1-min .w1-mbar .w1-m:hover > .w1-mega{
+  display:block; position:absolute; left:100%; top:0; width:250px;
+  background:var(--w1-scuro2); border-radius:0 var(--w1-r) var(--w1-r) 0;
+  box-shadow:10px 10px 34px rgba(0,0,0,.45); z-index:250; padding:6px 0;
+  border-top:none;
+}
+body.w1-min .w1-mbar .w1-m:hover > .w1-mega{ width:560px; }
+body.w1-min .w1-mbar .w1-m:hover > .w1-mega .w1-cols{ display:grid; grid-template-columns:repeat(2,1fr); gap:0 8px; }
+
 /* ═══ BARRA 3 — titolo e briciole ══════════════════════════════════ */
 .w1-pbar{
   flex:0 0 auto; background:#fff; border-bottom:1px solid var(--w1-bordo);
@@ -363,36 +464,39 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
   .w1-mega .w1-cols{ grid-template-columns:repeat(2,1fr); }
 }
 
+/* Su schermo stretto la sidebar si ritira in un cassetto: la apre il burger,
+   il contenuto torna a tutta larghezza (niente colonna fissa a sinistra). */
 @media (max-width: 900px){
+  #app.w1{ padding-left:0; }
   .w1-top{ gap:12px; padding:0 12px; }
   .w1-burger{ display:flex; }
   .w1-appname, .w1-top .w1-sep{ display:none; }
   .w1-gsearch{ display:none; }
   .w1-uinfo{ display:none; }
   .w1-pill{ display:none; }
+  .w1-fuori{ left:0; }
 
-  /* la barra scura diventa un cassetto laterale */
   .w1-mbar{
-    position:fixed; top:var(--w1-h1); left:0; bottom:0; width:270px; height:auto;
-    flex-direction:column; align-items:stretch; overflow-y:auto;
-    padding:8px 0 24px; z-index:216;
+    width:272px; z-index:240;
     transform:translateX(-100%); transition:transform .22s ease;
-    box-shadow:0 0 40px rgba(0,0,0,.5);
+    box-shadow:0 0 40px rgba(0,0,0,.5); border-right:none;
   }
   .w1-mbar.open{ transform:translateX(0); }
-  .w1-m{ display:block; }
-  .w1-m > a{ height:42px; border-bottom:none; border-left:3px solid transparent; }
-  .w1-m.act > a{ border-bottom-color:transparent; border-left-color:var(--w1-verde2); }
-  .w1-m.nuovo > a{ margin:8px 10px; height:38px; }
-  .w1-mbar .w1-spacer{ display:none; }
-  .w1-dd, .w1-mega{
-    position:static; width:auto; min-width:0; box-shadow:none; border:none;
-    border-top:1px solid rgba(255,255,255,.08); border-radius:0;
-    background:rgba(0,0,0,.22); padding:4px 0;
-  }
-  .w1-dd a, .w1-mega a{ color:#c7d2dd; padding:8px 22px; }
-  .w1-dd a:hover, .w1-mega a:hover{ background:rgba(255,255,255,.06); color:#fff; }
-  .w1-dd .w1-t, .w1-mega h5{ color:rgba(255,255,255,.4); border-bottom:none; padding-left:22px; }
+  /* Nel cassetto la sidebar è sempre a etichette, mai a icone, anche se la
+     preferenza salvata era «compressa». */
+  body.w1-min .w1-mbar{ width:272px; }
+  body.w1-min .w1-side-head{ justify-content:flex-start; padding:0 12px; }
+  body.w1-min .w1-side-head .w1-logo{ display:block; }
+  body.w1-min .w1-mbar .w1-m > a{ justify-content:flex-start; padding:0 16px; }
+  body.w1-min .w1-mbar .w1-m > a > span,
+  body.w1-min .w1-mbar .w1-m > a .w1-ch{ display:inline; }
+  body.w1-min .w1-mbar .w1-m.nuovo > a{ margin:2px 10px 10px; }
+  /* i sotto-menu tornano fisarmonica (niente flyout dentro il cassetto) */
+  body.w1-min .w1-mbar .w1-m.open > .w1-dd,
+  body.w1-min .w1-mbar .w1-m.open > .w1-mega{ display:block; position:static; width:auto; box-shadow:none; }
+  body.w1-min .w1-mbar .w1-m:hover > .w1-dd,
+  body.w1-min .w1-mbar .w1-m:hover > .w1-mega{ position:static; width:auto; box-shadow:none; background:rgba(0,0,0,.22); }
+  .w1-side-foot{ display:none; }
   .w1-mega{ padding:4px 0; }
   .w1-mega .w1-cols{ display:block; }
   .w1-mega .w1-foot{ display:none; }
@@ -440,7 +544,8 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
    mano: la fascia cambia altezza quando le voci vanno a capo, e un numero
    fisso oggi e' un ritaglio domani. Il valore di scorta serve solo al primo
    fotogramma, prima che la misura sia stata presa. */
-.w1-fuori{ top:var(--w1-testa, 118px); }
+/* Oltre all'altezza (sotto la fascia) ora anche a destra della sidebar. */
+.w1-fuori{ top:var(--w1-testa, 118px); left:var(--w1-sidew); }
 
 .w1-load{
   position:absolute; inset:0; z-index:2;

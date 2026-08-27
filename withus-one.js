@@ -618,20 +618,27 @@
   }
 
   function costruisciBarra2() {
-    var bar = document.createElement('nav');
-    bar.className = 'w1-mbar';
-    bar.id = 'w1-mbar';
+    var side = document.createElement('aside');
+    side.className = 'w1-mbar';
+    side.id = 'w1-mbar';
 
+    /* In cima alla sidebar il logo fa da voce «Scrivania»: cliccabile, porta a
+       casa, con lo stato attivo quando la Scrivania è aperta (title/aria-label
+       tengono il nome per chi non vede). */
+    var head = document.createElement('div');
+    head.className = 'w1-side-head';
+    head.innerHTML =
+      '<a class="w1-logo-btn" id="w1-logo-home" href="javascript:void(0)" title="Scrivania" aria-label="Scrivania">' +
+        '<img class="w1-logo" src="withus-logo-white.png" alt="With Us"></a>';
+    side.appendChild(head);
+
+    var nav = document.createElement('nav');
+    nav.className = 'w1-side-nav';
     for (var i = 0; i < MENU.length; i++) {
       var m = MENU[i];
-      // «Scrivania» non è più una voce: la fa il logo (a sinistra della fascia).
+      // «Scrivania» non è più una voce: la fa il logo in cima alla sidebar.
       if (m.key === 'dashboard') continue;
-      if (m.spacer) {
-        var sp = document.createElement('div');
-        sp.className = 'w1-spacer';
-        bar.appendChild(sp);
-        continue;
-      }
+      if (m.spacer) continue;   // niente spaziatore in colonna
       var w = document.createElement('div');
       w.className = 'w1-m' + (m.nuovo ? ' nuovo' : '') + (m.tick ? ' w1-mtick' : '');
       w.setAttribute('data-key', m.key);
@@ -658,9 +665,36 @@
         };
       })(m, w, a);
 
-      bar.appendChild(w);
+      nav.appendChild(w);
     }
-    return bar;
+    side.appendChild(nav);
+
+    /* Piede: comprime la sidebar a sole icone e ricorda la scelta (localStorage).
+       Un pulsante solo: «« comprimi» quando è larga, «» espandi» quando è stretta. */
+    var foot = document.createElement('div');
+    foot.className = 'w1-side-foot';
+    foot.innerHTML =
+      '<button class="w1-side-toggle" id="w1-side-toggle" title="Comprimi il menu" aria-label="Comprimi il menu">' +
+        '<svg class="w1-i sm w1-side-ch"><use href="#i-right"/></svg><span>Comprimi</span></button>';
+    side.appendChild(foot);
+
+    side.querySelector('#w1-logo-home').onclick = function (e) { e.preventDefault(); chiudiCassetto(); vai('dashboard'); };
+    side.querySelector('#w1-side-toggle').onclick = function (e) { e.preventDefault(); e.stopPropagation(); alternaSidebar(); };
+
+    return side;
+  }
+
+  /* Comprimi/espandi la sidebar (a sole icone o con le etichette). La scelta si
+     ricorda tra una sessione e l'altra: chi la vuole stretta la ritrova stretta. */
+  function alternaSidebar() {
+    var min = !document.body.classList.contains('w1-min');
+    document.body.classList.toggle('w1-min', min);
+    var t = document.getElementById('w1-side-toggle');
+    if (t) {
+      t.title = min ? 'Espandi il menu' : 'Comprimi il menu';
+      t.setAttribute('aria-label', t.title);
+    }
+    try { localStorage.setItem('iam_side_min', min ? '1' : '0'); } catch (e) {}
   }
 
   /* UNA FASCIA SOLA. Prima erano due (BARRA 1 bianca alta 60 + BARRA 2 scura alta
@@ -672,15 +706,12 @@
   function costruisciBarra1() {
     var top = document.createElement('header');
     top.className = 'w1-top';
+    // La fascia in alto tiene solo gli strumenti: ricerca, agenda, posta, stato
+    // e chip utente. La navigazione (le 7 voci) è passata nella sidebar a sinistra
+    // (come i CRM): a 1280px sette voci in riga si accavallavano. Il burger apre
+    // la sidebar-cassetto su telefono.
     top.innerHTML =
       '<button class="w1-burger" id="w1-burger" aria-label="Menu">' + ico('i-list') + '</button>' +
-      // Il logo prende il posto della voce «Scrivania»: cliccabile, porta a casa.
-      // Il nome resta per chi non vede (title + aria-label) e nella briciola in alto.
-      '<a class="w1-logo-btn" id="w1-logo-home" href="javascript:void(0)" title="Scrivania" aria-label="Scrivania">' +
-        '<img class="w1-logo" src="withus-logo-white.png" alt="With Us"></a>';
-    // le voci di menu (ex BARRA 2) ora vivono DENTRO questa fascia
-    top.appendChild(costruisciBarra2());
-    top.insertAdjacentHTML('beforeend',
       '<div class="w1-spacer"></div>' +
       '<div class="w1-gsearch">' +
         '<svg class="w1-i sm w1-si"><use href="#i-search"/></svg>' +
@@ -698,7 +729,7 @@
           '<div class="w1-uinfo"><b id="w1-uname">Utente</b><span id="w1-urole">—</span></div>' +
           '<svg class="w1-i sm"><use href="#i-down"/></svg>' +
         '</div>' +
-      '</div>');
+      '</div>';
 
     top.querySelector('#w1-burger').onclick = function (e) {
       e.stopPropagation();
@@ -707,7 +738,6 @@
       if (b) b.classList.toggle('open');
       if (s) s.classList.toggle('open');
     };
-    top.querySelector('#w1-logo-home').onclick = function (e) { e.preventDefault(); chiudiCassetto(); vai('dashboard'); };
     top.querySelector('#w1-b-agenda').onclick = function () { vai('dashboard'); tryCall('openAgendaModal'); };
     top.querySelector('#w1-b-posta').onclick = function () { tryCall('openPosta'); };
     /* Il menu utente è quello di IAM: si apre lo stesso pannello di prima.
@@ -1192,6 +1222,11 @@
        menu della ex BARRA 2) e sotto la riga del titolo (BARRA 3). */
     app.insertBefore(costruisciBarra3(), app.firstChild);
     app.insertBefore(costruisciBarra1(), app.firstChild);
+    // La sidebar è fissa a sinistra (position:fixed): l'ordine nel DOM non conta,
+    // #app ha il padding a sinistra che le lascia il posto.
+    app.insertBefore(costruisciBarra2(), app.firstChild);
+    // Ripristina lo stato compresso scelto in precedenza.
+    try { if (localStorage.getItem('iam_side_min') === '1') document.body.classList.add('w1-min'); } catch (e) {}
 
     /* ═══ I PANNELLI CHE VIVONO FUORI DA #app ══════════════════════════
        Fonti compagnie, Stato collegamenti e Analisi dei bisogni sono figli

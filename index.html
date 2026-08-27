@@ -132,53 +132,7 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   .posta-search{order:10;flex-basis:100% !important;max-width:none !important;margin:0 !important;}
   #mail-casella{max-width:150px !important;}
 }
-/* ── LAB OVERLAY ──────────────────────────────────────────────────────── */
-#lab-overlay{position:fixed;inset:0;background:#04080F;z-index:9999;display:none;overflow:hidden;}
-#lab-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
-#lab-flask{position:absolute;}
-#lab-flash{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,.85) 0%,rgba(26,122,232,.3) 45%,transparent 70%);transform:scale(0);pointer-events:none;}
-#lab-shards{position:absolute;width:0;height:0;}
-.lab-shard{position:absolute;width:20px;height:20px;background:linear-gradient(135deg,#00D4FF,rgba(26,122,232,.7));opacity:0;transform-origin:center;}
-#lab-logo{position:absolute;opacity:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;}
-#lab-logo-title{font-size:20px;font-weight:800;background:linear-gradient(135deg,#00D4FF,#1A7AE8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:.2em;}
-#lab-logo-sub{font-size:9px;color:rgba(0,212,255,.55);letter-spacing:.25em;font-family:monospace;}
-#lab-iframe{display:none;position:absolute;inset:0;width:100%;height:100%;border:none;z-index:10;}
-#btn-back-iam{display:none;position:fixed;bottom:24px;left:24px;z-index:10001;padding:9px 16px;background:rgba(4,8,15,.92);border:1px solid rgba(0,212,255,.35);border-radius:20px;color:#00D4FF;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;backdrop-filter:blur(10px);align-items:center;gap:6px;}
-#btn-back-iam:hover{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.6);}
-@keyframes flask-drop{0%{transform:translateY(-110vh) rotate(-8deg);opacity:0}70%{transform:translateY(0) rotate(0);opacity:1}82%{transform:translateY(-20px) rotate(2deg)}93%{transform:translateY(4px) rotate(-1deg)}100%{transform:translateY(0) rotate(0)}}
-@keyframes flask-shatter{0%{opacity:1;transform:scale(1)}30%{opacity:1;transform:scale(1.3);filter:brightness(5) drop-shadow(0 0 18px #00D4FF)}100%{opacity:0;transform:scale(0.05)}}
-@keyframes flash-pop{0%{opacity:.95;transform:scale(0)}40%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(3.5)}}
-@keyframes shard-go{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:var(--se) scale(.15)}}
-@keyframes logo-up{0%{opacity:0;transform:scale(.12);filter:blur(14px)}55%{transform:scale(1.09);filter:blur(0)}80%{transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
-@keyframes logo-txt{0%{opacity:0;letter-spacing:.5em}100%{opacity:1;letter-spacing:.2em}}
-@keyframes iframe-in{0%{opacity:0}100%{opacity:1}}
-@keyframes overlay-out{0%{opacity:1}100%{opacity:0}}
-@keyframes back-in{0%{opacity:0;transform:translateX(-14px)}100%{opacity:1;transform:translateX(0)}}
-/* ── Caricamento futuristico di ritorno a IAM ── */
-#iam-return{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,#16264d 0%,#0f1b3d 60%,#0a1430 100%);overflow:hidden;}
 .hdr-mark{width:92px;height:30px;-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:var(--txt);flex:0 0 auto;}
-.ir-mark{-webkit-mask:url('assets/iam-wordmark.svg') center/contain no-repeat;mask:url('assets/iam-wordmark.svg') center/contain no-repeat;background-color:#fff;}
-#iam-return.show{display:flex;}
-#iam-return:before{content:'';position:absolute;inset:-2px;background-image:linear-gradient(rgba(8,170,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(8,170,255,.08) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);mask-image:radial-gradient(circle at 50% 45%,#000 0%,transparent 70%);animation:irGrid 7s linear infinite;}
-@keyframes irGrid{to{background-position:40px 40px,40px 40px;}}
-.ir-core{position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center;}
-.ir-ring{position:absolute;border-radius:50%;border:1.5px solid transparent;}
-.ir-ring.r1{inset:0;border-top-color:#20EEE8;border-right-color:rgba(8,170,255,.35);box-shadow:0 0 26px rgba(32,238,232,.22);animation:irSpin 2.4s linear infinite;}
-.ir-ring.r2{inset:26px;border-bottom-color:#1450FF;border-left-color:rgba(20,80,255,.45);animation:irSpinRev 3.4s linear infinite;}
-.ir-ring.r3{inset:54px;border:1px dashed rgba(24,221,255,.45);animation:irSpin 9s linear infinite;}
-.ir-scan{position:absolute;inset:6px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0deg,rgba(32,238,232,.22) 42deg,transparent 84deg);animation:irSpin 1.9s linear infinite;}
-.ir-logo{position:relative;z-index:2;width:150px;height:150px;animation:irLogoIn .7s cubic-bezier(.2,.8,.2,1) both;}
-.ir-title{margin-top:30px;font-family:'Share Tech Mono',monospace;font-size:23px;font-weight:700;letter-spacing:.42em;text-indent:.42em;background:linear-gradient(90deg,#20EEE8,#1450FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-.ir-sub{margin-top:11px;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:.22em;color:rgba(32,238,232,.82);min-height:14px;}
-.ir-sub:after{content:'_';margin-left:2px;animation:irBlink 1s steps(1) infinite;}
-.ir-bar{margin-top:18px;width:230px;height:3px;border-radius:3px;background:rgba(24,221,255,.16);overflow:hidden;}
-.ir-bar>i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,#20EEE8,#1450FF);box-shadow:0 0 10px rgba(32,238,232,.7);animation:irBar 1.3s ease-out forwards;}
-@keyframes irSpin{to{transform:rotate(360deg);}}
-@keyframes irSpinRev{to{transform:rotate(-360deg);}}
-@keyframes irLogoIn{0%{opacity:0;transform:scale(.3);filter:blur(10px)}60%{transform:scale(1.08)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
-@keyframes irGlow{0%,100%{filter:drop-shadow(0 0 9px rgba(24,221,255,.4))}50%{filter:drop-shadow(0 0 22px rgba(32,238,232,.8))}}
-@keyframes irBlink{50%{opacity:0;}}
-@keyframes irBar{0%{width:0}100%{width:100%}}
 .nbadge{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center;border:1.5px solid var(--surf);}
 
 /* ── PANELS ── */
@@ -1184,7 +1138,7 @@ input[type=file]{display:none;}
 }
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
-<link rel="stylesheet" href="withus-one.css?v=20260827h">
+<link rel="stylesheet" href="withus-one.css?v=20260827i">
 </head>
 <body>
 
@@ -1296,10 +1250,11 @@ input[type=file]{display:none;}
   <button class="nbtn" id="nb-workdiary" onclick="goTab('workdiary')"><i class="ti ti-notebook"></i><span>Diary</span></button>
   <button class="nbtn" id="nb-performance" onclick="goTab('performance')"><i class="ti ti-chart-line"></i><span>KPI</span></button>
 
-  <button class="nbtn" id="nb-lab" onclick="goTab('lab')" style="display:none;background:linear-gradient(135deg,#00D4FF,#1A7AE8);color:#fff;box-shadow:0 4px 12px rgba(0,212,255,.35);">
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M9 3v7l-4 8a1 1 0 0 0 .9 1.5h12.2a1 1 0 0 0 .9-1.5l-4-8V3"/><line x1="6.5" y1="13" x2="17.5" y2="13"/></svg>
-    <span>Lab</span>
-  </button>
+  <!-- Cancello nascosto del Marketing (ex «Lab»). La scocca (withus-one.js,
+       voce «Marketing» con mirror:'nb-marketing') legge da QUI se la voce va
+       mostrata, in base a lab_abilitato — come nb-quoto per «Nuovo preventivo».
+       Non si vede e non si clicca: e' solo la sorgente del permesso. -->
+  <button class="nbtn" id="nb-marketing" style="display:none" aria-hidden="true" tabindex="-1"></button>
 
   <button class="nbtn" onclick="window.open('https://withus.assieasy.com/assieasy/','_blank')" style="color:var(--blu-txt);">
     <i class="ti ti-external-link"></i><span>Assieasy</span>
@@ -1747,23 +1702,6 @@ input[type=file]{display:none;}
   </div>
 </div>
 
-<!-- LAB · hub marketing (Lead + Dashboard esterna) -->
-<div class="panel" id="panel-lab">
-  <div style="padding:18px 14px 8px;">
-    <div style="font-size:22px;font-weight:850;background:linear-gradient(135deg,#00D4FF,#1A7AE8);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block;">Lab · Marketing</div>
-    <div style="font-size:13px;color:var(--txt3);margin-top:2px;">Gestione lead, campagne e strumenti marketing.</div>
-  </div>
-  <div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));padding:6px 14px 18px;">
-    <button onclick="goTab('lead')" style="text-align:left;display:flex;gap:13px;align-items:center;padding:16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:14px;cursor:pointer;color:var(--txt);font-family:inherit;">
-      <div style="width:42px;height:42px;border-radius:11px;background:rgba(var(--acc-rgb),.14);display:flex;align-items:center;justify-content:center;color:var(--acc);flex-shrink:0;"><i class="ti ti-target-arrow" style="font-size:22px;"></i></div>
-      <div><div style="font-size:15px;font-weight:800;">Lead</div><div style="font-size:12px;color:var(--txt3);margin-top:2px;">Contatti recuperati · fonte/campagna · stato</div></div>
-    </button>
-    <button onclick="openLab()" style="text-align:left;display:flex;gap:13px;align-items:center;padding:16px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:14px;cursor:pointer;color:var(--txt);font-family:inherit;">
-      <div style="width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#00D4FF,#1A7AE8);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;"><i class="ti ti-rocket" style="font-size:22px;"></i></div>
-      <div><div style="font-size:15px;font-weight:800;">Dashboard Marketing</div><div style="font-size:12px;color:var(--txt3);margin-top:2px;">Apri la dashboard Lab Insurance</div></div>
-    </button>
-  </div>
-</div>
 
 <!-- LEAD -->
 <div class="panel" id="panel-lead">
@@ -3866,6 +3804,10 @@ function ripristinaScheda() {
     const contabSub = ['quadratura','caricafile','anomalie','sospesi','storico','conto'];
     if (contabSub.includes(lastTab)) { goTab('carica'); selContabTab(lastTab); }
     else if (lastTab === 'quoto') goTab('dashboard');
+    /* «lab» era la vecchia pagina-hub, ora rimossa (Marketing vive nel riquadro,
+       IAM.md §10). Chi l'aveva salvata come ultima scheda non deve trovare uno
+       schermo vuoto: si ricade sulla scrivania. */
+    else if (lastTab === 'lab') goTab('dashboard');
     else goTab(lastTab);
   } finally {
     RIPRISTINO_IN_CORSO = false;
@@ -3907,7 +3849,7 @@ function goTab(t) {
     loadTrattDB().then(() => renderTratt());
   }
   if (t === 'lead') {
-    document.getElementById('nb-lab')?.classList.add('act'); // Lead vive nel tab Lab: tieni Lab evidenziato
+    document.getElementById('nb-marketing')?.classList.add('act'); // Lead vive sotto Marketing: tieni Marketing evidenziato
     renderLead();
     loadLeadDB().then(() => renderLead());
   }
@@ -7178,8 +7120,8 @@ function applicaPermessi(ruolo) {
     const el = document.getElementById(id);
     if (el) el.style.display = visibile ? 'flex' : 'none';
   });
-  const labBtn = document.getElementById('nb-lab');
-  if (labBtn) labBtn.style.display = (isSuperAdmin() || PROFILO?.lab_abilitato) ? 'flex' : 'none';
+  const mktBtn = document.getElementById('nb-marketing');
+  if (mktBtn) mktBtn.style.display = (isSuperAdmin() || PROFILO?.lab_abilitato) ? 'flex' : 'none';
   const btnQuoto = document.getElementById('nb-quoto');
   if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
   const btnPosta = document.getElementById('nb-posta');
@@ -7540,7 +7482,7 @@ async function renderUtenti() {
         </select>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<label class="sw-row" title="Accesso a IAM">IAM <span class="sw"><input type="checkbox" ${iamOn?'checked':''} onchange="toggleIamAccess('${u.id}',${iamOn})"><span class="sl"></span></span></label>` : ''}
         ${canEdit && !isSA ? `<label class="sw-row" title="Accesso all'area preventivi">Preventivi <span class="sw"><input type="checkbox" ${quotoOn?'checked':''} onchange="toggleQuotoAccess('${u.id}',${quotoOn})"><span class="sl"></span></span></label>` : ''}
-        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso al Lab (marketing & integrazioni)">Lab <span class="sw"><input type="checkbox" ${u.lab_abilitato?'checked':''} onchange="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})"><span class="sl"></span></span></label>` : ''}
+        ${canEdit && !isSA ? `<label class="sw-row" title="Accesso a Marketing (dashboard, campagne, lead)">Marketing <span class="sw"><input type="checkbox" ${u.lab_abilitato?'checked':''} onchange="toggleLabAbilitato('${u.id}',${!!u.lab_abilitato})"><span class="sl"></span></span></label>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="setRui('${u.id}')" title="N. iscrizione RUI (usato da Quoto per la rimessa)" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;">RUI ${u.rui?esc(u.rui):'—'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriPermessiMail('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Caselle email che questo utente può vedere" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-mail"></i> Posta</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSA) ? `<button onclick="apriModalitaPagamento('${u.id}','${esc(((u.nome||'')+' '+(u.cognome||'')).trim())}')" title="Modalità di pagamento consentite per questo collaboratore" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-credit-card"></i> Pagamenti</button>` : ''}
@@ -7732,7 +7674,7 @@ async function toggleLabAbilitato(userId, abilitato) {
       applicaPermessi(PROFILO.ruolo);
     }
     await renderUtenti();
-  } catch(e) { alert('Errore Lab toggle: ' + e.message); }
+  } catch(e) { alert('Errore aggiornamento Marketing: ' + e.message); }
 }
 
 async function toggleQuotoAccess(userId, attuale) {
@@ -7990,76 +7932,6 @@ function ecRender(){
   }).join('');
 }
 
-async function openLab() {
-  // Nessuna animazione "vecchia" (ampolla): il Lab ha il suo splash interno (stile QUOTO).
-  const ov    = document.getElementById('lab-overlay');
-  const stage = document.getElementById('lab-stage');
-  const iframe= document.getElementById('lab-iframe');
-  const back  = document.getElementById('btn-back-iam');
-
-  ov.style.opacity = '1'; ov.style.animation = ''; ov.style.display = 'block';
-  if (stage) stage.style.display = 'none';
-  back.style.display = 'flex';
-
-  const { data } = await db.auth.getSession();
-  const token   = data?.session?.access_token || '';
-  const refresh = data?.session?.refresh_token || '';
-  const email = encodeURIComponent(ME?.email || '');
-  const nome  = encodeURIComponent(((PROFILO?.nome || '') + ' ' + (PROFILO?.cognome || '')).trim());
-
-  iframe.style.opacity = '1';
-  iframe.style.display = 'block';
-  iframe.style.animation = '';
-  // SSO completo via hash #at/#rt (sessione persistente nel Lab, come per QUOTO)
-  /* Il token NON sta piu' nella QUERY STRING: la query finisce nei log del
-     server e nei referrer delle richieste che partono dalla pagina, l'hash no.
-     L'hash #at/#rt resta (e' la strada che bootAuth del Lab prova per prima) e
-     il postMessage qui sotto resta quella preferita. Il duplicato `&token=` era
-     solo il residuo della vecchia modalita' "header". */
-  let src = `https://quoto.withusassicurazioni.it/lab/?sso=true&email=${email}&nome=${nome}`;
-  if (token && refresh) src += `#at=${encodeURIComponent(token)}&rt=${encodeURIComponent(refresh)}`;
-  iframe.src = src;
-
-  iframe.addEventListener('load', () => {
-    iframe.contentWindow?.postMessage({
-      tipo: 'sso',
-      email: ME?.email || '',
-      nome: decodeURIComponent(nome),
-      ruolo: PROFILO?.ruolo || '',
-      token,
-      access_token: token,
-      refresh_token: refresh
-    }, 'https://quoto.withusassicurazioni.it');
-  }, { once: true });
-}
-
-async function chiudiLab() {
-  const ov   = document.getElementById('lab-overlay');
-  const iframe = document.getElementById('lab-iframe');
-  const back = document.getElementById('btn-back-iam');
-  back.style.display = 'none';
-  // Caricamento futuristico SOPRA a tutto: copre la transizione di rientro in IAM
-  const ret = document.getElementById('iam-return');
-  const bar = ret ? ret.querySelector('.ir-bar > i') : null;
-  const sub = ret ? ret.querySelector('.ir-sub') : null;
-  if (ret) { ret.classList.add('show'); if (bar) { bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; } }
-  const steps = ['CONNESSIONE SICURA', 'CARICAMENTO MODULI', 'SINCRONIZZAZIONE', 'SISTEMA PRONTO'];
-  let si = 0; if (sub) sub.textContent = steps[0];
-  const tmr = setInterval(() => { si++; if (sub && steps[si]) sub.textContent = steps[si]; }, 320);
-  // Chiude il Lab dietro al loader (istantaneo, non si vede il salto)
-  ov.style.display = 'none'; ov.style.animation = '';
-  iframe.style.display = 'none'; iframe.src = '';
-  const stage = document.getElementById('lab-stage');
-  stage.style.display = 'flex'; stage.style.opacity = '1'; stage.style.transition = '';
-  // Tiene il loader ~1.3s, poi dissolve rivelando IAM
-  await new Promise(r => setTimeout(r, 1350));
-  clearInterval(tmr);
-  if (ret) {
-    ret.style.transition = 'opacity .4s ease'; ret.style.opacity = '0';
-    await new Promise(r => setTimeout(r, 400));
-    ret.classList.remove('show'); ret.style.opacity = ''; ret.style.transition = '';
-  }
-}
 
 // ─── PANNELLO PERSONALE ───────────────────────────────────────────────────────
 async function renderPannelloPersonale() {
@@ -14436,65 +14308,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- ── LAB OVERLAY ───────────────────────────────────────────────────── -->
-<div id="lab-overlay">
-  <div id="lab-stage">
-    <!-- Flask che cade -->
-    <div id="lab-flask">
-      <svg width="58" height="84" viewBox="0 0 58 84" fill="none">
-        <rect x="19" y="0" width="20" height="5" rx="2" fill="rgba(0,212,255,.3)" stroke="#00D4FF" stroke-width="1.5"/>
-        <rect x="21" y="4" width="16" height="24" rx="1" fill="rgba(0,212,255,.1)" stroke="#00D4FF" stroke-width="1.5"/>
-        <path d="M21 28L5 60a18 18 0 0 0 16.4 24h15.2A18 18 0 0 0 53 60L37 28z" fill="rgba(0,212,255,.08)" stroke="#00D4FF" stroke-width="1.8"/>
-        <path d="M10 58a18 18 0 0 0 16.4 24h15.2A18 18 0 0 0 53 58z" fill="rgba(0,212,255,.2)"/>
-        <path d="M12 62q10-5 18-2q8 3 18-1" stroke="rgba(0,212,255,.4)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <circle cx="22" cy="66" r="2.2" fill="rgba(0,212,255,.55)"/>
-        <circle cx="35" cy="70" r="1.6" fill="rgba(26,122,232,.65)"/>
-        <circle cx="18" cy="72" r="1.4" fill="rgba(0,212,255,.35)"/>
-      </svg>
-    </div>
-    <!-- Flash d'impatto -->
-    <div id="lab-flash"></div>
-    <!-- Frammenti -->
-    <div id="lab-shards">
-      <div class="lab-shard" style="--se:translate(-140px,-70px) rotate(-55deg);clip-path:polygon(0 100%,45% 0,100% 75%)"></div>
-      <div class="lab-shard" style="--se:translate(145px,-65px) rotate(50deg);clip-path:polygon(0 75%,55% 0,100% 100%)"></div>
-      <div class="lab-shard" style="--se:translate(-95px,115px) rotate(-40deg);clip-path:polygon(0 0,100% 25%,55% 100%)"></div>
-      <div class="lab-shard" style="--se:translate(105px,125px) rotate(65deg);clip-path:polygon(45% 0,100% 65%,0 100%)"></div>
-      <div class="lab-shard" style="--se:translate(-165px,25px) rotate(-70deg);clip-path:polygon(0 50%,65% 0,100% 100%)"></div>
-      <div class="lab-shard" style="--se:translate(175px,35px) rotate(45deg);clip-path:polygon(35% 0,100% 55%,0 100%)"></div>
-      <div class="lab-shard" style="--se:translate(-35px,155px) rotate(-20deg);clip-path:polygon(0 0,100% 0,50% 100%)"></div>
-      <div class="lab-shard" style="--se:translate(45px,-150px) rotate(30deg);clip-path:polygon(50% 0,100% 100%,0 100%)"></div>
-    </div>
-    <!-- Logo Lab -->
-    <div id="lab-logo">
-      <svg width="72" height="72" viewBox="0 0 120 120"><defs><radialGradient id="lo-a" cx="40%" cy="35%" r="65%"><stop offset="0%" stop-color="#1A3A7A"/><stop offset="100%" stop-color="#050E28"/></radialGradient><radialGradient id="lo-b" cx="30%" cy="40%" r="70%"><stop offset="0%" stop-color="#00EEFF" stop-opacity=".9"/><stop offset="100%" stop-color="#6633CC" stop-opacity=".5"/></radialGradient><linearGradient id="lo-wg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#00DDFF"/><stop offset="50%" stop-color="#AA44FF"/><stop offset="100%" stop-color="#00DDFF"/></linearGradient><clipPath id="lo-fc"><path d="M46 38Q28 50 18 72Q10 90 12 100Q15 112 60 112Q105 112 108 100Q110 90 102 72Q92 50 74 38Z"/></clipPath></defs><path d="M46 38Q28 50 18 72Q10 90 12 100Q15 112 60 112Q105 112 108 100Q110 90 102 72Q92 50 74 38Z" fill="url(#lo-a)" stroke="#1A4A9A" stroke-width="1.5"/><path d="M22 82Q20 94 22 102Q25 112 60 112Q95 112 98 102Q100 94 98 82Q80 88 60 88Q40 88 22 82Z" fill="url(#lo-b)" opacity=".6" clip-path="url(#lo-fc)"/><path d="M18 74Q35 64 60 68Q85 72 102 64" fill="none" stroke="url(#lo-wg)" stroke-width="2" stroke-linecap="round" clip-path="url(#lo-fc)"/><rect x="44" y="15" width="32" height="24" rx="3" fill="#1A4A9A" stroke="#2A5ABA" stroke-width="1"/><rect x="42" y="10" width="36" height="8" rx="3" fill="#3A7AEA" opacity=".8"/></svg>
-      <div id="lab-logo-title">LAB INSURANCE</div>
-      <div id="lab-logo-sub">MARKETING · β1.0</div>
-    </div>
-  </div>
-  <!-- Iframe Lab -->
-  <iframe id="lab-iframe" allow="clipboard-read; clipboard-write"></iframe>
-  <!-- Torna a IAM -->
-  <button id="btn-back-iam" onclick="chiudiLab()">
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 3L5 8l5 5"/></svg>
-    IAM
-  </button>
-</div>
 
-<!-- Caricamento futuristico di ritorno a IAM -->
-<div id="iam-return" aria-hidden="true">
-  <div class="ir-core">
-    <div class="ir-scan"></div>
-    <div class="ir-ring r1"></div>
-    <div class="ir-ring r2"></div>
-    <div class="ir-ring r3"></div>
-    <div class="ir-logo ir-mark"></div>
-  </div>
-  <div class="ir-sub">CONNESSIONE SICURA</div>
-  <div class="ir-bar"><i></i></div>
-</div>
-
-<script src="withus-one.js?v=20260827h"></script>
+<script src="withus-one.js?v=20260827i"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

@@ -190,7 +190,7 @@
     });
   });
 
-  function caricaFrame(fr, page, cerca, prod) {
+  function caricaFrame(fr, page, cerca, prod, sotto) {
     var load = document.getElementById('w1-qload');
     if (load) load.style.display = '';
     FRAME_PRONTO = false;
@@ -200,17 +200,25 @@
        aprire, cosi' non c'e' lo sfarfallio della schermata sbagliata).
        Il testo cercato NON e' piu' qui: e' quasi sempre il nome o il codice
        fiscale di un cliente e finiva nei log del server e nella cronologia.
-       Va nel messaggio, insieme alla sessione. */
-    var base = QUOTO + '?from=iam';
+       Va nel messaggio, insieme alla sessione.
+       `sotto` e' il percorso di base dentro QUOTO: '' per il preventivatore,
+       'lab/' per Marketing. Stessa origine, stesso ponte, altra pagina —
+       cosi' non c'e' una seconda macchina da mantenere (IAM.md §10). */
+    var base = QUOTO + (sotto || '') + '?from=iam';
     if (page) base += '&page=' + encodeURIComponent(page);
     if (prod) base += '&prod=' + encodeURIComponent(prod);
     ATTESA = { page: page, prod: prod, cerca: cerca };
     fr.src = base;
   }
 
-  /* opz = { titolo: ['Titolo','Area'], cerca: 'testo' } */
+  /* opz = { titolo: ['Titolo','Area'], cerca: 'testo', base: 'lab/', menu: 'marketing' }
+     `base` = quale pagina di QUOTO ospitare nel riquadro ('' preventivatore,
+     'lab/' Marketing). `menu` = quale voce di menu accendere (di norma 'quoto',
+     'marketing' per il Lab). Lo stesso riquadro serve tutte e due: cambiando
+     `base` il riquadro si ricarica sull'altra pagina. */
   function aprireQuoto(page, opz) {
     opz = opz || {};
+    var base = opz.base || '';
     var p = riquadro();
     if (!p) { setTimeout(function () { aprireQuoto(page, opz); }, 200); return; }
 
@@ -226,23 +234,41 @@
     p.classList.add('act');
     try { sessionStorage.setItem('iam_last_tab', 'quoto'); } catch (e) {}
 
+    /* Il velo dice cosa sta arrivando: «preventivatore» o «Marketing». Con una
+       sola scritta fissa, aprendo Marketing si leggeva «preventivatore». */
+    var lt = p.querySelector('.w1-load-txt');
+    if (lt) lt.textContent = base ? 'Apertura di Marketing…' : 'Apertura del preventivatore…';
+
     var fr = document.getElementById('w1-qframe');
     if (!fr) return;
 
-    if (!fr.src) {
+    /* Cambio di pagina ospite (dal preventivatore a Marketing o viceversa):
+       sono due documenti diversi, il riquadro va ricaricato — non basta un
+       messaggio di navigazione, che resterebbe sulla pagina sbagliata. */
+    var cambioApp = (fr.getAttribute('data-w1base') || '') !== base;
+
+    if (!fr.src || cambioApp) {
+      fr.setAttribute('data-w1base', base);
+      FRAME_PRONTO = false;
       fr.onload = function () {
         FRAME_PRONTO = true;
         vestiFrame(fr);
         var l = document.getElementById('w1-qload');
         if (l) l.style.display = 'none';
       };
-      caricaFrame(fr, page, opz.cerca, opz.prod);
+      caricaFrame(fr, page, opz.cerca, opz.prod, base);
     } else if (FRAME_PRONTO) {
       vestiFrame(fr);
       vaiPagina(fr, page, opz.cerca, opz.prod);
     }
 
-    setActive('quoto', page, opz.titolo);
+    setActive(opz.menu || 'quoto', page, opz.titolo);
+  }
+
+  /* Marketing (ex «Lab»): apre la dashboard dentro il riquadro, stessa scocca
+     del preventivatore. Niente overlay, niente ampolla, niente «torna a IAM». */
+  function aprireMarketing() {
+    aprireQuoto(null, { base: 'lab/', menu: 'marketing', titolo: ['Marketing', 'Marketing'] });
   }
 
   function Q(page, titolo) { return function () { aprireQuoto(page, { titolo: titolo }); }; }
@@ -317,8 +343,8 @@
       sub: [
         { l: 'Anagrafiche', i: 'i-user', go: Q('anagrafiche') },
         { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } },
-        { l: 'Lead', i: 'i-bolt', act: 'lead', go: function () { vai('lead'); } },
-        /* «Documenti» era modulistica di prodotto, non roba del cliente: spostata
+        /* «Lead» e' andata sotto Marketing: qui era un doppione (IAM.md §10).
+           «Documenti» era modulistica di prodotto, non roba del cliente: spostata
            in Strumenti › Utility (era nel posto sbagliato sotto Clienti). */
         { hr: true },
         { l: 'Posta', i: 'i-mail', mirror: 'nb-posta', go: function () { tryCall('openPosta'); setActive('posta'); } }
@@ -358,6 +384,21 @@
         { l: 'Richieste all\'ufficio', i: 'i-tick', go: Q('richieste') }
       ] },
 
+    /* MARKETING (ex «Lab»): una voce propria. Cliccandola si apre subito la
+       dashboard dentro il riquadro (come il preventivatore). Sotto si raccoglie
+       il marketing prima sparso: Dashboard, Campagne email e Analisi dei bisogni
+       (erano in Strumenti), Lead (era in Clienti). Il nome «Lab» sparisce: non
+       e' un'altra applicazione, e' una sezione di IAM (IAM.md §10). Il cancello
+       resta `lab_abilitato`, letto dal pulsante nascosto nb-marketing. */
+    { key: 'marketing', l: 'Marketing', i: 'i-flask', mirror: 'nb-marketing',
+      go: function () { aprireMarketing(); },
+      sub: [
+        { l: 'Dashboard', i: 'i-grid', go: function () { aprireMarketing(); } },
+        { l: 'Campagne email', i: 'i-mail', go: function () { aprireQuoto('campagne', { menu: 'marketing', titolo: ['Campagne email', 'Marketing'] }); } },
+        { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function () { vai('analisi'); } },
+        { l: 'Lead', i: 'i-bolt', act: 'lead', go: function () { vai('lead'); } }
+      ] },
+
     { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: function(){ vai('fonti'); },
       sub: [
         /* Le fonti stanno in IAM, non nel preventivatore: sono credenziali dei
@@ -366,16 +407,9 @@
         { l: 'Fonti e collegamenti compagnie', i: 'i-plug', go: function(){ vai('fonti'); } },
         /* Due voci e non una, di proposito: qui si GUARDA come stanno i
            collegamenti, nelle Fonti si SCRIVONO le credenziali. La schermata
-           che fa tutte e due le cose e' quella che nessuno capisce piu'. */
+           che fa tutte e due le cose e' quella che nessuno capisce piu'.
+           Campagne email e Analisi dei bisogni sono passate sotto Marketing. */
         { l: 'Stato collegamenti', i: 'i-plug', act: 'collegamenti', go: function(){ vai('collegamenti'); } },
-        { l: 'Campagne email', i: 'i-mail', go: Q('campagne') },
-        /* Il pacchetto la collocava in «Strumenti > Marketing > Analisi dei
-           bisogni», ma questo menu ha due livelli e non tre. Sta accanto alle
-           campagne email, che e' l'altra funzione di marketing: aggiungere un
-           terzo livello per una voce sola avrebbe voluto dire riscrivere il
-           menu di tutto il gestionale. */
-        { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function(){ vai('analisi'); } },
-        { l: 'Lab — analisi e previdenza', i: 'i-flask', mirror: 'nb-lab', act: 'lab', go: function () { vai('lab'); } },
         /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
            sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su
            Utility le apre, un clic sulla categoria porta il preventivatore già
@@ -412,15 +446,16 @@
     fonti:       ['Fonti compagnie', 'Strumenti'],
     collegamenti:['Stato collegamenti', 'Strumenti'],
     /* Qui e non in TITOLI_QUOTO, per la stessa ragione scritta sopra per le
-       Fonti: quella mappa si legge solo a preventivatore aperto. */
-    analisi:     ['Analisi dei bisogni', 'Strumenti'],
+       Fonti: quella mappa si legge solo a preventivatore aperto.
+       Analisi dei bisogni e Lead sono passate sotto Marketing (IAM.md §10). */
+    analisi:     ['Analisi dei bisogni', 'Marketing'],
     carica:      ['Contabilità', 'Contabilità'],
     team:        ['Collaboratori', 'Agenzia'],
     pipeline:    ['Trattative', 'Clienti'],
-    lead:        ['Lead', 'Clienti'],
+    lead:        ['Lead', 'Marketing'],
     workdiary:   ['Diario di lavoro', 'Agenzia'],
     performance: ['KPI e gare', 'Agenzia'],
-    lab:         ['Lab', 'Strumenti'],
+    marketing:   ['Marketing', 'Marketing'],
     utenti:      ['Utenti e permessi', 'Amministrazione'],
     azienda:     ['Azienda', 'Amministrazione'],
     agenti:      ['Agenti AI', 'Amministrazione'],
@@ -476,7 +511,7 @@
     portafoglio: ['Portafoglio polizze', 'Portafoglio'],
     scadenzario: ['Scadenzario e rinnovi', 'Portafoglio'],
     titoli:      ['Titoli e quietanze', 'Portafoglio'],
-    campagne:    ['Campagne email', 'Strumenti'],
+    campagne:    ['Campagne email', 'Marketing'],
     sinistri:    ['Sinistri', 'Portafoglio'],
     storico:     ['Produzione e storico', 'Agenzia'],
     emissioni:   ['Emissioni', 'Agenzia'],
@@ -491,8 +526,8 @@
     dashboard: 'dashboard', carica: 'carica', anomalie: 'carica', sospesi: 'carica',
     quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'agenzia', workdiary: 'agenzia',
-    performance: 'agenzia', pipeline: 'clienti', lead: 'clienti', lab: 'strumenti',
-    fonti: 'strumenti', analisi: 'strumenti', collegamenti: 'strumenti',
+    performance: 'agenzia', pipeline: 'clienti', lead: 'marketing',
+    fonti: 'strumenti', analisi: 'marketing', collegamenti: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
   };
 
@@ -1023,6 +1058,7 @@
     portafoglio: 'ti-file-description',
     carica:      'ti-credit-card',
     agenzia:     'ti-building',
+    marketing:   'ti-speakerphone',
     strumenti:   'ti-plug',
     admin:       'ti-shield-lock'
   };

@@ -164,11 +164,15 @@ if (M) {
 }
 
 // ── 3. L'innesto in IAM ───────────────────────────────────────────────────
-prova('la voce sta in Strumenti', () => {
-  const i = scocca.indexOf("key: 'strumenti'");
-  deve(i > 0, 'non trovo il gruppo Strumenti');
-  const gruppo = scocca.slice(i, scocca.indexOf('] }', i));
-  deve(/Analisi dei bisogni/.test(gruppo), 'la voce non è dentro Strumenti');
+prova('la voce sta in Marketing', () => {
+  /* Analisi dei bisogni è passata da Strumenti a Marketing (IAM.md §10).
+     Si taglia fino alla voce successiva ('strumenti', subito dopo): il blocco
+     Marketing ha un '] }' interno (l'array titolo di Campagne email) che
+     troncherebbe uno slice basato su quel marcatore. */
+  const i = scocca.indexOf("key: 'marketing'");
+  deve(i > 0, 'non trovo il gruppo Marketing');
+  const gruppo = scocca.slice(i, scocca.indexOf("key: 'strumenti'", i));
+  deve(/Analisi dei bisogni/.test(gruppo), 'la voce non è dentro Marketing');
   deve(/vai\('analisi'\)/.test(gruppo), 'la voce non apre la scheda analisi');
 });
 
@@ -184,14 +188,14 @@ prova('il titolo sta in TITOLI e non in TITOLI_QUOTO', () => {
   const tq = scocca.indexOf('var TITOLI_QUOTO');
   const mappa = scocca.slice(t, tq > t ? tq : scocca.length);
   deve(/analisi:\s*\[/.test(mappa), 'la scheda analisi non ha titolo in TITOLI');
-  deve(/analisi:\s*\['[^']*',\s*'Strumenti'\]/.test(mappa), 'la briciola non dice Strumenti');
+  deve(/analisi:\s*\['[^']*',\s*'Marketing'\]/.test(mappa), 'la briciola non dice Marketing');
 });
 
 prova('la scheda evidenzia la sua voce di menu', () => {
   const i = scocca.indexOf('var TAB2MENU = {');
   deve(i > 0, 'non trovo TAB2MENU');
   const mappa = scocca.slice(i, scocca.indexOf('};', i));
-  deve(/analisi:\s*'strumenti'/.test(mappa), 'aprendo l\'analisi nessuna voce resta accesa');
+  deve(/analisi:\s*'marketing'/.test(mappa), 'aprendo l\'analisi nessuna voce resta accesa');
 });
 
 prova('la schermata esiste in index.html', () => {

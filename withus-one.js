@@ -434,9 +434,12 @@
            apre quella, senza passare da una schermata che non c'entra. */
         { l: 'Operativa', i: 'i-users', sub: [
           { l: 'Collaboratori', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
-          { l: 'Emissioni',     i: 'i-doc2',  go: function(){ aprireQuoto('emissioni', { menu: 'strumenti', titolo: ['Emissioni', 'Operativa'] }); } },
-          { l: 'Preventivi',    i: 'i-file',  go: function(){ aprireQuoto('richieste', { menu: 'strumenti', titolo: ['Preventivi', 'Operativa'] }); } },
-          { l: 'Supporto',      i: 'i-info',  go: function(){ aprireQuoto('ticket',    { menu: 'strumenti', titolo: ['Supporto', 'Operativa'] }); } },
+          /* Una voce sola dove prima ce n'erano tre (Emissioni, Preventivi,
+             Supporto): erano tre schermate sulle stesse persone, e chi doveva
+             sapere cosa gli avevano chiesto le apriva tutte e tre tenendo il
+             conto a mente. Adesso è una coda unica con la Tipologia come
+             filtro: preventivo, emissione, supporto. (28/08/2026) */
+          { l: 'Richieste',     i: 'i-list',  go: function(){ aprireQuoto('richieste', { menu: 'strumenti', titolo: ['Richieste', 'Operativa'] }); } },
         ] },
         /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
            sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su

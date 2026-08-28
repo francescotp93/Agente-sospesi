@@ -4567,33 +4567,37 @@ async function caricaDaFareOggi(forza) {
 
   /* 8-9. I due buchi che bloccano il marketing (specifica 12A §PARTE-A punto 4):
      senza email non parte nessuna comunicazione, senza consenso non si entra in
-     campagna. Il clic apre in QUOTO i Clienti già filtrati sul buco — page
-     «anagrafiche:senza-email» / «anagrafiche:senza-consenso», che là parte da
-     «Tutti» (clienti E lead), così il numero in lista combacia con questo. */
+     campagna. Si contano solo i CLIENTI (lead=false, e nessun marcatore LEAD in
+     nota) — lo stesso metro con cui il quotatore divide clienti e lead: sono la
+     rubrica su cui l'agenzia ha già una relazione. Il clic apre in QUOTO i
+     Clienti già filtrati sul buco (page «anagrafiche:senza-email» / «-consenso»),
+     che là parte dalla scheda Clienti, così il numero in lista combacia con questo. */
 
-  // 8. Contatti senza email
+  // 8. Clienti senza email
   await conta(async () => {
-    const { data, error } = await db.from('quote_anagrafiche').select('email');
+    const { data, error } = await db.from('quote_anagrafiche').select('email,note').eq('lead', false);
     if (error) throw error;
-    const n = (data || []).filter(a => !(a.email && String(a.email).trim())).length;
+    const cl = (data || []).filter(a => !/\bLEAD\b/i.test(a.note || ''));
+    const n = cl.filter(a => !(a.email && String(a.email).trim())).length;
     if (!n) return;
-    voci.push({ n, cls: '', l: n === 1 ? 'contatto senza email' : 'contatti senza email',
+    voci.push({ n, cls: '', l: n === 1 ? 'cliente senza email' : 'clienti senza email',
                 s: 'senza indirizzo non li raggiunge nessuna campagna', va: () => oggiApri('anagrafiche:senza-email') });
   });
 
-  // 9. Contatti senza consenso marketing (stessa regola di QUOTO: privacy firmata
+  // 9. Clienti senza consenso marketing (stessa regola di QUOTO: privacy firmata
   //    con marketing_elettronico = true). Nel DB non c'è la colonna consenso_marketing,
   //    quindi ci si basa solo su privacy_firma.
   await conta(async () => {
-    const { data, error } = await db.from('quote_anagrafiche').select('privacy_firma');
+    const { data, error } = await db.from('quote_anagrafiche').select('privacy_firma,note').eq('lead', false);
     if (error) throw error;
+    const cl = (data || []).filter(a => !/\bLEAD\b/i.test(a.note || ''));
     const haConsenso = a => {
       const pf = a && a.privacy_firma;
       return !!(pf && pf.stato === 'firmata' && pf.consensi && pf.consensi.marketing_elettronico === true);
     };
-    const n = (data || []).filter(a => !haConsenso(a)).length;
+    const n = cl.filter(a => !haConsenso(a)).length;
     if (!n) return;
-    voci.push({ n, cls: '', l: n === 1 ? 'contatto senza consenso marketing' : 'contatti senza consenso marketing',
+    voci.push({ n, cls: '', l: n === 1 ? 'cliente senza consenso marketing' : 'clienti senza consenso marketing',
                 s: 'non entrano in una campagna finché non firmano', va: () => oggiApri('anagrafiche:senza-consenso') });
   });
 

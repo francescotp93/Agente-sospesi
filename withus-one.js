@@ -411,6 +411,14 @@
            decisione a parte e va presa guardando i dati, non il menu. */
       ] },
 
+    /* «Richieste» — un menu a sé, non più una voce di terzo livello sotto
+       Strumenti › Operativa. È la coda unica di quello che i collaboratori
+       chiedono all'agenzia (preventivi, emissioni, supporto), con la Tipologia
+       come filtro: un ingresso di primo livello, non un posto dove la trovava
+       solo chi già sapeva che c'era (richiesta di Francesco, 28/08/2026). */
+    { key: 'richieste', l: 'Richieste', i: 'i-list',
+      go: function () { aprireQuoto('richieste', { menu: 'richieste', titolo: ['Richieste', 'Richieste'] }); } },
+
     { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: function(){ vai('fonti'); },
       sub: [
         /* Le fonti stanno in IAM, non nel preventivatore: sono credenziali dei
@@ -422,25 +430,13 @@
            che fa tutte e due le cose e' quella che nessuno capisce piu'.
            Campagne email e Analisi dei bisogni sono passate sotto Marketing. */
         { l: 'Stato collegamenti', i: 'i-plug', act: 'collegamenti', go: function(){ vai('collegamenti'); } },
-        /* Operativa: l'hub del rapporto con i collaboratori — chi sono e cosa
-           mandano. Prima erano sparse fra Agenzia e le code; poi sono diventate
-           una pagina a quattro schede (IAM.md §11.7); dal 28/08/2026 sono
-           quattro voci di menu.
-
-           Perché il passaggio. Con le schede si entrava SEMPRE da Collaboratori
-           e le altre tre esistevano solo per chi già sapeva che erano lì dentro:
-           dal menu non si vedevano, e una funzione che non si vede dal menu per
-           metà dell'agenzia non esiste. Adesso si clicca quella che serve e si
-           apre quella, senza passare da una schermata che non c'entra. */
-        { l: 'Operativa', i: 'i-users', sub: [
-          { l: 'Collaboratori', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
-          /* Una voce sola dove prima ce n'erano tre (Emissioni, Preventivi,
-             Supporto): erano tre schermate sulle stesse persone, e chi doveva
-             sapere cosa gli avevano chiesto le apriva tutte e tre tenendo il
-             conto a mente. Adesso è una coda unica con la Tipologia come
-             filtro: preventivo, emissione, supporto. (28/08/2026) */
-          { l: 'Richieste',     i: 'i-list',  go: function(){ aprireQuoto('richieste', { menu: 'strumenti', titolo: ['Richieste', 'Operativa'] }); } },
-        ] },
+        /* Operativa: l'elenco dei collaboratori dell'agenzia. Un tempo una pagina
+           a quattro schede (§11.7), poi un sotto-menu; il 28/08/2026 le «Richieste»
+           (preventivi, emissioni, supporto) sono uscite in un menu di primo
+           livello (voce «Richieste», qui sopra), e qui restava solo Collaboratori
+           — un sotto-menu con una voce sola è un sotto-menu di troppo. Torna una
+           voce diretta. */
+        { l: 'Operativa', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
         /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
            sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su
            Utility le apre, un clic sulla categoria porta il preventivatore già

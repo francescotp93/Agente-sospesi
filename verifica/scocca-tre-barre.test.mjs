@@ -153,7 +153,7 @@ prova('ogni voce chiama una funzione che in IAM esiste', () => {
 
 prova('la barra scura ha le voci decise, nell ordine deciso', () => {
   const chiavi = [...corpo.matchAll(/\{ key: '([a-z]+)',/g)].map(m => m[1]);
-  const atteso = ['dashboard', 'quoto', 'clienti', 'portafoglio', 'carica', 'agenzia', 'marketing', 'strumenti'];
+  const atteso = ['dashboard', 'quoto', 'clienti', 'portafoglio', 'carica', 'agenzia', 'marketing', 'richieste', 'strumenti'];
   deve(chiavi.join(',') === atteso.join(','), 'menu cambiato: ' + chiavi.join(', '));
   return atteso.length + ' voci';
 });

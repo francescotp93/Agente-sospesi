@@ -7870,6 +7870,9 @@ async function resetPermessiUtente(userId){
 
 // ── ESTRATTO CONTO — polizze emesse dai collaboratori ───────────────────────────
 let EC_ROWS = [];
+/* Cosa si sta guardando adesso: righe filtrate e totali, scritti da ecRender e
+   letti dall'export. */
+let EC_VIEW = { rows: [], coll: '', per: 'month', totDaPagare: 0, totPagato: 0, nDaPagare: 0, nPagato: 0 };
 function ecMetodoLabel(m){ return ({ rimessa:'Rimessa', virtual_pos:'Virtual POS', paypal:'PayPal', bonifico:'Bonifico' })[m] || (m || 'n/d'); }
 function ecEuro(n){ return '€ ' + (Number(n)||0).toLocaleString('it-IT',{ minimumFractionDigits:2, maximumFractionDigits:2 }); }
 function ecDataFmt(dt){ try{ return new Date(dt).toLocaleDateString('it-IT'); }catch(e){ return ''; } }
@@ -7895,6 +7898,13 @@ async function openEstrattoConto(){
         <div><label style="${lbl}">Da</label><input id="ec-da" type="date" onchange="ecRender()" style="${inp}"></div>
         <div><label style="${lbl}">A</label><input id="ec-a" type="date" onchange="ecRender()" style="${inp}"></div>
       </div>
+      <div style="flex:1;min-width:8px"></div>
+      <!-- Un estratto conto che si può solo guardare non è un estratto conto:
+           serve da mandare al collaboratore e da tenere in contabilità. I due
+           tasti erano già nella schermata gemella del preventivatore; qui
+           mancavano, e chi lo apriva da IAM si ricopiava i numeri a mano. -->
+      <button onclick="ecExportExcel()" title="Scarica in Excel" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #1c8a52;background:rgba(46,193,106,.10);color:#1c8a52;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+      <button onclick="ecExportPDF()" title="Scarica o stampa in PDF" style="display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--acc);background:var(--surf2);color:var(--acc);border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px"><i class="ti ti-file-type-pdf"></i> PDF</button>
     </div>
     <div id="ec-summary" style="padding:12px 16px;border-bottom:1px solid var(--bord);background:var(--surf);display:flex;gap:10px;flex-wrap:wrap;"></div>
     <div id="ec-body" style="flex:1;overflow:auto;"><div style="padding:40px;text-align:center;color:var(--txt3);">Carico le polizze…</div></div>`;
@@ -7938,6 +7948,11 @@ function ecRender(){
   if (coll) rows = rows.filter(r => r.coll === coll);
   let totDaPagare = 0, totPagato = 0, nDaPagare = 0, nPagato = 0;
   rows.forEach(r => { if (r.metodo === 'rimessa'){ totDaPagare += r.importo; nDaPagare++; } else { totPagato += r.importo; nPagato++; } });
+  /* Quello che si vede è quello che si scarica. Ricalcolare i filtri dentro
+     l'export vorrebbe dire due codici che devono restare d'accordo per sempre:
+     basta una riga cambiata da una parte sola e il PDF dice un totale diverso
+     da quello a schermo — con i soldi di un collaboratore dentro. */
+  EC_VIEW = { rows, coll, per, totDaPagare, totPagato, nDaPagare, nPagato };
   const sum = document.getElementById('ec-summary');
   if (sum) sum.innerHTML = `
     <div style="flex:1;min-width:130px;background:var(--surf2);border:1px solid var(--bord2);border-radius:10px;padding:10px 12px;"><div style="font-size:11px;color:var(--txt3);">Polizze nel periodo</div><div style="font-size:20px;font-weight:800;">${rows.length}</div></div>
@@ -7965,6 +7980,125 @@ function ecRender(){
   }).join('');
 }
 
+
+
+/* ══════════ ESTRATTO CONTO — PDF ed EXCEL ══════════
+   Il documento è lo STESSO che genera la schermata gemella del preventivatore
+   (funzioni ecq… in QUOTO): stessa intestazione, stessa tabella, stessi totali.
+   Due estratti conto della stessa agenzia che si presentano in due modi diversi
+   sono due estratti conto, e il collaboratore che ne riceve uno per mese se ne
+   accorge.
+
+   L'Excel non è un vero .xlsx: è una tabella HTML che Excel apre e riconosce.
+   Vale la pena dirlo — una libreria in più per scrivere lo ZIP di un xlsx, in
+   un file che è già grande, per un foglio di sette colonne, non si ripaga. Se
+   un giorno servono formule o più fogli, allora sì. */
+function ecExportFilename(ext){
+  const coll = EC_VIEW.coll ? ('_' + EC_VIEW.coll.replace(/[^a-zA-Z0-9]+/g, '-')) : '';
+  return 'estratto-conto' + coll + '_' + new Date().toISOString().slice(0, 10) + '.' + ext;
+}
+function ecPeriodoLabel(){
+  const per = EC_VIEW.per;
+  if (per === 'today') return 'Oggi';
+  if (per === 'month') return 'Mese corrente';
+  if (per === 'year') return 'Anno corrente';
+  if (per === 'custom'){
+    const da = document.getElementById('ec-da')?.value || '', a = document.getElementById('ec-a')?.value || '';
+    const f = s => { try { return new Date(s).toLocaleDateString('it-IT'); } catch(e){ return s; } };
+    return 'Dal ' + (da ? f(da) : 'inizio') + ' al ' + (a ? f(a) : 'oggi');
+  }
+  return 'Tutto';
+}
+function ecLogoUrl(){
+  return (location.origin && location.origin.indexOf('http') === 0)
+    ? (location.origin + '/withus-logo.png')
+    : 'https://iam.withusassicurazioni.it/withus-logo.png';
+}
+function ecRowsHTML(){
+  return EC_VIEW.rows.map(r => { const dp = (r.metodo === 'rimessa');
+    return `<tr>
+      <td>${ecDataFmt(r.data)}</td>
+      <td>${esc(r.cliente)}</td>
+      <td>${esc(r.prodotto)}${r.compagnia ? ' · ' + esc(r.compagnia) : ''}</td>
+      <td>${esc(r.coll)}</td>
+      <td>${esc(ecMetodoLabel(r.metodo))}</td>
+      <td class="num">${ecEuro(r.importo)}</td>
+      <td class="${dp ? 'st-dp' : 'st-pg'}">${dp ? 'Da pagare' : 'Pagato'}</td>
+    </tr>`;
+  }).join('');
+}
+function ecDocHTML(){
+  const v = EC_VIEW, oggi = new Date().toLocaleDateString('it-IT');
+  return `
+  <div class="ec-head">
+    <img src="${ecLogoUrl()}" alt="With Us" class="ec-logo">
+    <div class="ec-head-r">
+      <div class="ec-title">Estratto conto</div>
+      <div class="ec-meta">Periodo: <b>${esc(ecPeriodoLabel())}</b> · Collaboratore: <b>${esc(v.coll || 'Tutti i collaboratori')}</b></div>
+      <div class="ec-meta">Generato il ${oggi}</div>
+    </div>
+  </div>
+  <div class="ec-cards">
+    <div class="ec-card"><div class="ec-card-l">Polizze nel periodo</div><div class="ec-card-v">${v.rows.length}</div></div>
+    <div class="ec-card ec-green"><div class="ec-card-l">Già pagate (${v.nPagato})</div><div class="ec-card-v">${ecEuro(v.totPagato)}</div><div class="ec-card-s">non conteggiate</div></div>
+    <div class="ec-card ec-red"><div class="ec-card-l">Da versare · rimesse (${v.nDaPagare})</div><div class="ec-card-v">${ecEuro(v.totDaPagare)}</div><div class="ec-card-s">totale estratto</div></div>
+  </div>
+  <table class="ec-table">
+    <thead><tr><th>Data</th><th>Cliente</th><th>Prodotto</th><th>Collaboratore</th><th>Metodo</th><th class="num">Importo</th><th>Stato</th></tr></thead>
+    <tbody>${ecRowsHTML()}</tbody>
+    <tfoot><tr><td colspan="5">TOTALE DA VERSARE (rimesse)</td><td class="num">${ecEuro(v.totDaPagare)}</td><td></td></tr></tfoot>
+  </table>
+  <div class="ec-foot">With Us Società Cooperativa · Via Cofano 76, 91100 Trapani · RUI A000747484 · Documento generato automaticamente da IAM</div>`;
+}
+function ecDocCSS(){
+  /* Colori scritti a mano e non variabili del tema: il documento esce dal
+     programma. Con il tema scuro attivo, un PDF che eredita le variabili nasce
+     nero su nero. */
+  return `
+  *{box-sizing:border-box} body{font-family:Arial,Helvetica,sans-serif;color:#1d2433;margin:0;padding:26px}
+  .ec-head{display:flex;align-items:center;gap:18px;border-bottom:3px solid #1f3b73;padding-bottom:14px;margin-bottom:16px}
+  .ec-logo{height:54px;width:auto}
+  .ec-head-r{flex:1}
+  .ec-title{font-size:24px;font-weight:800;color:#1f3b73}
+  .ec-meta{font-size:12.5px;color:#5b6478;margin-top:2px}
+  .ec-cards{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+  .ec-card{flex:1;min-width:150px;border:1px solid #e2e6ef;border-radius:10px;padding:11px 14px;background:#f8f9fc}
+  .ec-card-l{font-size:11px;color:#5b6478}
+  .ec-card-v{font-size:21px;font-weight:800;margin-top:3px}
+  .ec-card-s{font-size:10px;color:#8a93a6}
+  .ec-green{background:#eafaf0;border-color:#b6e6c8} .ec-green .ec-card-v{color:#1c8a52}
+  .ec-red{background:#fdecea;border-color:#f3b6b1} .ec-red .ec-card-v{color:#c0392b}
+  .ec-table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .ec-table th{background:#1f3b73;color:#fff;text-align:left;padding:9px 10px;font-weight:700}
+  .ec-table td{padding:8px 10px;border-bottom:1px solid #e8ebf2}
+  .ec-table tbody tr:nth-child(even){background:#f6f8fc}
+  .ec-table .num{text-align:right;white-space:nowrap}
+  .ec-table tfoot td{font-weight:800;border-top:2px solid #1f3b73;background:#eef2fb}
+  .st-dp{color:#c0392b;font-weight:700} .st-pg{color:#1c8a52;font-weight:700}
+  .ec-foot{margin-top:18px;font-size:10.5px;color:#8a93a6;border-top:1px solid #e2e6ef;padding-top:10px}
+  @media print{ body{padding:0} .ec-card{-webkit-print-color-adjust:exact;print-color-adjust:exact} .ec-table th,.ec-table tfoot td{-webkit-print-color-adjust:exact;print-color-adjust:exact} }`;
+}
+function ecExportPDF(){
+  if (!EC_VIEW.rows.length){ alert('Nessuna polizza da esportare nel periodo selezionato.'); return; }
+  const html = '<!doctype html><html lang="it"><head><meta charset="utf-8"><title>' + ecExportFilename('pdf') + '</title><style>'
+    + ecDocCSS() + '</style></head><body>' + ecDocHTML()
+    + '<' + 'script>window.onload=function(){setTimeout(function(){window.print();},400);};<' + '/script></body></html>';
+  const w = window.open('', '_blank');
+  if (!w){ alert('Il browser ha bloccato la finestra: abilita i popup per questo sito e riprova.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+function ecExportExcel(){
+  if (!EC_VIEW.rows.length){ alert('Nessuna polizza da esportare nel periodo selezionato.'); return; }
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>'
+    + ecDocCSS() + '</style></head><body>' + ecDocHTML() + '</body></html>';
+  /* Il BOM davanti: senza, Excel apre il file in ASCII e le accentate diventano
+     scarabocchi — «Societ Cooperativa», e il nome di mezza clientela storpiato. */
+  const blob = new Blob(['\ufeff' + html], { type: 'application/vnd.ms-excel' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = ecExportFilename('xls');
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
 
 // ─── PANNELLO PERSONALE ───────────────────────────────────────────────────────
 async function renderPannelloPersonale() {

@@ -92,7 +92,9 @@ e.prova('le scorciatoie del mega-menu portano con sé la loro briciola', () => {
 
 e.prova('setActive accetta la briciola dichiarata, e ha la precedenza', () => {
   const i = src.indexOf('function setActive(');
-  const corpo = src.slice(i, i + 900);
+  // Finestra ampia: la riga «var voce = titolo ||» puo' stare dopo un commento
+  // che documenta il ripiego dei titoli col suffisso (es. anagrafiche:senza-email).
+  const corpo = src.slice(i, i + 1800);
   deve(/function setActive\(tab, page, titolo\)/.test(corpo), 'setActive non riceve il titolo');
   deve(/var voce = titolo\s*\n?\s*\|\|/.test(corpo), 'il titolo dichiarato non ha la precedenza');
 });

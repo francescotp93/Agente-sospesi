@@ -1148,7 +1148,7 @@ input[type=file]{display:none;}
 }
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
-<link rel="stylesheet" href="withus-one.css?v=20260827r">
+<link rel="stylesheet" href="withus-one.css?v=20260828a">
 </head>
 <body>
 
@@ -4572,13 +4572,22 @@ async function caricaDaFareOggi(forza) {
      visto per intero (scelta di Francesco). Un clic apre i Clienti già filtrati
      su quel buco (page «anagrafiche:<filtro>»). */
   await conta(async () => {
-    const { data, error } = await db.from('quote_anagrafiche').select('email,privacy_firma');
+    const { data, error } = await db.from('quote_anagrafiche').select('email,privacy_firma,consenso_marketing');
     if (error) throw error;
     const tutte = data || [];
     const senzaMail = tutte.filter(a => !(a.email && String(a.email).trim())).length;
     if (senzaMail) voci.push({ n: senzaMail, cls: '', l: senzaMail === 1 ? 'contatto senza email' : 'contatti senza email',
                 s: 'senza indirizzo non parte nessuna campagna', va: () => oggiApri('anagrafiche:senza-email') });
-    const consensoOk = a => { const pf = a.privacy_firma; return !!(pf && pf.stato === 'firmata' && pf.consensi && pf.consensi.marketing_elettronico === true); };
+    /* Stessa identica regola che usano le campagne (QUOTO): il campo
+       `consenso_marketing` oppure la privacy firmata con la spunta del
+       marketing elettronico. Contare il buco con una regola e scegliere i
+       destinatari con un'altra vorrebbe dire una scrivania che dice un numero e
+       un invio che ne fa un altro. */
+    const consensoOk = a => {
+      if (a.consenso_marketing === true) return true;
+      const pf = a.privacy_firma;
+      return !!(pf && pf.stato === 'firmata' && pf.consensi && pf.consensi.marketing_elettronico === true);
+    };
     const senzaCons = tutte.filter(a => !consensoOk(a)).length;
     if (senzaCons) voci.push({ n: senzaCons, cls: '', l: senzaCons === 1 ? 'contatto senza consenso marketing' : 'contatti senza consenso marketing',
                 s: 'niente email marketing finché manca', va: () => oggiApri('anagrafiche:senza-consenso') });
@@ -14343,7 +14352,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-<script src="withus-one.js?v=20260827r"></script>
+<script src="withus-one.js?v=20260828a"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

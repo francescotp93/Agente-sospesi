@@ -513,6 +513,11 @@
     'cauzioni-privati': ['Cauzioni privati', 'Preventivatore'],
     cauzioni:    ['Fideiussioni', 'Preventivatore'],
     anagrafiche: ['Anagrafiche clienti', 'Clienti'],
+    /* I «buchi» della Scrivania aprono i Clienti gia' filtrati. Senza queste due
+       righe la barra scriveva «Nuovo preventivo»: si partiva da «clienti senza
+       email» e si arrivava su una schermata che diceva un'altra cosa. */
+    'anagrafiche:senza-email':    ['Clienti senza email', 'Clienti'],
+    'anagrafiche:senza-consenso': ['Clienti senza consenso marketing', 'Clienti'],
     utility:     ['Utility', 'Strumenti'],
     'utility:nota':      ['Note informative', 'Strumenti'],
     'utility:documento': ['Documenti utili', 'Strumenti'],
@@ -1074,8 +1079,15 @@
     if (!t || !c) return;
     /* Ordine: il titolo dichiarato dalla voce di menu (che sa da dove sei
        passato), poi la pagina del preventivatore, poi la scheda di IAM. */
-    var voce = titolo
-      || ((tab === 'quoto' && page && TITOLI_QUOTO[page]) ? TITOLI_QUOTO[page] : TITOLI[tab]);
+    /* Le pagine del preventivatore possono arrivare con un suffisso che dice su
+       quale scheda aprirsi («utility:nota», «anagrafiche:senza-email»). Se la
+       forma completa non e' in elenco si ripiega sulla pagina base: meglio
+       «Anagrafiche clienti» che «Nuovo preventivo», che dice il falso. */
+    var titQuoto = null;
+    if (tab === 'quoto' && page) {
+      titQuoto = TITOLI_QUOTO[page] || TITOLI_QUOTO[String(page).split(':')[0]] || null;
+    }
+    var voce = titolo || titQuoto || TITOLI[tab];
     /* Se non si sa che titolo mettere si scrive almeno il nome della voce di
        menu: lasciare quello di prima e' peggio, perche' dice il falso. */
     if (!voce) {

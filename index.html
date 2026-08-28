@@ -1148,7 +1148,7 @@ input[type=file]{display:none;}
 }
 </style>
 <link rel="stylesheet" href="withus-pictograms.css?v=20260804">
-<link rel="stylesheet" href="withus-one.css?v=20260828b">
+<link rel="stylesheet" href="withus-one.css?v=20260828c">
 </head>
 <body>
 
@@ -1640,13 +1640,14 @@ input[type=file]{display:none;}
      nativo) + le tre code del preventivatore (Emissioni/Preventivi/Supporto), che
      si aprono nel riquadro. La scheda Collaboratori è l'ex «Agenzia › Collaboratori»
      (renderTeam), spostata qui con gli stessi id, così le funzioni team non cambiano. -->
+<!-- OPERATIVA · COLLABORATORI
+     La striscia di quattro schede è stata tolta il 28/08/2026: Emissioni,
+     Preventivi e Supporto sono diventate voci di menu (Strumenti › Operativa),
+     e questa pagina è rimasta quella che è sempre stata davvero — l'elenco dei
+     collaboratori. Due navigazioni per le stesse quattro cose erano una di
+     troppo, e quella nascosta dentro la pagina la vedeva solo chi già sapeva
+     che c'era. -->
 <div class="panel" id="panel-operativa">
-  <div style="display:flex;gap:6px;padding:10px 12px 2px;overflow-x:auto;scrollbar-width:none;">
-    <button class="ptab act" id="op-t-collab" onclick="selOperativaTab('collab')" style="font-size:12px;white-space:nowrap;">Collaboratori</button>
-    <button class="ptab" id="op-t-emiss" onclick="selOperativaTab('emissioni')" style="font-size:12px;white-space:nowrap;">Emissioni</button>
-    <button class="ptab" id="op-t-prev" onclick="selOperativaTab('preventivi')" style="font-size:12px;white-space:nowrap;">Preventivi</button>
-    <button class="ptab" id="op-t-supp" onclick="selOperativaTab('supporto')" style="font-size:12px;white-space:nowrap;">Supporto</button>
-  </div>
   <div id="op-pane-collab">
     <div style="padding:8px 12px 0;display:flex;gap:8px;align-items:center;">
       <input type="search" id="tm-search" placeholder="Cerca nome, cognome o ramo..." style="flex:1;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTeam()">
@@ -3862,7 +3863,7 @@ function goTab(t) {
   if (pp) pp.classList.add('act');
   setUltimoTab(t);
   if (t === 'storico')     buildStorico();
-  if (t === 'operativa')   { selOperativaTab('collab'); }
+  if (t === 'operativa')   { renderTeam(); loadTeamDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
     renderTratt();
     loadTrattDB().then(() => renderTratt());
@@ -4410,25 +4411,14 @@ function oggiApri(pagina) {
   if (typeof apriQuoto === 'function') apriQuoto();
 }
 
-/* Le quattro schede di Operativa (§11.7, versione «mista» approvata).
-   «Collaboratori» è nativa di IAM (renderTeam, ex Agenzia › Collaboratori). Le
-   altre tre sono pagine del preventivatore — Emissioni, Preventivi (richieste) e
-   Supporto (ticket, che legge iam_ticket) — e si aprono nel riquadro: passando a
-   loro si esce dalla scheda Collaboratori. La riservatezza delle richieste
-   («ognuno vede il proprio, l'agenzia vede tutto») la applica il preventivatore
-   con le sue policy, non serve riscriverla qui. */
-function selOperativaTab(t) {
-  const btns = { collab:'op-t-collab', emissioni:'op-t-emiss', preventivi:'op-t-prev', supporto:'op-t-supp' };
-  Object.entries(btns).forEach(([k, id]) => {
-    const b = document.getElementById(id); if (b) b.classList.toggle('act', k === t);
-  });
-  if (t === 'collab') { loadTeamDB().then(() => renderTeam()); return; }
-  const dest = { emissioni:['emissioni','Emissioni'], preventivi:['richieste','Preventivi'], supporto:['ticket','Supporto'] }[t];
-  if (!dest) return;
-  if (typeof window.withusOneApri === 'function') {
-    window.withusOneApri(dest[0], { menu:'strumenti', titolo:[dest[1], 'Operativa'] });
-  } else { oggiApri(dest[0]); }
-}
+/* Le quattro sezioni di Operativa (§11.7) sono quattro voci di menu, non più
+   quattro schede dentro una pagina: «Collaboratori» è nativa di IAM
+   (renderTeam, ex Agenzia › Collaboratori) e vive in questo panel; Emissioni,
+   Preventivi (richieste) e Supporto (ticket) sono pagine del preventivatore e
+   le apre la scocca nel riquadro, con la loro briciola.
+   La riservatezza delle richieste («ognuno vede il proprio, l'agenzia vede
+   tutto») la applica il preventivatore con le sue policy, non serve
+   riscriverla qui. */
 
 /* La scrivania viene ricostruita da cinque punti diversi del programma (login,
    caricamento file, cambio scheda…). Il richiamo sta dentro buildDashboard() per
@@ -14352,7 +14342,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-<script src="withus-one.js?v=20260828b"></script>
+<script src="withus-one.js?v=20260828c"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

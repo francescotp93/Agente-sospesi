@@ -423,9 +423,21 @@
            Campagne email e Analisi dei bisogni sono passate sotto Marketing. */
         { l: 'Stato collegamenti', i: 'i-plug', act: 'collegamenti', go: function(){ vai('collegamenti'); } },
         /* Operativa: l'hub del rapporto con i collaboratori — chi sono e cosa
-           mandano (Collaboratori, Emissioni, Preventivi, Supporto), in una pagina
-           a schede (IAM.md §11.7). Prima erano sparse fra Agenzia e le code. */
-        { l: 'Operativa', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
+           mandano. Prima erano sparse fra Agenzia e le code; poi sono diventate
+           una pagina a quattro schede (IAM.md §11.7); dal 28/08/2026 sono
+           quattro voci di menu.
+
+           Perché il passaggio. Con le schede si entrava SEMPRE da Collaboratori
+           e le altre tre esistevano solo per chi già sapeva che erano lì dentro:
+           dal menu non si vedevano, e una funzione che non si vede dal menu per
+           metà dell'agenzia non esiste. Adesso si clicca quella che serve e si
+           apre quella, senza passare da una schermata che non c'entra. */
+        { l: 'Operativa', i: 'i-users', sub: [
+          { l: 'Collaboratori', i: 'i-users', act: 'operativa', go: function(){ vai('operativa'); } },
+          { l: 'Emissioni',     i: 'i-doc2',  go: function(){ aprireQuoto('emissioni', { menu: 'strumenti', titolo: ['Emissioni', 'Operativa'] }); } },
+          { l: 'Preventivi',    i: 'i-file',  go: function(){ aprireQuoto('richieste', { menu: 'strumenti', titolo: ['Preventivi', 'Operativa'] }); } },
+          { l: 'Supporto',      i: 'i-info',  go: function(){ aprireQuoto('ticket',    { menu: 'strumenti', titolo: ['Supporto', 'Operativa'] }); } },
+        ] },
         /* Materiale di consultazione dell'agenzia. Le tre categorie sono un
            sotto-elenco a fisarmonica DENTRO «Utility» (3° livello): un clic su
            Utility le apre, un clic sulla categoria porta il preventivatore già
@@ -471,7 +483,10 @@
     analisi:     ['Analisi dei bisogni', 'Marketing'],
     carica:      ['Contabilità', 'Contabilità'],
     team:        ['Collaboratori', 'Operativa'],
-    operativa:   ['Operativa', 'Strumenti'],
+    /* La pagina di IAM sotto «Operativa» è una sola: i Collaboratori. Le altre
+       tre voci del sotto-menu sono pagine del preventivatore e dichiarano il
+       loro titolo da sé. */
+    operativa:   ['Collaboratori', 'Operativa'],
     pipeline:    ['Trattative', 'Clienti'],
     workdiary:   ['Diario di lavoro', 'Agenzia'],
     performance: ['KPI e gare', 'Agenzia'],

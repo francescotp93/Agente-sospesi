@@ -399,8 +399,16 @@
       sub: [
         { l: 'Dashboard', i: 'i-grid', go: function () { aprireMarketing(); } },
         { l: 'Campagne email', i: 'i-mail', go: function () { aprireQuoto('campagne', { menu: 'marketing', titolo: ['Campagne email', 'Marketing'] }); } },
-        { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function () { vai('analisi'); } },
-        { l: 'Lead', i: 'i-bolt', act: 'lead', go: function () { vai('lead'); } }
+        { l: 'Analisi dei bisogni', i: 'i-flask', act: 'analisi', go: function () { vai('analisi'); } }
+        /* «Lead» tolta il 28/08/2026. Erano due elenchi di lead che non si
+           parlavano: questo, su iam_lead, era VUOTO; i lead veri — 28 — stanno
+           in anagrafica (quote_anagrafiche.lead: un nominativo senza privacy
+           firmata) e si vedono in Clienti › Anagrafiche, scheda «Lead».
+           Due liste con lo stesso nome sono peggio di una sola: si guarda
+           quella sbagliata, la si trova vuota e si conclude che non ci sono
+           lead. La schermata resta nel codice (panel-lead) ma non ha più un
+           ingresso: toglierla del tutto, insieme alla sua tabella, è una
+           decisione a parte e va presa guardando i dati, non il menu. */
       ] },
 
     { key: 'strumenti', l: 'Strumenti', i: 'i-cog', go: function(){ vai('fonti'); },
@@ -465,7 +473,6 @@
     team:        ['Collaboratori', 'Operativa'],
     operativa:   ['Operativa', 'Strumenti'],
     pipeline:    ['Trattative', 'Clienti'],
-    lead:        ['Lead', 'Marketing'],
     workdiary:   ['Diario di lavoro', 'Agenzia'],
     performance: ['KPI e gare', 'Agenzia'],
     marketing:   ['Marketing', 'Marketing'],
@@ -545,7 +552,7 @@
     quadratura: 'carica', caricafile: 'carica',
     storico: 'carica', conto: 'carica', team: 'strumenti', operativa: 'strumenti',
     workdiary: 'agenzia',
-    performance: 'agenzia', pipeline: 'clienti', lead: 'marketing',
+    performance: 'agenzia', pipeline: 'clienti',
     fonti: 'strumenti', analisi: 'marketing', collegamenti: 'strumenti',
     posta: 'strumenti',
     utenti: 'admin', azienda: 'admin', agenti: 'admin', quoto: 'quoto'
@@ -1063,7 +1070,20 @@
     return p;
   }
 
-  /* ═══ evidenziazione, titolo e briciole ════════════════════════════ */
+  /* ═══ evidenziazione, titolo e briciole ════════════════════════════
+     Il titolo si sceglie in quest'ordine: quello dichiarato dalla voce di menu
+     (che sa da dove sei passato), poi la pagina del preventivatore, poi la
+     scheda di IAM, poi il nome del capo-menu.
+
+     Le pagine del preventivatore possono arrivare con un suffisso che dice su
+     quale scheda aprirsi («utility:nota», «anagrafiche:senza-email»). Se la
+     forma completa non e' in elenco si ripiega sulla pagina base: meglio
+     «Anagrafiche clienti» che «Nuovo preventivo», che dice il falso.
+
+     La spiegazione sta QUI e non dentro la funzione di proposito: il corpo di
+     setActive e' sorvegliato da una prova che ne legge i primi 900 caratteri
+     (verifica/scocca-titoli-menu.test.mjs), e un commento lungo la spingerebbe
+     fuori da quella finestra facendo fallire una prova che ha ragione. */
 
   function setActive(tab, page, titolo) {
     var k = TAB2MENU[tab] || tab;
@@ -1077,12 +1097,6 @@
     var t = document.getElementById('w1-titolo');
     var c = document.getElementById('w1-crumb');
     if (!t || !c) return;
-    /* Ordine: il titolo dichiarato dalla voce di menu (che sa da dove sei
-       passato), poi la pagina del preventivatore, poi la scheda di IAM. */
-    /* Le pagine del preventivatore possono arrivare con un suffisso che dice su
-       quale scheda aprirsi («utility:nota», «anagrafiche:senza-email»). Se la
-       forma completa non e' in elenco si ripiega sulla pagina base: meglio
-       «Anagrafiche clienti» che «Nuovo preventivo», che dice il falso. */
     var titQuoto = null;
     if (tab === 'quoto' && page) {
       titQuoto = TITOLI_QUOTO[page] || TITOLI_QUOTO[String(page).split(':')[0]] || null;

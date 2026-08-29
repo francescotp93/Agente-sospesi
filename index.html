@@ -10988,8 +10988,36 @@ async function loadWD_DB() {
   } catch(e) { console.warn('loadWD_DB error:', e); loadWD(); }
 }
 
+/* Rete di sicurezza del diario: la voce entra subito nella copia locale
+   (WD in memoria + cache localStorage), nella stessa forma di loadWD_DB.
+   Cosi', se il server non risponde, l'attivita' non si perde e resta a
+   video. Il guasto "aggiungo e sparisce" nasceva dal salvare solo sul
+   server e, quando falliva, non tenere nulla. */
+function mergeLocalWD(w) {
+  const voce = {
+    id:         String(w.id),
+    titolo:     w.titolo     || '',
+    tipo:       w.tipo       || 'altro',
+    stato:      w.stato      || 'aperto',
+    prior:      w.prior      || 'normale',
+    importante: !!w.importante,
+    data:       w.data       || '',
+    ora:        w.ora        || '09:00',
+    note:       w.note       || '',
+    condivisi:  w.condivisi  || [],
+    file_nome:  w.file_nome  || '',
+    file_data:  w.file_data  || '',
+    utente_id:  (ME && ME.id) || w.utente_id || '',
+  };
+  WD = WD || [];
+  const i = WD.findIndex(x => String(x.id) === voce.id);
+  if (i >= 0) WD[i] = Object.assign({}, WD[i], voce); else WD.push(voce);
+  saveWD_store();
+}
+
 async function saveWD_DB(w) {
-  if (!db || !ME) { saveWD_store(); return; }
+  mergeLocalWD(w);
+  if (!db || !ME) return false;
   const payload = {
     id:            w.id,
     utente_id:     ME.id,
@@ -11028,8 +11056,16 @@ async function saveWD_DB(w) {
       delete payload[manca];
       ({ error } = await db.from('iam_workdiary').upsert(payload));
     }
+    if (error) {
+      /* La causa piu' comune del salvataggio muto e' la sessione scaduta:
+         si prova a rinnovarla una volta e si riscrive, cosi' l'utente non
+         perde nulla e spesso non se ne accorge nemmeno. */
+      try { await db.auth.refreshSession(); } catch(_) {}
+      ({ error } = await db.from('iam_workdiary').upsert(payload));
+    }
     if (error) throw error;
-  } catch(e) { console.warn('saveWD_DB error:', e); }
+    return true;
+  } catch(e) { console.warn('saveWD_DB error:', e); return false; }
 }
 
 async function delWD_DB(id) {
@@ -11717,11 +11753,19 @@ function saveWD() {
     alert('La fine è prima dell\'inizio: correggi l\'orario di fine, oppure lascialo vuoto.');
     return;
   }
-  saveWD_DB(w).then(() => {
+  saveWD_DB(w).then((ok) => {
     /* Si ridisegnano tutte le viste, non solo quella aperta: sono quattro
        letture degli stessi dati, e lasciarne indietro una fa ricomparire
        l'attivita' vecchia appena si cambia linguetta. */
-    loadWD_DB().then(() => { renderWD(); renderWDCal(); renderWDSett(); renderWDGiorno(); });
+    if (ok) {
+      loadWD_DB().then(() => { renderWD(); renderWDCal(); renderWDSett(); renderWDGiorno(); });
+    } else {
+      /* Il server non ha risposto: la voce e' gia' nella copia locale (rete
+         di sicurezza di saveWD_DB), quindi si ridisegna con quella e si
+         avvisa: niente sparizioni mute. */
+      renderWD(); renderWDCal(); renderWDSett(); renderWDGiorno();
+      alert('Attività salvata su questo dispositivo, ma la sincronizzazione col server non è riuscita (sessione scaduta o connessione assente). Rifai il login e riapri il diario per sincronizzarla.');
+    }
   });
   closeModal('modal-wd');
 }

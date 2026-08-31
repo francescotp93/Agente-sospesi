@@ -5766,6 +5766,7 @@ function schedaLead(c) {
       </div>` : ''}
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;">
         <button onclick="apriDiarioLead('${c.id}')" style="font-size:11.5px;padding:6px 11px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;"><i class="ti ti-notebook"></i> Diario trattativa</button>
+        <button onclick="apriProvinciaProfiloLead('${c.id}')" style="font-size:11.5px;padding:6px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-map-pin"></i> Provincia e profilo</button>
         ${a.cv_path ? `<button onclick="apriFileCollab('${esc(a.cv_path)}')" style="font-size:11.5px;padding:6px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-file-cv"></i> Curriculum</button>` : ''}
         <button onclick="oggiApri('utenti')" title="La scheda completa (fotografia, conferma a collaboratore) sta nel registro anagrafico: si apre qui dentro, nel riquadro, senza uscire da IAM" style="font-size:11.5px;padding:6px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-external-link"></i> Scheda completa</button>
       </div>
@@ -5808,6 +5809,55 @@ async function caricaFotoLead(righe) {
    CRONOLOGIA — quando è stato sentito, chi l'ha sentito, cosa aveva detto la
    volta prima — che è l'unica cosa che serve davvero quando si riprende in mano
    una trattativa ferma da tre settimane. */
+/* Provincia e profilo previsto sono i due campi che la barra filtri usa e che
+   la scheda del registro anagrafico non chiede ancora. Si scrivono da qui —
+   sono due caselle, non un secondo editor della scheda: il resto (curriculum,
+   fotografia, conferma a collaboratore) resta dove già funziona. Senza questa
+   finestrella i due filtri sarebbero nati vuoti e sarebbero rimasti vuoti. */
+async function apriProvinciaProfiloLead(id) {
+  const c = (COLLAB_LEAD || []).find(x => x.id === id); if (!c) return;
+  document.getElementById('pplead-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'pplead-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9150;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;';
+  ov.onclick = ev => { if (ev.target === ov) ov.remove(); };
+  ov.innerHTML = `
+    <div style="background:var(--surf);border-radius:var(--r);box-shadow:var(--shd);width:100%;max-width:380px;padding:18px;">
+      <div style="font-weight:800;font-size:15px;margin-bottom:3px;">Provincia e profilo</div>
+      <div style="font-size:11.5px;color:var(--txt3);margin-bottom:14px;">${esc(((c.nome||'')+' '+(c.cognome||'')).trim())}</div>
+      <div class="fld"><label>Provincia (sigla)</label><input id="pp-prov" maxlength="4" value="${esc(c.provincia||'')}" placeholder="PA" style="text-transform:uppercase;"></div>
+      <div class="fld" style="margin-top:10px;"><label>Profilo previsto</label>
+        <select id="pp-prof">
+          <option value="">— non ancora deciso —</option>
+          ${Object.keys(PROFILI).map(k=>`<option value="${k}" ${c.profilo===k?'selected':''}>${esc(PROFILI[k].label)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="font-size:10.5px;color:var(--txt3);margin-top:8px;line-height:1.5;">Sul lead è una previsione: diventa un permesso vero solo quando la persona ha un accesso, e si assegna da Utenti › Permessi.</div>
+      <div id="pp-msg" style="font-size:12px;min-height:16px;margin-top:6px;"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button onclick="salvaProvinciaProfiloLead('${id}')" style="flex:1;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-weight:800;cursor:pointer;font-family:inherit;">Salva</button>
+        <button onclick="document.getElementById('pplead-ov').remove()" style="padding:11px 14px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:9px;cursor:pointer;color:var(--txt);font-family:inherit;">Chiudi</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+}
+
+async function salvaProvinciaProfiloLead(id) {
+  const msg = document.getElementById('pp-msg');
+  const prov = (document.getElementById('pp-prov')?.value || '').trim().toUpperCase() || null;
+  const prof = document.getElementById('pp-prof')?.value || null;
+  try {
+    const { error } = await db.from('quote_collaboratori').update({ provincia: prov, profilo: prof }).eq('id', id);
+    if (error) throw error;
+    const c = (COLLAB_LEAD || []).find(x => x.id === id);
+    if (c) { c.provincia = prov; c.profilo = prof; }
+    document.getElementById('pplead-ov')?.remove();
+    renderTeam();
+  } catch (e) {
+    if (msg) { msg.style.color = 'var(--red)'; msg.textContent = 'Non salvato: ' + (e.message || e); }
+  }
+}
+
 async function apriDiarioLead(id) {
   const c = (COLLAB_LEAD || []).find(x => x.id === id);
   const nome = c ? ((c.nome || '') + ' ' + (c.cognome || '')).trim() : 'Collaboratore';

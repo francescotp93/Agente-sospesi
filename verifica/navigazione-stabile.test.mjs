@@ -72,6 +72,7 @@ function apparecchia(schedaMemorizzata) {
       // tutto cio' che goTab chiama e qui non interessa
       selContabTab: (t) => visitate.push('contab:' + t),
       buildStorico(){}, loadTeamDB: async()=>{}, renderTeam(){}, renderTratt(){},
+      loadCollabLeadDB: async()=>{},
       selOperativaTab: (t) => visitate.push('operativa:' + t),
       loadTrattDB: async()=>{}, renderLead(){}, loadLeadDB: async()=>{},
       loadWD_DB: async()=>{}, selWDTab(){}, renderWDCal(){}, subscribeWD(){},
@@ -80,6 +81,11 @@ function apparecchia(schedaMemorizzata) {
       renderUtenti(){}, renderKpiCtrl(){}, renderGestioneObiettivi(){}, renderAuditLog(){},
       renderHubList(){}, renderPannelloPersonale(){}, renderObiettiviOperatore(){},
       quotoUrl: async()=>'', applicaPermessi(){}, PERF_CUR: 'gare',
+      /* Il profilo «segnalatore» (§2.5) chiude goTab a chi non e' iscritto RUI.
+         Qui si prova la NAVIGAZIONE, non i profili: si finge un utente senza
+         profilo, che e' il caso di tutti quelli di oggi. Il vincolo del
+         segnalatore ha la sua prova, in profili-collaboratore.test.mjs. */
+      eSegnalatore: () => false, apriSegnalazione(){}, alert(){},
       requestAnimationFrame: (f)=>f(), setTimeout: ()=>0
     },
     visitate

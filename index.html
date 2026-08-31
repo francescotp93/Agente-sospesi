@@ -9080,12 +9080,29 @@ async function fontiVerifica(id) {
 }
 
 async function mailToken(){ try { const { data } = await db.auth.getSession(); return (data && data.session && data.session.access_token) || null; } catch(e){ return null; } }
-async function mailFetch(path, opts){
+async function mailFetch(path, opts, _tent){
   opts = opts || {};
   const tok = await mailToken();
-  const res = await fetch(MAIL_API + path, Object.assign({}, opts, {
-    headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (tok || '') }, opts.headers || {})
-  }));
+  let res;
+  try {
+    res = await fetch(MAIL_API + path, Object.assign({}, opts, {
+      headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (tok || '') }, opts.headers || {})
+    }));
+  } catch (rete) {
+    // "Failed to fetch": la richiesta non ha nemmeno ricevuto una risposta. Il
+    // backend sta su Render (piano free) e si addormenta dopo ~15 min di
+    // inattivita': la PRIMA chiamata lo sveglia, ma il risveglio puo' prendere
+    // 30-60s. Invece di arrenderci al primo colpo (era questo il "Failed to
+    // fetch" che si vedeva in Posta), riproviamo con attese crescenti: un
+    // semplice risveglio del server non deve piu' diventare un errore.
+    const n = _tent || 0;
+    const attese = [2000, 4000, 6000, 8000, 10000, 12000]; // ~42s complessivi
+    if (n < attese.length) {
+      await new Promise(r => setTimeout(r, attese[n]));
+      return mailFetch(path, opts, n + 1);
+    }
+    throw new Error('Il server della posta non risponde: potrebbe essersi appena riavviato. Riprova tra un minuto.');
+  }
   let body = null; try { body = await res.json(); } catch(_) {}
   if (!res.ok) throw new Error((body && body.error) || ('Errore ' + res.status));
   return body;

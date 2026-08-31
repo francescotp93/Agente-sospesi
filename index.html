@@ -143,6 +143,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 /* ── CARDS ── */
 .card{background:var(--surf);border-radius:var(--r);box-shadow:var(--shd);margin:0 12px;overflow:hidden;border:1px solid var(--bord);transition:box-shadow .2s;}
 .slbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt3);padding:16px 16px 6px;}
+/* Barra filtri Collaboratori (§2.3): stesso aspetto delle pillole già in uso
+   sopra, così la sezione non sembra scritta da un'altra mano. */
+.tmf{padding:7px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;max-width:100%;}
+.tmf:focus{outline:1px solid var(--acc);}
 
 /* ── METRICS ── */
 .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;}
@@ -1280,6 +1284,12 @@ input[type=file]{display:none;}
     <i class="ti ti-bolt"></i>
     <span>Nuovo preventivo</span>
   </button>
+  <!-- L'unica voce che vede un segnalatore non iscritto RUI (§2.5). Nasce
+       nascosta e la accende applicaPermessi() solo per quel profilo. -->
+  <button class="nbtn" id="nb-segnala" onclick="apriSegnalazione()" style="display:none;">
+    <i class="ti ti-user-plus"></i>
+    <span>Segnala un contatto</span>
+  </button>
   <button class="nbtn" id="nb-posta" onclick="openPosta()" style="display:none;">
     <i class="ti ti-mail"></i>
     <span>Posta</span>
@@ -1656,7 +1666,33 @@ input[type=file]{display:none;}
       </select>
       <button onclick="openCollabModal(null)" style="width:38px;height:38px;border-radius:50%;background:var(--acc);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-plus" style="font-size:18px;"></i></button>
     </div>
-    <div class="slbl">Team · <span id="tm-count">0</span> collaboratori</div>
+    <!-- §2.3 — Barra filtri. Le voci si riempiono da sole con quello che c'è
+         davvero in elenco (province, compagnie, profili): un menu con dentro
+         venti province di cui una sola usata fa perdere tempo a ogni ricerca.
+         Il filtro sul denaro è DOPPIO e non per capriccio: sugli attivi c'è il
+         fatturato vero, sui lead solo un portafoglio dichiarato dall'interessato
+         e non verificato. Mescolarli in una colonna sola vuol dire ritrovarseli
+         sommati in un report, ed è esattamente ciò che §2.2 vieta. -->
+    <div id="tm-filtri" style="padding:8px 12px 0;display:flex;gap:7px;flex-wrap:wrap;align-items:center;">
+      <select id="tm-stato" onchange="renderTeam()" class="tmf">
+        <option value="">Attivi e lead</option>
+        <option value="attivo">Solo attivi</option>
+        <option value="lead">Solo lead (in trattativa)</option>
+        <option value="scartato">Non proseguiti</option>
+      </select>
+      <select id="tm-prov"      onchange="renderTeam()" class="tmf"><option value="">Ogni provincia</option></select>
+      <select id="tm-profilo"   onchange="renderTeam()" class="tmf"><option value="">Ogni profilo</option></select>
+      <select id="tm-compagnia" onchange="renderTeam()" class="tmf"><option value="">Ogni compagnia</option></select>
+      <select id="tm-ramo"      onchange="renderTeam()" class="tmf"><option value="">Ogni fascia di prodotto</option></select>
+      <select id="tm-soldi"     onchange="renderTeam()" class="tmf">
+        <option value="">Qualunque importo</option>
+        <option value="0-50000">fino a 50.000 €</option>
+        <option value="50000-150000">50.000 – 150.000 €</option>
+        <option value="150000-">oltre 150.000 €</option>
+      </select>
+      <button onclick="azzeraFiltriCollab()" class="tmf" style="cursor:pointer;" title="Togli tutti i filtri"><i class="ti ti-filter-off"></i></button>
+    </div>
+    <div class="slbl">Team · <span id="tm-count">0 collaboratori</span></div>
     <div id="tm-empty" class="empty"><i class="ti ti-users"></i><p>Nessun collaboratore.<br>Premi + per aggiungerne uno.</p></div>
     <div id="tm-list"></div>
     <div style="height:80px;"></div>
@@ -3251,9 +3287,19 @@ async function onLogin(user) {
         onLogout(); return;
       }
       if (PROFILO.accesso_iam === false) {
-        if (PROFILO.accesso_quoto === true) { apriQuoto(); return; }
-        alert('Il tuo account non ha accesso a IAM. Contatta un amministratore.');
-        onLogout(); return;
+        /* Il segnalatore non viene mai spedito al preventivatore, nemmeno se la
+           sua scheda dice accesso_quoto = true (§2.5): resta qui, dove l'unica
+           cosa che trova è il modale di segnalazione. Senza questa riga un
+           segnalatore con la scheda impostata male finirebbe dritto dentro il
+           quotatore, che è esattamente ciò che la norma vieta. */
+        if (PROFILO.accesso_quoto === true && !eSegnalatore(PROFILO)) { apriQuoto(); return; }
+        if (!eSegnalatore(PROFILO)) {
+          alert('Il tuo account non ha accesso a IAM. Contatta un amministratore.');
+          onLogout(); return;
+        }
+        // Segnalatore: resta in IAM. goTab() gli chiude tutto tranne la sua
+        // scheda, quindi «entrare» qui non gli apre niente che non debba vedere.
+        PROFILO.accesso_iam = true;
       }
     }
     if (PROFILO) {
@@ -3745,7 +3791,20 @@ async function quotoUrl() {
   } catch (e) { console.warn('Ponte QUOTO: sessione non disponibile', e); }
   return url;
 }
+/* Chi può arrivare al preventivatore. Il segnalatore è escluso PRIMA di ogni
+   altra considerazione (§2.5): non è una questione di permessi concessi male,
+   è che non è iscritto al RUI. Se un domani qualcuno gli mettesse
+   accesso_quoto = true sull'archivio per sbaglio, questa riga regge lo stesso. */
+function puoQuotare() {
+  if (eSegnalatore(PROFILO)) return false;
+  return (PROFILO && PROFILO.accesso_quoto === true) || isSuperAdmin();
+}
+
 function apriQuoto() {
+  if (!puoQuotare()) {
+    alert('Il preventivatore è riservato a un intermediario iscritto al RUI.');
+    return;
+  }
   // La destinazione (con email e sessione) viene costruita da quotoUrl() al redirect.
   // Evita che al rientro da QUOTO l'app riapra il tab "quoto" (loop): salva la dashboard
   setUltimoTab('dashboard');
@@ -3839,6 +3898,24 @@ function goTab(t) {
      bottone nascosto. Chi forza goTab('utenti') dalla console senza diritto non apre
      niente di utile — torna al profilo. Fail-closed: se il profilo non è ancora
      caricato, si blocca. (È il vero controllo dietro l'area personale unificata.) */
+  /* La segnalazione è un modale, non una pagina: si può chiedere da qualunque
+     punto e non cambia la scheda sotto. */
+  if (t === 'segnala') { apriSegnalazione(); return; }
+
+  /* §2.5 — Vincolo normativo, non ordine di schermate. Il segnalatore non è
+     iscritto al RUI e non fa intermediazione: l'unica cosa che può aprire è il
+     modale di segnalazione, più la propria scheda. I bottoni gli sono già
+     nascosti da applicaPermessi(), ma nascondere un bottone non è un divieto:
+     questo è il rifiuto vero, quello che vale anche per chi scrive
+     goTab('quoto') nella console del browser. Il documento lo chiede esplicito
+     — «un segnalatore che apre un preventivo deve ricevere un rifiuto, non una
+     schermata» — ed è qui che il rifiuto succede. */
+  if (eSegnalatore(PROFILO) && t !== 'profilo') {
+    alert('Puoi segnalare un contatto, non consultare preventivi.\n\nPremi, garanzie, condizioni e preventivi sono riservati a un intermediario iscritto al RUI, che prenderà in carico la trattativa.');
+    goTab('profilo');
+    return;
+  }
+
   const RISERVATE = {
     utenti:  () => !!PERMESSI[PROFILO?.ruolo]?.utenti,
     azienda: () => !!PERMESSI[PROFILO?.ruolo]?.utenti,
@@ -3863,7 +3940,10 @@ function goTab(t) {
   if (pp) pp.classList.add('act');
   setUltimoTab(t);
   if (t === 'storico')     buildStorico();
-  if (t === 'operativa')   { renderTeam(); loadTeamDB().then(() => renderTeam()); }
+  /* I due elenchi arrivano da tabelle diverse e ognuno ridisegna appena c'è:
+     se il registro dei lead è lento, gli attivi compaiono lo stesso invece di
+     aspettarlo — e viceversa. */
+  if (t === 'operativa')   { renderTeam(); loadTeamDB().then(() => renderTeam()); loadCollabLeadDB().then(() => renderTeam()); }
   if (t === 'pipeline') {
     renderTratt();
     loadTrattDB().then(() => renderTratt());
@@ -5490,19 +5570,332 @@ function renderFattureCardHTML(c) {
   }).join('');
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   COLLABORATORI LEAD (§2.1-2.3 delle specifiche del 31/08/2026)
+
+   PERCHE' I LEAD NON STANNO IN iam_team.
+   Il registro delle persone esisteva gia' e sta in quote_collaboratori: stato
+   candidato/attivo/scartato, diario delle note con autore e data, curriculum,
+   fotografia, portafoglio dichiarato, compagnie con cui dice di lavorare. E'
+   in uso e funziona. Rifarlo qui dentro iam_team avrebbe creato una seconda
+   scheda della stessa persona da tenere allineata a mano — cioe' il terzo
+   sistema che le specifiche vietano al §2.4.
+   Quindi: la PERSONA sta li', l'ECONOMIA del collaboratore attivo (provvigioni,
+   fatture, documenti, gare) resta qui in iam_team, e le due si legano con
+   iam_team.collab_id. Questa sezione le mostra insieme, che e' quello che
+   serviva davvero: «due stati nella stessa sezione».
+
+   IL PROSPECT NON ENTRA NEL FLUSSO DI FIRMA. Qui il lead si legge e si annota;
+   promuoverlo a collaboratore vero (mandato, fascicolo, OTP) resta un gesto
+   solo, quello che gia' esiste, e non ne facciamo un secondo. */
+let COLLAB_LEAD = [];
+
+async function loadCollabLeadDB() {
+  if (!db) { COLLAB_LEAD = []; return; }
+  try {
+    const { data, error } = await db.from('quote_collaboratori')
+      .select('id,nome,cognome,email,telefono,citta,provincia,profilo,stato,portafoglio_stimato,lavora_con,cv_path,foto_path,contatto_il,iam_id')
+      .order('cognome');
+    if (error) throw error;
+    COLLAB_LEAD = data || [];
+  } catch (e) {
+    /* Se il registro non risponde la sezione non deve sparire: restano gli
+       attivi, che stanno in un'altra tabella e non c'entrano con questo guasto. */
+    console.warn('loadCollabLeadDB:', e.message || e);
+    COLLAB_LEAD = [];
+  }
+}
+
+const RAMI_LABEL = { auto:'Auto', vita:'Vita', re:'Rami elementari', cau:'Cauzioni', inf:'Infortuni' };
+function numeroOrNull(v){ const n = parseFloat(v); return Number.isFinite(n) && n !== 0 ? n : null; }
+
+/* Un attivo di iam_team e la sua scheda anagrafica sono la stessa persona:
+   prima si prova con il collegamento vero (collab_id), poi — per le schede
+   create prima che il collegamento esistesse — con l'email. E' lo stesso
+   ripiego che usa gia' il ponte delle firme. */
+function schedaAnagrafica(attivo) {
+  if (!COLLAB_LEAD.length) return null;
+  if (attivo.collab_id) {
+    const x = COLLAB_LEAD.find(c => c.id === attivo.collab_id);
+    if (x) return x;
+  }
+  const mail = (attivo.email || '').trim().toLowerCase();
+  return mail ? (COLLAB_LEAD.find(c => (c.email || '').trim().toLowerCase() === mail) || null) : null;
+}
+
+/* Attivi e lead ridotti alla stessa forma, cosi' filtri e conteggi non devono
+   sapere da quale tabella arriva ogni riga. `fatturato` e `dichiarato` restano
+   DUE campi distinti e non si sommano mai: il primo e' un numero
+   dell'agenzia, il secondo e' quello che la persona ha raccontato di sé. */
+function collabUnificati() {
+  const attivi = (TEAM || []).map(c => {
+    const an = schedaAnagrafica(c);
+    return {
+      tipo: 'attivo', id: c.id, raw: c, anagrafica: an,
+      nome: c.nome || '', cogn: c.cogn || '',
+      email: c.email || (an && an.email) || '', tel: c.tel || (an && an.telefono) || '',
+      citta: (an && an.citta) || '', prov: (an && an.provincia) || '',
+      profilo: (an && an.profilo) || '',
+      compagnie: (c.compagnie || []).map(k => etichettaCompagnia(k)),
+      rami: Object.keys(c.rami || {}).filter(k => c.rami[k]),
+      fatturato: numeroOrNull(c.port_attuale) || numeroOrNull(c.port),
+      dichiarato: null,
+    };
+  });
+  const lead = (COLLAB_LEAD || [])
+    .filter(c => (c.stato || 'attivo') !== 'attivo')   // gli attivi li porta iam_team
+    .map(c => ({
+      tipo: (c.stato === 'scartato') ? 'scartato' : 'lead', id: c.id, raw: c, anagrafica: c,
+      nome: c.nome || '', cogn: c.cognome || '',
+      email: c.email || '', tel: c.telefono || '',
+      citta: c.citta || '', prov: c.provincia || '',
+      profilo: c.profilo || '',
+      compagnie: String(c.lavora_con || '').split(/[,;]/).map(s => s.trim()).filter(Boolean),
+      rami: [],
+      fatturato: null,
+      dichiarato: numeroOrNull(c.portafoglio_stimato),
+    }));
+  return attivi.concat(lead);
+}
+
+/* I menu si riempiono con quello che c'e' davvero in elenco. Un menu che
+   propone una provincia dove non lavora nessuno fa perdere tempo a ogni
+   ricerca, e non si accorge da solo quando quella provincia arriva. */
+function riempiFiltriCollab(tutti) {
+  const riempi = (id, valori, etichetta) => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const scelto = sel.value;
+    const prima = sel.options[0] ? sel.options[0].outerHTML : '';
+    const unici = [...new Set(valori.filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b), 'it'));
+    sel.innerHTML = prima + unici.map(v => `<option value="${esc(v)}">${esc(etichetta ? etichetta(v) : v)}</option>`).join('');
+    if (unici.includes(scelto)) sel.value = scelto;   // il filtro attivo non salta al ridisegno
+  };
+  riempi('tm-prov',      tutti.map(c => c.prov));
+  riempi('tm-profilo',   tutti.map(c => c.profilo), v => (PROFILI[v] || {}).label || v);
+  riempi('tm-compagnia', tutti.flatMap(c => c.compagnie));
+  riempi('tm-ramo',      tutti.flatMap(c => c.rami), v => RAMI_LABEL[v] || v);
+}
+
+function azzeraFiltriCollab() {
+  ['tm-stato','tm-prov','tm-profilo','tm-compagnia','tm-ramo','tm-soldi','tm-hub-filter'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const s = document.getElementById('tm-search'); if (s) s.value = '';
+  renderTeam();
+}
+
+/* I filtri DEGRADANO invece di rompersi: una riga a cui manca il dato su cui
+   si sta filtrando viene esclusa, non mostrata come zero. Un lead senza
+   fatturato non e' un collaboratore che ha fatturato zero — e' una persona di
+   cui quel numero non esiste, e sono due cose diverse. */
+function filtraCollab(tutti) {
+  const v = id => (document.getElementById(id)?.value || '');
+  const q = (document.getElementById('tm-search')?.value || '').toLowerCase().trim();
+  const stato = v('tm-stato'), prov = v('tm-prov'), prof = v('tm-profilo');
+  const comp = v('tm-compagnia'), ramo = v('tm-ramo'), soldi = v('tm-soldi');
+  const hub = document.getElementById('tm-hub-filter')?.value || '';
+
+  return tutti.filter(c => {
+    // «Solo attivi» / «Solo lead»: i non proseguiti restano fuori se non li si chiede.
+    if (stato) { if (c.tipo !== stato) return false; }
+    else if (c.tipo === 'scartato') return false;
+
+    if (q) {
+      const dove = [c.nome, c.cogn, c.email, c.citta, c.prov].join(' ').toLowerCase()
+                 + ' ' + c.rami.join(' ').toLowerCase() + ' ' + c.compagnie.join(' ').toLowerCase();
+      if (!dove.includes(q)) return false;
+    }
+    if (hub  && !(c.tipo === 'attivo' && String(c.raw.hub_id) === String(hub))) return false;
+    if (prov && c.prov !== prov) return false;
+    if (prof && c.profilo !== prof) return false;
+    if (comp && !c.compagnie.includes(comp)) return false;
+    if (ramo && !c.rami.includes(ramo)) return false;
+    if (soldi) {
+      // Sugli attivi vale il fatturato, sui lead il portafoglio dichiarato:
+      // sono due numeri diversi, ma la domanda («quanto vale?») e' la stessa.
+      const n = (c.tipo === 'attivo') ? c.fatturato : c.dichiarato;
+      if (n == null) return false;                       // dato assente: escluso, non zero
+      const [da, a] = soldi.split('-');
+      if (da && n <  parseFloat(da)) return false;
+      if (a  && n >= parseFloat(a))  return false;
+    }
+    return true;
+  });
+}
+
+/* La scheda del lead e' LEGGERA per scelta: chi e', dove sta, come si raggiunge,
+   cosa dice di avere in mano. Niente provvigioni, niente fatture, niente
+   documenti — quella roba nasce alla firma e prima non esiste. */
+function schedaLead(c) {
+  const a = c.anagrafica || {};
+  const ini = ((c.nome || '?')[0] + (c.cogn || '?')[0]).toUpperCase();
+  const scartato = c.tipo === 'scartato';
+  const dove = [c.citta, c.prov ? '(' + c.prov + ')' : ''].filter(Boolean).join(' ');
+  const prof = c.profilo ? ((PROFILI[c.profilo] || {}).label || c.profilo) : '';
+  const riga = (et, val) => val
+    ? `<div><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">${et}</div><div style="font-weight:500;">${esc(val)}</div></div>` : '';
+
+  return `<div style="background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;${scartato ? 'opacity:.6;' : ''}">
+    <div style="background:linear-gradient(135deg,#243447 0%,#2f4358 100%);padding:14px 16px;display:flex;align-items:center;gap:12px;">
+      <!-- La fotografia arriva dopo, con un collegamento firmato: le iniziali
+           tengono il posto invece di lasciare un buco che salta quando la foto
+           arriva. Se la foto non c'è (o il collegamento non si ottiene) restano
+           le iniziali, che è comunque meglio di un riquadro vuoto. -->
+      <div id="lead-av-${c.id}" style="width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;border:2px solid rgba(255,255,255,.2);overflow:hidden;">${ini}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:15px;font-weight:700;color:#fff;">${esc((c.nome + ' ' + c.cogn).trim() || 'Senza nome')}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;">${scartato ? 'Non proseguito' : 'In trattativa'}${dove ? ' · ' + esc(dove) : ''}${prof ? ' · ' + esc(prof) : ''}</div>
+      </div>
+      <span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:10px;background:${scartato ? 'rgba(255,255,255,.14)' : 'rgba(255,196,80,.22)'};color:${scartato ? 'rgba(255,255,255,.7)' : '#ffc450'};border:.5px solid rgba(255,255,255,.18);">LEAD</span>
+    </div>
+    <div style="padding:12px 14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;">
+        ${riga('Email', c.email)}${riga('Telefono', c.tel)}
+        ${riga('Primo contatto', a.contatto_il)}
+      </div>
+      ${c.compagnie.length ? `<div style="margin-top:10px;"><div style="color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;">Dice di lavorare con</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${c.compagnie.map(k => `<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:var(--surf2);border:.5px solid var(--bord2);">${esc(k)}</span>`).join('')}</div></div>` : ''}
+      ${c.dichiarato != null ? `
+      <!-- §2.2 — Il portafoglio dichiarato NON va nella colonna del fatturato
+           reale, e nemmeno con lo stesso aspetto: è un numero che ha detto la
+           persona, non uno che ha contato l'agenzia. Qui sta in un riquadro suo,
+           con scritto sopra da dove viene. -->
+      <div style="margin-top:10px;background:var(--surf2);border:.5px dashed var(--bord2);border-radius:8px;padding:9px 11px;">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--amb,#c98a17);font-weight:700;">Portafoglio dichiarato · non verificato</div>
+        <div style="font-size:15px;font-weight:700;margin-top:2px;">€ ${fmt(c.dichiarato)}</div>
+        <div style="font-size:10.5px;color:var(--txt3);margin-top:2px;">Riferito dall'interessato. Non è fatturato: non sommarlo a quello dei collaboratori attivi.</div>
+      </div>` : ''}
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;">
+        <button onclick="apriDiarioLead('${c.id}')" style="font-size:11.5px;padding:6px 11px;background:rgba(var(--acc-rgb),.12);color:var(--acc);border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;"><i class="ti ti-notebook"></i> Diario trattativa</button>
+        ${a.cv_path ? `<button onclick="apriFileCollab('${esc(a.cv_path)}')" style="font-size:11.5px;padding:6px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-file-cv"></i> Curriculum</button>` : ''}
+        <button onclick="oggiApri('utenti')" title="La scheda completa (fotografia, conferma a collaboratore) sta nel registro anagrafico: si apre qui dentro, nel riquadro, senza uscire da IAM" style="font-size:11.5px;padding:6px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;color:var(--txt);font-family:inherit;"><i class="ti ti-external-link"></i> Scheda completa</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* Curriculum e fotografia stanno nel secchio 'candidati', lo stesso in cui li
+   carica il registro anagrafico: il collegamento è firmato e scade, così un
+   indirizzo copiato per sbaglio non resta aperto a chiunque. */
+const CANDIDATI_BUCKET = 'candidati';
+async function linkCandidato(path, secondi) {
+  if (!path || !db) return null;
+  try {
+    const { data, error } = await db.storage.from(CANDIDATI_BUCKET).createSignedUrl(path, secondi || 300);
+    if (error) throw error;
+    return data.signedUrl;
+  } catch (e) { console.warn('linkCandidato:', e.message || e); return null; }
+}
+async function apriFileCollab(path) {
+  const url = await linkCandidato(path, 300);
+  if (!url) { alert('Il file non è disponibile.'); return; }
+  window.open(url, '_blank');
+}
+async function caricaFotoLead(righe) {
+  for (const c of righe) {
+    const path = c.anagrafica && c.anagrafica.foto_path;
+    if (!path) continue;
+    const el = document.getElementById('lead-av-' + c.id);
+    if (!el) continue;
+    const url = await linkCandidato(path, 600);
+    if (url && document.getElementById('lead-av-' + c.id)) {
+      el.innerHTML = '<img src="' + url + '" alt="" style="width:100%;height:100%;object-fit:cover;">';
+    }
+  }
+}
+
+/* §2.2 — Il diario della trattativa: non un campo unico che si riscrive, ma
+   una nota per volta con data e autore. La differenza è che così si vede la
+   CRONOLOGIA — quando è stato sentito, chi l'ha sentito, cosa aveva detto la
+   volta prima — che è l'unica cosa che serve davvero quando si riprende in mano
+   una trattativa ferma da tre settimane. */
+async function apriDiarioLead(id) {
+  const c = (COLLAB_LEAD || []).find(x => x.id === id);
+  const nome = c ? ((c.nome || '') + ' ' + (c.cognome || '')).trim() : 'Collaboratore';
+  document.getElementById('diario-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'diario-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;font-family:inherit;';
+  ov.onclick = ev => { if (ev.target === ov) ov.remove(); };
+  ov.innerHTML = `
+    <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:620px;max-height:85vh;display:flex;flex-direction:column;">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--bord2);display:flex;align-items:center;gap:10px;">
+        <i class="ti ti-notebook" style="font-size:20px;color:var(--acc);"></i>
+        <div style="flex:1;"><div style="font-weight:800;font-size:15px;">Diario trattativa</div>
+        <div style="font-size:11.5px;color:var(--txt3);">${esc(nome)}</div></div>
+        <button onclick="document.getElementById('diario-ov').remove()" style="padding:6px 9px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
+      </div>
+      <div id="diario-note" style="flex:1;overflow:auto;padding:14px 18px;">Carico…</div>
+      <div style="padding:12px 18px 18px;border-top:1px solid var(--bord2);display:flex;gap:8px;">
+        <input id="diario-testo" placeholder="Cosa è successo oggi…" style="flex:1;padding:10px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:13px;color:var(--txt);font-family:inherit;" onkeydown="if(event.key==='Enter')aggiungiNotaLead('${id}')">
+        <button onclick="aggiungiNotaLead('${id}')" style="padding:10px 16px;background:var(--acc);color:#fff;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-family:inherit;">Aggiungi</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  await disegnaNoteLead(id);
+}
+
+async function disegnaNoteLead(id) {
+  const box = document.getElementById('diario-note'); if (!box) return;
+  try {
+    const { data, error } = await db.from('quote_collaboratori_note')
+      .select('id,testo,autore_nome,creato_il')
+      .eq('collaboratore_id', id).order('creato_il', { ascending: false });
+    if (error) throw error;
+    if (!data || !data.length) {
+      box.innerHTML = '<div style="color:var(--txt3);text-align:center;padding:28px 0;">Nessuna nota. La prima la scrivi qui sotto.</div>';
+      return;
+    }
+    box.innerHTML = data.map(n => {
+      const q = n.creato_il ? new Date(n.creato_il).toLocaleString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+      return `<div style="border-left:2px solid var(--acc);padding:2px 0 2px 11px;margin-bottom:13px;">
+        <div style="font-size:10.5px;color:var(--txt3);">${esc(q)}${n.autore_nome ? ' · ' + esc(n.autore_nome) : ''}</div>
+        <div style="font-size:13px;margin-top:3px;white-space:pre-wrap;">${esc(n.testo)}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    box.innerHTML = '<div style="color:var(--red);padding:14px 0;">Non riesco a leggere il diario: ' + esc(e.message || e) + '</div>';
+  }
+}
+
+async function aggiungiNotaLead(id) {
+  const inp = document.getElementById('diario-testo');
+  const testo = (inp && inp.value || '').trim();
+  if (!testo) return;
+  try {
+    const { error } = await db.from('quote_collaboratori_note').insert({
+      collaboratore_id: id, testo,
+      autore_id: (ME && ME.id) || null,
+      // Il nome si scrive per esteso ADESSO: fra un anno l'utenza potrebbe non
+      // esserci più, e una nota firmata da un id sparito non dice niente.
+      autore_nome: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || (ME && ME.email) || null,
+    });
+    if (error) throw error;
+    if (inp) inp.value = '';
+    await disegnaNoteLead(id);
+  } catch (e) { alert('Nota non salvata: ' + (e.message || e)); }
+}
+
 function renderTeam() {
   loadTeam();
-  const q = (document.getElementById('tm-search')?.value||'').toLowerCase();
-  const hubFilter = document.getElementById('tm-hub-filter')?.value;
-  let lista = TEAM;
-  if (q) lista = TEAM.filter(c =>
-    (c.nome+' '+c.cogn).toLowerCase().includes(q) ||
-    Object.entries(c.rami||{}).some(([k,v])=>v&&k.toLowerCase().includes(q))
-  );
-  if (hubFilter) lista = lista.filter(c => String(c.hub_id) === String(hubFilter));
-  document.getElementById('tm-count').textContent = TEAM.length;
-  document.getElementById('tm-empty').style.display = lista.length?'none':'block';
-  document.getElementById('tm-list').innerHTML = lista.map(c => {
+  const tutti = collabUnificati();
+  riempiFiltriCollab(tutti);
+  const visibili = filtraCollab(tutti);
+  const nAttivi = tutti.filter(c => c.tipo === 'attivo').length;
+  const nLead   = tutti.filter(c => c.tipo === 'lead').length;
+
+  const cnt = document.getElementById('tm-count');
+  if (cnt) cnt.textContent = nLead ? (nAttivi + ' attivi · ' + nLead + ' in trattativa')
+                                  : (nAttivi + ' collaboratori');
+  const vuoto = document.getElementById('tm-empty');
+  if (vuoto) vuoto.style.display = visibili.length ? 'none' : 'block';
+
+  const lista = visibili.filter(c => c.tipo === 'attivo').map(c => c.raw);
+  const soloLead = visibili.filter(c => c.tipo !== 'attivo');
+  const schedeLead = soloLead.map(schedaLead).join('');
+  // Le fotografie si chiedono dopo che l'elenco è a schermo: il collegamento
+  // firmato è una chiamata di rete a testa, e l'elenco non deve aspettarla.
+  setTimeout(() => caricaFotoLead(soloLead), 0);
+  document.getElementById('tm-list').innerHTML = schedeLead + lista.map(c => {
     const ini  = ((c.nome||'?')[0]+(c.cogn||'?')[0]).toUpperCase();
     const rami = [];
     if(c.rami?.auto) rami.push('<span class="rc rc-auto">Auto</span>');
@@ -7083,6 +7476,181 @@ const PERMESSI_LABELS = {
   sospesi:'Sospesi', storico:'Storico', team:'Team', pipeline:'Pipeline', lead:'Lead', workdiary:'Diary',
   performance:'KPI / Performance', utenti:'Gestione utenti', modifica:'Può modificare'
 };
+
+// ─── PROFILI COLLABORATORE (§2.4 delle specifiche del 31/08/2026) ────────────
+// Un solo concetto di profilo, non tre sistemi. Da qui dipendono, in
+// configurazione e non in codice: le voci di menu visibili, i prodotti
+// quotabili, i permessi. Aggiungere un profilo domani è una voce in più in
+// questa tabella — nessuna migrazione, nessuna funzione nuova. Per lo stesso
+// motivo la colonna iam_utenti.profilo non ha un vincolo CHECK sui valori:
+// l'elenco valido è questo qui sotto.
+//
+// `vede` è una LISTA BIANCA, non una lista nera: elenca le sezioni che il
+// profilo può aprire, e tutto il resto è chiuso. La differenza conta il giorno
+// in cui si aggiunge una sezione nuova: con la lista bianca nasce chiusa per i
+// profili ristretti, invece di aprirsi da sola perché nessuno si è ricordato di
+// elencarla fra le esclusioni.
+//
+// `vede: null` (o profilo assente) = nessun taglio: valgono i permessi del
+// ruolo. È il caso di tutti gli utenti di oggi, che infatti non cambiano.
+const PROFILI = {
+  previdenza_vita: {
+    label: 'Previdenza e vita',
+    rui: true,
+    // Deve poter lavorare in autonomia dal primo giorno: le sue trattative, i
+    // suoi contatti, la sua agenda. Non la contabilità dell'agenzia.
+    vede: ['pipeline', 'lead', 'workdiary', 'team'],
+    // Il modulo «vita» del preventivatore è già quello che contiene TCM, fondo
+    // pensione e TFR: è esattamente il perimetro di questo profilo.
+    moduli: ['vita'],
+    prodotti: null,
+    soloSegnalazione: false,
+  },
+  dealer_iscritto: {
+    label: 'Dealer iscritto RUI',
+    rui: true,
+    vede: ['pipeline', 'lead'],
+    // I moduli li sceglie l'amministratore: «solo il prodotto specifico
+    // assegnato» cambia da dealer a dealer, quindi non può stare scritto qui.
+    moduli: null,
+    prodotti: null,
+    soloSegnalazione: false,
+  },
+  segnalatore: {
+    label: 'Segnalatore (non iscritto RUI)',
+    rui: false,
+    vede: [],          // niente. Proprio niente: vedi eSegnalatore() e §2.5.
+    moduli: [],        // nessun preventivatore: non è iscritto al RUI.
+    prodotti: [],
+    soloSegnalazione: true,
+  },
+};
+
+// Le chiavi di PERMESSI che sono SEZIONI, cioè una schermata da mostrare o
+// nascondere. Restano fuori `modifica` (è una facoltà, non una schermata) e
+// `utenti` (è l'amministrazione: nessun profilo ristretto la ottiene, mai).
+const SEZIONI_PROFILO = ['carica','dashboard','anomalie','sospesi','storico','conto','team','pipeline','lead','workdiary','performance'];
+
+function profiloDi(profilo){ return PROFILI[profilo && profilo.profilo] || null; }
+
+/* §2.5 — Il segnalatore (CAF, patronato, negozio di telefonia, utility) NON è
+   iscritto al RUI e NON fa intermediazione. Non è una preferenza di interfaccia
+   ed è per questo che sta scritto nel codice come regola di permesso e non
+   lasciato alla formazione: se l'interfaccia gli mostra un premio, una
+   garanzia, una condizione o un preventivo, siamo fuori dalla norma.
+   L'unica cosa che può aprire è il modale di segnalazione. */
+function eSegnalatore(profilo){ const p = profiloDi(profilo); return !!(p && p.soloSegnalazione); }
+
+/* I prodotti che questa persona può far quotare. IAM non quota — quota il
+   preventivatore — quindi qui il compito è dire QUALI, non calcolare niente.
+   L'ordine: prima quelli assegnati a mano sulla scheda, poi quelli del
+   profilo. Un segnalatore restituisce sempre lista vuota. */
+function prodottiDi(profilo){
+  if (eSegnalatore(profilo)) return [];
+  const suMisura = profilo && profilo.prodotti;
+  if (Array.isArray(suMisura) && suMisura.length) return suMisura.slice();
+  const p = profiloDi(profilo);
+  return (p && Array.isArray(p.prodotti)) ? p.prodotti.slice() : [];
+}
+
+/* Quali moduli del preventivatore vede questa persona. NON è un meccanismo
+   nuovo: iam_utenti.moduli esiste già ed è quello che il preventivatore legge
+   per decidere cosa mostrare (renderModules). Il profilo si limita a riempirlo,
+   così il permesso è applicato dove è sempre stato applicato — inventarne un
+   secondo avrebbe voluto dire due elenchi da tenere d'accordo.
+   null = decide l'amministratore, modulo per modulo, sulla scheda della persona. */
+function moduliDi(profilo){
+  if (eSegnalatore(profilo)) return [];
+  const p = profiloDi(profilo);
+  return (p && Array.isArray(p.moduli)) ? p.moduli.slice() : null;
+}
+
+/* Le voci d'interesse che il segnalatore può indicare. Sono CATEGORIE, non
+   prodotti: «Casa», non «RC fabbricato con massimale 500.000». La differenza è
+   il confine della norma — una categoria dice di cosa vorrebbe parlare la
+   persona, un prodotto con le sue condizioni sarebbe già intermediazione. */
+const SEGNALAZIONE_INTERESSI = ['Auto e moto','Casa e famiglia','Salute','Vita e previdenza','Impresa e professione','Altro / non so'];
+
+/* §2.5 — Il modale di segnalazione: l'unica schermata del segnalatore.
+   Nome, cognome, email, e nient'altro che serva. Niente premi, niente
+   garanzie, niente preventivi, niente condizioni: se comparisse anche solo un
+   importo, questa schermata diventerebbe intermediazione fatta da chi non è
+   iscritto al RUI. Il contatto entra come lead in anagrafica con l'origine
+   tracciata (chi l'ha segnalato), che è quello che serve poi per la
+   provvigione di segnalazione; da lì la trattativa la prende in carico un
+   iscritto RUI, come vendita a distanza. */
+function apriSegnalazione(){
+  document.getElementById('segnala-ov')?.remove();
+  const ov = document.createElement('div');
+  ov.id = 'segnala-ov';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;';
+  ov.innerHTML = `
+    <div style="background:var(--surf);border-radius:var(--r);box-shadow:var(--shd);width:100%;max-width:440px;overflow:hidden;">
+      <div style="padding:16px 18px;border-bottom:1px solid var(--bord2);display:flex;align-items:center;gap:10px;">
+        <i class="ti ti-user-plus" style="font-size:22px;color:var(--acc);"></i>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:16px;">Segnala un contatto</div>
+          <div style="font-size:11.5px;color:var(--txt3);margin-top:2px;">Lascia i recapiti: ti richiama un nostro intermediario iscritto.</div>
+        </div>
+        <button onclick="document.getElementById('segnala-ov').remove()" style="padding:6px 9px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:8px;cursor:pointer;color:var(--txt);"><i class="ti ti-x"></i></button>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:11px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="fld"><label>Nome *</label><input id="sg-nome" autocomplete="off"></div>
+          <div class="fld"><label>Cognome *</label><input id="sg-cogn" autocomplete="off"></div>
+        </div>
+        <div class="fld"><label>Email *</label><input id="sg-email" type="email" autocomplete="off"></div>
+        <div class="fld"><label>Telefono</label><input id="sg-tel" autocomplete="off"></div>
+        <div class="fld"><label>Di cosa vorrebbe parlare</label>
+          <select id="sg-int">${SEGNALAZIONE_INTERESSI.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('')}</select>
+        </div>
+        <div id="sg-msg" style="font-size:12px;min-height:16px;"></div>
+        <button id="sg-invia" onclick="inviaSegnalazione()" style="padding:12px;background:var(--acc);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;">Invia la segnalazione</button>
+        <div style="font-size:10.5px;color:var(--txt3);line-height:1.5;">
+          La segnalazione non è una proposta assicurativa e non impegna nessuno.
+          Prezzi, garanzie e condizioni li illustra un intermediario iscritto al RUI,
+          con l'informativa precontrattuale prevista.
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  setTimeout(() => document.getElementById('sg-nome')?.focus(), 60);
+}
+
+async function inviaSegnalazione(){
+  const msg = document.getElementById('sg-msg');
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  const nome = val('sg-nome'), cogn = val('sg-cogn'), email = val('sg-email');
+  const dire = (t, ok) => { if (msg) { msg.style.color = ok ? 'var(--grn)' : 'var(--red)'; msg.textContent = t; } };
+  if (!nome || !cogn || !email)         return dire('Servono nome, cognome ed email.', false);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return dire('L\'email non sembra scritta bene.', false);
+  if (!db)                              return dire('Servizio dati non disponibile.', false);
+  const btn = document.getElementById('sg-invia');
+  if (btn) { btn.disabled = true; btn.textContent = 'Invio…'; }
+  try {
+    /* L'origine è il punto di tutta la faccenda: senza sapere CHI ha segnalato
+       non si paga la provvigione di segnalazione. Sta in due campi perché
+       agente_id regge nel tempo anche se la persona cambia nome, e
+       agente_nome resta leggibile anche se un domani l'utenza sparisce. */
+    const { error } = await db.from('iam_lead').insert({
+      nome, cognome: cogn, email,
+      telefono:    val('sg-tel') || null,
+      prodotto:    val('sg-int') || null,
+      fonte:       'segnalazione',
+      stato:       'nuovo',
+      agente_id:   (ME && ME.id) || null,
+      agente_nome: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || (ME && ME.email) || null,
+      note:        'Segnalato da ' + ((ME && ME.email) || 'utente sconosciuto') + '. Da prendere in carico da un iscritto RUI.',
+    });
+    if (error) throw error;
+    dire('Segnalazione inviata. Un intermediario prenderà contatto.', true);
+    ['sg-nome','sg-cogn','sg-email','sg-tel'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  } catch (e) {
+    dire('Non è stato possibile inviare: ' + (e.message || e), false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Invia la segnalazione'; }
+  }
+}
 // ─── Abilitazioni KPI: dove vivono davvero ───────────────────────────────────
 // Le spunte "questo collaboratore vede la sezione CONSAP / RE / TCM / le gare"
 // stanno nell'archivio, dentro iam_utenti.permessi, sotto la voce "kpi".
@@ -7107,7 +7675,21 @@ function permessiEffettivi(profilo){
   const base = PERMESSI[canonRuolo(profilo?.ruolo)] || PERMESSI.collaboratore;
   const ov = { ...permessiJson(profilo) };
   delete ov.kpi; // "kpi" non e' una sezione: e' il gruppo di spunte della scheda KPI
-  return Object.assign({}, base, ov);
+  const eff = Object.assign({}, base, ov);
+
+  /* Il profilo STRINGE, non allarga (§2.4). Quello che il ruolo o la spunta
+     per-utente avevano concesso resta concesso solo se il profilo lo elenca;
+     un profilo non puo' regalare una sezione che il ruolo non dava. Messo in
+     questo ordine — ruolo, poi spunte, poi profilo — la restrizione e'
+     l'ultima parola, e nessuna spunta dimenticata su una vecchia scheda puo'
+     riaprire a un dealer la contabilita' dell'agenzia. */
+  const prof = profiloDi(profilo);
+  if (prof && Array.isArray(prof.vede)) {
+    SEZIONI_PROFILO.forEach(k => { eff[k] = !!eff[k] && prof.vede.includes(k); });
+    eff.utenti = false;                            // l'amministrazione non passa mai da un profilo
+    if (prof.soloSegnalazione) eff.modifica = false;
+  }
+  return eff;
 }
 
 async function caricaProfilo(userId) {
@@ -7164,7 +7746,10 @@ function applicaPermessi(ruolo) {
   const mktBtn = document.getElementById('nb-marketing');
   if (mktBtn) mktBtn.style.display = (isSuperAdmin() || PROFILO?.lab_abilitato) ? 'flex' : 'none';
   const btnQuoto = document.getElementById('nb-quoto');
-  if (btnQuoto) btnQuoto.style.display = (PROFILO?.accesso_quoto === true || isSuperAdmin()) ? 'flex' : 'none';
+  if (btnQuoto) btnQuoto.style.display = puoQuotare() ? 'flex' : 'none';
+  /* Il segnalatore ha un solo bottone, ed è questo (§2.5). */
+  const btnSegnala = document.getElementById('nb-segnala');
+  if (btnSegnala) btnSegnala.style.display = eSegnalatore(PROFILO) ? 'flex' : 'none';
   const btnPosta = document.getElementById('nb-posta');
   if (btnPosta) {
     const haPosta = (isSuperAdmin() || (PROFILO?.mail_caselle && String(PROFILO.mail_caselle).trim()));
@@ -7825,11 +8410,13 @@ async function salvaModalitaPagamento(userId){
 // ── Pannello permessi per singolo utente (override del ruolo, sezione per sezione) ──
 async function apriPermessiUtente(userId, nome){
   let u = (UTENTI_LISTA||[]).find(x=>x.id===userId);
-  if(!u){ try{ const {data}=await db.from('iam_utenti').select('ruolo,attivo,permessi').eq('id',userId).single(); u=data; }catch(e){} }
+  if(!u){ try{ const {data}=await db.from('iam_utenti').select('ruolo,attivo,permessi,profilo,prodotti').eq('id',userId).single(); u=data; }catch(e){} }
   const ruolo = canonRuolo(u?.ruolo); const attivo = (u?.attivo!==false);
   let ov = u?.permessi; if(ov && typeof ov==='string'){ try{ ov=JSON.parse(ov); }catch(e){ ov=null; } }
   const base = PERMESSI[ruolo] || PERMESSI.collaboratore;
   const eff = Object.assign({}, base, (ov&&typeof ov==='object')?ov:{});
+  const profAtt = (u && u.profilo) || '';
+  const prodAtt = Array.isArray(u && u.prodotti) ? u.prodotti.join(', ') : '';
   const id='pu-ov'; document.getElementById(id)?.remove();
   const rows = Object.keys(PERMESSI_LABELS).map(k=>{
     const def = !!base[k];
@@ -7840,6 +8427,21 @@ async function apriPermessiUtente(userId, nome){
       <div style="font-size:15px;font-weight:700;margin-bottom:4px;"><i class="ti ti-adjustments" style="color:var(--acc);"></i> Permessi — ${esc(nome)}</div>
       <div style="font-size:12px;color:var(--txt3);margin-bottom:12px;">Ruolo: <b>${esc((RUOLI[ruolo]||{}).label||ruolo)}</b>. Abilita/disabilita l'utente e ogni sezione di IAM. Le modifiche qui hanno priorità sul ruolo.</div>
       <label class="sw-row" style="cursor:pointer;border-bottom:1px solid var(--bord);padding-bottom:10px;margin-bottom:6px;"><span class="sw-lbl" style="font-weight:700;">Account abilitato (può accedere)</span><span class="sw"><input type="checkbox" id="pu-attivo" ${attivo?'checked':''}><span class="sl"></span></span></label>
+
+      <!-- §2.4 — Il profilo sta SOPRA le spunte, non accanto, perché è lui ad
+           avere l'ultima parola: stringe quello che ruolo e spunte concedono. -->
+      <div style="border-bottom:1px solid var(--bord);padding-bottom:12px;margin-bottom:10px;">
+        <div class="fld"><label>Profilo collaboratore</label>
+          <select id="pu-profilo" onchange="anteprimaProfilo()">
+            <option value="" ${!profAtt?'selected':''}>— nessuno (valgono i permessi del ruolo) —</option>
+            ${Object.keys(PROFILI).map(k=>`<option value="${k}" ${profAtt===k?'selected':''}>${esc(PROFILI[k].label)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fld" style="margin-top:8px;"><label>Prodotti assegnati <span style="font-weight:400;color:var(--txt3);">(separati da virgola — servono al dealer, che ne ha solo alcuni)</span></label>
+          <input id="pu-prodotti" value="${esc(prodAtt)}" placeholder="es. rc_moto, garanzia_estesa">
+        </div>
+        <div id="pu-prof-nota" style="font-size:11.5px;color:var(--txt3);margin-top:8px;line-height:1.5;"></div>
+      </div>
       ${rows}
       <div style="display:flex;gap:8px;margin-top:16px;">
         <button onclick="salvaPermessiUtente('${userId}')" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
@@ -7848,7 +8450,29 @@ async function apriPermessiUtente(userId, nome){
       </div>
     </div></div>`;
   document.body.insertAdjacentHTML('beforeend', html);
+  anteprimaProfilo();
 }
+
+/* Dice a voce quello che il profilo fa alle spunte qui sopra. Senza questa
+   nota il pannello mentirebbe: si vedrebbero dieci spunte accese e un dealer
+   che poi apre due sole sezioni, e sembrerebbe un bug invece della regola. */
+function anteprimaProfilo(){
+  const nota = document.getElementById('pu-prof-nota'); if (!nota) return;
+  const k = document.getElementById('pu-profilo')?.value || '';
+  const p = PROFILI[k];
+  if (!p) { nota.innerHTML = 'Nessun profilo: contano solo il ruolo e le spunte qui sotto.'; return; }
+  if (p.soloSegnalazione) {
+    nota.innerHTML = '<b style="color:var(--red);">Non iscritto al RUI.</b> Vede soltanto il modale «Segnala un contatto»: '
+      + 'nessuna sezione, nessun preventivo, nessun premio, nessuna condizione. Le spunte qui sotto non lo riaprono — '
+      + 'il divieto è normativo e vale anche se qualcuno le accende tutte.';
+    return;
+  }
+  const aperte = (p.vede || []).map(s => PERMESSI_LABELS[s] || s).join(', ') || 'nessuna';
+  const mod = Array.isArray(p.moduli) ? (p.moduli.join(', ') || 'nessuno') : 'quelli già assegnati a mano (il profilo non li tocca)';
+  nota.innerHTML = 'Delle spunte qui sotto restano attive solo: <b>' + esc(aperte) + '</b>. '
+    + 'Le altre si chiudono anche se accese. Moduli del preventivatore: <b>' + esc(mod) + '</b>.';
+}
+
 async function salvaPermessiUtente(userId){
   // Si riscrivono solo le spunte di sezione mostrate qui: quello che c'e' gia'
   // sotto altre voci (per esempio "kpi", le abilitazioni della scheda KPI) resta
@@ -7857,8 +8481,22 @@ async function salvaPermessiUtente(userId){
   const permessi = { ...permessiJson(u) };
   document.querySelectorAll('.pu-c').forEach(c=>{ permessi[c.dataset.k] = c.checked; });
   const attivo = document.getElementById('pu-attivo')?.checked !== false;
+  const profilo = document.getElementById('pu-profilo')?.value || null;
+  const prodotti = (document.getElementById('pu-prodotti')?.value || '')
+    .split(',').map(s => s.trim()).filter(Boolean);
+  /* Il segnalatore non tiene il preventivatore, punto: si spegne qui alla
+     fonte, così il divieto non dipende dal fatto che qualcuno si ricordi di
+     togliere la spunta «accesso QUOTO» in un altro pannello. */
+  const patch = { permessi, attivo, profilo, prodotti: prodotti.length ? prodotti : null };
+  /* I moduli del preventivatore si allineano al profilo qui, alla fonte: così
+     il permesso arriva dove il preventivatore lo legge davvero, e non resta una
+     spunta di IAM che dall'altra parte non produce niente. `null` vuol dire
+     «li sceglie l'amministratore»: in quel caso non si tocca quello che c'è. */
+  const mod = moduliDi({ profilo });
+  if (mod !== null) patch.moduli = mod;
+  if (profilo && PROFILI[profilo] && PROFILI[profilo].soloSegnalazione) patch.accesso_quoto = false;
   try{
-    const { error } = await db.from('iam_utenti').update({ permessi, attivo }).eq('id', userId);
+    const { error } = await db.from('iam_utenti').update(patch).eq('id', userId);
     if(error) throw error;
     document.getElementById('pu-ov')?.remove();
     await renderUtenti();

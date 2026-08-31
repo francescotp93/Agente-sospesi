@@ -42,6 +42,10 @@ function stub(extra = {}) {
         collaboratore: { performance: false, modifica: true },
       },
       canonRuolo: r => (r === 'operativo' ? 'collaboratore' : r || 'collaboratore'),
+      /* permessiEffettivi ora interseca anche il profilo collaboratore (§2.4).
+         Qui si provano le spunte KPI su un utente SENZA profilo — il caso di
+         tutti quelli di oggi — quindi il profilo non deve entrarci. */
+      profiloDi: () => null, moduliDi: () => null, PROFILI: {},
       renderGaraTabs() {},
       renderGara(g) { chiamate.renderGara.push(g); },
       loadCSFromDB() {}, loadREFromDB() {}, loadTCMFromDB() {},

@@ -31,6 +31,46 @@ La grafica di questa sezione funziona esattamente come voluto dall'utente. Non t
 - **Supabase:** tabella principale utenti `iam_utenti` con colonne: `ruolo` (top_master/master/operativo), `quoto` (bool), `accesso_quoto` (bool)
 - **Quoto:** app separata su `francescotp93/QUOTE`, stessa istanza Supabase, accede a `iam_utenti`
 
+## Collaboratori: due tabelle, una persona (31 agosto 2026)
+
+Non esiste una sola tabella dei collaboratori, e **non va creata**:
+
+- **`quote_collaboratori`** è il registro della **persona**: stato
+  `candidato` / `attivo` / `scartato`, diario delle note
+  (`quote_collaboratori_note`, con autore e data), curriculum, fotografia,
+  portafoglio dichiarato, compagnie, provincia, profilo previsto. La scheda
+  completa e la promozione a collaboratore vero si fanno da QUOTO, dove
+  esistono già.
+- **`iam_team`** è l'**economia** del collaboratore attivo: provvigioni,
+  fatture, documenti, gare, hub.
+- Si legano con **`iam_team.collab_id`** (e, sulle schede vecchie che non
+  l'hanno ancora, con l'email — stesso ripiego del ponte delle firme).
+
+IAM le mostra insieme in Strumenti › Operativa › Collaboratori. Rifare la
+scheda prospect dentro `iam_team` significa creare la seconda scheda della
+stessa persona da tenere allineata a mano: è il «terzo sistema» che le
+specifiche vietano.
+
+## Profili collaboratore — §2.4/2.5
+
+`PROFILI` in `index.html` è l'**unico** posto dove si definisce un profilo.
+Aggiungerne uno è una voce in quella tabella: niente migrazione (la colonna
+`iam_utenti.profilo` non ha un vincolo `CHECK` apposta), niente funzioni nuove.
+
+- `vede` è una **lista bianca** di sezioni. Il profilo **stringe e non allarga
+  mai**: interseca quello che ruolo e spunte per-utente avevano concesso.
+- I prodotti quotabili passano da **`iam_utenti.moduli`**, che esiste già ed è
+  quello che il preventivatore legge (`renderModules`). Il profilo lo riempie.
+  Non inventarne un secondo.
+
+**Vincolo normativo, non preferenza di interfaccia:** il profilo `segnalatore`
+non è iscritto al RUI e non fa intermediazione. Non deve vedere premi,
+garanzie, condizioni o preventivi per **nessuna** strada — bottone, `goTab`
+dalla console, istradamento del login, o `accesso_quoto` messo male
+sull'archivio. Le porte sono `eSegnalatore()`, `puoQuotare()` e il blocco in
+`goTab()`, ed è sorvegliato da `verifica/profili-collaboratore.test.mjs`.
+Prima di toccare quelle funzioni, si legge quella prova.
+
 ## Ruoli IAM
 - `top_master` = admin completo
 - `master` = manager

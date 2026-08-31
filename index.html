@@ -9089,14 +9089,16 @@ async function mailFetch(path, opts, _tent){
       headers: Object.assign({ 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (tok || '') }, opts.headers || {})
     }));
   } catch (rete) {
-    // "Failed to fetch": la richiesta non ha nemmeno ricevuto una risposta. Il
-    // backend sta su Render (piano free) e si addormenta dopo ~15 min di
-    // inattivita': la PRIMA chiamata lo sveglia, ma il risveglio puo' prendere
-    // 30-60s. Invece di arrenderci al primo colpo (era questo il "Failed to
-    // fetch" che si vedeva in Posta), riproviamo con attese crescenti: un
-    // semplice risveglio del server non deve piu' diventare un errore.
+    // "Failed to fetch": la richiesta non ha nemmeno ricevuto una risposta — in
+    // quel momento il server della posta (api.withusassicurazioni.it) non era
+    // raggiungibile. Puo' capitare per un intoppo di rete o per i pochi secondi
+    // in cui il servizio si riavvia (systemd Restart=always sul VPS). Invece di
+    // arrenderci al primo colpo, riproviamo con attese crescenti: un intoppo
+    // passeggero non deve diventare subito un errore. Se il server e' proprio
+    // giu', dopo i tentativi mostriamo un messaggio chiaro (non un "Failed to
+    // fetch" criptico).
     const n = _tent || 0;
-    const attese = [2000, 4000, 6000, 8000, 10000, 12000]; // ~42s complessivi
+    const attese = [2000, 4000, 6000, 8000]; // ~20s complessivi
     if (n < attese.length) {
       await new Promise(r => setTimeout(r, attese[n]));
       return mailFetch(path, opts, n + 1);

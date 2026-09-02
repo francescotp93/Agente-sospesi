@@ -68,5 +68,18 @@ e.prova('doLogin e\' rimasta asincrona', () => {
   return 'l\'accesso puo\' aspettare la risposta del server';
 });
 
+e.prova('l\'errore del 2FA sul recupero password si capisce', () => {
+  /* Supabase risponde «AAL2 session is required to update email or password
+     when MFA is enabled»: chi la legge conclude che il recupero e' rotto,
+     mentre la strada c'e' ed e' un'altra. Il 2 settembre 2026 e' costata a
+     Francesco un giro a vuoto mentre cercava di rientrare. */
+  const src = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
+  const f = src.slice(src.indexOf('async function doReset'), src.indexOf('async function doLogout'));
+  deve(/AAL2\|MFA/.test(f), 'la risposta in inglese di Supabase arriva cosi\' com\'e\' a chi legge');
+  deve(/verifica in due passaggi/i.test(f), 'non spiega in italiano che cos\'e\' il problema');
+  deve(/dal tuo profilo/.test(f), 'non dice come si fa allora a cambiarla');
+  return 'dice cos\'e\' successo e qual e\' la strada buona';
+});
+
 e.stampa();
 process.exit(e.ko === 0 ? 0 : 1);

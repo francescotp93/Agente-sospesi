@@ -3417,7 +3417,18 @@ async function doReset() {
       db.auth.getSession().then(({ data }) => { if (data.session) onLogin(data.session.user); });
     }, 1200);
   } catch(e) {
-    err.style.color = '#ffaaaa'; err.textContent = e.message || 'Errore.';
+    /* «AAL2 session is required to update email or password when MFA is
+       enabled» e' la risposta di Supabase quando sull'utenza c'e' la verifica
+       in due passaggi: per cambiare la password non basta il link ricevuto per
+       email, bisogna aver superato ANCHE il secondo fattore.
+       Detta cosi' non la capisce nessuno, e chi la legge conclude che il
+       recupero e' rotto — mentre la strada c'e' ed e' un'altra. Il 2 settembre
+       2026 e' costata a Francesco un giro a vuoto mentre cercava di rientrare. */
+    const m = String(e && e.message || '');
+    err.style.color = '#ffaaaa';
+    err.textContent = /AAL2|MFA/i.test(m)
+      ? 'Sul tuo accesso e\' attiva la verifica in due passaggi: da qui la password non si puo\' cambiare. Torna alla schermata di accesso, entra con la password che hai (e col codice dell\'app), poi cambiala dal tuo profilo.'
+      : (m || 'Errore.');
     btn.disabled = false; btn.textContent = 'Salva nuova password';
   }
 }

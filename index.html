@@ -8224,9 +8224,9 @@ function apriCambioPassword() {
   const html = `<div style="background:rgba(0,0,0,.6);position:fixed;inset:0;z-index:500;display:flex;align-items:flex-end;" id="cp-overlay" onclick="if(event.target.id==='cp-overlay')this.remove()">
     <div style="background:var(--surf);border-radius:var(--r) var(--r) 0 0;width:100%;padding:20px 16px 32px;">
       <div style="font-size:15px;font-weight:700;margin-bottom:14px;">Cambia password</div>
-      <div class="fld" style="margin-bottom:8px;"><label>Password attuale</label><input type="password" id="cp-old" placeholder="••••••••"></div>
-      <div class="fld" style="margin-bottom:8px;"><label>Nuova password</label><input type="password" id="cp-new" placeholder="min. 6 caratteri"></div>
-      <div class="fld" style="margin-bottom:10px;"><label>Conferma nuova password</label><input type="password" id="cp-new2" placeholder="ripeti"></div>
+      <div class="fld" style="margin-bottom:8px;"><label>Password attuale</label><div class="pw-box"><input type="password" id="cp-old" placeholder="••••••••"><button type="button" class="pw-occhio" onclick="mostraPw('cp-old',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <div class="fld" style="margin-bottom:8px;"><label>Nuova password</label><div class="pw-box"><input type="password" id="cp-new" placeholder="min. 6 caratteri"><button type="button" class="pw-occhio" onclick="mostraPw('cp-new',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+      <div class="fld" style="margin-bottom:10px;"><label>Conferma nuova password</label><div class="pw-box"><input type="password" id="cp-new2" placeholder="ripeti"><button type="button" class="pw-occhio" onclick="mostraPw('cp-new2',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <div id="cp-err" style="font-size:12px;color:var(--red);min-height:14px;margin-bottom:8px;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="doCambioPassword()" style="flex:1;padding:12px;background:var(--acc);color:#fff;border:none;border-radius:var(--rs);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
@@ -8234,6 +8234,29 @@ function apriCambioPassword() {
       </div>
     </div></div>`;
   document.body.insertAdjacentHTML('beforeend', html);
+}
+
+/* C'e' un'app di autenticazione registrata, e la sessione non l'ha ancora
+   superata? Allora il cambio password verra' rifiutato: meglio saperlo prima. */
+async function servePrimaIlCodice() {
+  try {
+    const { data } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    return !!data && data.nextLevel === 'aal2' && data.currentLevel !== 'aal2';
+  } catch (e) { return false; }   // se non si riesce a chiederlo, si prova lo stesso
+}
+
+/* Chiede il codice all'app e alza il livello della sessione. Torna true se
+   adesso si puo' procedere. Scrive da se' il motivo se qualcosa non va: chi
+   legge deve sapere cos'e' successo, non trovarsi una finestra che si chiude. */
+async function saliDiLivello(err) {
+  const { data: fattori } = await db.auth.mfa.listFactors();
+  const totp = ((fattori && fattori.totp) || []).find(f => f.status === 'verified');
+  if (!totp) { if (err) err.textContent = 'Serve la verifica in due passaggi, ma non trovo nessuna app registrata. Aprila da «Verifica in due passaggi (2FA)» qui nel profilo.'; return false; }
+  const codice = prompt('Sul tuo accesso è attiva la verifica in due passaggi.\n\nApri l\'app di autenticazione e scrivi il codice a 6 cifre:');
+  if (codice == null) { if (err) err.textContent = 'Cambio annullato.'; return false; }
+  const { error } = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: String(codice).trim() });
+  if (error) { if (err) err.textContent = 'Codice non corretto o scaduto. I codici durano trenta secondi: prendine uno nuovo e riprova.'; return false; }
+  return true;
 }
 
 async function doCambioPassword() {
@@ -8248,6 +8271,18 @@ async function doCambioPassword() {
     // Verifica password attuale
     const { error: e1 } = await db.auth.signInWithPassword({ email: ME.email, password: old });
     if (e1) { if(err) err.textContent='Password attuale errata.'; return; }
+
+    /* IL SECONDO FATTORE SI CHIEDE PRIMA, non come rimedio a un errore.
+       Controllare la password attuale crea una sessione «di primo livello»:
+       con la verifica in due passaggi accesa, il cambio verrebbe rifiutato con
+       un messaggio in inglese che non dice cosa fare. Chiederlo qui vuol dire
+       che quel messaggio nessuno lo vede piu'.
+       (Il rimedio dopo l'errore resta comunque, qualche riga sotto: se un
+       giorno Supabase cambia le regole, non si torna al vicolo cieco.) */
+    if (await servePrimaIlCodice()) {
+      const salito = await saliDiLivello(err);
+      if (!salito) return;
+    }
     let { error: e2 } = await db.auth.updateUser({ password: np1 });
 
     /* ── IL VICOLO CIECO DEL SECONDO FATTORE ──────────────────────────────────
@@ -8264,13 +8299,8 @@ async function doCambioPassword() {
        Adesso, se serve il secondo fattore, si chiede il codice e si sale di
        livello — invece di rimandare indietro un messaggio in inglese. */
     if (e2 && /AAL2|MFA/i.test(String(e2.message || ''))) {
-      const { data: fattori } = await db.auth.mfa.listFactors();
-      const totp = ((fattori && fattori.totp) || []).find(f => f.status === 'verified');
-      if (!totp) throw new Error('Serve la verifica in due passaggi, ma non trovo nessuna app registrata. Aprila da «Verifica in due passaggi (2FA)» qui nel profilo.');
-      const codice = prompt('Sul tuo accesso è attiva la verifica in due passaggi.\n\nApri l\'app di autenticazione e scrivi il codice a 6 cifre:');
-      if (codice == null) { if(err) err.textContent = 'Cambio annullato.'; return; }
-      const { error: e3 } = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: String(codice).trim() });
-      if (e3) throw new Error('Codice non corretto o scaduto. I codici durano trenta secondi: prendine uno nuovo e riprova.');
+      const salito = await saliDiLivello(err);
+      if (!salito) return;
       ({ error: e2 } = await db.auth.updateUser({ password: np1 }));
     }
     if (e2) throw e2;

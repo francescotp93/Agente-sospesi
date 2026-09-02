@@ -86,14 +86,24 @@ e.prova('il cambio password non e\' un vicolo cieco col 2FA', () => {
      abbia GIA' superato il secondo fattore. Ma la password attuale si controlla
      con un accesso normale, che non basta — e col «ricorda dispositivo 30
      giorni» il codice non viene chiesto affatto: la password resta immutabile
-     per un mese. Francesco ci e' rimasto dentro il 2 settembre 2026. */
+     per un mese. Francesco ci e' rimasto dentro il 2 settembre 2026.
+     La prova segue la REGOLA, non il punto in cui il codice sta oggi: la prima
+     versione guardava dentro doCambioPassword ed e' diventata rossa appena ho
+     spostato quelle righe in due funzioni a parte, su codice corretto. */
   const src = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
-  const f = src.slice(src.indexOf('async function doCambioPassword'), src.indexOf('//  AUTENTICAZIONE A DUE FATTORI'));
-  deve(/AAL2\|MFA/.test(f), 'non riconosce nemmeno il rifiuto per il secondo fattore');
-  deve(/challengeAndVerify/.test(f), 'riconosce il problema ma non fa salire di livello la sessione: resta un vicolo cieco');
-  deve(/listFactors/.test(f), 'non cerca quale app di autenticazione e\' registrata');
-  deve(/trenta secondi/.test(f), 'se il codice non va, non dice perche\' puo\' essere scaduto');
-  return 'chiede il codice e prosegue, invece di rimandare indietro un errore in inglese';
+  deve(/async function saliDiLivello/.test(src), 'non c\'e\' nessun modo di far salire di livello la sessione');
+  const sali = src.slice(src.indexOf('async function saliDiLivello'), src.indexOf('async function doCambioPassword'));
+  deve(/challengeAndVerify/.test(sali), 'chiede il codice ma non lo usa per salire di livello');
+  deve(/listFactors/.test(sali), 'non cerca quale app di autenticazione e\' registrata');
+  deve(/trenta secondi/.test(sali), 'se il codice non va, non dice perche\' puo\' essere scaduto');
+
+  const cambio = src.slice(src.indexOf('async function doCambioPassword'), src.indexOf('//  AUTENTICAZIONE A DUE FATTORI'));
+  /* Due strade, e servono entrambe: chiederlo PRIMA (cosi' il messaggio in
+     inglese non lo vede nessuno) e rimediare DOPO (se un giorno le regole di
+     Supabase cambiano, non si torna al vicolo cieco). */
+  deve(/servePrimaIlCodice\(\)/.test(cambio), 'il codice si chiede solo dopo aver mostrato un errore in inglese');
+  deve(/AAL2\|MFA/.test(cambio), 'tolta la rete di sicurezza: se il controllo preventivo non basta, si torna bloccati');
+  return 'lo chiede prima, e sa rimediare anche dopo';
 });
 
 e.stampa();

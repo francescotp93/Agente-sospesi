@@ -92,7 +92,15 @@
          davvero (finestre di pagamento, scarico PDF, stampa) vanno collaudate
          una per una prima di stringere. Vedi INTERFACCIA-QUOTO-IAM.md §2. */
       '<iframe class="w1-frame" id="w1-qframe" title="Preventivatore With Us"' +
-      ' allow="" referrerpolicy="origin"></iframe>' +
+      /* clipboard-write: senza questo permesso il browser NEGA la copia alle
+         pagine dentro il riquadro, e ogni pulsante «Copia» del preventivatore
+         falliva in silenzio — il 2 settembre 2026 «Copia link» della
+         convenzione rispondeva «copialo a mano». Il permesso si concede a una
+         cosa sola, la scrittura negli appunti, e solo a questo riquadro.
+         Lettura NO: non c'e' motivo per cui una pagina debba leggere quello
+         che uno ha copiato prima, e quello che c'e' negli appunti puo' essere
+         qualsiasi cosa. */
+      ' allow="clipboard-write" referrerpolicy="origin"></iframe>' +
       '</div>';
     panels.appendChild(p);
     return p;

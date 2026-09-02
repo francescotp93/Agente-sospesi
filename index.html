@@ -65,6 +65,18 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 .ls{position:fixed;inset:0;background:linear-gradient(135deg,#eef4f0 0%,#e2ede7 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
 .lcard{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;border:1px solid rgba(2,152,78,.12);box-shadow:0 12px 40px rgba(45,60,110,.12);}
 .lf{display:flex;flex-direction:column;gap:5px;}
+/* ── L'OCCHIO SULLA PASSWORD ──────────────────────────────────────────────────
+   Chi ha appena ricevuto una password provvisoria per email la ribatte a mano,
+   spesso dal telefono, e se sbaglia un carattere si sente dire «email o
+   password errati» — che manda a dubitare dell'indirizzo invece che di una
+   lettera. L'occhio toglie di mezzo tutta questa categoria di errori.
+   Il campo torna nascosto da solo dopo qualche secondo: una password lasciata
+   a schermo su un computer condiviso e' peggio del problema che risolve. */
+.pw-box{position:relative;display:block}
+.pw-box input{width:100%;padding-right:44px}
+.pw-occhio{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8b93a7;cursor:pointer;padding:6px;display:flex;align-items:center;border-radius:8px}
+.pw-occhio:hover{color:#3a4254;background:rgba(0,0,0,.05)}
+.pw-occhio.aperto{color:#1c8a52}
 .lf label{font-size:10px;font-weight:700;color:#5a6275;text-transform:uppercase;letter-spacing:1px;}
 .lf input{padding:12px 15px;border-radius:12px;border:1px solid rgba(0,0,0,.12);background:#f5f7fc;color:#16203a;font-size:15px;font-family:inherit;outline:none;transition:border-color .2s;}
 .lf input:focus{border-color:#02984e;background:#fff;}
@@ -1164,7 +1176,9 @@ input[type=file]{display:none;}
   <div style="font-size:13px;color:#5a6275;margin-bottom:20px;text-align:center;">Accesso riservato alla tua agenzia</div>
   <div class="lcard">
     <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="la-tua@email.com" autocomplete="email"></div>
-    <div class="lf" id="l-pass-wrap"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="lf" id="l-pass-wrap"><label>Password</label>
+      <div class="pw-box"><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="pw-occhio" onclick="mostraPw('l-pass',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
     <div class="lerr" id="l-err" style="color:#c0392b;"></div>
     <button class="lbtn" id="l-btn" onclick="doLogin()">Accedi</button>
     <div class="lsw" id="l-sw1" onclick="toggleReg()">Non hai un account? <span>Registrati</span></div>
@@ -1179,8 +1193,12 @@ input[type=file]{display:none;}
   <div style="font-family:Georgia,serif;font-size:24px;color:#fff;margin-bottom:6px;">Nuova password</div>
   <div style="font-size:13px;color:rgba(255,255,255,.45);margin-bottom:20px;">Scegli una nuova password</div>
   <div class="lcard">
-    <div class="lf"><label>Nuova password</label><input type="password" id="r-pass1" placeholder="Minimo 6 caratteri"></div>
-    <div class="lf"><label>Conferma</label><input type="password" id="r-pass2" placeholder="Ripeti la password" onkeydown="if(event.key==='Enter')doReset()"></div>
+    <div class="lf"><label>Nuova password</label>
+      <div class="pw-box"><input type="password" id="r-pass1" placeholder="Minimo 6 caratteri">
+      <button type="button" class="pw-occhio" onclick="mostraPw('r-pass1',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+    <div class="lf"><label>Conferma</label>
+      <div class="pw-box"><input type="password" id="r-pass2" placeholder="Ripeti la password" onkeydown="if(event.key==='Enter')doReset()">
+      <button type="button" class="pw-occhio" onclick="mostraPw('r-pass2',this)" aria-label="Mostra la password" title="Mostra la password"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
     <div class="lerr" id="r-err" style="color:#ffaaaa;"></div>
     <button class="lbtn" id="r-btn" onclick="doReset()">Salva nuova password</button>
   </div>
@@ -3289,7 +3307,25 @@ function onLogout() {
 }
 
 // ─── AUTH ACTIONS ─────────────────────────────────────────────────────────────
-async function doLogin() {
+async /* Mostra o nasconde una password. Si rinasconde da sola dopo 12 secondi: chi
+   la scopre per controllare un carattere non deve ricordarsi di ricoprirla. */
+function mostraPw(id, btn){
+  const el = document.getElementById(id); if(!el) return;
+  const aperto = el.type === 'text';
+  el.type = aperto ? 'password' : 'text';
+  if(btn){
+    btn.classList.toggle('aperto', !aperto);
+    btn.setAttribute('aria-label', aperto ? 'Mostra la password' : 'Nascondi la password');
+    btn.title = aperto ? 'Mostra la password' : 'Nascondi la password';
+  }
+  clearTimeout(el.__pwTimer);
+  if(!aperto) el.__pwTimer = setTimeout(() => {
+    el.type = 'password';
+    if(btn){ btn.classList.remove('aperto'); btn.setAttribute('aria-label','Mostra la password'); btn.title='Mostra la password'; }
+  }, 12000);
+}
+
+function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   const btn   = document.getElementById('l-btn');

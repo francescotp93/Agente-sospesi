@@ -81,5 +81,20 @@ e.prova('l\'errore del 2FA sul recupero password si capisce', () => {
   return 'dice cos\'e\' successo e qual e\' la strada buona';
 });
 
+e.prova('il cambio password non e\' un vicolo cieco col 2FA', () => {
+  /* Con la verifica in due passaggi attiva Supabase pretende una sessione che
+     abbia GIA' superato il secondo fattore. Ma la password attuale si controlla
+     con un accesso normale, che non basta — e col «ricorda dispositivo 30
+     giorni» il codice non viene chiesto affatto: la password resta immutabile
+     per un mese. Francesco ci e' rimasto dentro il 2 settembre 2026. */
+  const src = fs.readFileSync(path.join(RADICE, 'index.html'), 'utf8');
+  const f = src.slice(src.indexOf('async function doCambioPassword'), src.indexOf('//  AUTENTICAZIONE A DUE FATTORI'));
+  deve(/AAL2\|MFA/.test(f), 'non riconosce nemmeno il rifiuto per il secondo fattore');
+  deve(/challengeAndVerify/.test(f), 'riconosce il problema ma non fa salire di livello la sessione: resta un vicolo cieco');
+  deve(/listFactors/.test(f), 'non cerca quale app di autenticazione e\' registrata');
+  deve(/trenta secondi/.test(f), 'se il codice non va, non dice perche\' puo\' essere scaduto');
+  return 'chiede il codice e prosegue, invece di rimandare indietro un errore in inglese';
+});
+
 e.stampa();
 process.exit(e.ko === 0 ? 0 : 1);

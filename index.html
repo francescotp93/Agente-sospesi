@@ -3307,7 +3307,7 @@ function onLogout() {
 }
 
 // ─── AUTH ACTIONS ─────────────────────────────────────────────────────────────
-async /* Mostra o nasconde una password. Si rinasconde da sola dopo 12 secondi: chi
+/* Mostra o nasconde una password. Si rinasconde da sola dopo 12 secondi: chi
    la scopre per controllare un carattere non deve ricordarsi di ricoprirla. */
 function mostraPw(id, btn){
   const el = document.getElementById(id); if(!el) return;
@@ -3325,7 +3325,7 @@ function mostraPw(id, btn){
   }, 12000);
 }
 
-function doLogin() {
+async function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   const btn   = document.getElementById('l-btn');

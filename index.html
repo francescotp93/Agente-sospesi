@@ -8248,7 +8248,31 @@ async function doCambioPassword() {
     // Verifica password attuale
     const { error: e1 } = await db.auth.signInWithPassword({ email: ME.email, password: old });
     if (e1) { if(err) err.textContent='Password attuale errata.'; return; }
-    const { error: e2 } = await db.auth.updateUser({ password: np1 });
+    let { error: e2 } = await db.auth.updateUser({ password: np1 });
+
+    /* ── IL VICOLO CIECO DEL SECONDO FATTORE ──────────────────────────────────
+       Con la verifica in due passaggi attiva, Supabase pretende una sessione
+       che ABBIA GIA' superato il secondo fattore (AAL2) per cambiare password.
+       Ma qui sopra la password attuale si controlla con un accesso normale, che
+       vale AAL1: l'aggiornamento veniva rifiutato con «AAL2 session is required
+       to update email or password when MFA is enabled», in inglese e senza via
+       d'uscita.
+       Peggio: col «ricorda dispositivo 30 giorni» il codice al login non viene
+       chiesto affatto, quindi la sessione resta AAL1 per un mese e la password
+       non si puo' cambiare MAI. Il 2 settembre 2026 Francesco ci e' rimasto
+       dentro: entrava, ma non poteva rimettere una password sua.
+       Adesso, se serve il secondo fattore, si chiede il codice e si sale di
+       livello — invece di rimandare indietro un messaggio in inglese. */
+    if (e2 && /AAL2|MFA/i.test(String(e2.message || ''))) {
+      const { data: fattori } = await db.auth.mfa.listFactors();
+      const totp = ((fattori && fattori.totp) || []).find(f => f.status === 'verified');
+      if (!totp) throw new Error('Serve la verifica in due passaggi, ma non trovo nessuna app registrata. Aprila da «Verifica in due passaggi (2FA)» qui nel profilo.');
+      const codice = prompt('Sul tuo accesso è attiva la verifica in due passaggi.\n\nApri l\'app di autenticazione e scrivi il codice a 6 cifre:');
+      if (codice == null) { if(err) err.textContent = 'Cambio annullato.'; return; }
+      const { error: e3 } = await db.auth.mfa.challengeAndVerify({ factorId: totp.id, code: String(codice).trim() });
+      if (e3) throw new Error('Codice non corretto o scaduto. I codici durano trenta secondi: prendine uno nuovo e riprova.');
+      ({ error: e2 } = await db.auth.updateUser({ password: np1 }));
+    }
     if (e2) throw e2;
     document.getElementById('cp-overlay')?.remove();
     alert('✓ Password aggiornata con successo!');

@@ -383,7 +383,7 @@
         { l: 'KPI e gare', i: 'i-chart', act: 'performance', mirror: 'nb-performance', go: function () { vai('performance'); } },
         { hr: true },
         /* Le convenzioni sono un accordo DELL'AGENZIA con un ente (il primo e'
-           Asia Sicilia), non un prodotto: stanno qui, non nel preventivatore.
+           ASE Sicilia), non un prodotto: stanno qui, non nel preventivatore.
            La schermata vive nel repository QUOTE e si apre col ponte, come
            Produzione e storico. Senza questa riga esisteva ed era invisibile:
            dentro IAM la barra di QUOTO non si vede, quindi una pagina che non

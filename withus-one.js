@@ -403,6 +403,11 @@
            pallina accanto alla voce conta quelli da ricontrollare: e' l'unico
            promemoria che si vede senza andarla a cercare. (03/09/2026) */
         { l: 'Parametri previdenziali', i: 'i-scale', go: Q('parametri', ['Parametri previdenziali', 'Agenzia']) },
+        /* L'analisi previdenziale: quanta pensione avra' il cliente, quanto gli
+           manca, quanto serve versare, e il report da consegnare. La schermata
+           esisteva gia' dentro Vita e non la trovava nessuno; i numeri con cui
+           fa i conti sono quelli della voce qui sopra. (03/09/2026) */
+        { l: 'Analisi previdenziale', i: 'i-trend', go: Q('previdenza', ['Analisi previdenziale', 'Agenzia']) },
         { l: 'Produzione e storico', i: 'i-trend', go: Q('storico') }
       ] },
 
@@ -580,6 +585,9 @@
     estratto:    ['Estratto conto', 'Contabilità'],
     convenzioni: ['Convenzioni', 'Agenzia'],
     parametri:   ['Parametri previdenziali', 'Agenzia'],
+    /* La pagina di QUOTO si chiama «previdenza» e non «analisi»: in IAM
+       «analisi» e' gia' l'Analisi dei bisogni, in Marketing. */
+    previdenza:  ['Analisi previdenziale', 'Agenzia'],
     fonti:       ['Fonti compagnie', 'Strumenti']
   };
 

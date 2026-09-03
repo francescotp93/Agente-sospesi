@@ -397,6 +397,12 @@
            dentro IAM la barra di QUOTO non si vede, quindi una pagina che non
            ha una voce QUI, per chi lavora, non esiste. (02/09/2026) */
         { l: 'Convenzioni', i: 'i-users', go: Q('convenzioni', ['Convenzioni', 'Agenzia']) },
+        /* I numeri di legge con cui si calcola la pensione (coefficienti,
+           aliquote, tetto di deducibilita'): stanno in una schermata perche'
+           cambiano da soli, per decreto, senza che nessuno ce lo dica. La
+           pallina accanto alla voce conta quelli da ricontrollare: e' l'unico
+           promemoria che si vede senza andarla a cercare. (03/09/2026) */
+        { l: 'Parametri previdenziali', i: 'i-scale', go: Q('parametri', ['Parametri previdenziali', 'Agenzia']) },
         { l: 'Produzione e storico', i: 'i-trend', go: Q('storico') }
       ] },
 
@@ -573,6 +579,7 @@
     performance: ['Performance', 'Agenzia'],
     estratto:    ['Estratto conto', 'Contabilità'],
     convenzioni: ['Convenzioni', 'Agenzia'],
+    parametri:   ['Parametri previdenziali', 'Agenzia'],
     fonti:       ['Fonti compagnie', 'Strumenti']
   };
 

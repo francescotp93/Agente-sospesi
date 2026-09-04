@@ -352,6 +352,39 @@ cd ../agente-sospesi && node controlla-tutto.mjs  # IAM, 15
 la prova è sbagliata: pretendeva il *mezzo* invece del *fine*. Si corregge la
 prova, non si abbassa la soglia.
 
+**Ogni prova deve avere un caso in cui fallisce se il comportamento cambia.**
+Farla fallire sul codice di prima è solo metà del lavoro: dice che la prova
+vede la correzione di oggi. L'altra metà è che continui a vederla domani. Una
+prova scritta `for (const k of ELENCO_OBBLIGATORIO || []) …` passa verde anche
+quando l'elenco è vuoto — non sorveglia niente, e non lo dichiara. Prima di
+chiuderla, chiediti *quale modifica futura la fa diventare rossa*, e scrivi
+quel caso. Se la risposta è «nessuna», quella non è una prova: è un commento
+che consuma tempo di collaudo.
+
+Non basta quindi controllare il numero giusto: bisogna controllare che il modo
+sbagliato darebbe un numero diverso. Le detrazioni dell'art. 13 si calcolano
+sul reddito complessivo, e la prova che le sorveglia calcola anche la variante
+sull'imponibile: se un giorno qualcuno le sposta lì, la differenza c'è e la
+prova diventa rossa con scritto di quanto. Senza quel secondo conto la prova
+sarebbe passata prima e dopo l'errore.
+
+**Ogni documento di formazione che nasce da un calcolo lo genera il motore, e
+una prova lo tiene allineato.** Un documento scritto a mano invecchia in
+silenzio: il motore cambia, il file resta, e il collaboratore studia numeri che
+il programma non produce più — sono i più difficili da scoprire, perché nessuno
+li ricalcola. Quindi:
+
+1. lo produce uno script che chiama il motore
+   (`server/verifica/casi/genera-*.mjs`), non una persona;
+2. il file generato si versiona nel repository, così si legge senza eseguire
+   niente e si vede nel diff quando cambia;
+3. una prova nella suite ricontrolla che il file sia ancora quello che il
+   motore produce — versione delle regole e numeri a campione — e dice nel
+   messaggio d'errore il comando per rigenerarlo.
+
+Chi tocca il motore o si accorge subito che il materiale di formazione è
+cambiato, o lo scopre un collaboratore in appuntamento.
+
 ### Come si scrive
 
 - **Tutto in italiano**: nomi, commenti, messaggi. `anaValida`, `wdsLunedi`,

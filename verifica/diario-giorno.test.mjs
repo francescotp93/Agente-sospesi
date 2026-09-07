@@ -134,7 +134,7 @@ prova('ora di fine, cliente e prodotto: si scrivono, si salvano, si rileggono', 
   for (const id of ['wd-ora-fine', 'wd-cliente', 'wd-prodotto']) {
     deve(html.includes('id="' + id + '"'), 'manca il campo ' + id);
   }
-  const apri = corpoDi('async function openWDModal(id)');
+  const apri = corpoDi('async function openWDModal(id');
   deve(apri, 'manca openWDModal');
   for (const [campo, id] of [['ora_fine', 'wd-ora-fine'], ['cliente', 'wd-cliente'], ['prodotto', 'wd-prodotto']]) {
     deve(apri.includes(id), 'aprendo in modifica il campo ' + id + ' resta vuoto');

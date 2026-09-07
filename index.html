@@ -11383,6 +11383,27 @@ function wdGiornoNext() { wdGiornoVai(1); }
 /* Apre la vista Giorno su una data precisa (dalla settimana o dal mese). */
 function wdApriGiorno(ds) { WDG_DATA = ds; selWDTab('giorno'); }
 
+/* ══ IL GIORNO CHE SI STA GUARDANDO ═══════════════════════════════════════
+   «Nuova attività» metteva sempre la data di OGGI. Ma chi apre un giorno nel
+   calendario e poi preme quel tasto sta scrivendo un'attività PER QUEL GIORNO:
+   la data di oggi va cancellata e riscritta a mano ogni volta, e il giorno che
+   nessuno si accorge di non aver cambiato finisce nell'agenda sbagliata.
+   Qui si risponde a una domanda sola: qual e' il giorno che l'operatore ha
+   davanti? Se non ce n'e' uno — vista settimana, elenco, o il diario nemmeno
+   aperto — si torna a oggi, che e' il comportamento di prima. (05/09/2026) */
+function wdDataScelta() {
+  /* Fuori dal diario non c'e' nessun giorno scelto: il tasto della Scrivania
+     deve continuare a proporre oggi, anche se il diario era rimasto aperto su
+     un altro giorno. */
+  const pan = document.getElementById('panel-workdiary');
+  if (!pan || pan.offsetParent === null) return null;
+  const v = wdVistaAttiva();
+  if (v === 'giorno') return WDG_DATA || null;
+  if (v === 'cal') return WD_CAL_DAY || null;
+  /* Settimana ed elenco non hanno un giorno scelto: hanno un periodo. */
+  return null;
+}
+
 /* ══ IL PERIODO, GOVERNATO DA UN POSTO SOLO ═══════════════════════════════
    Prima ogni vista aveva la sua barra con i suoi tre comandi: lo stesso
    gesto scritto in tre punti, e cambiando vista si tornava sempre a oggi
@@ -11791,15 +11812,16 @@ function geoLocalizzaWD() {
   );
 }
 
-async function openWDModal(id) {
+async function openWDModal(id, dataScelta) {
   WD_ID = id; WD_FILE = null;
   const w = id ? WD.find(x=>x.id===id) : null;
   document.getElementById('wd-modal-title').textContent = w ? w.titolo||'Modifica' : 'Nuova operazione';
   const sv = (fid,val) => { const el=document.getElementById(fid); if(el) el.value=val||''; };
-  // Nuova attività: la data parte da OGGI (il giorno in cui la si crea), così non
-  // si deve ricordare di compilarla. In modifica resta la data già salvata.
+  /* Nuova attività: la data parte dal GIORNO CHE SI STA GUARDANDO — quello
+     aperto nel calendario — e solo se non ce n'e' uno da oggi. In modifica
+     resta la data già salvata. */
   sv('wd-titolo', w?.titolo); sv('wd-note', w?.note);
-  sv('wd-data', w?.data || (id ? '' : wdsISO(new Date())));
+  sv('wd-data', w?.data || (id ? '' : (dataScelta || wdDataScelta() || wdsISO(new Date()))));
   sv('wd-ora', w?.ora||'09:00'); sv('wd-tipo-m', w?.tipo||'riunione');
   sv('wd-stato-m', w?.stato||'aperto'); sv('wd-prior', w?.prior||'normale');
   sv('wd-ora-fine', w?.ora_fine); sv('wd-cliente', w?.cliente); sv('wd-prodotto', w?.prodotto);
@@ -12006,17 +12028,15 @@ function showWDDay(ds) {
 }
 
 function apriNuovoEventoData(ds) {
-  openWDModal(null);
-  setTimeout(() => {
-    const dataEl = document.getElementById('wd-data');
-    if (dataEl) dataEl.value = ds;
-    const titleEl = document.getElementById('wd-modal-title');
-    if (titleEl) {
-      const dataFmt = new Date(ds+'T12:00:00').toLocaleDateString('it-IT',
-        {day:'2-digit', month:'long'});
-      titleEl.textContent = 'Nuovo evento — ' + dataFmt;
-    }
-  }, 50);
+  /* La data si passa a chi apre la finestra, non si scrive nel campo mezzo
+     decimo di secondo dopo sperando di arrivare secondi. */
+  openWDModal(null, ds);
+  const titleEl = document.getElementById('wd-modal-title');
+  if (titleEl) {
+    const dataFmt = new Date(ds+'T12:00:00').toLocaleDateString('it-IT',
+      {day:'2-digit', month:'long'});
+    titleEl.textContent = 'Nuovo evento — ' + dataFmt;
+  }
 }
 
 

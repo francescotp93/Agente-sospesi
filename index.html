@@ -9371,9 +9371,14 @@ async function fontiDiagnosi(btn) {
       + (p.cosa_fare ? '<div style="font-size:12.5px;color:var(--f-muted);margin-top:6px"><b>Cosa fare:</b> ' + esc(p.cosa_fare) + '</div>' : '')
       + '</div>';
 
-    const pallino = f => f.raggiungibile === false ? ['var(--f-muted)', 'non risponde']
+    /* «Non risponde» dice che qualcosa e' rotto. Ma INLINEA, SARA e RC POLIZZA
+       non hanno nessuno scraper: non c'e' niente che debba rispondere, e
+       marcarle come guaste manda a cercare un guasto che non esiste. Il
+       messaggio sotto lo diceva gia' giusto — era l'etichetta a mentire. */
+    const pallino = f => f.servizio_configurato === false ? ['var(--f-muted)', 'senza servizio automatico']
+      : (f.raggiungibile === false ? ['var(--f-muted)', 'non risponde']
       : (f.loggato === true ? ['var(--f-green)', 'sessione attiva']
-      : (f.loggato === null ? ['var(--f-amber)', 'non lo dice'] : ['var(--f-red)', 'non collegata']));
+      : (f.loggato === null ? ['var(--f-amber)', 'non lo dice'] : ['var(--f-red)', 'non collegata'])));
     const riga = f => { const c = pallino(f);
       const minori = (f.diagnosi || []).filter(x => x.gravita !== 'alta');
       return '<div style="border-top:1px solid var(--f-line);padding:8px 2px;font-size:13px">'
@@ -9444,7 +9449,12 @@ async function fontiCarica(forza) {
   const btn = document.getElementById('f-ric');
   if (btn) btn.disabled = true;
   try {
-    const d = await mailFetch('/fonti');
+    /* «forza» vuol dire una cosa sola: non usare nessuna cache — ne' la mia
+       dei venti secondi, ne' quella della sonda sul server. Prima saltava solo
+       la prima, e dopo un accesso riuscito il badge restava indietro: sullo
+       schermo compariva «Configurata» accanto al messaggio «sei dentro».
+       (Francesco, 09/09/2026) */
+    const d = await mailFetch('/fonti' + (forza ? '?forza=1' : ''));
     FONTI = (d && d.fonti) || [];
     fontiDisegna();
   } catch (e) {
@@ -9565,7 +9575,7 @@ function fontiScheda(f) {
         </div>
         <div class="f-az">
           <button class="f-b pri" type="button" onclick="fontiSalva('${esc(f.id)}')"><i class="ti ti-device-floppy"></i> Salva credenziali</button>
-          <button class="f-b" type="button" onclick="fontiAccedi('${esc(f.id)}')"><i class="ti ti-login"></i> ${st === 'attiva' ? 'Rifai l\'accesso' : 'Accedi al portale'}</button>
+          <button class="f-b" type="button" onclick="fontiAccedi('${esc(f.id)}', ${st === 'attiva'})"><i class="ti ti-login"></i> ${st === 'attiva' ? 'Rifai l\'accesso' : 'Accedi al portale'}</button>
           <button class="f-b" type="button" onclick="fontiVerifica('${esc(f.id)}')"><i class="ti ti-refresh-dot"></i> Controlla stato</button>
           ${f.has2fa && !attesa ? `<button class="f-b" type="button" onclick="fontiApriCodice('${esc(f.id)}')"><i class="ti ti-device-mobile-check"></i> Accedi col codice</button>` : ''}
           ${f.custom ? `<button class="f-b" style="color:var(--f-red);border-color:#efc9c5" type="button" onclick="fontiElimina('${esc(f.id)}')"><i class="ti ti-trash"></i> Elimina</button>` : ''}
@@ -9799,14 +9809,20 @@ async function fontiAttivaToggle(id, el) {
   }
 }
 
-async function fontiAccedi(id) {
+/* `rifai` = la sessione risulta gia' attiva e si vuole rientrare da capo.
+   Senza, lo scraper vede di essere dentro e risponde «gia' attiva» senza
+   toccare il portale: giusto tutti i giorni, inutile il giorno in cui hai
+   cambiato la password sul portale e vuoi verificare subito che funzioni —
+   che e' l'unico giorno in cui uno preme un pulsante che si chiama «Rifai
+   l'accesso». (Francesco, 09/09/2026) */
+async function fontiAccedi(id, rifai) {
   if (!fontiPuoEntrare()) return;
   FONTI_ATTESA[id] = { codice: false };
   FONTI_ESITI[id] = null; /* barra da capo: è un accesso nuovo */
-  fontiEsito(id, 'Avvio l\'accesso al portale…', null, 8);
+  fontiEsito(id, rifai ? 'Chiudo la sessione e rientro da capo…' : 'Avvio l\'accesso al portale…', null, 8);
   fontiDisegna();
   try {
-    await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi', { method: 'POST' });
+    await mailFetch('/fonti/' + encodeURIComponent(id) + '/accedi' + (rifai ? '?forza=1' : ''), { method: 'POST' });
   } catch (e) {
     /* 404/405 vuol dire che il motore si sta aggiornando, non che l'accesso
        e' fallito: sono due cose diverse e chiedono due attese diverse. */

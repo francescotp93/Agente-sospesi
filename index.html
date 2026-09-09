@@ -9375,10 +9375,17 @@ async function fontiDiagnosi(btn) {
        non hanno nessuno scraper: non c'e' niente che debba rispondere, e
        marcarle come guaste manda a cercare un guasto che non esiste. Il
        messaggio sotto lo diceva gia' giusto — era l'etichetta a mentire. */
+    /* E chi si quota dal browser (Prima) non «non risponde»: e' spento per come
+       e' fatto. Il server lo dice gia' con un codice suo, `via_browser`; qui si
+       legge quello, invece di dedurlo dal fatto che il servizio non c'e'. Lo
+       stesso difetto corretto per chi non ha uno scraper, sfuggito per questo
+       caso. (Francesco, 09/09/2026) */
+    const dalBrowser = f => (f.diagnosi || []).some(x => x && x.codice === 'via_browser');
     const pallino = f => f.servizio_configurato === false ? ['var(--f-muted)', 'senza servizio automatico']
+      : (dalBrowser(f) ? ['var(--f-muted)', 'si quota dal browser']
       : (f.raggiungibile === false ? ['var(--f-muted)', 'non risponde']
       : (f.loggato === true ? ['var(--f-green)', 'sessione attiva']
-      : (f.loggato === null ? ['var(--f-amber)', 'non lo dice'] : ['var(--f-red)', 'non collegata'])));
+      : (f.loggato === null ? ['var(--f-amber)', 'non lo dice'] : ['var(--f-red)', 'non collegata']))));
     const riga = f => { const c = pallino(f);
       const minori = (f.diagnosi || []).filter(x => x.gravita !== 'alta');
       return '<div style="border-top:1px solid var(--f-line);padding:8px 2px;font-size:13px">'

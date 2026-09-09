@@ -71,6 +71,46 @@ sull'archivio. Le porte sono `eSegnalatore()`, `puoQuotare()` e il blocco in
 `goTab()`, ed è sorvegliato da `verifica/profili-collaboratore.test.mjs`.
 Prima di toccare quelle funzioni, si legge quella prova.
 
+## Cosa esiste già in QUOTO — guardare PRIMA di costruire
+
+Le specifiche del 31/08/2026 descrivono lavoro che in buona parte era già
+stato fatto dall'altra parte. Nella sessione del 9 settembre 2026 è successo
+tre volte: due sono state intercettate leggendo il database, la terza solo
+perché una migrazione è fallita. Prima di aprire un blocco di quel documento,
+**si guarda il database e il repo QUOTO**, non si comincia a scrivere.
+
+### Convenzioni e portale associato — **non creare `iam_convenzioni*`**
+`quote_convenzioni`, `quote_convenzione_prodotti`, `quote_convenzione_associati`
+(con OTP, `auth_user_id`, privacy e conservazione) e `quote_convenzione_richieste`
+sono in produzione con dati veri. Le pagine sono `iscrizione.html` (il link
+pubblico) e `area.html` (l'area riservata) nel repo QUOTO, con
+`server/convenzionati.js` sul VPS. La funzione `convenzione_pubblica(token)` è
+la porta anonima: **non ridefinirla**, serve quelle tabelle.
+
+### Modulo previdenziale — **non ricostruirlo in IAM**
+Vive in QUOTO: `tariffe/motore/previdenza.js` (oltre 2.000 righe),
+`quote_parametri_previdenziali` (parametri con fonte, `scade_il`,
+`ricontrolla_il`, `da_confermare`) e `quote_analisi_previdenziali` (l'archivio
+di ogni scheda stampata). Le voci di menu **sono già nella scocca**, in
+`withus-one.js`: «Analisi previdenziale» e «Parametri previdenziali» aprono le
+pagine di QUOTO dentro il riquadro di IAM. Per l'utente il modulo è già dentro
+IAM: rifarlo qui significa due voci con numeri diversi.
+
+Quel motore fa più di quanto le specifiche chiedessero: IRPEF vera con
+detrazioni e trattamento integrativo (e dice quando la deduzione non fa
+risparmiare nulla perché l'imposta è già zero), contributi per gestione,
+coefficienti proiettati con la speranza di vita, ISC del fondo, euro di oggi
+contro euro di domani, e il controllo di **sovracopertura** — se il versamento
+copre più del divario lo segnala, che sotto IDD è ciò che una revisione di
+adeguatezza contesta.
+
+Un punto su cui non sbagliare, perché è facile: **dimissioni e licenziamento si
+tassano allo stesso modo**. Il 15% contro il 23% dipende dalla causa del
+riscatto, non dal tipo di cessazione — e le dimissioni volontarie dopo dodici
+mesi di inoccupazione danno comunque il trattamento agevolato. Quello che
+cambia è cosa si può riscattare e quando, e dipende dal regolamento del fondo:
+va chiesto al fondo, non calcolato.
+
 ## Ruoli IAM
 - `top_master` = admin completo
 - `master` = manager

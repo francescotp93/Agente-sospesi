@@ -51,8 +51,21 @@ prova('chi non ha uno scraper non viene dato per rotto', () => {
   /* L'ordine conta: il controllo su «non ha uno scraper» deve venire PRIMA di
      «non risponde», altrimenti la prima condizione vera vince e si torna a
      dare per rotto chi non ha niente da rompere. */
-  deve(f.indexOf('servizio_configurato') < f.indexOf('non risponde'), 'la condizione arriva dopo «non risponde» e non serve a niente');
+  /* Si cerca il TOKEN con le virgolette, non le parole: un commento che le
+     usa non deve far cambiare l'esito a una prova sull'ordine del codice. */
+  deve(f.indexOf('servizio_configurato') < f.indexOf("'non risponde'"), 'la condizione arriva dopo «non risponde» e non serve a niente');
   return 'senza scraper ≠ guasto';
+});
+
+prova('chi si quota dal browser non «non risponde»: e\' spento per come e\' fatto', () => {
+  /* Stesso difetto di sopra, sfuggito per un caso: Prima. Il server lo dice
+     gia' con un codice suo (via_browser); l'etichetta deve leggere quello,
+     non dedurre un guasto dal fatto che il servizio non c'e'. */
+  const f = fetta('async function fontiDiagnosi(', 'async function fontiCarica(');
+  deve(/codice === 'via_browser'/.test(f), 'non legge il codice con cui il server dice «spenta per come e\' fatta»');
+  deve(/si quota dal browser/.test(f), 'manca l\'etichetta che lo dice');
+  deve(f.indexOf("'via_browser'") < f.indexOf("'non risponde'"), 'il controllo arriva dopo «non risponde» e non vince mai');
+  return 'Prima e\' spenta di proposito, e si legge';
 });
 
 prova('«Rifai l\'accesso» chiede davvero di rientrare da capo', () => {

@@ -11403,7 +11403,18 @@ function composeMail(prefill){
     }
     err.textContent = scheduledAt ? 'Programmazione…' : 'Invio in corso…';
     try {
-      await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, cc: cc || undefined, bcc: ccn || undefined, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, fromName: [PROFILO && PROFILO.nome, PROFILO && PROFILO.cognome].filter(Boolean).join(' ') || undefined, attachments: MAIL_ATTACH.map(a => ({ name: a.name, content: a.content })), scheduledAt }) });
+      /* NIENTE `fromName`. Qui si mandava al server il nome e cognome di chi
+         stava scrivendo, e il server lo metteva accanto all'indirizzo della
+         casella: al destinatario arrivava «Francesco Oddo
+         <amministrazione@withusassicurazioni.it>» — una persona che non
+         conosce, al posto dell'agenzia con cui ha un rapporto.
+         «Tutte le mail devono arrivare da With Us Assicurazioni»
+         (Francesco, 09/09/2026): adesso il nome lo decide il server, in un
+         posto solo (QUOTE/server/mittente.js), e quello che si mandava da qui
+         verrebbe comunque ignorato. Si toglie perche' un parametro che non
+         serve piu' ma continua a partire e' un invito a rimetterlo in mezzo.
+         Chi scrive si firma nel testo, come in qualunque lettera. */
+      await mailFetch('/mail/send', { method: 'POST', body: JSON.stringify({ to, cc: cc || undefined, bcc: ccn || undefined, subject, html: mailBodyToHtml(text), text: text + MAIL_FOOTER_TEXT, casella: MAIL_CASELLA, attachments: MAIL_ATTACH.map(a => ({ name: a.name, content: a.content })), scheduledAt }) });
       document.getElementById(id)?.remove();
       alert(scheduledAt ? ('Invio programmato per ' + new Date(schedVal).toLocaleString('it-IT')) : 'Messaggio inviato.');
     } catch(e) { err.textContent = 'Errore invio: ' + e.message; }

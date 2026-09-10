@@ -9911,7 +9911,9 @@ async function connettoreDisegna() {
     + '<a class="f-b" href="' + CONN_ZIP + '" download style="text-decoration:none"><i class="ti ti-download"></i> Scarica</a>'
     + (ext ? '<button class="f-b pri" type="button" onclick="connettoreCollega(this)"><i class="ti ti-plug-connected"></i> ' + (ext.collegato ? 'Ricollega' : 'Collega l\'estensione') + '</button>' : '')
     + (ext && ext.in_attesa && ext.in_attesa.length ? '<button class="f-b" type="button" onclick="connettoreRimanda(this)"><i class="ti ti-send"></i> Rimanda le catture in attesa</button>' : '')
-    + '</div></div>';
+    + '<button class="f-b" type="button" onclick="connettoreChiaveLettura(this)" title="Una chiave di sola lettura, per far leggere le catture a Giulia dalla sua sessione"><i class="ti ti-key"></i> Chiave per Giulia</button>'
+    + '</div></div>'
+    + '<div id="f-conn-chiave"></div>';
   if (!ext) h += '<div style="font-size:11.5px;color:var(--f-muted);margin-top:6px">Non installata? Scarica lo zip, scompattalo in una cartella che resta, poi Chrome → chrome://extensions → Modalità sviluppatore → «Carica estensione non pacchettizzata». Poi ricarica questa pagina (F5) e premi «Collega».</div>';
 
   h += '<div style="margin-top:12px;border-top:1px solid var(--f-line);padding-top:10px"><b style="font-size:12px">Catture arrivate</b> <span style="color:var(--f-muted);font-size:11px">· ' + catture.length + '</span>';
@@ -9953,6 +9955,29 @@ async function connettoreCollega(btn) {
   }
   if (btn) { btn.disabled = false; btn.innerHTML = old; }
   connettoreDisegna();
+}
+
+/* LA CHIAVE DI LETTURA PER GIULIA. «Non c'e' un modo per tu vedere in
+   automatico le catture quando ti chiedo di vederle?» (Francesco,
+   10/09/2026). Si', con una chiave di SOLA lettura: apre l'elenco e la lettura
+   delle catture, niente altro. Si vede una volta sola, qui; poi va messa fra
+   le variabili d'ambiente della sessione di Giulia (WITHUS_CATTURE_CHIAVE).
+   Rifarla ne conia una nuova e la vecchia resta valida finche' non si revoca. */
+async function connettoreChiaveLettura(btn) {
+  const box = document.getElementById('f-conn-chiave');
+  if (!box) return;
+  if (!confirm('Creo una chiave di sola lettura per Giulia? La vedrai una volta sola: copiala subito.')) return;
+  if (btn) btn.disabled = true;
+  try {
+    const r = await mailFetch('/fonti/connettore/chiave', { method: 'POST', body: JSON.stringify({ nome: 'Giulia (agenti-ai)', ruolo: 'lettura' }) });
+    if (!r || !r.chiave || r.ruolo !== 'lettura') throw new Error((r && r.error) || 'il server non ha dato una chiave di lettura');
+    box.innerHTML = '<div style="margin-top:10px;background:var(--f-amber-bg);border:1px solid #f3d9a8;border-radius:8px;padding:10px 12px;font-size:12px">'
+      + '<b>Chiave di lettura per Giulia</b> — si vede solo adesso.<div style="display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap">'
+      + '<code id="f-conn-chiave-val" style="font-size:12px;background:#fff;border:1px solid var(--f-line);border-radius:6px;padding:6px 8px;word-break:break-all">' + esc(r.chiave) + '</code>'
+      + '<button class="f-b" type="button" style="height:30px" onclick="navigator.clipboard.writeText(document.getElementById(\'f-conn-chiave-val\').textContent).then(()=>{this.textContent=\'Copiata ✓\'})">Copia</button></div>'
+      + '<div style="color:var(--f-muted);margin-top:6px">Mettila nella sessione di Giulia come variabile d\'ambiente <b>WITHUS_CATTURE_CHIAVE</b>. Apre solo l\'elenco e la lettura delle catture: niente cancellazioni, niente credenziali.</div></div>';
+  } catch (e) { alert('Chiave non creata: ' + (e.message || e)); }
+  if (btn) btn.disabled = false;
 }
 
 async function connettoreRimanda(btn) {

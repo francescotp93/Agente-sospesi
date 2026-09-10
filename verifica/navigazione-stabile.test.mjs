@@ -53,7 +53,10 @@ e.prova('il ripristino avviene una volta sola', () => {
 function apparecchia(schedaMemorizzata) {
   const memoria = { 'iam_last_tab': schedaMemorizzata };
   const visitate = [];
-  const { ctx } = stanza(src, ['goTab', 'ripristinaScheda'], {
+  /* contaSezioni: goTab la chiama quando apre Operativa (§2.6). Senza
+     portarsela dentro, qui risulterebbe assente e le prove del ripristino
+     fallirebbero per un motivo che con la navigazione non c'entra. */
+  const { ctx } = stanza(src, ['goTab', 'ripristinaScheda', 'contaSezioni'], {
     altro: {
       /* Le tre spie vivono fuori dalle funzioni ritagliate: qui vanno messe a
          mano, altrimenti nella stanza chiusa non esistono. */

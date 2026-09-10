@@ -1276,6 +1276,12 @@ input[type=file]{display:none;}
     </div>
   </div>
   <button class="umenu-item" onclick="goTab('profilo');document.getElementById('umenu').style.display='none';"><i class="ti ti-user-circle" style="font-size:16px;color:var(--txt3);"></i> Il mio profilo</button>
+  <!-- «I miei documenti» sta QUI e non nella barra scura di proposito: e' roba
+       che riguarda te, come il profilo, non una sezione dell'agenzia. Non ha un
+       permesso perche' non ce n'e' uno da dare — un mandato lo firma anche un
+       amministratore, e ognuno vede solo i propri: il filtro non e' in questa
+       pagina, e' iam_mie_firme() che gira nel database con auth.uid(). -->
+  <button class="umenu-item" onclick="goTab('miedocs');document.getElementById('umenu').style.display='none';"><i class="ti ti-file-certificate" style="font-size:16px;color:var(--txt3);"></i> I miei documenti</button>
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
   <button class="umenu-item" id="um-btn-estratto" onclick="openEstrattoConto();document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-file-invoice" style="font-size:16px;color:var(--txt3);"></i> Estratto conto</button>
   <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
@@ -1991,6 +1997,18 @@ input[type=file]{display:none;}
 <div class="panel" id="panel-profilo" style="overflow-y:auto;">
   <div id="profilo-content"></div>
   <div id="profilo-obiettivi" style="padding:0 12px 12px;"></div>
+</div>
+
+<!-- I MIEI DOCUMENTI — l'area riservata del collaboratore (M2) -->
+<div class="panel" id="panel-miedocs" style="overflow-y:auto;">
+  <div style="max-width:760px;margin:0 auto;padding:18px 12px 40px;">
+    <h2 style="margin:0 0 4px;font-size:19px;font-weight:700;">I miei documenti</h2>
+    <p style="margin:0 0 18px;font-size:13px;color:var(--txt2);line-height:1.55;">
+      Mandato, tabelle provvigionali, informative e ogni altro documento che hai
+      firmato con l'agenzia. Restano qui: non serve ritrovare l'email.
+    </p>
+    <div id="miedocs-lista"></div>
+  </div>
 </div>
 
 <!-- WORK DIARY -->
@@ -4104,7 +4122,13 @@ function goTab(t) {
      goTab('quoto') nella console del browser. Il documento lo chiede esplicito
      — «un segnalatore che apre un preventivo deve ricevere un rifiuto, non una
      schermata» — ed è qui che il rifiuto succede. */
-  if (eSegnalatore(PROFILO) && t !== 'profilo') {
+  /* «I miei documenti» passa, come il profilo. Questa guardia e' scritta per i
+     PREVENTIVI — lo dice il messaggio — e un documento che hai firmato tu non
+     e' un preventivo: e' roba tua. Un segnalatore firma comunque l'informativa
+     privacy e l'accordo di segnalazione, e ha diritto di rileggerli (art. 15
+     GDPR) senza doverli chiedere a qualcuno. E' anche il primo gradino del
+     percorso: l'area riservata si apre prima di tutto il resto. */
+  if (eSegnalatore(PROFILO) && t !== 'profilo' && t !== 'miedocs') {
     alert('Puoi segnalare un contatto, non consultare preventivi.\n\nPremi, garanzie, condizioni e preventivi sono riservati a un intermediario iscritto al RUI, che prenderà in carico la trattativa.');
     goTab('profilo');
     return;
@@ -4155,6 +4179,9 @@ function goTab(t) {
   }
   if (t === 'workdiary')   { loadWD_DB().then(() => { selWDTab('cal'); renderWDCal(); }); subscribeWD(); }
   if (t === 'pagamenti')   { renderPagamenti(); }
+  /* Si ricarica a ogni apertura: una controfirma arrivata mezz'ora fa deve
+     vedersi senza che nessuno ricarichi la pagina. */
+  if (t === 'miedocs')     { caricaMieiDocumenti(); }
   if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); caricaDaFareOggi(); }   // Blocco B
@@ -6811,6 +6838,175 @@ async function inviaFirmaCollab(collabId) {
     fcMsg('Errore nell\'invio: ' + (e.message||e), 'var(--red,#c0392b)');
     if (btn) { btn.disabled = false; btn.textContent = 'Invia'; }
   }
+}
+
+/* ═══ I MIEI DOCUMENTI — l'area riservata del collaboratore (M2, 10/09/2026) ══
+   Qui il collaboratore ritrova quello che ha firmato: mandato, tabelle
+   provvigionali, informative. Il senso e' che restino raggiungibili mesi dopo,
+   quando l'email non c'e' piu'.
+
+   DUE COSE CHE SEMBRANO DETTAGLI E NON LO SONO.
+
+   1. L'elenco non arriva da una query su iam_firme. Quella tabella e' chiusa
+      allo staff (policy `iam_is_staff()`) e porta anche il token con cui si
+      apre un documento e si firma. Si chiama iam_mie_firme(), che gira DENTRO
+      il database con auth.uid(): non puo' tornare le righe di un altro nemmeno
+      sbagliando una condizione qui, e non restituisce il token.
+
+   2. Il documento non si apre con un link. Il link della firma porta il token
+      nell'indirizzo, e un indirizzo finisce negli appunti, nella cronologia,
+      in uno screenshot. Si chiede a /firma-collab/mio/doc con il proprio
+      accesso: la' si sa gia' chi sta chiedendo, e il documento di un altro
+      risponde «non trovato» come se non esistesse.
+
+   Perche' non c'e' un tasto «Firma» in questa schermata: firmare vuole il
+   codice usa e getta che sta nell'email, ed e' il secondo fattore. Un tasto
+   qui lo aggirerebbe — una firma varrebbe quanto una sessione IAM aperta su un
+   computer lasciato acceso. Chi ha perso l'email la richiede all'agenzia. */
+
+/* La stessa tabella del backend (TIPI in firmaCollab.js). FIRMA_TIPI qui sopra
+   e' l'elenco di cosa si PUO' MANDARE, e non e' la stessa cosa: il POG si puo'
+   ricevere ma non ancora spedire da IAM, perche' vuole prodotto e versione. */
+function mieDocsTitolo(tipo, titolo) {
+  if (titolo) return titolo;
+  var noti = {
+    privacy_intermediario: 'Informativa Privacy Intermediario',
+    autocertificazione: 'Autocertificazione',
+    mandato: 'Mandato di collaborazione',
+    tabella_provvigionale: 'Tabella provvigionale',
+    appendice_mandato: 'Appendice al mandato',
+    provvigioni_supplementari: 'Provvigioni supplementari',
+    pog: 'POG — informazioni sul mercato di riferimento'
+  };
+  return noti[tipo] || 'Documento';
+}
+
+/* Gli stati sono quelli veri scritti da firmaCollab.js. Ognuno dice anche cosa
+   deve fare la persona che legge: uno stato che non si traduce in un'azione e'
+   una parola che non serve a niente. */
+function mieDocsStato(stato) {
+  var mappa = {
+    inviata: {
+      etichetta: 'Da firmare',
+      colore: 'var(--amb,#b8860b)', sfondo: 'var(--amb-bg,#fff5e0)',
+      spiega: 'Il link per firmarlo è nell\'email che ti abbiamo mandato: la firma richiede un codice usa e getta, e per sicurezza da qui non si può rigenerare. Non la trovi? Chiedila all\'agenzia.'
+    },
+    firmata_collab: {
+      etichetta: 'Firmato da te · in attesa della controfirma',
+      colore: 'var(--blu-txt,#2a5db0)', sfondo: 'var(--blu-bg,#e6efff)',
+      spiega: 'Hai fatto la tua parte. Manca la firma dell\'agenzia.'
+    },
+    completata: {
+      etichetta: 'Firmato da entrambi',
+      colore: 'var(--grn,#1c9c4c)', sfondo: 'var(--grn-bg,#e6f7ec)',
+      spiega: ''
+    }
+  };
+  return mappa[stato] || { etichetta: stato || '—', colore: 'var(--txt2)', sfondo: 'var(--surf2)', spiega: '' };
+}
+
+function mieDocsData(v) {
+  if (!v) return '';
+  var d = new Date(v);
+  if (isNaN(d.getTime())) return String(v).slice(0, 10);
+  return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function schedaMioDocumento(f) {
+  var st = mieDocsStato(f.stato);
+  /* La versione non e' un vezzo: senza, fra un anno non si dimostra a quali
+     condizioni provvigionali si era firmato. Se c'e', si vede. */
+  var righe = [];
+  if (f.versione) righe.push('versione ' + esc(f.versione));
+  if (f.valido_dal) righe.push('valido dal ' + esc(mieDocsData(f.valido_dal)));
+  var date = [];
+  if (f.firmato_collab_il) date.push('Firmato da te il ' + esc(mieDocsData(f.firmato_collab_il)));
+  if (f.firmato_agente_il) date.push('Controfirmato il ' + esc(mieDocsData(f.firmato_agente_il)));
+  if (!date.length && f.creato_il) date.push('Ricevuto il ' + esc(mieDocsData(f.creato_il)));
+
+  return '<div style="background:var(--surf);border:.5px solid var(--bord2);border-left:3px solid ' + st.colore + ';border-radius:10px;padding:13px 15px;margin-bottom:10px;">' +
+    '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:200px;">' +
+        '<div style="font-size:14px;font-weight:700;">' + esc(mieDocsTitolo(f.tipo, f.titolo)) + '</div>' +
+        (righe.length ? '<div style="font-size:11.5px;color:var(--txt3);margin-top:2px;">' + righe.join(' · ') + '</div>' : '') +
+      '</div>' +
+      '<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;background:' + st.sfondo + ';color:' + st.colore + ';white-space:nowrap;">' + esc(st.etichetta) + '</span>' +
+    '</div>' +
+    (date.length ? '<div style="font-size:12px;color:var(--txt2);margin-top:7px;">' + date.join(' · ') + '</div>' : '') +
+    (st.spiega ? '<div style="font-size:12px;color:var(--txt2);margin-top:7px;line-height:1.5;background:var(--surf2);border-radius:7px;padding:8px 10px;">' + esc(st.spiega) + '</div>' : '') +
+    '<div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap;">' +
+      '<button onclick="apriMioDocumento(\'' + esc(f.id) + '\')" style="font-size:12px;padding:6px 13px;background:var(--acc);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:inherit;font-weight:600;">Apri il documento</button>' +
+      /* L'allegato caricato dall'agenzia, quando c'e': e' il PDF originale
+         (una tabella provvigionale, per esempio), non il testo della firma. */
+      (f.doc_url ? '<a href="' + esc(f.doc_url) + '" target="_blank" rel="noopener" style="font-size:12px;padding:6px 13px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:7px;text-decoration:none;font-family:inherit;">Allegato</a>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+/* Il documento si apre in una scheda nuova, ma il suo indirizzo non e'
+   apribile da solo: la richiesta porta l'accesso nell'intestazione, non nella
+   barra degli indirizzi. La scheda si apre PRIMA della chiamata, altrimenti il
+   browser la considera non voluta e la blocca. */
+async function apriMioDocumento(id) {
+  var scheda = window.open('', '_blank');
+  if (scheda) {
+    scheda.document.write('<!doctype html><meta charset="utf-8"><title>Documento</title>' +
+      '<body style="font-family:system-ui,sans-serif;color:#63736a;padding:40px;text-align:center">Carico il documento…</body>');
+  }
+  try {
+    var tok = await mailToken();
+    var r = await fetch(MAIL_API + '/firma-collab/mio/doc?id=' + encodeURIComponent(id), {
+      headers: { 'Authorization': 'Bearer ' + (tok || '') }
+    });
+    if (!r.ok) throw new Error(r.status === 404
+      ? 'Questo documento non risulta fra i tuoi.'
+      : 'Il server non risponde (' + r.status + ').');
+    var html = await r.text();
+    if (scheda) { scheda.document.open(); scheda.document.write(html); scheda.document.close(); }
+    else {
+      /* Scheda bloccata dal browser: si mostra dentro IAM invece di perdere
+         il documento con un messaggio che non spiega niente. */
+      var ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.55);display:flex;padding:20px;';
+      ov.innerHTML = '<div style="background:#fff;border-radius:12px;flex:1;display:flex;flex-direction:column;overflow:hidden;">' +
+        '<div style="padding:8px 12px;text-align:right;"><button style="font-size:12px;padding:5px 12px;border:none;border-radius:6px;cursor:pointer;">Chiudi</button></div>' +
+        '<iframe style="flex:1;border:0;"></iframe></div>';
+      ov.querySelector('button').onclick = function () { ov.remove(); };
+      document.body.appendChild(ov);
+      ov.querySelector('iframe').srcdoc = html;
+    }
+  } catch (e) {
+    if (scheda) scheda.close();
+    alert(e.message || 'Non riesco ad aprire il documento.');
+  }
+}
+
+async function caricaMieiDocumenti() {
+  var box = document.getElementById('miedocs-lista');
+  if (!box) return;
+  box.innerHTML = '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Caricamento…</div>';
+  if (!db) { box.innerHTML = '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Non risulta un collegamento al database.</div>'; return; }
+  var firme = [];
+  try {
+    var r = await db.rpc('iam_mie_firme');
+    if (r.error) throw r.error;
+    firme = r.data || [];
+  } catch (e) {
+    console.error('caricaMieiDocumenti:', e);
+    box.innerHTML = '<div style="color:var(--red,#c0392b);font-size:13px;text-align:center;padding:26px 0;">Non riesco a caricare i documenti. Riprova fra un minuto.</div>';
+    return;
+  }
+  if (!firme.length) {
+    /* Il vuoto non e' un guasto, e va detto: qui dentro non c'e' niente finche'
+       l'agenzia non manda il primo documento da firmare. */
+    box.innerHTML = '<div style="text-align:center;padding:34px 16px;color:var(--txt3);">' +
+      '<i class="ti ti-file-certificate" style="font-size:30px;display:block;margin-bottom:9px;opacity:.35;"></i>' +
+      '<div style="font-size:13.5px;color:var(--txt2);">Non hai ancora documenti.</div>' +
+      '<div style="font-size:12.5px;margin-top:5px;line-height:1.55;">Compariranno qui quando l\'agenzia te ne manderà uno da firmare — a partire dal mandato di collaborazione.</div>' +
+    '</div>';
+    return;
+  }
+  box.innerHTML = firme.map(schedaMioDocumento).join('');
 }
 
 function firmaDocUrl(f) {

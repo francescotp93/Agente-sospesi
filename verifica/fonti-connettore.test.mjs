@@ -84,6 +84,17 @@ prova('una cattura si apre, si scarica e si cancella dalla stessa schermata', ()
   return 'apri, scarica, elimina';
 });
 
+prova('la chiave per Giulia e\' di sola lettura, e si vede una volta sola', () => {
+  const f = fetta('async function connettoreChiaveLettura(', '\n}\n');
+  deve(f.length > 0, 'manca il pulsante «Chiave per Giulia»');
+  deve(/ruolo: 'lettura'/.test(f), 'chiede una chiave senza dire che e\' di lettura: il server ne darebbe una di deposito');
+  deve(/r\.ruolo !== 'lettura'/.test(f), 'non controlla che il server abbia risposto con una chiave di lettura');
+  deve(/WITHUS_CATTURE_CHIAVE/.test(f), 'non dice dove va messa la chiave');
+  deve(/confirm\(/.test(f), 'conia una chiave senza chiedere');
+  deve(!/localStorage|sessionStorage/.test(f), 'la chiave viene messa da parte nella pagina');
+  return 'lettura, mostrata una volta, con le istruzioni';
+});
+
 console.log('FONTI COMPAGNIE — il Connettore Chrome nel pannello');
 for (const [ok, n, d] of esiti) console.log(`  ${ok ? 'ok ' : 'X  '} ${n}${d ? ' — ' + d : ''}`);
 const ko = esiti.filter(e => !e[0]).length;

@@ -9337,9 +9337,16 @@ let FONTI = [], FONTI_FILTRO = 'tutte', FONTI_APERTA = null, FONTI_ULTIMO = 0, F
    Admin, si chiudeva, e non riprovava mai piu': restava l'estetica e non
    funzionava niente — senza un errore, perche' dal suo punto di vista non era
    successo niente di sbagliato. */
+/* CHI GESTISCE LE FONTI. Non piu' il solo Super Admin: «sblocca le funzioni
+   di fonti anche per l'account di lombardo.angelo955@gmail.com» (Francesco,
+   10/09/2026). Lo stesso elenco sta nel server (FONTI_STAFF in
+   server/fonti.js di QUOTE): se qui si apre e li' risponde 403 — o il
+   contrario — e' perche' i due elenchi non dicono la stessa cosa. */
+const FONTI_STAFF = ['lombardo.angelo955@gmail.com'];
 function fontiStatoAccesso() {
   if (!ME || !ME.email) return 'attesa';
-  return (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? 'si' : 'no';
+  if (typeof isSuperAdmin === 'function' && isSuperAdmin()) return 'si';
+  return FONTI_STAFF.includes(String(ME.email).toLowerCase()) ? 'si' : 'no';
 }
 function fontiPuoEntrare() { return fontiStatoAccesso() === 'si'; }
 
@@ -9436,7 +9443,7 @@ async function fontiCarica(forza) {
      entra nei portali. */
   const accesso = fontiStatoAccesso();
   if (accesso === 'no') {
-    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-lock"></i><b>Riservata al Super Admin</b>'
+    box.innerHTML = '<div class="f-vuoto"><i class="ti ti-lock"></i><b>Riservata a chi gestisce le fonti</b>'
       + '<span>Sei entrato come ' + esc(ME.email) + '.</span></div>';
     const sm = document.getElementById('f-somma'); if (sm) sm.innerHTML = '';
     return;

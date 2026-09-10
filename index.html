@@ -3025,6 +3025,13 @@ input[type=file]{display:none;}
 
   <section class="f-somma" id="f-somma"></section>
   <section id="f-diagnosi" style="display:none;margin-bottom:14px"></section>
+  <!-- CONNETTORE CHROME. L'estensione «With Us · Connettore» registra le
+       chiamate degli otto portali mentre l'agente fa un preventivo e le manda
+       qui da sola («mappa solo i domini che ci interessano e porta
+       automaticamente tutti i dati che ci servono» — Francesco, 10/09/2026).
+       Da questa sezione la si collega (le si da' la chiave con cui consegna) e
+       si leggono le catture arrivate. -->
+  <section id="f-connettore" class="f-card" style="margin-bottom:12px"></section>
 
   <section class="f-tools">
     <label class="f-cerca"><i class="ti ti-search"></i><input id="f-q" placeholder="Cerca compagnia" autocomplete="off" oninput="fontiDisegna()"></label>
@@ -9464,6 +9471,7 @@ async function fontiCarica(forza) {
     const d = await mailFetch('/fonti' + (forza ? '?forza=1' : ''));
     FONTI = (d && d.fonti) || [];
     fontiDisegna();
+    connettoreDisegna();
   } catch (e) {
     /* Un messaggio generico costringe ad aprire la console del browser per
        sapere se il motore e' spento, se la sessione e' scaduta o se e' un
@@ -9841,6 +9849,178 @@ async function fontiAttivaToggle(id, el) {
    cambiato la password sul portale e vuoi verificare subito che funzioni —
    che e' l'unico giorno in cui uno preme un pulsante che si chiama «Rifai
    l'accesso». (Francesco, 09/09/2026) */
+/* ══ CONNETTORE CHROME ═══════════════════════════════════════════════════════
+   L'estensione vive nel browser di chi guarda questa pagina, non sul server:
+   quindi si parla con lei con window.postMessage (il suo ponte gira su
+   *.withusassicurazioni.it) e con il server per le catture arrivate.
+   «Collega l'estensione» chiede al server una chiave nuova e la consegna
+   all'estensione: da quel momento le catture partono da sole. */
+const CONN_PORTALI = { italiana: 'Italiana (Plurima)', hdi: 'HDI', allianz: 'Allianz', prima: 'Prima', groupama: 'Groupama', axa: 'AXA', sara: 'Sara Assicurazioni', '24h': '24H Assistance' };
+const CONN_ZIP = 'https://quoto.withusassicurazioni.it/prima-extension/withus-connettore.zip';
+let CONN = { aperta: null };
+
+function connettoreChiedi(action, data, ms) {
+  return new Promise((ok, no) => {
+    const reqId = 'wc' + Date.now() + Math.random().toString(36).slice(2, 6);
+    let fatto = false;
+    const h = (ev) => {
+      if (ev.source !== window || !ev.data || ev.data.__withusConnettore !== 'response' || ev.data.reqId !== reqId) return;
+      fatto = true; window.removeEventListener('message', h); ok(ev.data.result);
+    };
+    window.addEventListener('message', h);
+    try { window.postMessage({ __withusConnettore: 'request', reqId, action, data }, '*'); } catch (e) {}
+    setTimeout(() => { if (!fatto) { window.removeEventListener('message', h); no(new Error('estensione non rilevata')); } }, ms || 2500);
+  });
+}
+
+function connPill(testo, tipo) { return '<span style="display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin:0 6px 6px 0;background:' + (tipo === 'ok' ? 'var(--f-green-soft);color:var(--f-green-dark)' : tipo === 'warn' ? 'var(--f-amber-bg);color:var(--f-amber)' : tipo === 'no' ? 'var(--f-red-bg);color:var(--f-red)' : '#eff3f1;color:#5f6d66') + '">' + testo + '</span>'; }
+const connKb = (b) => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((b || 0) / 1024)) + ' KB';
+const connQuando = (iso) => { try { return new Date(iso).toLocaleString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (e) { return iso || ''; } };
+
+async function connettoreDisegna() {
+  const box = document.getElementById('f-connettore');
+  if (!box) return;
+  const [ext, server, lista] = await Promise.all([
+    connettoreChiedi('stato', null, 2500).catch(() => null),
+    mailFetch('/fonti/connettore').catch(() => null),
+    mailFetch('/fonti/connettore/catture').catch(() => null),
+  ]);
+  const catture = (lista && lista.catture) || [];
+  let pills = '';
+  if (!ext) pills += connPill('Estensione non rilevata in questo browser', 'no');
+  else {
+    pills += connPill('Estensione v' + esc(ext.versione) + ' rilevata', 'ok');
+    pills += ext.collegato ? connPill('Collegata a IAM', 'ok') : connPill('Non collegata: premi «Collega»', 'warn');
+    if (ext.rec && ext.rec.on) pills += connPill('Sta registrando ' + esc(CONN_PORTALI[ext.rec.portale] || ext.rec.portale) + ' · ' + (ext.rec.n || 0) + ' chiamate', 'warn');
+    if (ext.in_attesa && ext.in_attesa.length) pills += connPill(ext.in_attesa.length + ' cattur' + (ext.in_attesa.length === 1 ? 'a' : 'e') + ' in attesa nell\'estensione', 'warn');
+  }
+  if (server) pills += connPill((server.chiavi || []).length + ' browser collegat' + ((server.chiavi || []).length === 1 ? 'o' : 'i'), 'grigio');
+
+  let h = '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">'
+    + '<div><b style="font-size:14px"><i class="ti ti-puzzle"></i> Connettore Chrome</b>'
+    + '<div style="color:var(--f-muted);font-size:11.5px;margin:3px 0 8px;max-width:640px">Registra le chiamate degli otto portali (Italiana, HDI, Allianz, Prima, Groupama, AXA, Sara, 24H) mentre fai un preventivo e le porta qui da sola. Si accende dall\'icona dell\'estensione, con il caso scritto sopra.</div>'
+    + '<div>' + pills + '</div></div>'
+    + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    + '<a class="f-b" href="' + CONN_ZIP + '" download style="text-decoration:none"><i class="ti ti-download"></i> Scarica</a>'
+    + (ext ? '<button class="f-b pri" type="button" onclick="connettoreCollega(this)"><i class="ti ti-plug-connected"></i> ' + (ext.collegato ? 'Ricollega' : 'Collega l\'estensione') + '</button>' : '')
+    + (ext && ext.in_attesa && ext.in_attesa.length ? '<button class="f-b" type="button" onclick="connettoreRimanda(this)"><i class="ti ti-send"></i> Rimanda le catture in attesa</button>' : '')
+    + '</div></div>';
+  if (!ext) h += '<div style="font-size:11.5px;color:var(--f-muted);margin-top:6px">Non installata? Scarica lo zip, scompattalo in una cartella che resta, poi Chrome → chrome://extensions → Modalità sviluppatore → «Carica estensione non pacchettizzata». Poi ricarica questa pagina (F5) e premi «Collega».</div>';
+
+  h += '<div style="margin-top:12px;border-top:1px solid var(--f-line);padding-top:10px"><b style="font-size:12px">Catture arrivate</b> <span style="color:var(--f-muted);font-size:11px">· ' + catture.length + '</span>';
+  if (!catture.length) h += '<div style="color:var(--f-muted);font-size:11.5px;margin-top:4px">Ancora nessuna. La prima arriva quando premi «Ferma e manda a IAM» nell\'estensione.</div>';
+  else {
+    h += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px"><thead><tr style="color:var(--f-muted);font-size:10.5px;text-align:left"><th style="padding:4px 6px">Quando</th><th style="padding:4px 6px">Portale</th><th style="padding:4px 6px">Caso</th><th style="padding:4px 6px;text-align:right">Chiamate</th><th style="padding:4px 6px;text-align:right">Peso</th><th></th></tr></thead><tbody>';
+    for (const c of catture.slice(0, 30)) {
+      h += '<tr style="border-top:1px solid var(--f-line)' + (CONN.aperta === c.id ? ';background:var(--f-green-soft)' : '') + '">'
+        + '<td style="padding:6px;white-space:nowrap">' + esc(connQuando(c.quando)) + '</td>'
+        + '<td style="padding:6px;white-space:nowrap"><b>' + esc(CONN_PORTALI[c.portale] || c.portale) + '</b></td>'
+        + '<td style="padding:6px">' + esc(c.caso) + (c.fermata ? ' <span style="color:var(--f-amber)">· fermata: ' + esc(c.fermata) + '</span>' : '') + '</td>'
+        + '<td style="padding:6px;text-align:right">' + (c.n || 0) + '</td><td style="padding:6px;text-align:right;white-space:nowrap">' + connKb(c.byte) + '</td>'
+        + '<td style="padding:4px 6px;white-space:nowrap;text-align:right">'
+        + '<button class="f-b" style="height:28px;padding:0 9px;font-size:11px" type="button" onclick="connettoreApri(\'' + esc(c.id) + '\')"><i class="ti ti-eye"></i> Apri</button> '
+        + '<button class="f-b" style="height:28px;padding:0 9px;font-size:11px" type="button" onclick="connettoreScarica(\'' + esc(c.id) + '\')"><i class="ti ti-download"></i></button> '
+        + '<button class="f-b" style="height:28px;padding:0 9px;font-size:11px;color:var(--f-red)" type="button" onclick="connettoreElimina(\'' + esc(c.id) + '\')"><i class="ti ti-trash"></i></button>'
+        + '</td></tr>';
+    }
+    h += '</tbody></table>';
+  }
+  h += '</div><div id="f-conn-dettaglio"></div>';
+  box.innerHTML = h;
+  if (CONN.aperta) connettoreApri(CONN.aperta, true);
+}
+
+async function connettoreCollega(btn) {
+  const old = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Collego…'; }
+  try {
+    /* Un nome per riconoscere il browser nell'elenco delle chiavi. */
+    const ua = navigator.userAgent || '';
+    const nome = (/Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : 'Browser') + ' · ' + (/Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : '') + ' · ' + new Date().toLocaleDateString('it-IT');
+    const r = await mailFetch('/fonti/connettore/chiave', { method: 'POST', body: JSON.stringify({ nome }) });
+    if (!r || !r.chiave) throw new Error((r && r.error) || 'il server non ha dato una chiave');
+    const e = await connettoreChiedi('collega', { chiave: r.chiave, api: MAIL_API }, 4000);
+    if (!e || !e.ok) throw new Error((e && e.error) || 'l\'estensione non ha accettato la chiave');
+  } catch (err) {
+    alert('Non collegata: ' + (err.message || err));
+  }
+  if (btn) { btn.disabled = false; btn.innerHTML = old; }
+  connettoreDisegna();
+}
+
+async function connettoreRimanda(btn) {
+  if (btn) btn.disabled = true;
+  try { await connettoreChiedi('rimanda', null, 30000); } catch (e) { alert('Non rimandate: ' + (e.message || e)); }
+  connettoreDisegna();
+}
+
+/* La cattura aperta: una riga per chiamata, e cliccandola si vede cosa e'
+   partito e cosa e' tornato. E' la mappa del portale che prima si leggeva in
+   una textarea. */
+async function connettoreApri(id, silenzioso) {
+  const box = document.getElementById('f-conn-dettaglio');
+  if (!box) return;
+  CONN.aperta = id;
+  if (!silenzioso) box.innerHTML = '<div class="f-vuoto"><i class="ti ti-loader"></i>Apro la cattura…</div>';
+  let c = null;
+  try { c = await mailFetch('/fonti/connettore/catture/' + encodeURIComponent(id)); } catch (e) { box.innerHTML = '<div style="color:var(--f-red);font-size:12px;margin-top:8px">Non riesco a leggerla: ' + esc(e.message || e) + '</div>'; return; }
+  CONN.dati = c;
+  const chiamate = (c && c.chiamate) || [];
+  const durata = c.avvio && c.fine ? Math.round((c.fine - c.avvio) / 1000) + ' s' : '';
+  let h = '<div style="margin-top:12px;border-top:1px solid var(--f-line);padding-top:10px">'
+    + '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><div><b style="font-size:13px">' + esc(CONN_PORTALI[c.portale] || c.portale) + '</b> · ' + esc(c.caso) + '<div style="color:var(--f-muted);font-size:11px">' + esc(connQuando(c.quando)) + (durata ? ' · durata ' + durata : '') + ' · ' + chiamate.length + ' chiamate' + (c.versione_estensione ? ' · estensione v' + esc(c.versione_estensione) : '') + '</div></div>'
+    + '<button class="f-b" type="button" style="height:30px" onclick="CONN.aperta=null;document.getElementById(\'f-conn-dettaglio\').innerHTML=\'\';connettoreDisegna()"><i class="ti ti-x"></i> Chiudi</button></div>';
+  h += '<div style="max-height:520px;overflow:auto;margin-top:8px;border:1px solid var(--f-line);border-radius:8px"><table style="width:100%;border-collapse:collapse;font-size:11.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace"><tbody>';
+  chiamate.forEach((k, i) => {
+    let u = k.url || ''; let host = '', percorso = u;
+    try { const x = new URL(u); host = x.host; percorso = x.pathname + x.search; } catch (e) {}
+    const stato = k.stato == null ? '—' : k.stato;
+    const col = k.metodo === 'NAV' ? 'var(--f-muted)' : (k.stato >= 400 ? 'var(--f-red)' : k.stato >= 200 ? 'var(--f-green-dark)' : 'var(--f-amber)');
+    h += '<tr style="border-top:1px solid var(--f-line);cursor:pointer" onclick="connettoreRiga(' + i + ')">'
+      + '<td style="padding:5px 8px;color:var(--f-muted);white-space:nowrap">' + (k.t != null ? (k.t / 1000).toFixed(1) + 's' : '') + '</td>'
+      + '<td style="padding:5px 8px;font-weight:700;white-space:nowrap">' + esc(k.metodo || '') + '</td>'
+      + '<td style="padding:5px 8px;word-break:break-all"><span style="color:var(--f-muted)">' + esc(host) + '</span>' + esc(percorso.slice(0, 160)) + '</td>'
+      + '<td style="padding:5px 8px;color:' + col + ';font-weight:700;white-space:nowrap">' + esc(stato) + '</td>'
+      + '<td style="padding:5px 8px;color:var(--f-muted);white-space:nowrap">' + (k.ms != null ? k.ms + ' ms' : '') + '</td></tr>'
+      + '<tr id="f-conn-riga-' + i + '" style="display:none"><td colspan="5" style="padding:0 8px 10px"></td></tr>';
+  });
+  h += '</tbody></table></div></div>';
+  box.innerHTML = h;
+  if (!silenzioso) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function connettoreRiga(i) {
+  const tr = document.getElementById('f-conn-riga-' + i);
+  const k = CONN.dati && CONN.dati.chiamate && CONN.dati.chiamate[i];
+  if (!tr || !k) return;
+  if (tr.style.display !== 'none') { tr.style.display = 'none'; return; }
+  const bello = (t) => { const s = String(t == null ? '' : t); try { return JSON.stringify(JSON.parse(s), null, 2); } catch (e) { return s; } };
+  const pre = (titolo, testo) => '<div style="font-size:10.5px;color:var(--f-muted);margin:8px 0 3px;font-family:system-ui">' + titolo + '</div><pre style="margin:0;background:var(--f-ink,#1b2733);color:#e2e8f0;padding:8px;border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto;font-size:11px">' + esc(String(testo).slice(0, 12000)) + '</pre>';
+  const r = k.richiesta || {};
+  tr.firstChild.innerHTML = '<div style="font-family:system-ui;font-size:11.5px;word-break:break-all;margin-top:6px"><b>' + esc(k.metodo) + '</b> ' + esc(k.url) + (k.pagina ? '<div style="color:var(--f-muted)">dalla pagina ' + esc(k.pagina) + '</div>' : '') + '</div>'
+    + (Object.keys(r.intestazioni || {}).length ? pre('Intestazioni inviate (segreti mascherati)', Object.entries(r.intestazioni).map(([a, b]) => a + ': ' + b).join('\n')) : '')
+    + (r.corpo ? pre('Dati inviati', bello(r.corpo)) : '')
+    + pre('Risposta' + (k.tipo ? ' · ' + esc(k.tipo) : ''), k.risposta ? bello(k.risposta) : '(vuota)');
+  tr.style.display = '';
+}
+
+async function connettoreScarica(id) {
+  try {
+    const c = await mailFetch('/fonti/connettore/catture/' + encodeURIComponent(id));
+    const blob = new Blob([JSON.stringify(c, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = 'cattura-' + (c.portale || 'portale') + '-' + String(c.quando || '').slice(0, 16).replace(/[:T]/g, '-') + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) { alert('Non scaricata: ' + (e.message || e)); }
+}
+
+async function connettoreElimina(id) {
+  if (!confirm('Cancellare questa cattura? Non si recupera.')) return;
+  try { await mailFetch('/fonti/connettore/catture/' + encodeURIComponent(id), { method: 'DELETE' }); } catch (e) { alert('Non cancellata: ' + (e.message || e)); }
+  if (CONN.aperta === id) CONN.aperta = null;
+  connettoreDisegna();
+}
+
 async function fontiAccedi(id, rifai) {
   if (!fontiPuoEntrare()) return;
   FONTI_ATTESA[id] = { codice: false };

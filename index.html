@@ -3465,6 +3465,10 @@ async function onLogin(user) {
     }
     if (PROFILO) {
       applicaPermessi(PROFILO.ruolo);
+      /* Adesso PROFILO c'e', quindi la domanda «e' staff?» ha una risposta:
+         se non lo e', la copia di iam_team lasciata dai login precedenti se
+         ne va subito, senza aspettare che qualcuno apra una schermata. */
+      if (eStaffLocale() === false) scordaTeamLocale();
       mostraBadgeRuolo();
       await syncThemeFromDB();
     }
@@ -5612,8 +5616,43 @@ function mergeTeamFatture(list) {
   const store = loadFattureStore();
   return (list||[]).map(c => ({...c, fatture: store[String(c.id)] || c.fatture || []}));
 }
-function loadTeam() { try { TEAM = mergeTeamFatture(JSON.parse(localStorage.getItem('iam_team')||'[]')); } catch(e){ TEAM=[]; } }
-function saveTeam() { localStorage.setItem('iam_team', JSON.stringify(TEAM)); }
+/* ── LA COPIA CHE RESTA NEL BROWSER ───────────────────────────────────────
+   Chiudere le policy di iam_team (migrazione M0, 10/09/2026) toglie la
+   tabella dal database a chi non e' staff, ma non tocca quello che i login
+   precedenti hanno gia' lasciato in localStorage: IBAN, provvigioni e note
+   di tutta la rete, su un computer che non controlliamo. Nessuna policy
+   arriva li'. Ce la cancella solo il codice, ed e' quello che fa qui sotto.
+
+   `null` significa «non lo so ancora»: al primissimo avvio PROFILO puo'
+   non essere ancora arrivato, e in quel caso non si decide niente. Si
+   cancella solo quando si SA che l'utente non e' staff — altrimenti si
+   butterebbe via la copia di un amministratore proprio quando gli serve,
+   cioe' quando il database non risponde. */
+function eStaffLocale() {
+  /* Ogni dipendenza e' controllata prima di usarla: questa funzione viene
+     estratta e fatta girare da sola dalle prove, e in quel contesto PROFILO,
+     isSuperAdmin e canonRuolo possono non esserci. Se manca qualcosa la
+     risposta e' `null` — «non lo so» — e chi chiama non cancella niente. */
+  try {
+    if (typeof isSuperAdmin === 'function' && isSuperAdmin()) return true;
+    var p = (typeof PROFILO !== 'undefined') ? PROFILO : null;
+    var r = p && p.ruolo;
+    if (!r || typeof canonRuolo !== 'function') return null;
+    return canonRuolo(r) !== 'collaboratore';
+  } catch (e) { return null; }
+}
+function scordaTeamLocale() { try { localStorage.removeItem('iam_team'); } catch(e) {} }
+
+function loadTeam() {
+  if (eStaffLocale() === false) { scordaTeamLocale(); TEAM = []; return; }
+  try { TEAM = mergeTeamFatture(JSON.parse(localStorage.getItem('iam_team')||'[]')); } catch(e){ TEAM=[]; }
+}
+function saveTeam() {
+  /* Non basta cancellare una volta: senza questo, il primo salvataggio la
+     riscriverebbe identica. */
+  if (eStaffLocale() === false) { scordaTeamLocale(); return; }
+  localStorage.setItem('iam_team', JSON.stringify(TEAM));
+}
 
 async function loadTeamDB() {
   if (!db) { loadTeam(); return; }
@@ -8092,7 +8131,13 @@ const RUOLI = {
 const PERMESSI = {
   admin:         { carica:true,  dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:true },
   operatore:     { carica:false, dashboard:true, anomalie:true, sospesi:true, storico:true, conto:true, team:true, pipeline:true, lead:true, workdiary:true, performance:true, ai:true, utenti:true, modifica:false },
-  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:true, pipeline:true, lead:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
+  /* `team:false` dal 10/09/2026. iam_team porta IBAN, codici fiscali, tabelle
+     provvigionali, fatture e note interne di tutta la rete, e fino a oggi la
+     tabella era leggibile da chiunque avesse un accesso IAM (unica policy:
+     `auth.uid() IS NOT NULL`). Chiuse le policy allo staff, al collaboratore
+     quella schermata tornerebbe comunque vuota: meglio non mostrargliela
+     affatto, invece di lasciargli una pagina spoglia che sembra un guasto. */
+  collaboratore: { carica:false, dashboard:false,anomalie:false,sospesi:true, storico:false,conto:false,team:false, pipeline:true, lead:true, workdiary:true, performance:false,ai:true,utenti:false,modifica:true }
 };
 // Etichette leggibili delle sezioni controllabili (per il pannello permessi per-utente)
 const PERMESSI_LABELS = {

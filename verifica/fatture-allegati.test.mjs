@@ -33,6 +33,9 @@ import { sorgenteAttuale, sorgenteA, stanza, esiti, deve } from './banco.mjs';
 const NOMI = [
   'loadFattureStore', 'saveFattureStore', 'getFattureCollab', 'getFattureMerged',
   'mergeTeamFatture', 'loadTeam', 'saveTeam',
+  // Dal 10/09/2026 loadTeam/saveTeam passano da questa guardia prima di
+  // toccare localStorage: senza portarsela dentro, qui risulterebbe assente.
+  'eStaffLocale', 'scordaTeamLocale',
   'fatturaFileSalvabile', 'fatturaFilePerDB', 'nomeFileSicuro', 'chiaveCasuale',
   'caricaAllegatoFattura', 'apriAllegatoFattura',
   'loadFatturaFile', 'aggiungiFatturaCollab', 'persistFattureCollaboratore',

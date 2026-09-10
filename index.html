@@ -158,6 +158,38 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 /* Barra filtri Collaboratori (§2.3): stesso aspetto delle pillole già in uso
    sopra, così la sezione non sembra scritta da un'altra mano. */
 .tmf{padding:7px 11px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:20px;font-size:12px;color:var(--txt);font-family:inherit;max-width:100%;}
+/* Le sezioni di Operativa (§2.6). Sotto la linea, non dentro un riquadro: sono
+   tre viste della stessa cosa, non tre pagine diverse. */
+.op-sez{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);font-size:13px;font-weight:600;padding:9px 14px;margin-bottom:-1px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px;}
+.op-sez:hover{color:var(--txt);}
+.op-sez-on{color:var(--acc);border-bottom-color:var(--acc);}
+.op-sez-nera.op-sez-on{color:#ff8080;border-bottom-color:#ff8080;}
+.op-badge{font-size:10.5px;font-weight:700;background:var(--surf2);color:var(--txt3);border-radius:9px;padding:1px 6px;min-width:18px;text-align:center;}
+.op-sez-on .op-badge{background:rgba(2,152,78,.16);color:var(--acc);}
+.op-sez-nera.op-sez-on .op-badge{background:rgba(220,50,50,.2);color:#ff8080;}
+/* Le schede di candidatura e black list */
+.cnd{background:var(--surf);border-radius:var(--r);margin:0 12px 12px;box-shadow:var(--shd);overflow:hidden;}
+.cnd-testa{padding:14px 16px;display:flex;align-items:flex-start;gap:12px;border-bottom:.5px solid var(--bord);}
+.cnd-ini{width:44px;height:44px;border-radius:50%;background:var(--acc);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
+.cnd-nera .cnd-ini{background:#8c3030;}
+.cnd-nome{font-size:15px;font-weight:700;}
+.cnd-sotto{font-size:11.5px;color:var(--txt3);margin-top:2px;}
+.cnd-corpo{padding:12px 16px;display:flex;flex-direction:column;gap:12px;}
+.cnd-griglia{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;}
+@media (max-width:520px){.cnd-griglia{grid-template-columns:1fr;}}
+.cnd-et{color:var(--txt3);font-size:10px;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;}
+.cnd-val{font-weight:500;word-break:break-word;}
+.cnd-cit{background:var(--surf2);border-left:2px solid var(--bord2);border-radius:0 6px 6px 0;padding:9px 12px;font-size:12px;color:var(--txt2);font-style:italic;}
+.cnd-tit{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt3);}
+.cnd-bt{font-size:11.5px;padding:6px 12px;border-radius:6px;cursor:pointer;font-family:inherit;border:.5px solid var(--bord2);background:var(--surf2);color:var(--txt2);}
+.cnd-bt:hover{color:var(--txt);}
+.cnd-bt-pieno{background:var(--acc);color:#fff;border-color:var(--acc);}
+.cnd-bt-nero{background:rgba(220,50,50,.18);color:#ff8080;border-color:rgba(220,50,50,.3);}
+.cnd-nota{background:var(--surf2);border-radius:6px;padding:8px 11px;font-size:12px;}
+.cnd-nota-chi{font-size:10.5px;color:var(--txt3);margin-top:3px;}
+.cnd-motivo{background:rgba(220,50,50,.1);border-left:2px solid rgba(220,50,50,.45);border-radius:0 6px 6px 0;padding:10px 13px;font-size:12.5px;}
+.cnd-scad{font-size:10.5px;color:var(--txt3);margin-top:5px;}
+.cnd-ta{width:100%;background:var(--surf2);border:.5px solid var(--bord2);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--txt);font-family:inherit;resize:vertical;min-height:56px;}
 .tmf:focus{outline:1px solid var(--acc);}
 
 /* ── METRICS ── */
@@ -1676,6 +1708,18 @@ input[type=file]{display:none;}
      troppo, e quella nascosta dentro la pagina la vedeva solo chi già sapeva
      che c'era. -->
 <div class="panel" id="panel-operativa">
+  <!-- §2.6 — Le sezioni di Operativa. «Collaboratori» e' quella di sempre e
+       non cambia; «Candidature» raccoglie chi arriva dal modulo pubblico
+       (quoto.withusassicurazioni.it/candidatura.html) e «Black list» chi non
+       va piu' ricontattato. Sono tre viste sulla STESSA tabella
+       quote_collaboratori, divise per stato: nessun elenco parallelo da
+       tenere d'accordo con gli altri. -->
+  <div id="op-sezioni" style="display:flex;gap:2px;padding:10px 12px 0;border-bottom:.5px solid var(--bord);flex-wrap:wrap;">
+    <button class="op-sez op-sez-on" data-sez="collab" onclick="opSezione('collab')">Collaboratori</button>
+    <button class="op-sez" data-sez="cand" onclick="opSezione('cand')">Candidature<span class="op-badge" id="op-n-cand">0</span></button>
+    <button class="op-sez op-sez-nera" data-sez="nera" onclick="opSezione('nera')">Black list<span class="op-badge" id="op-n-nera">0</span></button>
+  </div>
+
   <div id="op-pane-collab">
     <div style="padding:8px 12px 0;display:flex;gap:8px;align-items:center;">
       <input type="search" id="tm-search" placeholder="Cerca nome, cognome o ramo..." style="flex:1;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderTeam()">
@@ -1714,6 +1758,87 @@ input[type=file]{display:none;}
     <div id="tm-empty" class="empty"><i class="ti ti-users"></i><p>Nessun collaboratore.<br>Premi + per aggiungerne uno.</p></div>
     <div id="tm-list"></div>
     <div style="height:80px;"></div>
+  </div>
+
+  <!-- Candidature dal modulo pubblico -->
+  <div id="op-pane-cand" style="display:none;">
+    <div style="padding:10px 12px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <input type="search" id="cand-cerca" placeholder="Cerca nome, comune, RUI..." style="flex:1;min-width:150px;padding:9px 13px;background:var(--surf2);border:.5px solid var(--bord2);border-radius:22px;font-size:13px;color:var(--txt);font-family:inherit;" oninput="renderCandidature()">
+      <button onclick="apriGeneraLink()" style="padding:9px 14px;background:var(--acc);border:none;color:#fff;border-radius:22px;cursor:pointer;font-size:12.5px;font-weight:600;font-family:inherit;white-space:nowrap;"><i class="ti ti-link"></i> Genera link</button>
+    </div>
+    <div class="slbl">Candidature · <span id="cand-count">0</span></div>
+    <div id="cand-empty" class="empty"><i class="ti ti-user-plus"></i><p>Nessuna candidatura.<br>Genera un link e mandalo in giro.</p></div>
+    <div id="cand-list"></div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Black list -->
+  <div id="op-pane-nera" style="display:none;">
+    <div class="slbl">Black list · <span id="nera-count">0</span></div>
+    <div id="nera-empty" class="empty"><i class="ti ti-shield-off"></i><p>Nessuno in black list.</p></div>
+    <div id="nera-list"></div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Finestra: metti in black list -->
+  <div id="bl-modale" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--surf);border-radius:var(--r);max-width:480px;width:100%;box-shadow:var(--shd);overflow:hidden;">
+      <div style="padding:16px 18px 13px;border-bottom:.5px solid var(--bord);">
+        <div style="font-size:16px;font-weight:700;">Metti in black list</div>
+        <div style="font-size:12.5px;color:var(--txt3);margin-top:3px;" id="bl-chi">—</div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;">
+        <!-- L'avvertenza sta QUI perche' e' l'unico punto in cui il testo lo
+             scrive una persona e nessuno lo rilegge. La motivazione e' un dato
+             personale come gli altri: se l'interessato chiede cosa abbiamo su
+             di lui (art. 15 GDPR) gliela dobbiamo mostrare. -->
+        <div style="background:rgba(224,163,60,.12);border-left:2px solid #e0a33c;border-radius:0 6px 6px 0;padding:10px 13px;font-size:12px;color:var(--txt2);line-height:1.5;">
+          <b style="color:var(--txt);">Scrivi un fatto, non un giudizio.</b> La persona ha diritto di chiederci cosa abbiamo scritto su di lei, e dobbiamo mostrarglielo. «Non si è presentato a due appuntamenti fissati» si difende; «tipo poco serio» no.
+        </div>
+        <div>
+          <label for="bl-motivo" style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px;">Motivazione</label>
+          <textarea id="bl-motivo" class="cnd-ta" style="min-height:76px;" placeholder="Cosa è successo, e quando."></textarea>
+          <div id="bl-err" style="display:none;color:#ff8080;font-size:12px;font-weight:500;margin-top:5px;">Serve una motivazione di almeno quindici caratteri.</div>
+        </div>
+        <div>
+          <label for="bl-quando" style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px;">Da ricontrollare il</label>
+          <input type="date" id="bl-quando" class="tmf" style="border-radius:6px;">
+          <div style="font-size:10.5px;color:var(--txt3);margin-top:5px;">Una black list senza scadenza non si difende. Alla data si ridiscute o si cancella.</div>
+        </div>
+      </div>
+      <div style="padding:13px 18px;border-top:.5px solid var(--bord);display:flex;gap:8px;justify-content:flex-end;">
+        <button class="cnd-bt" onclick="chiudiBlackList()">Annulla</button>
+        <button class="cnd-bt cnd-bt-nero" onclick="confermaBlackList()">Metti in black list</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Finestra: genera il link della candidatura -->
+  <div id="gl-modale" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:var(--surf);border-radius:var(--r);max-width:520px;width:100%;box-shadow:var(--shd);overflow:hidden;">
+      <div style="padding:16px 18px 13px;border-bottom:.5px solid var(--bord);">
+        <div style="font-size:16px;font-weight:700;">Link per candidarsi</div>
+        <div style="font-size:12.5px;color:var(--txt3);margin-top:3px;">Chi lo apre lascia i recapiti e finisce lì: nessun accesso a IAM.</div>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <label for="gl-chi" style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px;">A nome di</label>
+          <select id="gl-chi" class="tmf" style="border-radius:6px;width:100%;" onchange="aggiornaLinkCandidatura()"></select>
+          <div style="font-size:10.5px;color:var(--txt3);margin-top:5px;">Il codice in coda al link non chiede niente a chi compila: serve a te, per sapere chi ha portato chi.</div>
+        </div>
+        <div>
+          <label for="gl-url" style="font-size:12.5px;font-weight:600;display:block;margin-bottom:5px;">Il link</label>
+          <input type="text" id="gl-url" readonly class="tmf" style="border-radius:6px;width:100%;font-size:12px;" onclick="this.select()">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="cnd-bt cnd-bt-pieno" id="gl-copia" onclick="copiaLinkCandidatura()">Copia</button>
+          <a class="cnd-bt" id="gl-whatsapp" target="_blank" rel="noopener" style="text-decoration:none;"><i class="ti ti-brand-whatsapp"></i> Manda su WhatsApp</a>
+        </div>
+      </div>
+      <div style="padding:13px 18px;border-top:.5px solid var(--bord);display:flex;justify-content:flex-end;">
+        <button class="cnd-bt" onclick="chiudiGeneraLink()">Chiudi</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4012,7 +4137,13 @@ function goTab(t) {
   /* I due elenchi arrivano da tabelle diverse e ognuno ridisegna appena c'è:
      se il registro dei lead è lento, gli attivi compaiono lo stesso invece di
      aspettarlo — e viceversa. */
-  if (t === 'operativa')   { renderTeam(); loadTeamDB().then(() => renderTeam()); loadCollabLeadDB().then(() => renderTeam()); }
+  if (t === 'operativa')   {
+    renderTeam(); contaSezioni();
+    loadTeamDB().then(() => renderTeam());
+    /* I contatori delle linguette si aggiornano appena l'elenco arriva: il
+       numero accanto a «Candidature» e' il motivo per cui uno ci clicca. */
+    loadCollabLeadDB().then(() => { renderTeam(); contaSezioni(); if (OP_SEZIONE !== 'collab') opSezione(OP_SEZIONE); });
+  }
   if (t === 'pipeline') {
     renderTratt();
     loadTrattDB().then(() => renderTratt());
@@ -5698,7 +5829,9 @@ async function loadCollabLeadDB() {
   if (!db) { COLLAB_LEAD = []; return; }
   try {
     const { data, error } = await db.from('quote_collaboratori')
-      .select('id,nome,cognome,email,telefono,citta,provincia,profilo,stato,portafoglio_stimato,lavora_con,cv_path,foto_path,contatto_il,iam_id')
+      .select('id,nome,cognome,email,telefono,citta,provincia,profilo,stato,portafoglio_stimato,lavora_con,cv_path,foto_path,contatto_il,iam_id,'
+            + 'fonte,messaggio,rui_sezione,rui_numero,privacy_versione,privacy_accettata_il,conservare_fino_al,'
+            + 'blacklist_motivo,blacklist_il,blacklist_ricontrollo')
       .order('cognome');
     if (error) throw error;
     COLLAB_LEAD = data || [];
@@ -6027,6 +6160,382 @@ async function aggiungiNotaLead(id) {
     if (inp) inp.value = '';
     await disegnaNoteLead(id);
   } catch (e) { alert('Nota non salvata: ' + (e.message || e)); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CANDIDATURE E BLACK LIST (§2.6)
+
+   Tre viste sulla STESSA tabella quote_collaboratori, divise per stato:
+   «Collaboratori» (attivi e lead, la sezione di sempre), «Candidature»
+   (stato 'candidato', chi arriva dal modulo pubblico) e «Black list»
+   (stato 'blacklist'). Nessun elenco parallelo da tenere d'accordo con gli
+   altri, e nessun secondo concetto di collaboratore.
+
+   Il modulo pubblico sta in QUOTO (candidatura.html) e scrive passando dal
+   backend, non con la chiave pubblica. Qui si legge e si decide.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const CAND_LINK_BASE = 'https://quoto.withusassicurazioni.it/candidatura.html';
+let OP_SEZIONE = 'collab';
+let CAND_NOTE = {};          // id collaboratore -> note gia' lette
+
+function opSezione(quale) {
+  OP_SEZIONE = quale;
+  document.querySelectorAll('.op-sez').forEach(b =>
+    b.classList.toggle('op-sez-on', b.dataset.sez === quale));
+  ['collab', 'cand', 'nera'].forEach(n => {
+    const p = document.getElementById('op-pane-' + n);
+    if (p) p.style.display = (n === quale) ? '' : 'none';
+  });
+  if (quale === 'cand') renderCandidature();
+  if (quale === 'nera') renderBlackList();
+}
+
+/* I contatori sulle linguette si aggiornano anche quando la sezione non e'
+   aperta: il numero accanto a «Candidature» e' il motivo per cui uno ci
+   clicca. */
+function contaSezioni() {
+  /* Ogni dipendenza controllata prima di usarla. Questa funzione la chiama
+     goTab, che le prove ritagliano e fanno girare da sola: li' COLLAB_LEAD
+     non esiste, ed e' giusto che non esista — non si trascina mezza pagina
+     dentro una stanza chiusa per contare due numeri. Senza elenco non si
+     conta niente e non si rompe niente. */
+  const elenco = (typeof COLLAB_LEAD !== 'undefined' && Array.isArray(COLLAB_LEAD)) ? COLLAB_LEAD : [];
+  const n = (stato) => elenco.filter(c => c.stato === stato).length;
+  const c = document.getElementById('op-n-cand');
+  const b = document.getElementById('op-n-nera');
+  if (c) c.textContent = n('candidato');
+  if (b) b.textContent = n('blacklist');
+}
+
+function candFiltrate(stato) {
+  const q = (document.getElementById('cand-cerca')?.value || '').trim().toLowerCase();
+  return (COLLAB_LEAD || [])
+    .filter(c => c.stato === stato)
+    .filter(c => !q || [c.nome, c.cognome, c.citta, c.provincia, c.rui_numero, c.email]
+      .some(v => String(v || '').toLowerCase().includes(q)))
+    .sort((a, b) => String(b.contatto_il || '').localeCompare(String(a.contatto_il || '')));
+}
+
+/* Dichiarazioni, non arrow assegnate a una costante: le prove ritagliano
+   dalla pagina cercando «function <nome>», e una const arrow non la trovano —
+   passerebbero su un contesto in cui la funzione non c'e', senza provare
+   niente. */
+function candIniziali(c) { return ((c.nome || '?')[0] + (c.cognome || '?')[0]).toUpperCase(); }
+function candNomeCompleto(c) { return [c.nome, c.cognome].filter(Boolean).join(' '); }
+
+function candSezioneRui(c) {
+  if (c.rui_sezione === 'E')     return 'Sezione E · ' + esc(c.rui_numero || '');
+  if (c.rui_sezione === 'altra') return 'Altra sezione · ' + esc(c.rui_numero || '');
+  return '<span style="color:#e0a33c">Non ancora iscritto</span>';
+}
+function candData(v) {
+  if (!v) return '—';
+  const d = new Date(v);
+  return isNaN(d) ? esc(v) : d.toLocaleDateString('it-IT');
+}
+function candCampo(et, val) {
+  return val ? `<div><div class="cnd-et">${esc(et)}</div><div class="cnd-val">${val}</div></div>` : '';
+}
+
+/* ── L'elenco delle candidature ─────────────────────────────────────────── */
+function renderCandidature() {
+  contaSezioni();
+  const lista = candFiltrate('candidato');
+  const cnt = document.getElementById('cand-count');
+  if (cnt) cnt.textContent = lista.length;
+  const vuoto = document.getElementById('cand-empty');
+  if (vuoto) vuoto.style.display = lista.length ? 'none' : 'block';
+  const box = document.getElementById('cand-list');
+  if (box) box.innerHTML = lista.map(schedaCandidatura).join('');
+  lista.forEach(c => caricaNoteCollab(c.id));
+}
+
+function schedaCandidatura(c) {
+  /* La fonte dice chi ha portato chi: dal modulo esce «sito» oppure
+     «sito:<codice>» quando il link era stato generato per qualcuno. */
+  const rif = String(c.fonte || '').startsWith('sito:') ? String(c.fonte).slice(5) : '';
+  return `<div class="cnd" id="cnd-${esc(c.id)}">
+    <div class="cnd-testa">
+      <div class="cnd-ini">${esc(candIniziali(c))}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="cnd-nome">${esc(candNomeCompleto(c))}</div>
+        <div class="cnd-sotto">${esc(c.citta || '')}${c.provincia ? ' (' + esc(c.provincia) + ')' : ''} · arrivata il ${candData(c.contatto_il)}</div>
+      </div>
+    </div>
+    <div class="cnd-corpo">
+      <div class="cnd-griglia">
+        ${candCampo('Email', esc(c.email || ''))}
+        ${candCampo('Telefono', esc(c.telefono || ''))}
+        ${candCampo('RUI', candSezioneRui(c))}
+        ${candCampo('Arrivata da', rif ? 'Link di ' + esc(rif) : 'Modulo pubblico')}
+      </div>
+      ${c.messaggio ? `<div class="cnd-cit">«${esc(c.messaggio)}»</div>` : ''}
+
+      <div>
+        <div class="cnd-tit" style="margin-bottom:6px;">Informativa privacy</div>
+        <div class="cnd-griglia">
+          ${candCampo('Presa visione', c.privacy_accettata_il ? candData(c.privacy_accettata_il) + ' · v. ' + esc(c.privacy_versione || '—') : '—')}
+          ${candCampo('Da cancellare entro', candData(c.conservare_fino_al))}
+        </div>
+      </div>
+
+      ${bloccoNoteCollab(c)}
+
+      <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        ${c.rui_numero
+          ? `<a class="cnd-bt cnd-bt-pieno" style="text-decoration:none;" target="_blank" rel="noopener"
+               href="https://servizi.ivass.it/RuirPubblica/">Verifica su IVASS</a>`
+          : `<button class="cnd-bt" disabled title="Non ha dichiarato un numero RUI">Verifica RUI</button>`}
+        <button class="cnd-bt" onclick="candCambiaStato('${esc(c.id)}','in_valutazione')">Segna «in valutazione»</button>
+        <button class="cnd-bt" onclick="candCambiaStato('${esc(c.id)}','scartato')">Scarta</button>
+        <button class="cnd-bt cnd-bt-nero" onclick="apriBlackList('${esc(c.id)}')">Black list</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--txt3);">Nessun accesso a IAM: questa scheda vive solo in <code>quote_collaboratori</code>. Le credenziali si aprono a mano, dopo il colloquio.</div>
+    </div>
+  </div>`;
+}
+
+/* ── La black list ──────────────────────────────────────────────────────── */
+function renderBlackList() {
+  contaSezioni();
+  const lista = candFiltrate('blacklist');
+  const cnt = document.getElementById('nera-count');
+  if (cnt) cnt.textContent = lista.length;
+  const vuoto = document.getElementById('nera-empty');
+  if (vuoto) vuoto.style.display = lista.length ? 'none' : 'block';
+  const box = document.getElementById('nera-list');
+  if (box) box.innerHTML = lista.map(schedaNera).join('');
+  lista.forEach(c => caricaNoteCollab(c.id));
+}
+
+function schedaNera(c) {
+  /* La data di ricontrollo si evidenzia quando e' passata: una black list
+     senza scadenza non si difende, e una scadenza che nessuno guarda e' come
+     non averla messa. */
+  const scaduta = c.blacklist_ricontrollo && new Date(c.blacklist_ricontrollo) < new Date();
+  return `<div class="cnd cnd-nera" id="cnd-${esc(c.id)}">
+    <div class="cnd-testa">
+      <div class="cnd-ini">${esc(candIniziali(c))}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="cnd-nome">${esc(candNomeCompleto(c))}</div>
+        <div class="cnd-sotto">${esc(c.citta || '')}${c.provincia ? ' (' + esc(c.provincia) + ')' : ''} · in black list dal ${candData(c.blacklist_il)}</div>
+      </div>
+    </div>
+    <div class="cnd-corpo">
+      <div class="cnd-motivo">
+        <div class="cnd-tit" style="color:#ff8080;margin-bottom:5px;">Perché è in black list</div>
+        ${esc(c.blacklist_motivo || '—')}
+        <div class="cnd-scad">Da ridiscutere entro il ${candData(c.blacklist_ricontrollo)}${scaduta ? ' — <b style="color:#e0a33c">è passata</b>' : ''}</div>
+      </div>
+      <div class="cnd-griglia">
+        ${candCampo('Email', esc(c.email || ''))}
+        ${candCampo('Telefono', esc(c.telefono || ''))}
+      </div>
+      ${bloccoNoteCollab(c)}
+      <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        <button class="cnd-bt" onclick="candTogliDaNera('${esc(c.id)}')">Togli dalla black list</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--txt3);">Se ricompila il modulo pubblico non nasce una seconda scheda: resta questa, e allo staff arriva l'avviso.</div>
+    </div>
+  </div>`;
+}
+
+/* ── Le note interne ────────────────────────────────────────────────────────
+   Stanno in quote_collaboratori_note, tabella che esisteva gia' e che il
+   collaboratore non vede mai: le policy sono di solo staff. */
+function bloccoNoteCollab(c) {
+  const note = CAND_NOTE[c.id];
+  const righe = note === undefined
+    ? '<div style="font-size:11.5px;color:var(--txt3);">Carico le note…</div>'
+    : (note.length
+        ? note.map(n => `<div class="cnd-nota">${esc(n.testo)}<div class="cnd-nota-chi">${esc(n.autore_nome || 'staff')} · ${candData(n.creato_il)}</div></div>`).join('')
+        : '<div style="font-size:11.5px;color:var(--txt3);">Ancora nessuna nota.</div>');
+  return `<div>
+    <div class="cnd-tit" style="margin-bottom:6px;">Note interne</div>
+    <div style="display:flex;flex-direction:column;gap:7px;" id="note-${esc(c.id)}">${righe}</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;">
+      <textarea class="cnd-ta" id="nuova-nota-${esc(c.id)}" placeholder="Cosa ci siamo detti, cosa resta da fare."></textarea>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <span style="font-size:10.5px;color:var(--txt3);"><i class="ti ti-lock" style="font-size:11px;vertical-align:-1px;"></i> Non la vede il collaboratore</span>
+        <button class="cnd-bt cnd-bt-pieno" onclick="salvaNotaCollab('${esc(c.id)}')">Aggiungi nota</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function caricaNoteCollab(id) {
+  if (!db || CAND_NOTE[id] !== undefined) return;
+  try {
+    const { data, error } = await db.from('quote_collaboratori_note')
+      .select('testo,autore_nome,creato_il')
+      .eq('collaboratore_id', id).order('creato_il', { ascending: false });
+    if (error) throw error;
+    CAND_NOTE[id] = data || [];
+  } catch (e) {
+    /* Una nota che non si carica non deve far sparire la scheda: si dice, e il
+       resto resta leggibile. */
+    console.warn('note collaboratore:', e.message || e);
+    CAND_NOTE[id] = [];
+  }
+  const box = document.getElementById('note-' + id);
+  if (box) {
+    box.innerHTML = CAND_NOTE[id].length
+      ? CAND_NOTE[id].map(n => `<div class="cnd-nota">${esc(n.testo)}<div class="cnd-nota-chi">${esc(n.autore_nome || 'staff')} · ${candData(n.creato_il)}</div></div>`).join('')
+      : '<div style="font-size:11.5px;color:var(--txt3);">Ancora nessuna nota.</div>';
+  }
+}
+
+async function salvaNotaCollab(id) {
+  const campo = document.getElementById('nuova-nota-' + id);
+  const testo = (campo?.value || '').trim();
+  if (!testo) { campo?.focus(); return; }
+  if (!db || !ME) return alert('Non risulti collegato: la nota non è stata salvata.');
+  try {
+    const { error } = await db.from('quote_collaboratori_note').insert({
+      collaboratore_id: id, testo,
+      autore_id: ME.id,
+      autore_nome: [PROFILO?.nome, PROFILO?.cognome].filter(Boolean).join(' ') || ME.email,
+    });
+    if (error) throw error;
+    campo.value = '';
+    delete CAND_NOTE[id];
+    await caricaNoteCollab(id);
+  } catch (e) {
+    alert('Non sono riuscito a salvare la nota: ' + (e.message || e));
+  }
+}
+
+/* ── Cambi di stato ─────────────────────────────────────────────────────── */
+async function candCambiaStato(id, stato) {
+  if (!db) return;
+  try {
+    const { error } = await db.from('quote_collaboratori').update({ stato }).eq('id', id);
+    if (error) throw error;
+    await loadCollabLeadDB();
+    renderCandidature(); renderTeam();
+  } catch (e) {
+    alert('Non sono riuscito a cambiare lo stato: ' + (e.message || e));
+  }
+}
+
+let NERA_ID = null;
+function apriBlackList(id) {
+  NERA_ID = id;
+  const c = (COLLAB_LEAD || []).find(x => x.id === id);
+  document.getElementById('bl-chi').textContent = c ? candNomeCompleto(c) : '';
+  document.getElementById('bl-motivo').value = '';
+  document.getElementById('bl-err').style.display = 'none';
+  /* Due anni: e' la stessa distanza della conservazione delle candidature, e
+     serve solo come proposta — la data si cambia. */
+  const fra2 = new Date(); fra2.setFullYear(fra2.getFullYear() + 2);
+  document.getElementById('bl-quando').value = fra2.toISOString().slice(0, 10);
+  const d = document.getElementById('bl-modale');
+  d.style.display = 'flex';
+  setTimeout(() => document.getElementById('bl-motivo').focus(), 40);
+}
+function chiudiBlackList() { document.getElementById('bl-modale').style.display = 'none'; NERA_ID = null; }
+
+async function confermaBlackList() {
+  const motivo = document.getElementById('bl-motivo').value.trim();
+  const quando = document.getElementById('bl-quando').value;
+  if (motivo.length < 15) {
+    document.getElementById('bl-err').style.display = 'block';
+    document.getElementById('bl-motivo').focus();
+    return;
+  }
+  if (!db || !NERA_ID) return;
+  try {
+    const { error } = await db.from('quote_collaboratori').update({
+      stato: 'blacklist',
+      blacklist_motivo: motivo,
+      blacklist_il: new Date().toISOString(),
+      blacklist_da: ME?.id || null,
+      blacklist_ricontrollo: quando || null,
+    }).eq('id', NERA_ID);
+    if (error) throw error;
+    chiudiBlackList();
+    await loadCollabLeadDB();
+    opSezione('nera');
+  } catch (e) {
+    alert('Non sono riuscito a metterlo in black list: ' + (e.message || e));
+  }
+}
+
+async function candTogliDaNera(id) {
+  const c = (COLLAB_LEAD || []).find(x => x.id === id);
+  if (!confirm('Togliere ' + candNomeCompleto(c) + ' dalla black list? Torna fra le candidature.')) return;
+  if (!db) return;
+  try {
+    /* Il motivo NON si cancella: diventa una nota. Chi riapre la scheda fra un
+       anno deve poter sapere che c'era stata una decisione e quale. */
+    if (c?.blacklist_motivo && ME) {
+      await db.from('quote_collaboratori_note').insert({
+        collaboratore_id: id,
+        testo: 'Tolto dalla black list. Motivo precedente: ' + c.blacklist_motivo,
+        autore_id: ME.id,
+        autore_nome: [PROFILO?.nome, PROFILO?.cognome].filter(Boolean).join(' ') || ME.email,
+      }).then(() => {}, () => {});
+    }
+    const { error } = await db.from('quote_collaboratori').update({
+      stato: 'candidato', blacklist_motivo: null, blacklist_il: null,
+      blacklist_da: null, blacklist_ricontrollo: null,
+    }).eq('id', id);
+    if (error) throw error;
+    delete CAND_NOTE[id];
+    await loadCollabLeadDB();
+    opSezione('cand');
+  } catch (e) {
+    alert('Non sono riuscito a toglierlo: ' + (e.message || e));
+  }
+}
+
+/* ── Il generatore di link ──────────────────────────────────────────────────
+   Il link non scade e non ha un token da verificare: una candidatura deve
+   poter arrivare sempre. Il codice in coda serve solo a sapere chi ha portato
+   chi, e finisce in `fonte`. */
+function slugRif(c) {
+  const base = String(c.cogn || c.cognome || c.nome || 'rete')
+    .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 18);
+  return base + '-' + String(c.id || '').replace(/[^a-z0-9]/gi, '').slice(0, 4);
+}
+
+function apriGeneraLink() {
+  const attivi = (typeof collabUnificati === 'function' ? collabUnificati() : [])
+    .filter(c => c.tipo === 'attivo').map(c => c.raw);
+  const opzioni = ['<option value="">Link generico (nessun riferimento)</option>']
+    .concat(attivi.map(c => `<option value="${esc(slugRif(c))}">${esc([c.nome, c.cogn].filter(Boolean).join(' '))}</option>`))
+    .join('');
+  document.getElementById('gl-chi').innerHTML = opzioni;
+  aggiornaLinkCandidatura();
+  document.getElementById('gl-modale').style.display = 'flex';
+}
+function chiudiGeneraLink() { document.getElementById('gl-modale').style.display = 'none'; }
+
+function aggiornaLinkCandidatura() {
+  const rif = document.getElementById('gl-chi').value;
+  const url = CAND_LINK_BASE + (rif ? '?r=' + encodeURIComponent(rif) : '');
+  document.getElementById('gl-url').value = url;
+  const wa = document.getElementById('gl-whatsapp');
+  if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent(
+    'Ciao, se ti va di collaborare con noi lascia i tuoi recapiti qui: ' + url);
+}
+
+async function copiaLinkCandidatura() {
+  const campo = document.getElementById('gl-url');
+  try {
+    await navigator.clipboard.writeText(campo.value);
+  } catch (e) {
+    /* Su http (non https) e su qualche browser da telefono la scrivania degli
+       appunti non c'e': si seleziona il testo, cosi' resta un modo per
+       prenderlo. */
+    campo.select();
+  }
+  const b = document.getElementById('gl-copia');
+  const prima = b.textContent;
+  b.textContent = 'Copiato';
+  setTimeout(() => { b.textContent = prima; }, 1600);
 }
 
 function renderTeam() {

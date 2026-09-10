@@ -9799,6 +9799,25 @@ let FONTI_ATTESA = {};
 const FONTI_PASSO_CODICE = /^(attesa_otp|attesa_codice)$/i;
 const FONTI_PASSI_ROTTI = ['error', 'errore', 'non_loggato', 'senza_credenziali', 'timeout_otp', 'totp_rifiutato'];
 
+/* IL RIAVVIO CHE SI TRAVESTE DA GUASTO. La VPS tira giu' `main` ogni minuto e,
+   se il rilascio tocca uno scraper, lo riavvia: chi stava facendo l'accesso
+   in quel momento se lo vede ammazzare a meta'. Lo stesso evento arriva al
+   pannello in due vesti, secondo il momento in cui lo coglie:
+   - alla bussata, come 404/405 (il motore non c'e' ancora);
+   - durante l'attesa, come errore crudo di Playwright — «page.waitForTimeout:
+     Target page, context or browser has been closed» (Francesco, 09/09/2026).
+   Il primo era gia' tradotto, il secondo no: usciva in rosso, in inglese, e
+   mandava a cercare un guasto sul portale che non c'era. Una regola sola per
+   tutte e due le vesti, cosi' non si puo' piu' tradurne una e scordare l'altra. */
+const FONTI_RIAVVIO_TESTO = 'Il motore si sta aggiornando: riprova fra un paio di minuti.';
+function fontiEraUnRiavvio(msg) {
+  const m = String(msg || '');
+  return /\b40[45]\b/.test(m)
+    || /has been closed/i.test(m)
+    || /Target (page|closed)/i.test(m)
+    || /browser (has been|was) (closed|disconnected)/i.test(m);
+}
+
 /* Interruttore «entra nelle quotazioni»: spegne una compagnia nel confronto
    preventivi senza toccarle le credenziali (utile quando un portale è rotto e
    la si vuole parcheggiare, es. Prima). Aggiorna subito lo stato sul server;
@@ -9833,8 +9852,7 @@ async function fontiAccedi(id, rifai) {
   } catch (e) {
     /* 404/405 vuol dire che il motore si sta aggiornando, non che l'accesso
        e' fallito: sono due cose diverse e chiedono due attese diverse. */
-    const m = String(e.message || '');
-    if (/404|405/.test(m)) { fontiEsito(id, 'Il motore si sta aggiornando: riprova fra un paio di minuti.', 'var(--f-amber)'); return; }
+    if (fontiEraUnRiavvio(e.message)) { fontiEsito(id, FONTI_RIAVVIO_TESTO, 'var(--f-amber)'); return; }
     /* Sugli altri errori NON ci si ferma: la bussata puo' andare in timeout
        mentre il login parte lo stesso in sottofondo. Si va a vedere. */
   }
@@ -9864,6 +9882,9 @@ async function fontiAspetta(id) {
       return;
     }
     if (FONTI_PASSI_ROTTI.includes(passo.toLowerCase())) {
+      /* Se l'accesso e' morto perche' il motore si e' riavviato, non e' il
+         portale a parlare e non e' rosso: e' ambra, e si riprova fra poco. */
+      if (fontiEraUnRiavvio(msg)) { fontiEsito(id, FONTI_RIAVVIO_TESTO, 'var(--f-amber)'); fontiCarica(true); return; }
       fontiEsito(id, 'Il portale: ' + (msg || 'accesso non riuscito.'), 'var(--f-red)');
       fontiCarica(true);
       return;

@@ -71,7 +71,14 @@ const SORGENTE = sorgenteAttuale();
    comportamento: sono quelle che si accorgono di una scorciatoia aggiunta
    domani, che nessuna prova sul risultato vedrebbe. */
 function blocco() {
-  const da = SORGENTE.indexOf('I MIEI DOCUMENTI — l\'area riservata del collaboratore');
+  /* Si aggancia al commento del BLOCCO JAVASCRIPT, non al testo «I MIEI
+     DOCUMENTI» e basta: quello compare anche nel markup del pannello, molto
+     piu' su, e indexOf prenderebbe quello — ritagliando mezza pagina invece
+     della sezione. Una prova che guarda piu' di quello che dice non sta
+     guardando: sta indovinando, e passa o cade per motivi che non c'entrano.
+     (Scoperto l'11/09/2026, quando M4 ha aggiunto un `team_id` a duemila
+     righe di distanza e questa prova e' diventata rossa.) */
+  const da = SORGENTE.indexOf('/* ═══ I MIEI DOCUMENTI');
   const a  = SORGENTE.indexOf('function firmaDocUrl(', da);
   deve(da > 0 && a > da, 'il blocco «I miei documenti» non si trova più in index.html');
   return SORGENTE.slice(da, a);

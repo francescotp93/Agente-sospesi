@@ -6730,6 +6730,12 @@ function selCardTab(collabId, tab) {
 }
 
 // ── Firma documenti collaboratore ───────────────────────────────────────────
+/* `pdf` dice se il documento e' un file caricato invece di uno generato.
+   `prodotto` lo chiede solo il POG: sotto IDD (Reg. Delegato UE 2017/2358)
+   l'obbligo e' PER PRODOTTO e PER VERSIONE, e un POG senza quelle due cose e'
+   una firma che fra un anno non si sa piu' a cosa si riferisse. Il backend lo
+   rifiuta comunque — qui si evita di far arrivare fin la' una spedizione che
+   sarebbe respinta. */
 const FIRMA_TIPI = [
   { value:'privacy_intermediario',     label:'Informativa Privacy Intermediario', pdf:false },
   { value:'autocertificazione',        label:'Autocertificazione',                pdf:false },
@@ -6737,6 +6743,7 @@ const FIRMA_TIPI = [
   { value:'tabella_provvigionale',     label:'Tabella provvigionale',             pdf:true  },
   { value:'appendice_mandato',         label:'Appendice al mandato',              pdf:true  },
   { value:'provvigioni_supplementari', label:'Provvigioni supplementari',         pdf:true  },
+  { value:'pog',                       label:'POG — mercato di riferimento',      pdf:true, prodotto:true },
 ];
 function firmaTipoInfo(v){ return FIRMA_TIPI.find(t=>t.value===v) || null; }
 
@@ -6767,6 +6774,24 @@ function apriInviaFirmaCollab(collabId) {
           <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Email destinatario</label>
           <input id="fc-email" type="email" value="${esc(c.email||'')}" placeholder="email@esempio.it" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;">
         </div>
+        <div id="fc-prodotto-wrap" style="display:none;">
+          <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Prodotto <span style="color:var(--red,#c0392b);">*</span></label>
+          <select id="fc-prodotto" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);">
+            <option value="">Caricamento…</option>
+          </select>
+          <div style="font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.45;">Il POG vale per un prodotto alla volta: quando la compagnia lo aggiorna, va rifirmato solo per quel prodotto.</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="flex:1;">
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Versione <span id="fc-versione-obb" style="color:var(--red,#c0392b);display:none;">*</span></label>
+            <input id="fc-versione" type="text" placeholder="es. 2026.1" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Valido dal</label>
+            <input id="fc-valido-dal" type="date" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;">
+          </div>
+        </div>
+        <div id="fc-versione-nota" style="font-size:11px;color:var(--txt3);margin-top:-6px;line-height:1.45;">Facoltativa, ma su una tabella provvigionale conta: senza, fra un anno non si dimostra a quali condizioni una provvigione era maturata.</div>
         <div id="fc-file-wrap" style="display:none;">
           <label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Carica PDF</label>
           <input id="fc-file" type="file" accept="application/pdf" style="width:100%;font-size:12px;color:var(--txt2);">
@@ -6785,6 +6810,47 @@ function onFirmaTipoChange() {
   const info = firmaTipoInfo(tipo);
   const wrap = document.getElementById('fc-file-wrap');
   if (wrap) wrap.style.display = (info && info.pdf) ? 'block' : 'none';
+  /* Il prodotto lo chiede solo il POG, e con lui la versione diventa
+     obbligatoria: sono le due cose senza cui un POG non si sa a cosa si
+     riferisca. Per gli altri documenti la versione resta facoltativa. */
+  const chiedeProdotto = !!(info && info.prodotto);
+  const pw = document.getElementById('fc-prodotto-wrap');
+  if (pw) pw.style.display = chiedeProdotto ? 'block' : 'none';
+  const stella = document.getElementById('fc-versione-obb');
+  if (stella) stella.style.display = chiedeProdotto ? 'inline' : 'none';
+  const nota = document.getElementById('fc-versione-nota');
+  if (nota) nota.textContent = chiedeProdotto
+    ? 'Obbligatoria: sotto IDD il POG vale per prodotto e per versione. È la versione del documento della compagnia, non una data.'
+    : 'Facoltativa, ma su una tabella provvigionale conta: senza, fra un anno non si dimostra a quali condizioni una provvigione era maturata.';
+  if (chiedeProdotto) caricaProdottiPog();
+}
+
+/* I prodotti si leggono una volta sola e restano: sono otto righe che non
+   cambiano durante una sessione, e rileggerle a ogni apertura della tendina
+   farebbe lampeggiare «Caricamento…» per niente. */
+let PROD_POG = null;
+async function caricaProdottiPog() {
+  const sel = document.getElementById('fc-prodotto');
+  if (!sel) return;
+  function riempi(elenco) {
+    sel.innerHTML = '<option value="">Scegli il prodotto…</option>' +
+      elenco.map(p => '<option value="' + esc(p.id) + '">' + esc(p.nome || p.codice || p.id) + '</option>').join('');
+  }
+  if (PROD_POG) { riempi(PROD_POG); return; }
+  if (!db) { sel.innerHTML = '<option value="">Nessun collegamento al database</option>'; return; }
+  try {
+    const { data, error } = await db.from('quote_prodotti_catalogo')
+      .select('id,nome,codice,ordine').eq('attivo', true).order('ordine');
+    if (error) throw error;
+    PROD_POG = data || [];
+    riempi(PROD_POG);
+  } catch (e) {
+    console.error('caricaProdottiPog:', e);
+    /* Senza l'elenco non si inventa un campo libero: un prodotto scritto a
+       mano non combacerebbe con nessuna riga del catalogo, e la catena delle
+       versioni si spezzerebbe senza che nessuno se ne accorga. */
+    sel.innerHTML = '<option value="">Non riesco a caricare i prodotti</option>';
+  }
 }
 
 function fcMsg(text, color) {
@@ -6802,6 +6868,19 @@ async function inviaFirmaCollab(collabId) {
   const btn   = document.getElementById('fc-send');
   if (!info) { fcMsg('Seleziona un tipo di documento.', 'var(--red,#c0392b)'); return; }
   if (!email || !/.+@.+\..+/.test(email)) { fcMsg('Inserisci un indirizzo email valido.', 'var(--red,#c0392b)'); return; }
+  /* Prodotto e versione: il backend rifiuta comunque un POG senza, ma dirlo
+     qui evita di far caricare un PDF e spedire una richiesta per ricevere un
+     errore. Il messaggio spiega il perche', non solo il cosa: chi lo legge
+     deve capire che non e' un campo in piu' per burocrazia. */
+  const prodottoId = (document.getElementById('fc-prodotto')?.value || '').trim();
+  const versione   = (document.getElementById('fc-versione')?.value || '').trim();
+  const validoDal  = (document.getElementById('fc-valido-dal')?.value || '').trim();
+  if (info.prodotto && !prodottoId) {
+    fcMsg('Scegli il prodotto: il POG vale per un prodotto alla volta.', 'var(--red,#c0392b)'); return;
+  }
+  if (info.prodotto && !versione) {
+    fcMsg('Scrivi la versione del POG: sotto IDD l\'obbligo è per prodotto e per versione, e senza non si saprebbe più a quale documento si riferisce questa firma.', 'var(--red,#c0392b)'); return;
+  }
   let docUrl = null;
   if (info.pdf) {
     const fileInput = document.getElementById('fc-file');
@@ -6827,7 +6906,15 @@ async function inviaFirmaCollab(collabId) {
   try {
     await mailFetch('/firma-collab/request', {
       method: 'POST',
-      body: JSON.stringify({ teamId: collabId, tipo, titolo: info.label, email, docUrl })
+      body: JSON.stringify({
+        teamId: collabId, tipo, titolo: info.label, email, docUrl,
+        /* Vuoti si mandano come niente, non come stringa vuota: in iam_firme
+           una colonna vuota e una colonna nulla si leggono diverse, e la prima
+           sembra un dato scritto male invece di un dato che non c'e'. */
+        versione: versione || null,
+        prodottoId: prodottoId || null,
+        validoDal: validoDal || null
+      })
     });
     const ov = document.getElementById('modal-firma-collab');
     if (ov) ov.remove();

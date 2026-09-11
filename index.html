@@ -1282,6 +1282,7 @@ input[type=file]{display:none;}
        amministratore, e ognuno vede solo i propri: il filtro non e' in questa
        pagina, e' iam_mie_firme() che gira nel database con auth.uid(). -->
   <button class="umenu-item" onclick="goTab('miedocs');document.getElementById('umenu').style.display='none';"><i class="ti ti-file-certificate" style="font-size:16px;color:var(--txt3);"></i> I miei documenti</button>
+  <button class="umenu-item" onclick="goTab('miaformazione');document.getElementById('umenu').style.display='none';"><i class="ti ti-school" style="font-size:16px;color:var(--txt3);"></i> La mia formazione</button>
   <button class="umenu-item" id="um-btn-utenti" onclick="goTab('utenti');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-shield-lock" style="font-size:16px;color:var(--txt3);"></i> Gestione utenti</button>
   <button class="umenu-item" id="um-btn-estratto" onclick="openEstrattoConto();document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-file-invoice" style="font-size:16px;color:var(--txt3);"></i> Estratto conto</button>
   <button class="umenu-item" id="um-btn-azienda" onclick="goTab('azienda');document.getElementById('umenu').style.display='none';" style="display:none;"><i class="ti ti-building" style="font-size:16px;color:var(--txt3);"></i> Azienda</button>
@@ -2008,6 +2009,24 @@ input[type=file]{display:none;}
       firmato con l'agenzia. Restano qui: non serve ritrovare l'email.
     </p>
     <div id="miedocs-lista"></div>
+  </div>
+</div>
+
+<!-- LA MIA FORMAZIONE — il registro dell'aggiornamento professionale (M3) -->
+<div class="panel" id="panel-miaformazione" style="overflow-y:auto;">
+  <div style="max-width:760px;margin:0 auto;padding:18px 12px 40px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h2 style="margin:0 0 4px;font-size:19px;font-weight:700;">La mia formazione</h2>
+        <p style="margin:0 0 18px;font-size:13px;color:var(--txt2);line-height:1.55;max-width:520px;">
+          Le ore di aggiornamento professionale, con il loro attestato. Le
+          registri tu; l'agenzia le verifica prima che facciano numero.
+        </p>
+      </div>
+      <button onclick="apriNuovaFormazione()" style="font-size:13px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;"><i class="ti ti-plus" style="font-size:13px;vertical-align:-1px;"></i> Aggiungi</button>
+    </div>
+    <div id="mform-saldo"></div>
+    <div id="mform-lista"></div>
   </div>
 </div>
 
@@ -2921,12 +2940,15 @@ input[type=file]{display:none;}
 
     <!-- TAB 3: DOCUMENTI & ALLEGATI -->
     <div id="mcp-doc" class="modal-body" style="display:none;">
-      <!-- Ore formazione -->
+      <!-- Ore formazione. Questa sezione era un elenco JSON dentro iam_team
+           ({anno, ore, files}) che scriveva solo lo staff: su 12 schede era
+           pieno ZERO volte, mai usato da nessuno. Da li' il collaboratore non
+           poteva caricare niente, non c'era l'attestato, e un'ora dichiarata
+           valeva quanto una verificata. Dal 11/09/2026 il registro vero e'
+           iam_formazione, e questa mostra QUELLO: due elenchi con lo stesso
+           nome sono peggio di uno solo. -->
       <div class="fsec">
-        <div class="fsec-title" style="display:flex;justify-content:space-between;align-items:center;">
-          <span><i class="ti ti-school" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:var(--acc);"></i>Ore formazione</span>
-          <button onclick="addAnno()" style="font-size:11px;padding:3px 10px;background:var(--acc);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">+ Anno</button>
-        </div>
+        <div class="fsec-title"><i class="ti ti-school" style="font-size:13px;vertical-align:-1px;margin-right:5px;color:var(--acc);"></i>Ore formazione</div>
         <div id="mc-anni"></div>
       </div>
       <div class="fsec"><div class="fsec-title">Documenti obbligatori</div>
@@ -4128,7 +4150,7 @@ function goTab(t) {
      privacy e l'accordo di segnalazione, e ha diritto di rileggerli (art. 15
      GDPR) senza doverli chiedere a qualcuno. E' anche il primo gradino del
      percorso: l'area riservata si apre prima di tutto il resto. */
-  if (eSegnalatore(PROFILO) && t !== 'profilo' && t !== 'miedocs') {
+  if (eSegnalatore(PROFILO) && t !== 'profilo' && t !== 'miedocs' && t !== 'miaformazione') {
     alert('Puoi segnalare un contatto, non consultare preventivi.\n\nPremi, garanzie, condizioni e preventivi sono riservati a un intermediario iscritto al RUI, che prenderà in carico la trattativa.');
     goTab('profilo');
     return;
@@ -4182,6 +4204,7 @@ function goTab(t) {
   /* Si ricarica a ogni apertura: una controfirma arrivata mezz'ora fa deve
      vedersi senza che nessuno ricarichi la pagina. */
   if (t === 'miedocs')     { caricaMieiDocumenti(); }
+  if (t === 'miaformazione') { caricaMiaFormazione(); }
   if (t === 'performance') { mostraResiduiKPI(); selPerfTab(PERF_CUR || 'gare'); loadREFromDB(); }
   if (t === 'azienda')     { loadAzienda(); }
   if (t === 'dashboard') { loadTickets(); caricaDaFareOggi(); }   // Blocco B
@@ -6673,11 +6696,7 @@ function renderTeam() {
 
       <!-- TAB: Documenti -->
       <div id="cb-${c.id}-doc" style="padding:12px 14px;display:none;">
-        ${(c.anni||[]).length?`
-          <div style="margin-bottom:12px;">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);margin-bottom:6px;"><i class="ti ti-school" style="font-size:12px;vertical-align:-1px;margin-right:4px;color:var(--acc);"></i>Ore formazione</div>
-            <div style="display:flex;flex-wrap:wrap;gap:4px;">${c.anni.map(a=>`<span style="background:var(--blu-bg);color:var(--blu-txt);font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">${a.anno} · ${a.ore} ore</span>`).join('')}</div>
-          </div>`:''}
+        <div id="formaz-card-${c.id}" style="margin-bottom:12px;"></div>
         ${Object.keys(c.docs||{}).length ? `
           <div style="display:flex;flex-direction:column;gap:6px;">
             ${Object.entries(c.docs||{}).map(([k,d])=>{
@@ -6727,6 +6746,7 @@ function selCardTab(collabId, tab) {
     if (body) body.style.display = t===tab ? 'block' : 'none';
   });
   if (tab === 'firme') caricaFirmeCollab(collabId);
+  if (tab === 'doc') renderFormazioneCollab(collabId, 'formaz-card-' + collabId);
 }
 
 // ── Firma documenti collaboratore ───────────────────────────────────────────
@@ -6924,6 +6944,367 @@ async function inviaFirmaCollab(collabId) {
     console.error('inviaFirmaCollab:', e);
     fcMsg('Errore nell\'invio: ' + (e.message||e), 'var(--red,#c0392b)');
     if (btn) { btn.disabled = false; btn.textContent = 'Invia'; }
+  }
+}
+
+/* ═══ LA MIA FORMAZIONE — il registro dell'aggiornamento (M3, 11/09/2026) ════
+   Reg. IVASS 40/2018 chiede due cose diverse: 60 ore PRIMA dell'iscrizione al
+   RUI (art. 88, una volta) e 30 ore OGNI ANNO di aggiornamento (art. 89). Solo
+   le seconde fanno il conto annuale, ed e' il database a tenerle separate.
+
+   LA COSA CHE REGGE TUTTO: qui si DICHIARA, non si valida. Un registro dove
+   ognuno si timbra le proprie ore e' un foglio di autodichiarazioni, e davanti
+   a un'ispezione non vale niente. Non e' questa pagina a impedirlo — sarebbe
+   aggirabile con due righe dal browser — ma un trigger nel database: vedi
+   supabase/verifica/formazione-permessi.sql nel repository QUOTE.
+
+   Per questo le ore dichiarate e quelle validate si mostrano SEPARATE. Un
+   riquadro che le sommasse direbbe «30 su 30» a chi non ha ancora consegnato
+   un attestato: e' esattamente l'informazione che fa stare tranquilli
+   sbagliando. */
+
+const FORM_MODALITA = { aula: 'In aula', elearning: 'E-learning', webinar: 'Webinar', altro: 'Altro' };
+
+function formStato(stato) {
+  const m = {
+    dichiarata: { etichetta: 'In attesa di verifica', colore: 'var(--amb,#b8860b)', sfondo: 'var(--amb-bg,#fff5e0)' },
+    validata:   { etichetta: 'Verificata',            colore: 'var(--grn,#1c9c4c)', sfondo: 'var(--grn-bg,#e6f7ec)' },
+    respinta:   { etichetta: 'Respinta',              colore: 'var(--red,#c0392b)', sfondo: 'var(--red-bg,#fdecec)' },
+  };
+  return m[stato] || { etichetta: stato || '—', colore: 'var(--txt2)', sfondo: 'var(--surf2)' };
+}
+
+function formOre(n) {
+  const v = Number(n) || 0;
+  /* «12 ore», non «12.0 ore»: il decimale si scrive solo se c'e' davvero. */
+  return (Math.round(v * 10) / 10).toString().replace('.', ',');
+}
+
+function schedaSaldo(r) {
+  const rich = Number(r.ore_richieste) || 0;
+  const val  = Number(r.ore_validate) || 0;
+  const dic  = Number(r.ore_dichiarate) || 0;
+  const manca = Math.max(0, rich - val);
+  const pct = rich > 0 ? Math.min(100, (val / rich) * 100) : 0;
+  const pctDic = rich > 0 ? Math.min(100 - pct, (dic / rich) * 100) : 0;
+  return '<div style="background:var(--surf);border:.5px solid var(--bord2);border-radius:10px;padding:14px 16px;margin-bottom:12px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">' +
+      '<div style="font-size:15px;font-weight:700;">' + esc(String(r.anno)) + '</div>' +
+      '<div style="font-size:12px;color:var(--txt2);">' + esc(formOre(val)) + ' di ' + esc(formOre(rich)) + ' ore verificate</div>' +
+    '</div>' +
+    '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--surf2);margin-top:9px;">' +
+      '<div style="width:' + pct + '%;background:var(--grn,#1c9c4c);"></div>' +
+      '<div style="width:' + pctDic + '%;background:var(--amb,#b8860b);opacity:.55;"></div>' +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--txt2);margin-top:8px;line-height:1.5;">' +
+      (manca > 0
+        ? 'Ti mancano <b>' + esc(formOre(manca)) + ' ore</b> verificate.' +
+          (dic > 0 ? ' Ne hai ' + esc(formOre(dic)) + ' in attesa che l\'agenzia le controlli: finché non lo fa, non fanno numero.' : '')
+        : 'Sei a posto per quest\'anno.') +
+    '</div>' +
+  '</div>';
+}
+
+function schedaFormazione(f) {
+  const st = formStato(f.stato);
+  const righe = [];
+  if (f.ente) righe.push(esc(f.ente));
+  if (f.modalita) righe.push(esc(FORM_MODALITA[f.modalita] || f.modalita));
+  if (f.svolto_dal) righe.push(esc(mieDocsData(f.svolto_dal)) + (f.svolto_al && f.svolto_al !== f.svolto_dal ? ' – ' + esc(mieDocsData(f.svolto_al)) : ''));
+  const iniziale = f.tipo === 'iniziale';
+  return '<div style="background:var(--surf);border:.5px solid var(--bord2);border-left:3px solid ' + st.colore + ';border-radius:10px;padding:12px 14px;margin-bottom:9px;">' +
+    '<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:180px;">' +
+        '<div style="font-size:14px;font-weight:700;">' + esc(f.titolo || 'Corso') + '</div>' +
+        (righe.length ? '<div style="font-size:11.5px;color:var(--txt3);margin-top:2px;">' + righe.join(' · ') + '</div>' : '') +
+      '</div>' +
+      '<div style="text-align:right;">' +
+        '<div style="font-size:15px;font-weight:700;">' + esc(formOre(f.ore)) + ' ore</div>' +
+        '<div style="font-size:11px;color:var(--txt3);">' + esc(String(f.anno)) + (iniziale ? ' · iniziale' : '') + '</div>' +
+      '</div>' +
+      '<span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:6px;background:' + st.sfondo + ';color:' + st.colore + ';white-space:nowrap;align-self:center;">' + esc(st.etichetta) + '</span>' +
+    '</div>' +
+    (iniziale ? '<div style="font-size:11.5px;color:var(--txt3);margin-top:6px;">Le 60 ore iniziali (art. 88) si fanno una volta sola: non entrano nel conto annuale.</div>' : '') +
+    (f.stato === 'respinta' && f.nota ? '<div style="font-size:12px;margin-top:8px;background:var(--red-bg,#fdecec);color:var(--red,#c0392b);border-radius:7px;padding:8px 10px;line-height:1.5;">' + esc(f.nota) + '</div>' : '') +
+    '<div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;">' +
+      (f.attestato_url
+        ? '<button onclick="apriAttestato(\'' + esc(f.attestato_url) + '\')" style="font-size:12px;padding:5px 12px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;font-family:inherit;">Attestato</button>'
+        : '<span style="font-size:11.5px;color:var(--amb,#b8860b);align-self:center;">Senza attestato l\'agenzia non può verificarle.</span>') +
+      /* Si cancella solo finche' nessuno l'ha guardata: dopo e' una traccia, e
+         il database rifiuta comunque. */
+      (f.stato === 'dichiarata' ? '<button onclick="eliminaFormazione(\'' + esc(f.id) + '\')" style="font-size:12px;padding:5px 12px;background:none;color:var(--txt3);border:.5px solid var(--bord2);border-radius:7px;cursor:pointer;font-family:inherit;">Elimina</button>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+/* L'attestato sta in un deposito CHIUSO: non ha un indirizzo pubblico e va
+   chiesto con il proprio accesso. L'indirizzo firmato che si ottiene dura
+   pochi minuti, ed e' il motivo per cui non lo si salva da nessuna parte. */
+async function apriAttestato(percorso) {
+  if (!db) return;
+  try {
+    const { data, error } = await db.storage.from('formazione').createSignedUrl(percorso, 300);
+    if (error) throw error;
+    window.open(data.signedUrl, '_blank', 'noopener');
+  } catch (e) {
+    console.error('apriAttestato:', e);
+    alert('Non riesco ad aprire l\'attestato.');
+  }
+}
+
+async function caricaMiaFormazione() {
+  const saldo = document.getElementById('mform-saldo');
+  const lista = document.getElementById('mform-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Caricamento…</div>';
+  if (saldo) saldo.innerHTML = '';
+  if (!db) { lista.innerHTML = '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Non risulta un collegamento al database.</div>'; return; }
+  try {
+    const [corsi, saldi] = await Promise.all([
+      db.from('iam_formazione').select('*').order('anno', { ascending: false }).order('creato_il', { ascending: false }),
+      db.rpc('iam_mia_formazione_saldo'),
+    ]);
+    if (corsi.error) throw corsi.error;
+    if (saldi.error) throw saldi.error;
+    if (saldo) saldo.innerHTML = (saldi.data || []).map(schedaSaldo).join('');
+    const righe = corsi.data || [];
+    lista.innerHTML = righe.length
+      ? righe.map(schedaFormazione).join('')
+      : '<div style="text-align:center;padding:34px 16px;color:var(--txt3);">' +
+        '<i class="ti ti-school" style="font-size:30px;display:block;margin-bottom:9px;opacity:.35;"></i>' +
+        '<div style="font-size:13.5px;color:var(--txt2);">Non hai ancora registrato nessun corso.</div>' +
+        '<div style="font-size:12.5px;margin-top:5px;line-height:1.55;">Aggiungi le ore che hai fatto e allega l\'attestato: l\'agenzia le verifica, e da lì fanno numero.</div>' +
+        '</div>';
+  } catch (e) {
+    console.error('caricaMiaFormazione:', e);
+    lista.innerHTML = '<div style="color:var(--red,#c0392b);font-size:13px;text-align:center;padding:26px 0;">Non riesco a caricare il registro. Riprova fra un minuto.</div>';
+  }
+}
+
+/* -- IL REGISTRO VISTO DALL'AGENZIA (M3) -----------------------------------
+   Stesse righe che il collaboratore vede nella sua area, piu' i due tasti che
+   lui non ha: Valida e Respingi. E' la meta' che rende il registro qualcosa
+   di piu' di un foglio di autodichiarazioni - senza qualcuno che guardi
+   l'attestato, "30 ore" vuol dire solo che qualcuno ha scritto 30.
+
+   Chi valida non lo decide questa pagina: il database rifiuta la validazione
+   a chi non e' staff, e il timbro "validata da" lo scrive lui. Anche se
+   domani qualcuno mostrasse questi tasti alla persona sbagliata, non
+   funzionerebbero. */
+async function renderFormazioneCollab(teamId, boxId) {
+  const box = document.getElementById(boxId);
+  if (!box) return;
+  box.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:8px 0;">Caricamento...</div>';
+  const attivo = (TEAM || []).find(x => x.id === teamId);
+  if (!attivo || !db) { box.innerHTML = ''; return; }
+  /* A chi appartengono le ore: si passa dalla scheda anagrafica, come fa gia'
+     il ponte delle firme, e in mancanza si ripiega sull'email. */
+  const scheda = typeof schedaAnagrafica === 'function' ? schedaAnagrafica(attivo) : null;
+  const utente = scheda && scheda.iam_id;
+  try {
+    let q = db.from('iam_formazione').select('*').order('anno', { ascending: false }).order('creato_il', { ascending: false });
+    q = utente ? q.eq('utente_id', utente) : q.eq('collab_id', (scheda && scheda.id) || ' ');
+    const { data, error } = await q;
+    if (error) throw error;
+    const righe = data || [];
+    if (!righe.length) {
+      box.innerHTML = '<div style="color:var(--txt3);font-size:12px;padding:10px 0;">' +
+        (utente ? 'Non ha ancora registrato nessun corso.'
+                : 'Nessun corso. Questa scheda non &egrave; collegata a un accesso IAM, quindi il registro resta vuoto finch&eacute; non lo &egrave;.') +
+        '</div>';
+      return;
+    }
+    const perAnno = {};
+    righe.forEach(function (r) {
+      if (r.tipo !== 'aggiornamento') return;
+      perAnno[r.anno] = perAnno[r.anno] || { val: 0, dic: 0 };
+      if (r.stato === 'validata') perAnno[r.anno].val += Number(r.ore) || 0;
+      if (r.stato === 'dichiarata') perAnno[r.anno].dic += Number(r.ore) || 0;
+    });
+    const sommario = Object.keys(perAnno).sort().reverse().map(function (a) {
+      const v = perAnno[a];
+      /* Le 30 ore sono l'art. 89. Il numero sta anche nel database
+         (iam_formazione_ore_richieste): se un giorno cambia, va cambiato li'
+         e qui - e questa nota e' il promemoria che i posti sono due. */
+      const manca = Math.max(0, 30 - v.val);
+      return '<span style="background:' + (manca > 0 ? 'var(--amb-bg,#fff5e0);color:var(--amb,#b8860b)' : 'var(--grn-bg,#e6f7ec);color:var(--grn,#1c9c4c)') +
+        ';font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;">' + esc(a) + ' · ' + esc(formOre(v.val)) + '/30' +
+        (v.dic > 0 ? ' (+' + esc(formOre(v.dic)) + ' da verificare)' : '') + '</span>';
+    }).join('');
+
+    box.innerHTML =
+      (sommario ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">' + sommario + '</div>' : '') +
+      righe.map(function (r) {
+        const st = formStato(r.stato);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surf2);border-left:3px solid ' + st.colore + ';border-radius:var(--rs);margin-bottom:5px;flex-wrap:wrap;">' +
+          '<div style="flex:1;min-width:150px;">' +
+            '<div style="font-size:12px;font-weight:600;">' + esc(r.titolo || 'Corso') + '</div>' +
+            '<div style="font-size:11px;color:var(--txt3);">' + esc(String(r.anno)) + ' · ' + esc(formOre(r.ore)) + ' ore' +
+              (r.ente ? ' · ' + esc(r.ente) : '') + (r.tipo === 'iniziale' ? ' · iniziale' : '') + '</div>' +
+          '</div>' +
+          '<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:' + st.sfondo + ';color:' + st.colore + ';">' + esc(st.etichetta) + '</span>' +
+          (r.attestato_url
+            ? '<button onclick="apriAttestato(\'' + esc(r.attestato_url) + '\')" style="font-size:11px;padding:3px 9px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Attestato</button>'
+            : '<span style="font-size:10.5px;color:var(--amb,#b8860b);">senza attestato</span>') +
+          (r.stato === 'dichiarata'
+            ? '<button onclick="giudicaFormazione(\'' + esc(r.id) + '\',\'validata\',\'' + esc(teamId) + '\',\'' + esc(boxId) + '\')" style="font-size:11px;padding:3px 9px;background:var(--grn,#1c9c4c);color:#fff;border:none;border-radius:5px;cursor:pointer;font-family:inherit;">Valida</button>' +
+              '<button onclick="giudicaFormazione(\'' + esc(r.id) + '\',\'respinta\',\'' + esc(teamId) + '\',\'' + esc(boxId) + '\')" style="font-size:11px;padding:3px 9px;background:none;color:var(--red,#c0392b);border:.5px solid var(--red,#c0392b);border-radius:5px;cursor:pointer;font-family:inherit;">Respingi</button>'
+            : '') +
+        '</div>';
+      }).join('');
+  } catch (e) {
+    console.error('renderFormazioneCollab:', e);
+    box.innerHTML = '<div style="color:var(--red,#c0392b);font-size:12px;padding:8px 0;">Non riesco a leggere il registro della formazione.</div>';
+  }
+}
+
+async function giudicaFormazione(id, stato, teamId, boxId) {
+  /* Respingere senza dire perche' lascia la persona a indovinare, e la
+     prossima volta ridichiara la stessa cosa. Il motivo e' obbligatorio. */
+  let nota = null;
+  if (stato === 'respinta') {
+    nota = prompt('Perché la respingi? Lo leggerà il collaboratore.');
+    if (nota === null) return;
+    if (String(nota).trim().length < 5) { alert('Scrivi il motivo: senza, il collaboratore ridichiarerà la stessa cosa.'); return; }
+  }
+  /* `validata_da` e `validata_il` non si mandano: li scrive il database, e
+     mandarli da qui non servirebbe comunque a niente. */
+  try {
+    const { error } = await db.from('iam_formazione')
+      .update({ stato: stato, nota: nota ? String(nota).trim() : null }).eq('id', id);
+    if (error) throw error;
+    renderFormazioneCollab(teamId, boxId);
+  } catch (e) {
+    console.error('giudicaFormazione:', e);
+    alert('Non riesco a salvare: ' + (e.message || e));
+  }
+}
+
+function campoForm(id, etichetta, tipo, extra) {
+  return '<div style="flex:1;min-width:120px;">' +
+    '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">' + etichetta + '</label>' +
+    '<input id="' + id + '" type="' + tipo + '" ' + (extra || '') +
+    ' style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;"></div>';
+}
+
+function apriNuovaFormazione() {
+  const vecchio = document.getElementById('modal-formazione');
+  if (vecchio) vecchio.remove();
+  const ov = document.createElement('div');
+  ov.id = 'modal-formazione';
+  ov.className = 'modal-ov';
+  const anno = new Date().getFullYear();
+  ov.innerHTML =
+    '<div style="background:var(--surf,#fff);border-radius:14px;width:480px;max-width:96vw;max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.3);">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:.5px solid var(--bord,#eee);">' +
+        '<div style="font-size:15px;font-weight:700;">Aggiungi formazione</div>' +
+        '<button onclick="document.getElementById(\'modal-formazione\').remove()" style="background:none;border:none;font-size:20px;color:var(--txt3);cursor:pointer;line-height:1;">&times;</button>' +
+      '</div>' +
+      '<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">' +
+        campoForm('nf-titolo', 'Titolo del corso *', 'text', 'placeholder="es. Aggiornamento IVASS — rami danni"') +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+          campoForm('nf-ore', 'Ore *', 'number', 'min="0.5" max="999" step="0.5" placeholder="30"') +
+          campoForm('nf-anno', 'Anno *', 'number', 'min="2000" max="2100" value="' + anno + '"') +
+        '</div>' +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+          '<div style="flex:1;min-width:120px;">' +
+            '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Tipo</label>' +
+            '<select id="nf-tipo" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);">' +
+              '<option value="aggiornamento">Aggiornamento annuale (art. 89)</option>' +
+              '<option value="iniziale">Formazione iniziale (art. 88)</option>' +
+            '</select></div>' +
+          '<div style="flex:1;min-width:120px;">' +
+            '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Modalità</label>' +
+            '<select id="nf-modalita" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);">' +
+              '<option value="">—</option>' +
+              Object.keys(FORM_MODALITA).map(function (k) { return '<option value="' + k + '">' + FORM_MODALITA[k] + '</option>'; }).join('') +
+            '</select></div>' +
+        '</div>' +
+        campoForm('nf-ente', 'Ente che l\'ha erogato', 'text', 'placeholder="es. IVASS, compagnia, ente accreditato"') +
+        '<div style="display:flex;gap:10px;flex-wrap:wrap;">' +
+          campoForm('nf-dal', 'Svolto dal', 'date', '') +
+          campoForm('nf-al', 'al', 'date', '') +
+        '</div>' +
+        '<div>' +
+          '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Attestato (PDF o immagine)</label>' +
+          '<input id="nf-file" type="file" accept=".pdf,.jpg,.jpeg,.png" style="width:100%;font-size:12px;color:var(--txt2);">' +
+          '<div style="font-size:11px;color:var(--txt3);margin-top:4px;line-height:1.45;">Senza attestato l\'agenzia non può verificare le ore, e finché non le verifica non fanno numero.</div>' +
+        '</div>' +
+        '<div id="nf-msg" style="font-size:12px;display:none;"></div>' +
+        '<button id="nf-salva" onclick="salvaNuovaFormazione()" style="margin-top:4px;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Registra</button>' +
+      '</div>' +
+    '</div>';
+  ov.addEventListener('click', function (ev) { if (ev.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+function nfMsg(testo, colore) {
+  const m = document.getElementById('nf-msg');
+  if (!m) return;
+  m.style.display = 'block';
+  m.style.color = colore || 'var(--txt2)';
+  m.textContent = testo;
+}
+
+async function salvaNuovaFormazione() {
+  const val = function (id) { const e = document.getElementById(id); return e ? String(e.value || '').trim() : ''; };
+  const titolo = val('nf-titolo');
+  const ore = parseFloat(val('nf-ore'));
+  const anno = parseInt(val('nf-anno'), 10);
+  if (!titolo) { nfMsg('Scrivi il titolo del corso.', 'var(--red,#c0392b)'); return; }
+  if (!(ore > 0)) { nfMsg('Quante ore erano?', 'var(--red,#c0392b)'); return; }
+  if (!(anno >= 2000 && anno <= 2100)) { nfMsg('Controlla l\'anno.', 'var(--red,#c0392b)'); return; }
+  const dal = val('nf-dal'), al = val('nf-al');
+  if (dal && al && al < dal) { nfMsg('La data di fine viene prima di quella d\'inizio.', 'var(--red,#c0392b)'); return; }
+
+  const btn = document.getElementById('nf-salva');
+  if (btn) { btn.disabled = true; btn.textContent = 'Registro…'; }
+  try {
+    const { data: sess } = await db.auth.getSession();
+    const mio = sess && sess.session && sess.session.user && sess.session.user.id;
+    if (!mio) throw new Error('sessione non disponibile');
+
+    /* L'attestato va nella PROPRIA cartella: e' cosi' che le regole del
+       deposito riconoscono che e' tuo. Il nome del file si ripulisce — un
+       apostrofo o uno spazio in un percorso di archivio fa danni silenziosi. */
+    let attestato = null;
+    const file = (document.getElementById('nf-file') || {}).files;
+    if (file && file[0]) {
+      const f = file[0];
+      if (f.size > 20 * 1024 * 1024) throw new Error('L\'attestato supera i 20 MB.');
+      const pulito = f.name.replace(/[^a-zA-Z0-9._-]/g, '-').slice(-80);
+      attestato = mio + '/' + Date.now() + '-' + pulito;
+      const { error } = await db.storage.from('formazione').upload(attestato, f, { upsert: false });
+      if (error) throw error;
+    }
+
+    const { error } = await db.from('iam_formazione').insert({
+      utente_id: mio, anno: anno, tipo: val('nf-tipo') || 'aggiornamento', ore: ore,
+      titolo: titolo, ente: val('nf-ente') || null, modalita: val('nf-modalita') || null,
+      svolto_dal: dal || null, svolto_al: al || null, attestato_url: attestato,
+      /* `stato` non si manda: lo mette il database, e non sarebbe comunque
+         accettato da qui. Chi dichiara non valida. */
+    });
+    if (error) throw error;
+    const ov = document.getElementById('modal-formazione');
+    if (ov) ov.remove();
+    caricaMiaFormazione();
+  } catch (e) {
+    console.error('salvaNuovaFormazione:', e);
+    nfMsg('Non riesco a registrarla: ' + (e.message || e), 'var(--red,#c0392b)');
+    if (btn) { btn.disabled = false; btn.textContent = 'Registra'; }
+  }
+}
+
+async function eliminaFormazione(id) {
+  if (!confirm('Eliminare questa registrazione?')) return;
+  try {
+    const { error } = await db.from('iam_formazione').delete().eq('id', id);
+    if (error) throw error;
+    caricaMiaFormazione();
+  } catch (e) {
+    console.error('eliminaFormazione:', e);
+    alert('Non riesco a eliminarla: ' + (e.message || e));
   }
 }
 
@@ -7204,7 +7585,7 @@ async function openCollabModal(id) {
   svNum('mc-port-attuale', c?.port_attuale||'');
   svNum('mc-retention',    c?.retention||'');
   TEAM_PROVV = (c?.provv||[]).map(p=>({...p}));
-  renderAnni(); renderProvv(); renderCollabDocs(); renderFattureCollab();
+  renderFormazioneCollab(TEAM_ID, 'mc-anni'); renderProvv(); renderCollabDocs(); renderFattureCollab();
   selCollabTab('ana');
   document.getElementById('modal-collab').classList.add('show');
   const comps = c?.compagnie || [];
@@ -7754,47 +8135,11 @@ function saveCollab() {
   });
 }
 
-function addAnno() {
-  const a = prompt('Anno di formazione:', new Date().getFullYear()); if (!a) return;
-  TEAM_ANNI.push({anno:a, ore:'', files:[]}); renderAnni();
-}
-
-function renderAnni() {
-  document.getElementById('mc-anni').innerHTML = TEAM_ANNI.length ? TEAM_ANNI.map((an,i)=>`
-    <div class="anno-box">
-      <div class="anno-hdr">
-        <div><div class="anno-name"><i class="ti ti-folder" style="font-size:13px;vertical-align:-2px;margin-right:5px;color:var(--acc);"></i>${an.anno}</div>
-        <div style="font-size:11px;color:var(--txt3);margin-top:2px;">${an.ore||0} ore · ${(an.files||[]).length} file</div></div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input type="number" value="${an.ore||''}" placeholder="ore" style="width:52px;padding:5px 7px;background:var(--surf);border:.5px solid var(--bord2);border-radius:6px;font-size:12px;color:var(--txt);text-align:center;" onchange="TEAM_ANNI[${i}].ore=this.value">
-          <label style="font-size:11px;padding:4px 8px;background:var(--blu-bg);color:var(--blu-txt);border-radius:6px;cursor:pointer;">
-            <i class="ti ti-upload" style="font-size:11px;vertical-align:-1px;"></i> File
-            <input type="file" style="display:none;" multiple onchange="addFormazFile(${i},this)">
-          </label>
-          <button onclick="TEAM_ANNI.splice(${i},1);renderAnni()" style="background:none;border:none;cursor:pointer;color:var(--txt3);font-size:15px;">✕</button>
-        </div>
-      </div>
-      ${(an.files||[]).length?`<div style="padding:0 12px 8px;">${(an.files||[]).map((f,fi)=>`
-        <div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:.5px solid var(--bord);font-size:12px;">
-          <i class="ti ti-file" style="font-size:12px;color:var(--txt3);flex-shrink:0;"></i>
-          <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${typeof f==='object'?f.nome:f}</span>
-          ${typeof f==='object'&&f.data?`<button onclick="openFile(TEAM_ANNI[${i}].files[${fi}])" style="font-size:10px;padding:2px 6px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;">Apri</button>`:''}
-          <button onclick="if(confirm('Eliminare questo file?')){TEAM_ANNI[${i}].files.splice(${fi},1);renderAnni();}" style="font-size:10px;padding:2px 6px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
-        </div>`).join('')}</div>`:''
-      }
-    </div>`).join('')
-    : '<div style="color:var(--txt3);font-size:13px;padding:4px 0;">Nessun anno aggiunto</div>';
-}
-
-function addFormazFile(idx, inp) {
-  const files = Array.from(inp.files);
-  files.forEach(file => {
-    const r = new FileReader();
-    r.onload = e => { TEAM_ANNI[idx].files.push({nome:file.name,tipo:file.type,data:e.target.result}); renderAnni(); };
-    r.readAsDataURL(file);
-  });
-}
-
+/* addAnno / renderAnni / addFormazFile sono state tolte il 11/09/2026
+   insieme all'elenco `anni` che disegnavano: il registro della formazione e'
+   iam_formazione, e si vede da renderFormazioneCollab(). La colonna `anni`
+   resta in caricamento e salvataggio perche' toglierla dal database e' una
+   decisione a parte — era comunque vuota su tutte e 12 le schede. */
 function openFile(f) {
   if (!f?.data) { alert('File non disponibile.'); return; }
   const a = document.createElement('a');

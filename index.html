@@ -1725,6 +1725,13 @@ input[type=file]{display:none;}
     <button class="op-sez op-sez-on" data-sez="collab" onclick="opSezione('collab')">Collaboratori</button>
     <button class="op-sez" data-sez="cand" onclick="opSezione('cand')">Candidature<span class="op-badge" id="op-n-cand">0</span></button>
     <button class="op-sez op-sez-nera" data-sez="nera" onclick="opSezione('nera')">Black list<span class="op-badge" id="op-n-nera">0</span></button>
+    <button class="op-sez" data-sez="regola" onclick="opSezione('regola')">In regola<span class="op-badge" id="op-n-regola">0</span></button>
+  </div>
+
+  <!-- IN REGOLA (M4) - chi e' pronto e cosa gli manca. Non sblocca niente da
+       solo: dice chi e' a posto, ad aprire i permessi resta una persona. -->
+  <div id="op-pane-regola" style="display:none;">
+    <div id="regola-lista" style="padding:12px;"></div>
   </div>
 
   <div id="op-pane-collab">
@@ -6233,12 +6240,13 @@ function opSezione(quale) {
   OP_SEZIONE = quale;
   document.querySelectorAll('.op-sez').forEach(b =>
     b.classList.toggle('op-sez-on', b.dataset.sez === quale));
-  ['collab', 'cand', 'nera'].forEach(n => {
+  ['collab', 'cand', 'nera', 'regola'].forEach(n => {
     const p = document.getElementById('op-pane-' + n);
     if (p) p.style.display = (n === quale) ? '' : 'none';
   });
   if (quale === 'cand') renderCandidature();
   if (quale === 'nera') renderBlackList();
+  if (quale === 'regola') renderInRegola();
 }
 
 /* I contatori sulle linguette si aggiornano anche quando la sezione non e'
@@ -6944,6 +6952,190 @@ async function inviaFirmaCollab(collabId) {
     console.error('inviaFirmaCollab:', e);
     fcMsg('Errore nell\'invio: ' + (e.message||e), 'var(--red,#c0392b)');
     if (btn) { btn.disabled = false; btn.textContent = 'Invia'; }
+  }
+}
+
+/* -- IN REGOLA (M4, 11/09/2026) ---------------------------------------------
+   L'ultimo gradino del percorso: il collaboratore lascia i recapiti, l'agenzia
+   apre le credenziali, lui firma i documenti e registra le ore. Qui si guarda
+   il risultato.
+
+   NON SBLOCCA NIENTE DA SOLO, ED E' VOLUTO. Sarebbe comodo far scattare i
+   permessi quando le tre spunte diventano verdi. Sarebbe anche il modo di dare
+   il preventivatore a qualcuno perche' una data e' cambiata di notte, senza
+   che nessuno lo abbia deciso. Questa schermata dice CHI e' pronto; ad aprire
+   resta una persona, dalla scheda.
+
+   I GUAI VENGONO PRIMA DELLE TRE SPUNTE, e stanno in cima alla riga: finche'
+   due schede condividono un'email o un numero RUI, nessuna delle tre si puo'
+   risolvere - e sono guai veri, con un nome e un cognome, non controlli messi
+   li' per completezza. */
+
+const IVASS_RUI = 'https://servizi.ivass.it/RuirPubblica/';
+
+function spuntaRegola(ok, testo) {
+  const c = ok ? 'var(--grn,#1c9c4c)' : 'var(--txt3)';
+  const sfondo = ok ? 'var(--grn-bg,#e6f7ec)' : 'var(--surf2)';
+  return '<span style="font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;background:' + sfondo +
+    ';color:' + c + ';white-space:nowrap;">' + (ok ? '&#10003; ' : '') + esc(testo) + '</span>';
+}
+
+function rigaInRegola(r) {
+  const guai = r.guai || [];
+  const nome = ((r.cognome || '') + ' ' + (r.nome || '')).trim() || '(senza nome)';
+  const bordo = guai.length ? 'var(--red,#c0392b)' : (r.pronto ? 'var(--grn,#1c9c4c)' : 'var(--amb,#b8860b)');
+  return '<div style="background:var(--surf);border:.5px solid var(--bord2);border-left:3px solid ' + bordo +
+      ';border-radius:10px;padding:12px 14px;margin-bottom:9px;">' +
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' +
+      '<div style="flex:1;min-width:160px;">' +
+        '<div style="font-size:14px;font-weight:700;">' + esc(nome) +
+          (r.pronto ? ' <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;background:var(--grn,#1c9c4c);color:#fff;vertical-align:1px;">PRONTO</span>' : '') +
+        '</div>' +
+        '<div style="font-size:11.5px;color:var(--txt3);margin-top:2px;">' +
+          esc(r.rui || 'senza RUI') + (r.rui_sezione ? ' &middot; sez. ' + esc(r.rui_sezione) : '') +
+          (r.rui_verificato_il ? ' &middot; verificato il ' + esc(mieDocsData(r.rui_verificato_il)) : '') +
+        '</div>' +
+      '</div>' +
+      spuntaRegola(r.mandato_ok, 'Mandato') +
+      spuntaRegola(r.rui_ok, 'RUI sez. E') +
+      spuntaRegola(r.formazione_ok, 'Formazione ' + formOre(r.ore_validate) + '/' + formOre(r.ore_richieste)) +
+      '<button onclick="apriVerificaRui(\'' + esc(r.team_id) + '\')" style="font-size:11px;padding:4px 10px;background:var(--surf2);color:var(--txt2);border:.5px solid var(--bord2);border-radius:6px;cursor:pointer;font-family:inherit;white-space:nowrap;">Verifica RUI</button>' +
+    '</div>' +
+    (guai.length
+      ? '<div style="margin-top:9px;background:var(--red-bg,#fdecec);border-radius:7px;padding:8px 11px;">' +
+          guai.map(function (g) {
+            return '<div style="font-size:12px;color:var(--red,#c0392b);line-height:1.5;">&#9888; ' + esc(g) + '</div>';
+          }).join('') +
+        '</div>'
+      : '') +
+  '</div>';
+}
+
+async function renderInRegola() {
+  const box = document.getElementById('regola-lista');
+  if (!box) return;
+  box.innerHTML = '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Caricamento...</div>';
+  if (!db) { box.innerHTML = ''; return; }
+  try {
+    const { data, error } = await db.rpc('iam_collab_pronti');
+    if (error) throw error;
+    const righe = data || [];
+    REGOLA = righe;
+    /* Prima chi ha un guaio - e' quello su cui si puo' agire oggi - poi chi
+       non e' ancora pronto, e in fondo chi e' a posto: quella parte
+       dell'elenco non chiede niente a nessuno. */
+    righe.sort(function (a, b) {
+      const pa = (a.guai || []).length ? 0 : (a.pronto ? 2 : 1);
+      const pb = (b.guai || []).length ? 0 : (b.pronto ? 2 : 1);
+      if (pa !== pb) return pa - pb;
+      return String(a.cognome || '').localeCompare(String(b.cognome || ''));
+    });
+    const pronti = righe.filter(function (r) { return r.pronto; }).length;
+    const conGuai = righe.filter(function (r) { return (r.guai || []).length; }).length;
+    aggiornaBadgeRegola(conGuai);
+    box.innerHTML =
+      '<div style="background:var(--surf2);border-radius:10px;padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--txt2);line-height:1.55;">' +
+        '<b style="color:var(--txt);">' + pronti + ' su ' + righe.length + '</b> hanno mandato firmato, RUI sezione E verificato e formazione dell\'anno in regola.' +
+        (conGuai ? ' <b style="color:var(--red,#c0392b);">' + conGuai + '</b> hanno prima qualcosa da sistemare.' : '') +
+        '<div style="font-size:11.5px;color:var(--txt3);margin-top:6px;">Questa schermata non apre niente da sola: i permessi si danno dalla scheda, uno per uno.</div>' +
+      '</div>' +
+      (righe.length ? righe.map(rigaInRegola).join('')
+                    : '<div style="color:var(--txt3);font-size:13px;text-align:center;padding:26px 0;">Nessun collaboratore in elenco.</div>');
+  } catch (e) {
+    console.error('renderInRegola:', e);
+    box.innerHTML = '<div style="color:var(--red,#c0392b);font-size:13px;text-align:center;padding:26px 0;">Non riesco a leggere il quadro. Riprova fra un minuto.</div>';
+  }
+}
+
+let REGOLA = [];
+
+function aggiornaBadgeRegola(n) {
+  const b = document.getElementById('op-n-regola');
+  if (b) b.textContent = String(n || 0);
+}
+
+/* La verifica non e' una casella da spuntare: chi la fa deve essere andato sul
+   registro IVASS. Per questo il link c'e', il numero si mostra gia' copiabile,
+   e si chiede la SEZIONE invece di un si'/no - la sezione e' il dato da cui
+   dipende se quella persona puo' operare per conto nostro (art. 109 CAP). */
+function apriVerificaRui(teamId) {
+  const r = (REGOLA || []).find(function (x) { return x.team_id === teamId; });
+  if (!r) return;
+  const vecchio = document.getElementById('modal-rui');
+  if (vecchio) vecchio.remove();
+  const ov = document.createElement('div');
+  ov.id = 'modal-rui';
+  ov.className = 'modal-ov';
+  const nome = ((r.cognome || '') + ' ' + (r.nome || '')).trim();
+  ov.innerHTML =
+    '<div style="background:var(--surf,#fff);border-radius:14px;width:440px;max-width:96vw;max-height:92vh;overflow:auto;box-shadow:0 16px 50px rgba(0,0,0,.3);">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:.5px solid var(--bord,#eee);">' +
+        '<div style="font-size:15px;font-weight:700;">Verifica RUI</div>' +
+        '<button onclick="document.getElementById(\'modal-rui\').remove()" style="background:none;border:none;font-size:20px;color:var(--txt3);cursor:pointer;line-height:1;">&times;</button>' +
+      '</div>' +
+      '<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">' +
+        '<div style="font-size:13px;color:var(--txt2);">' + esc(nome) + '</div>' +
+        '<div style="background:var(--surf2);border-radius:9px;padding:11px 13px;">' +
+          '<div style="font-size:11px;color:var(--txt3);">Numero dichiarato</div>' +
+          '<div style="font-family:ui-monospace,monospace;font-size:16px;font-weight:700;letter-spacing:.04em;">' + esc(r.rui || '—') + '</div>' +
+          '<a href="' + IVASS_RUI + '" target="_blank" rel="noopener" style="font-size:12px;color:var(--acc);text-decoration:underline;">Cercalo sul registro IVASS &rarr;</a>' +
+        '</div>' +
+        '<div>' +
+          '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Cosa risulta sul registro</label>' +
+          '<select id="vr-sezione" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);">' +
+            '<option value="">Scegli...</option>' +
+            '<option value="E">Iscritto, sezione E</option>' +
+            '<option value="A">Iscritto, sezione A</option>' +
+            '<option value="B">Iscritto, sezione B</option>' +
+            '<option value="altra">Iscritto, altra sezione</option>' +
+            '<option value="no">Non risulta iscritto</option>' +
+          '</select>' +
+          '<div style="font-size:11px;color:var(--txt3);margin-top:5px;line-height:1.45;">Solo la sezione E pu&ograve; operare per conto dell\'agenzia (art. 109 CAP). La verifica vale un anno: dopo va rifatta, perch&eacute; un\'iscrizione si pu&ograve; cancellare.</div>' +
+        '</div>' +
+        '<div>' +
+          '<label style="display:block;font-size:11px;font-weight:600;color:var(--txt3);margin-bottom:4px;">Nota (facoltativa)</label>' +
+          '<input id="vr-nota" type="text" placeholder="es. numero corretto in E000664965" style="width:100%;padding:9px 10px;border:.5px solid var(--bord2,#ccc);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2,#fff);color:var(--txt);box-sizing:border-box;">' +
+        '</div>' +
+        '<div id="vr-msg" style="font-size:12px;display:none;color:var(--red,#c0392b);"></div>' +
+        '<button id="vr-salva" onclick="salvaVerificaRui(\'' + esc(teamId) + '\')" style="margin-top:4px;padding:11px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Registra la verifica</button>' +
+      '</div>' +
+    '</div>';
+  ov.addEventListener('click', function (ev) { if (ev.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+async function salvaVerificaRui(teamId) {
+  const sel = document.getElementById('vr-sezione');
+  const sez = sel ? String(sel.value || '') : '';
+  const msg = document.getElementById('vr-msg');
+  if (!sez) {
+    if (msg) { msg.style.display = 'block'; msg.textContent = 'Dì cosa risulta sul registro: senza, non è una verifica.'; }
+    return;
+  }
+  const nota = String((document.getElementById('vr-nota') || {}).value || '').trim();
+  const btn = document.getElementById('vr-salva');
+  if (btn) { btn.disabled = true; btn.textContent = 'Registro...'; }
+  try {
+    const { data: sess } = await db.auth.getSession();
+    const io = sess && sess.session && sess.session.user && sess.session.user.id;
+    /* Si scrive SEMPRE la data, anche quando l'esito e' negativo: «cercato il
+       tal giorno, non risulta iscritto» e' una verifica fatta, ed e' quella che
+       serve poter mostrare. Quello che cambia e' la sezione, ed e' la sezione
+       a decidere se e' a posto. */
+    const { error } = await db.from('iam_team').update({
+      rui_sezione: (sez === 'no' || sez === 'altra') ? sez : sez,
+      rui_verificato_il: new Date().toISOString().slice(0, 10),
+      rui_verificato_da: io || null,
+      rui_nota: nota || null,
+    }).eq('id', teamId);
+    if (error) throw error;
+    const ov = document.getElementById('modal-rui');
+    if (ov) ov.remove();
+    renderInRegola();
+  } catch (e) {
+    console.error('salvaVerificaRui:', e);
+    if (msg) { msg.style.display = 'block'; msg.textContent = 'Non riesco a salvare: ' + (e.message || e); }
+    if (btn) { btn.disabled = false; btn.textContent = 'Registra la verifica'; }
   }
 }
 

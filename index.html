@@ -9605,6 +9605,8 @@ async function renderUtenti() {
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        ${(canEdit || isSelf) && (!isSA || isSelf) ? `
+        <button onclick="apriDatiUtente('${u.id}')" title="Nome, cognome ed email di accesso" style="font-size:11px;padding:4px 10px;background:var(--surf3);color:var(--txt2);border:none;border-radius:6px;cursor:pointer;font-family:inherit;"><i class="ti ti-id"></i> Dati</button>` : ''}
         ${canEdit && !isSelf && !isSA ? `
         <button onclick="toggleSospendi('${u.id}',${u.attivo})" style="font-size:11px;padding:4px 10px;background:${u.attivo?'var(--amb-bg)':'var(--grn-bg)'};color:${u.attivo?'var(--amb-txt)':'var(--grn-txt)'};border:none;border-radius:6px;cursor:pointer;font-family:inherit;">${u.attivo?'Sospendi':'Riattiva'}</button>` : ''}
         ${(PROFILO?.ruolo==='admin' && !isSelf && !isSA) ? `<select class="ruolo-sel" onchange="setRuolo('${u.id}', this.value)" title="Ruolo utente">
@@ -9623,6 +9625,76 @@ async function renderUtenti() {
       </div>
     </div>`;
   }).join('');
+}
+
+/* ─── I DATI DI UN UTENTE — nome, cognome, email ───────────────────────────────
+   Nome e cognome di un utente non si potevano cambiare da nessuna parte: si
+   sceglievano alla creazione e restavano quelli. Un cognome sbagliato finiva
+   nell'elenco, nelle notifiche e — da oggi — sul preventivo del cliente.
+
+   L'EMAIL QUI NON SI CAMBIA, E IL MOTIVO NON E' PIGRIZIA.
+   In iam_utenti l'email e' una COPIA: quella vera, con cui si entra, sta in
+   auth.users e la puo' toccare solo una chiave di servizio, che nel browser
+   non c'e' e non ci deve stare. Cambiare la copia e basta sarebbe il peggiore
+   dei mondi: l'elenco mostrerebbe il nuovo indirizzo, la persona continuerebbe
+   a entrare con il vecchio, e il messaggio per rifare la password andrebbe
+   all'indirizzo vecchio. Sembrerebbe fatto e non lo sarebbe.
+   Finche' non c'e' una funzione di servizio che le cambi TUTTE E DUE insieme,
+   qui l'email si legge e non si tocca. */
+async function apriDatiUtente(uid) {
+  const u = (UTENTI_LISTA || []).find(x => x.id === uid);
+  if (!u) return;
+  const mio = uid === ME?.id;
+  const suo = (u.email || '').toLowerCase() === SUPER_ADMIN_EMAIL;
+  if (!(PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore' || mio)) return;
+  if (suo && !mio) return;   // la scheda del proprietario la tocca solo lui
+  let ov = document.getElementById('du-overlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'du-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(8,12,28,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.onclick = e => { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov);
+  }
+  const campo = 'width:100%;box-sizing:border-box;padding:9px 11px;border:.5px solid var(--bord2);border-radius:8px;font-family:inherit;font-size:13px;background:var(--surf2);color:var(--txt);';
+  ov.innerHTML = `<div style="background:var(--surf);border-radius:14px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:.5px solid var(--bord2);">
+      <div style="font-size:15px;font-weight:800;">Dati utente</div>
+      <button onclick="document.getElementById('du-overlay').remove()" style="background:var(--surf2);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--txt2);font-size:15px;">✕</button>
+    </div>
+    <div style="padding:16px 18px;">
+      <div style="margin-bottom:11px;"><label style="display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;">Nome</label>
+        <input id="du-nome" style="${campo}" value="${esc(u.nome || '')}"></div>
+      <div style="margin-bottom:11px;"><label style="display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;">Cognome</label>
+        <input id="du-cognome" style="${campo}" value="${esc(u.cognome || '')}"></div>
+      <div style="margin-bottom:6px;"><label style="display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;">Email di accesso</label>
+        <input id="du-email" style="${campo}opacity:.6;" value="${esc(u.email || '')}" disabled></div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:14px;">
+        L'email con cui si entra sta nell'anagrafe degli accessi, non qui: cambiarla solo in questa scheda
+        farebbe vedere il nuovo indirizzo e lascerebbe l'accesso — e il messaggio per rifare la password — sul vecchio.
+        Per cambiarla davvero serve una funzione di servizio: chiedila e si aggiunge.
+      </div>
+      <div id="du-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px;"></div>
+      <button onclick="salvaDatiUtente('${uid}')" style="width:100%;padding:10px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
+    </div>
+  </div>`;
+}
+
+async function salvaDatiUtente(uid) {
+  const err = document.getElementById('du-err');
+  const nome = (document.getElementById('du-nome')?.value || '').trim();
+  const cognome = (document.getElementById('du-cognome')?.value || '').trim();
+  /* Un utente senza nome diventa una riga vuota in elenco, e una firma vuota
+     sui documenti che lo citano. */
+  if (!nome && !cognome) { if (err) err.textContent = 'Serve almeno il nome o il cognome.'; return; }
+  try {
+    const { error } = await db.from('iam_utenti').update({ nome, cognome }).eq('id', uid);
+    if (error) throw error;
+    document.getElementById('du-overlay')?.remove();
+    await renderUtenti();
+  } catch (e) {
+    if (err) err.textContent = 'Non riesco a salvare: ' + (e.message || e);
+  }
 }
 
 // ─── MOVIMENTI DI UN UTENTE (Super Admin / Admin) ──────────────────────────────

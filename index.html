@@ -12634,6 +12634,19 @@ function abEsito(){
     + '<div id="ab-archivio" class="ab-avviso" style="margin-top:16px">'
     + '<i class="ti ti-loader-2"></i> Verifico se l\'analisi è stata archiviata…</div>'
 
+    /* IL FOGLIO. Sta alla fine perche' alla fine ci si arriva: il colloquio
+       e' finito, il cliente e' ancora seduto li' e vuole portarsi via
+       qualcosa. Il documento del motore (qui sopra) archivia sulla scheda e
+       questo no, ma esce anche quando il motore non risponde — cioe' oggi,
+       sempre. */
+    + '<div class="ab-nota" style="margin-top:16px">'
+    + '<i class="ti ti-printer"></i> <b>Stampa l\'analisi</b> — un foglio con la grafica With Us, '
+    + 'da consegnare o da tenere nel fascicolo. Le aree e i punteggi sono quelli che vedi qui sopra.'
+    + '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center">'
+    + '<button class="ab-b sm pri" type="button" id="ab-stampa-b" onclick="abStampa()">'
+    + '<i class="ti ti-file-download"></i> Stampa l\'analisi (PDF)</button>'
+    + '<span id="ab-stampa-stato" style="font-size:11px;color:var(--ab-ink3)"></span></div></div>'
+
     + '<div class="ab-q-az"><button class="ab-b" type="button" onclick="abVista(\'quest\')">'
     + '<i class="ti ti-arrow-left"></i> Torna alle risposte</button>'
     + '<button class="ab-b soft" type="button" onclick="abVista(\'console\')">Chiudi e torna alla ricerca</button></div>'
@@ -12693,6 +12706,482 @@ async function abApriReport(tipo){
     window.open(url, '_blank', 'noopener');
     setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
   } catch (e) { alert((e && e.message) || 'Non è stato possibile aprire il documento.'); }
+}
+
+/* ══════════ ANALISI DEI BISOGNI · IL FOGLIO STAMPATO ══════════════════════
+   Il report vero lo genera il motore (abChiudiSulMotore qui sopra). Il motore
+   pero' oggi non risponde, e finche' non risponde dalla schermata del
+   risultato non esce NIENTE: si finisce il questionario davanti al cliente e
+   sullo schermo resta «questa analisi non e' stata archiviata». Chi lavora in
+   agenzia da li' non ha piu' niente da lasciare in mano a nessuno.
+
+   Questo foglio si disegna qui, con le risposte che sono gia' sullo schermo:
+   funziona col motore spento e continuera' a funzionare quando ci sara' — e
+   non lo sostituisce, perche' il motore archivia sulla scheda del cliente e
+   questo no. Lo dice anche il foglio, in calce.
+
+   COME E' DIVISO, E PERCHE' — e' lo stesso taglio del preventivo
+   personalizzato in QUOTO, per la stessa ragione:
+     · abDocumento()  decide COSA c'e' scritto — si prova senza aprire un PDF;
+     · abPdfBlob()    decide COM'E' disegnato.
+   Se un'area esce col colore giusto ma senza lo stato scritto a parole, il
+   danno e' identico su qualunque impaginazione.
+
+   GRAFICA: la stessa del preventivo personalizzato, e non per somiglianza —
+   sono gli stessi numeri. Verde #02984e, fascia scura coi due cerchi
+   astratti, schede bianche bordate: template premium With Us
+   (docs/analisi-bisogni/assets) e token di withus-one-tokens.css. */
+
+const AB_DA_CONFERMARE = 'da confermare';
+
+/* Le avvertenze in calce. Sono le stesse parole che stanno sullo schermo del
+   risultato: un foglio che dicesse meno di quello che ha letto l'operatore
+   sarebbe un foglio che promette di piu'. */
+const AB_AVVERTENZE = 'Questa analisi indica quali aree meritano un confronto e perche\'. '
+  + 'Non e\' un preventivo, non e\' una raccomandazione personalizzata e non sostituisce '
+  + 'il colloquio con il consulente. I punteggi nascono dalle risposte raccolte oggi e '
+  + 'dalle regole in vigore al momento della stampa: cambiando le risposte cambia il risultato. '
+  + 'Nessuna copertura e\' attivata o modificata da questo documento.';
+
+function abDataIt(v) {
+  const s = String(v == null ? '' : v).trim();
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  return m ? (m[3] + '/' + m[2] + '/' + m[1]) : s;
+}
+
+/* I dati della societa' di intermediazione: quelli della sezione Azienda, non
+   una copia scritta qui dentro. Si tiene in memoria solo se e' COMPLETA —
+   altrimenti chi va a compilare il RUI torna qui e non cambia niente, che e'
+   esattamente il guasto gia' visto in QUOTO. */
+let AB_AZIENDA = null;
+async function abAzienda(force) {
+  const completa = AB_AZIENDA && String(AB_AZIENDA.rui_numero || '').trim();
+  if (completa && !force) return AB_AZIENDA;
+  try {
+    const { data } = await db.from('iam_azienda').select('dati').eq('id', 1).single();
+    AB_AZIENDA = (data && data.dati) || {};
+  } catch (e) { AB_AZIENDA = {}; }
+  return AB_AZIENDA;
+}
+
+/* L'iscrizione al RUI in una riga sola. Senza il numero non c'e' iscrizione da
+   scrivere: si marca «da confermare» e si finisce nell'elenco di cio' che
+   manca, invece di stampare una riga a meta' che sembra completa. */
+function abRuiTesto(sezione, numero, data, etichetta, mancanti) {
+  const n = String(numero == null ? '' : numero).trim();
+  if (!n) { if (etichetta && mancanti) mancanti.push(etichetta); return AB_DA_CONFERMARE; }
+  const sez = String(sezione == null ? '' : sezione).trim();
+  const dt = abDataIt(data);
+  return (sez ? 'sez. ' + sez + ' ' : '') + 'n. ' + n + (dt ? ' dal ' + dt : '');
+}
+
+/* ── IL CONTENUTO DEL DOCUMENTO ──────────────────────────────────────────────
+   Riceve la fotografia del rating e il contorno (azienda, consulente, i dati
+   dichiarati dal cliente) e torna quello che ci sara' scritto sopra. Niente
+   qui dentro tocca il disegno e niente va a cercare dati: cosi' si prova in un
+   colpo solo, senza rete e senza database. */
+function abDocumento(snapshot, ctx) {
+  ctx = ctx || {};
+  const az = ctx.azienda || {};
+  const cons = ctx.consulente || {};
+  const dati = ctx.dati || {};
+  const ana = dati.anagrafica || {};
+  const mancanti = [];
+  const oggi = ctx.quando ? new Date(ctx.quando) : new Date();
+
+  const nominativo = [ana.nome, ana.cognome].filter(Boolean).join(' ').trim();
+  const recapiti = [ana.email, ana.telefono].filter(Boolean);
+
+  const nec = (snapshot && snapshot.necessita) || [];
+  /* La principale e' la stessa che sceglie la schermata: la prima non grigia.
+     Ricalcolarla con una regola diversa vorrebbe dire stampare un documento
+     che contraddice lo schermo da cui e' uscito. */
+  const primo = nec.find(function (n) { return n.colore !== 'grigio'; }) || null;
+
+  const contatti = [az.tel, az.email, az.pec].filter(function (v) { return String(v || '').trim(); });
+
+  return {
+    titolo: 'ANALISI DEI BISOGNI',
+    data: oggi.toLocaleDateString('it-IT'),
+    azienda: {
+      ragioneSociale: String(az.rs || '').trim() || AB_DA_CONFERMARE,
+      sede: String(az.sede || '').trim() || AB_DA_CONFERMARE,
+      piva: String(az.piva || '').trim() || AB_DA_CONFERMARE,
+      rui: abRuiTesto(az.rui_sezione, az.rui_numero, az.rui_data, 'iscrizione RUI dell\'agenzia', mancanti),
+      contatti: contatti
+    },
+    consulente: {
+      nome: [cons.nome, cons.cognome].filter(Boolean).join(' ').trim() || AB_DA_CONFERMARE,
+      rui: abRuiTesto(null, cons.rui, null, 'iscrizione RUI del consulente', mancanti)
+    },
+    cliente: {
+      nominativo: nominativo || AB_DA_CONFERMARE,
+      identificativo: String(ana.cf || '').trim(),
+      nascita: abDataIt(ana.nascita),
+      recapiti: recapiti
+    },
+    /* Il numero grande in cima. Quando e' null NON diventa zero: un indice
+       assente e un indice pari a zero sono due notizie opposte, e su carta
+       non si distinguerebbero mai piu'. */
+    indice: (snapshot && snapshot.indiceComplessivo != null) ? String(snapshot.indiceComplessivo) : '—',
+    principale: primo ? {
+      etichetta: primo.etichetta, stato: primo.stato, colore: primo.colore,
+      prossimoPasso: primo.prossimoPasso, motivi: (primo.motivi || []).slice(0, 4)
+    } : null,
+    /* Senza una necessita' principale non si stampa un vuoto: si stampa la
+       ragione. «Non e' emerso niente» e «non abbiamo chiesto abbastanza» non
+       sono la stessa cosa, e il foglio non deve farle sembrare uguali. */
+    senzaPrincipale: 'Nessuna area emerge sulle altre: o le risposte raccolte non bastano ancora, '
+      + 'oppure non e\' emerso nulla che meriti la priorita\'. Non e\' un buon segno ne\' cattivo.',
+    aree: nec.map(function (a) {
+      /* I motivi della principale stanno gia' per esteso nel riquadro qui
+         sopra, sulla stessa facciata. Ristamparli identici venti righe piu'
+         giu' allunga il foglio di mezza pagina e non aggiunge una parola:
+         nella scheda dell'area resta il rimando. */
+      const gia = !!(primo && a.chiave === primo.chiave);
+      return {
+        etichetta: a.etichetta, stato: a.stato, colore: a.colore,
+        /* Un'area grigia non ha un punteggio basso: non ne ha uno. Stampare
+           «punteggio —» gli darebbe la forma di un numero mancante per caso,
+           quando invece lo stato accanto dice gia' tutto. */
+        punteggio: (a.colore === 'grigio' || a.punteggio == null) ? null : String(a.punteggio),
+        prossimoPasso: a.prossimoPasso,
+        motivi: gia ? [] : (a.motivi || []).slice(0, 3),
+        rimando: gia ? 'I motivi sono quelli elencati qui sopra.' : ''
+      };
+    }),
+    note: String(dati.note || '').trim(),
+    avvertenze: AB_AVVERTENZE,
+    /* Il motore archivia sulla scheda del cliente; questo foglio no. Dirlo
+       sul foglio e' l'unico modo perche' chi lo tiene in mano fra un mese
+       sappia che cosa ha in mano. */
+    archiviata: !!ctx.archiviata,
+    /* LA BANDA, E PERCHE' NON SI TOGLIE.
+       Il documento ufficiale dell'analisi lo produce il motore, dai dati che
+       ha in archivio. Questo lo compone il browser, dalle risposte che stanno
+       sullo schermo — e il browser e' un posto dove i dati si possono
+       cambiare. Senza una riga che lo dica, i due fogli sono
+       indistinguibili: stessa carta intestata, stesso RUI, stesso marchio, e
+       chi lo riceve non ha modo di sapere quale dei due ha in mano.
+       La banda non e' un avviso di cortesia: e' la cosa che tiene separati un
+       documento autorevole e una copia di lavoro. */
+    copiaDiLavoro: ctx.archiviata
+      ? 'COPIA DI LAVORO - il documento ufficiale e\' quello archiviato sulla scheda del cliente'
+      : 'COPIA DI LAVORO - questa analisi non risulta archiviata: non e\' un documento ufficiale',
+    versioni: 'Regole ' + ((snapshot && snapshot.versioneRegole) || '—')
+      + ' · questionario ' + ((snapshot && snapshot.versioneQuestionario) || '—'),
+    daConfermare: mancanti,
+    nomeFile: 'Analisi-bisogni-'
+      + ((nominativo || 'cliente').toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, ''))
+      + '-' + oggi.toISOString().slice(0, 10) + '.pdf'
+  };
+}
+
+/* ── jsPDF, caricato solo quando serve ────────────────────────────────────────
+   Non pesa su ogni apertura di IAM per una cosa che si usa quando si stampa. */
+let _abJsPdfPromise = null;
+async function abCaricaJsPdf() {
+  if (window.jspdf && window.jspdf.jsPDF) return window.jspdf.jsPDF;
+  if (!_abJsPdfPromise) {
+    _abJsPdfPromise = new Promise(function (ok, ko) {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+      s.onload = function () {
+        (window.jspdf && window.jspdf.jsPDF)
+          ? ok(window.jspdf.jsPDF) : ko(new Error('Generatore di PDF caricato ma non disponibile.'));
+      };
+      s.onerror = function () { ko(new Error('Non riesco a caricare il generatore di PDF: serve la rete.')); };
+      document.head.appendChild(s);
+    }).catch(function (e) { _abJsPdfPromise = null; throw e; });   // un errore non si ricorda per sempre
+  }
+  return _abJsPdfPromise;
+}
+
+/* Il marchio vero, non due lettere disegnate: il file sta nel repository. */
+let AB_LOGO = null;
+async function abLogo() {
+  if (AB_LOGO !== null) return AB_LOGO;
+  try {
+    const risp = await fetch('withus-logo-white.png');
+    if (!risp.ok) throw new Error('logo non raggiungibile');
+    const blob = await risp.blob();
+    AB_LOGO = await new Promise(function (ok, ko) {
+      const f = new FileReader();
+      f.onload = function () { ok(f.result); };
+      f.onerror = function () { ko(new Error('logo illeggibile')); };
+      f.readAsDataURL(blob);
+    });
+  } catch (e) { AB_LOGO = ''; }
+  return AB_LOGO;
+}
+
+/* ── IL DISEGNO ──────────────────────────────────────────────────────────────
+   Stessa tavolozza e stesse forme del preventivo personalizzato. */
+async function abPdfBlob(d) {
+  const jsPDF = await abCaricaJsPdf();
+  const logo = await abLogo();
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+  doc.setProperties({
+    title: 'Analisi dei bisogni - ' + d.cliente.nominativo, subject: 'Analisi dei bisogni',
+    author: d.azienda.ragioneSociale, keywords: 'analisi dei bisogni assicurativi'
+  });
+
+  const C = {
+    verde: [2, 152, 78], verdeVivo: [1, 192, 97], verdeScuro: [1, 107, 56],
+    verdeTenue: [234, 247, 240], scuro: [21, 33, 45], cerchio1: [14, 43, 28],
+    cerchio2: [17, 53, 36], testo: [31, 42, 55], testo2: [90, 107, 124],
+    bordo: [221, 227, 233], sfondo: [245, 247, 248],
+    bianco: [255, 255, 255], chiaro: [188, 205, 214], ambra: [176, 106, 0]
+  };
+  /* I quattro colori dell'indicatore, gli stessi della legenda sullo schermo.
+     Sul foglio pero' il colore non basta mai da solo: accanto a ogni pallino
+     c'e' sempre lo stato scritto a parole (specifica 08 §6). Stampato in
+     bianco e nero, o letto da chi non distingue rosso e verde, e' l'unica
+     cosa che resta. */
+  const STATO = {
+    rosso: [214, 58, 58], ambra: [201, 132, 0], blu: [45, 108, 223],
+    verde: [2, 152, 78], grigio: [139, 154, 169]
+  };
+  const tinta = function (c) { return STATO[c] || STATO.grigio; };
+
+  const pageW = 210, pageH = 297, margin = 16, contentW = 178;
+  /* Helvetica di jsPDF non ha i caratteri tipografici italiani, e le font
+     standard fanno SPARIRE il simbolo dell'euro senza dire niente. Qui gli
+     importi non ci sono, ma la regola resta la stessa del preventivo: le
+     sostituzioni si fanno, non si spera. */
+  const safe = function (v) {
+    return String(v == null ? '' : v)
+      .replace(/[’‘]/g, "'").replace(/[“”]/g, '"')
+      .replace(/[–—]/g, '-').replace(/…/g, '...')
+      .replace(/€\s*(?=\d)/g, 'EUR ')
+      .replace(/\s*€/g, ' EUR');
+  };
+  const setFill = function (a) { doc.setFillColor(a[0], a[1], a[2]); };
+  const setText = function (a) { doc.setTextColor(a[0], a[1], a[2]); };
+  const setDraw = function (a) { doc.setDrawColor(a[0], a[1], a[2]); };
+  const scrivi = function (v, x, y, size, style, color, maxW, leading) {
+    doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size || 9);
+    setText(color || C.testo);
+    const righe = maxW ? doc.splitTextToSize(safe(v), maxW) : [safe(v)];
+    doc.text(righe, x, y);
+    return y + righe.length * (leading || 4.4);
+  };
+  const scheda = function (x, y, w, h, fill, stroke, r) {
+    if (fill) setFill(fill);
+    if (stroke) { setDraw(stroke); doc.setLineWidth(.25); }
+    doc.roundedRect(x, y, w, h, r || 3, r || 3, stroke ? (fill ? 'FD' : 'S') : 'F');
+  };
+  const altezzaRighe = function (v, size, maxW, leading) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(size);
+    return doc.splitTextToSize(safe(v), maxW).length * leading;
+  };
+
+  // ── fascia scura con i cerchi astratti: la firma grafica del marchio ──
+  const fascia = function (alta) {
+    setFill(C.sfondo); doc.rect(0, 0, pageW, pageH, 'F');
+    setFill(C.scuro); doc.rect(0, 0, pageW, alta, 'F');
+    setFill(C.cerchio1); doc.circle(178, alta - 34, 24, 'F');
+    setFill(C.cerchio2); doc.circle(202, alta - 50, 19, 'F');
+    if (logo) { doc.addImage(logo, 'PNG', margin, 12, 27.6, 12); }
+    else {
+      scheda(margin, 12, 12, 12, C.verde, null, 3);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); setText(C.bianco);
+      doc.text('WU', margin + 6, 19.7, { align: 'center' });
+    }
+  };
+
+  /* Le pagine si aprono da qui e non a mano: con un elenco di aree che cresce,
+     dimenticare la fascia sulla seconda pagina vuol dire un foglio col
+     marchio e uno senza dentro lo stesso documento. */
+  const nuovaPagina = function () { doc.addPage(); fascia(26); return 40; };
+  const spazio = function (y, h) { return (y + h > 272) ? nuovaPagina() : y; };
+
+  // ── pagina 1 ──
+  fascia(62);
+  let yi = 31;
+  yi = scrivi(d.azienda.ragioneSociale, margin, yi, 10.5, 'bold', C.bianco, 110, 4.6);
+  yi = scrivi(d.azienda.sede, margin, yi + .6, 7.5, 'normal', C.chiaro, 110, 3.6);
+  yi = scrivi('P.IVA ' + d.azienda.piva + '  ·  RUI ' + d.azienda.rui, margin, yi + .4, 7.5, 'normal', C.chiaro, 118, 3.6);
+  if (d.azienda.contatti.length) scrivi(d.azienda.contatti.join('  ·  '), margin, yi + .4, 7.5, 'normal', C.chiaro, 118, 3.6);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); setText(C.verdeVivo);
+  doc.text(safe(d.titolo), pageW - margin, 17, { align: 'right' });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); setText(C.bianco);
+  doc.text(safe(d.cliente.nominativo), pageW - margin, 24.5, { align: 'right' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); setText(C.chiaro);
+  doc.text('del ' + safe(d.data), pageW - margin, 30, { align: 'right' });
+
+  let y = 70;
+
+  /* ── la banda: prima di tutto il resto, come il «da autorizzare» sul
+        preventivo. Una riga in calce la leggerebbe solo chi arriva in fondo. */
+  scheda(margin, y, contentW, 11, [255, 244, 230], C.ambra, 2);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); setText(C.ambra);
+  doc.text(safe(d.copiaDiLavoro), pageW / 2, y + 7.2, { align: 'center' });
+  y += 16;
+
+  // ── cliente e consulente, affiancati ──
+  const colW = (contentW - 6) / 2, hCard = 38;
+  scheda(margin, y, colW, hCard, C.bianco, C.bordo, 3);
+  scrivi('CLIENTE', margin + 7, y + 8, 7, 'bold', C.testo2);
+  let yc = scrivi(d.cliente.nominativo, margin + 7, y + 15, 10.5, 'bold', C.testo, colW - 14, 4.6);
+  if (d.cliente.identificativo) yc = scrivi(d.cliente.identificativo, margin + 7, yc + .8, 7.5, 'normal', C.testo2, colW - 14, 3.6);
+  if (d.cliente.nascita) yc = scrivi('Nata/o il ' + d.cliente.nascita, margin + 7, yc, 7.5, 'normal', C.testo2, colW - 14, 3.6);
+  if (d.cliente.recapiti.length) scrivi(d.cliente.recapiti.join(' · '), margin + 7, yc, 7.5, 'normal', C.testo2, colW - 14, 3.6);
+
+  const xi = margin + colW + 6;
+  scheda(xi, y, colW, hCard, C.bianco, C.bordo, 3);
+  scrivi('CONSULENTE', xi + 7, y + 8, 7, 'bold', C.testo2);
+  let yv = scrivi(d.consulente.nome, xi + 7, y + 15, 10.5, 'bold', C.testo, colW - 14, 4.6);
+  scrivi('Iscrizione RUI ' + d.consulente.rui, xi + 7, yv + .8, 7.5, 'normal',
+         d.consulente.rui === AB_DA_CONFERMARE ? C.ambra : C.testo2, colW - 14, 3.6);
+  y += hCard + 7;
+
+  // ── la necessita' principale: la cosa per cui si apre il foglio ──
+  if (d.principale) {
+    const hMot = d.principale.motivi.reduce(function (n, t) {
+      return n + altezzaRighe(t, 8.5, contentW - 60, 4.2) + 1.6;
+    }, 0);
+    const hPasso = altezzaRighe(d.principale.prossimoPasso, 8.5, contentW - 60, 4.2);
+    const hPrimo = 34 + hMot + hPasso;
+    scheda(margin, y, contentW, hPrimo, C.verdeTenue, null, 4);
+    scrivi('NECESSITA\' PRINCIPALE', margin + 9, y + 10, 7.5, 'bold', C.verdeScuro, 100, 4);
+    scrivi(d.principale.etichetta, margin + 9, y + 19, 13, 'bold', C.testo, contentW - 62, 5);
+    /* Lo stato a parole accanto al pallino, sempre. */
+    const t = tinta(d.principale.colore);
+    setFill(t); doc.circle(margin + 11, y + 25.2, 1.6, 'F');
+    scrivi(d.principale.stato, margin + 15, y + 26.4, 8.5, 'bold', t, contentW - 70, 4);
+
+    let yd = y + 34;
+    for (const m of d.principale.motivi) {
+      setFill(C.verde); doc.circle(margin + 11, yd - 1.2, 1.1, 'F');
+      yd = scrivi(m, margin + 15, yd, 8.5, 'normal', C.testo, contentW - 60, 4.2) + 1.6;
+    }
+    scrivi(d.principale.prossimoPasso, margin + 9, yd + 1.5, 8.5, 'normal', C.testo2, contentW - 60, 4.2);
+
+    // l'indice grande, a destra
+    const xr = pageW - margin - 9;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(30); setText(C.verdeScuro);
+    doc.text(safe(d.indice), xr, y + 26, { align: 'right' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7); setText(C.verde);
+    doc.text('INDICE COMPLESSIVO', xr, y + 32, { align: 'right' });
+    y += hPrimo + 7;
+  } else {
+    const h = 12 + altezzaRighe(d.senzaPrincipale, 8.5, contentW - 18, 4.2);
+    scheda(margin, y, contentW, h, C.bianco, C.bordo, 3);
+    scrivi(d.senzaPrincipale, margin + 9, y + 9, 8.5, 'normal', C.testo, contentW - 18, 4.2);
+    y += h + 7;
+  }
+
+  // ── le aree, una scheda per ciascuna ──
+  y = spazio(y, 14);
+  scrivi('LE AREE ESAMINATE', margin, y + 4, 7, 'bold', C.testo2);
+  y += 9;
+  for (const a of d.aree) {
+    const hMot = a.motivi.concat(a.rimando ? [a.rimando] : []).reduce(function (n, t) {
+      return n + altezzaRighe(t, 8, contentW - 30, 4) + 1.2;
+    }, 0);
+    const h = 21 + hMot + altezzaRighe(a.prossimoPasso, 8, contentW - 30, 4);
+    y = spazio(y, h + 5);
+    scheda(margin, y, contentW, h, C.bianco, C.bordo, 3);
+    const t = tinta(a.colore);
+    setFill(t); doc.circle(margin + 9, y + 8.4, 2, 'F');
+    scrivi(a.etichetta, margin + 14, y + 9.6, 10, 'bold', C.testo, contentW - 60, 4.4);
+    /* Lo stato a parole e il punteggio, a destra: il colore da solo su carta
+       in bianco e nero non direbbe niente. */
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); setText(t);
+    doc.text(safe(a.stato), pageW - margin - 9, y + 8, { align: 'right' });
+    if (a.punteggio) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setText(C.testo2);
+      doc.text(safe('punteggio ' + a.punteggio), pageW - margin - 9, y + 12.5, { align: 'right' });
+    }
+
+    let ya = y + 16;
+    if (a.rimando) ya = scrivi(a.rimando, margin + 14, ya, 8, 'normal', C.testo2, contentW - 30, 4) + 1.2;
+    for (const m of a.motivi) {
+      setFill(C.bordo); doc.circle(margin + 11, ya - 1.1, .9, 'F');
+      ya = scrivi(m, margin + 15, ya, 8, 'normal', C.testo2, contentW - 30, 4) + 1.2;
+    }
+    scrivi(a.prossimoPasso, margin + 9, ya + 1.2, 8, 'italic', C.testo2, contentW - 30, 4);
+    y += h + 5;
+  }
+
+  // ── le osservazioni del cliente, se ne ha lasciate ──
+  if (d.note) {
+    const h = 16 + altezzaRighe(d.note, 8.5, contentW - 16, 4.2);
+    y = spazio(y + 2, h);
+    scheda(margin, y, contentW, h, C.bianco, C.bordo, 3);
+    scrivi('OSSERVAZIONI RACCOLTE', margin + 8, y + 9, 7, 'bold', C.testo2);
+    scrivi(d.note, margin + 8, y + 16, 8.5, 'normal', C.testo, contentW - 16, 4.2);
+    y += h + 7;
+  }
+
+  // ── le avvertenze, in calce ──
+  const coda = d.avvertenze + (d.archiviata ? '' : ' Questo foglio e\' stato prodotto in agenzia dalle '
+    + 'risposte raccolte: l\'analisi non risulta archiviata sulla scheda del cliente.');
+  const hDisc = 14 + altezzaRighe(coda, 7.5, contentW - 16, 3.6);
+  y = spazio(y, hDisc);
+  scheda(margin, y, contentW, hDisc, C.bianco, C.bordo, 3);
+  scrivi('AVVERTENZE', margin + 8, y + 8, 7, 'bold', C.testo2);
+  scrivi(coda, margin + 8, y + 14, 7.5, 'normal', C.testo2, contentW - 16, 3.6);
+
+  // ── filigrana: seconda voce della banda, non la prima ──
+  if (typeof doc.GState === 'function') {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setGState(new doc.GState({ opacity: .07 }));
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(34); setText(C.ambra);
+      doc.text('COPIA DI LAVORO', pageW / 2, 175, { align: 'center', angle: 32 });
+      doc.setGState(new doc.GState({ opacity: 1 }));
+    }
+  }
+
+  // ── piede di pagina ──
+  const pagine = doc.getNumberOfPages();
+  for (let i = 1; i <= pagine; i++) {
+    doc.setPage(i);
+    setDraw(C.bordo); doc.setLineWidth(.25); doc.line(margin, 286, pageW - margin, 286);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); setText(C.testo2);
+    doc.text(safe(d.azienda.ragioneSociale + ' · Analisi dei bisogni · copia di lavoro · ' + d.versioni), margin, 291);
+    doc.text(safe('Pagina ' + i + ' di ' + pagine), pageW - margin, 291, { align: 'right' });
+  }
+
+  return doc.output('blob');
+}
+
+function abScaricaBlob(blob, nome) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = nome;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+}
+
+/* Il bottone in fondo al risultato. Il foglio esce anche se manca qualcosa —
+   serve pure per farlo vedere seduti al tavolo — ma chi lo genera deve sapere
+   che cosa ci trovera' scritto sopra PRIMA di darlo via. */
+async function abStampa() {
+  const stato = document.getElementById('ab-stampa-stato');
+  const di = function (t) { if (stato) stato.textContent = t; };
+  if (!AB_DATI || !window.ABRating) { alert('Non c\'e\' nessuna analisi da stampare.'); return; }
+  di('Preparo il documento…');
+  try {
+    const snapshot = window.ABRating.creaSnapshotRating(AB_DATI);
+    const documento = abDocumento(snapshot, {
+      azienda: await abAzienda(),
+      consulente: PROFILO || {},
+      dati: AB_DATI,
+      archiviata: !!AB_ANALISI_ID
+    });
+    abScaricaBlob(await abPdfBlob(documento), documento.nomeFile);
+    di(documento.daConfermare.length
+      ? ('PDF generato, ma ' + documento.daConfermare.length + ' dato/i da confermare ('
+         + documento.daConfermare.join(', ') + '): non consegnarlo così.')
+      : 'PDF generato.');
+  } catch (e) {
+    di('');
+    alert('Non riesco a generare il PDF: ' + ((e && e.message) || e));
+  }
 }
 
 // ── Pallino notifiche: mail non lette in arrivo ─────────────────────────────────

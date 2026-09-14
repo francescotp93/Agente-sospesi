@@ -261,21 +261,59 @@ prova('niente dati dimostrativi del prototipo', () => {
   }
 });
 
-prova('il PDF non viene generato da una libreria esterna', () => {
-  /* Il prototipo compone il PDF nel browser con jsPDF preso da un CDN. Qui no:
-     un documento che il cliente firma con OTP non può dipendere da un sito che
-     non controlliamo, e soprattutto la fonte autorevole è il server — se il
-     PDF nasce nel browser, nasce da dati che il browser può aver cambiato.
+prova('il documento ufficiale non nasce nel browser', () => {
+  /* COS'È CAMBIATO, E PERCHÉ (14/09/2026).
+     Fino a oggi questa prova diceva: nessuna libreria PDF nel browser, punto.
+     La ragione era, ed è, giusta — un documento che il cliente firma con OTP
+     non può dipendere da un CDN che non controlliamo, e soprattutto la fonte
+     autorevole è il server: se il PDF nasce nel browser, nasce da dati che il
+     browser può aver cambiato.
+
+     Però il motore che produce quel documento oggi non risponde, e finché non
+     risponde dalla schermata del risultato non esce NIENTE: si finisce il
+     colloquio col cliente seduto lì e non gli si può lasciare in mano niente.
+     Da qui il foglio disegnato nel browser (abPdfBlob).
+
+     La regola non è stata tolta, è stata spostata dove sta il rischio vero.
+     Quello che il browser non può fare resta: produrre il documento
+     AUTOREVOLE, quello archiviato e quello che si firma. Quel documento
+     continua a passare dal motore (abApriReport), e nessuna riga qui dentro
+     lo genera in locale.
+     Quello che il browser può fare è una COPIA DI LAVORO, e deve dire di
+     esserlo su ogni pagina — vedi la prova qui sotto, che è la condizione a
+     cui questa è stata allentata. Se un giorno quella marcatura sparisce,
+     i due fogli tornano indistinguibili e questo allentamento non ha più
+     nessuna giustificazione.
 
      Font e icone del prototipo NON sono controllati qui apposta: Inter e le
      Tabler le carica già IAM da prima (index.html righe 19-23), sono le
-     stesse, e riusarle non aggiunge nessuna dipendenza nuova. Una prova che
-     ne chiedesse la rimozione non alzerebbe l'asticella: cambierebbe
-     argomento. */
+     stesse, e riusarle non aggiunge nessuna dipendenza nuova. */
   const senzaCommenti = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
-  for (const esterna of ['jspdf', 'jsPDF', 'html2canvas', 'pdfmake']) {
+  /* Queste due restano vietate del tutto: servono a fotografare lo schermo e
+     farne un documento, che è esattamente il modo di spacciare per atto
+     quello che è un'immagine di una pagina modificabile. */
+  for (const esterna of ['html2canvas', 'pdfmake']) {
     deve(!senzaCommenti.includes(esterna), 'è entrata una libreria PDF nel browser: ' + esterna);
   }
+  /* Il documento che si firma continua a chiedersi al motore. */
+  deve(/abApriReport/.test(senzaCommenti) && /analisi-bisogni\/'\s*\+\s*encodeURIComponent\(AB_ANALISI_ID\)\s*\+\s*'\/report/.test(senzaCommenti),
+    'il report ufficiale non si chiede più al motore: se lo genera il browser, non è più autorevole');
+});
+
+prova('il foglio fatto nel browser dice di essere una copia di lavoro', () => {
+  /* È LA CONDIZIONE dell'allentamento qui sopra, non un dettaglio di stile.
+     Stessa carta intestata, stesso RUI, stesso marchio: senza una riga che li
+     distingua, il foglio composto dal browser e il documento archiviato dal
+     motore sono la stessa cosa in mano a chi li riceve. */
+  const senzaCommenti = html.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+  deve(/copiaDiLavoro:/.test(senzaCommenti), 'il documento non porta più la marcatura di copia di lavoro');
+  deve((senzaCommenti.match(/COPIA DI LAVORO/g) || []).length >= 3,
+    'la marcatura non è più su banda, filigrana e piede: basta girare pagina per perderla');
+  /* La banda si disegna PRIMA delle schede di cliente e consulente: in calce
+     la leggerebbe solo chi arriva in fondo. */
+  const i = senzaCommenti.indexOf('d.copiaDiLavoro');
+  const j = senzaCommenti.indexOf("scrivi('CLIENTE'");
+  deve(i > 0 && j > i, 'la banda non viene più prima del resto del foglio');
 });
 
 // ── 5. Il questionario ────────────────────────────────────────────────────

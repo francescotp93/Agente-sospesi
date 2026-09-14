@@ -81,8 +81,10 @@ e.prova('i preventivi personalizzati hanno una voce nel menu', () => {
   /* Stessa prova delle Convenzioni, stessa ragione. Il preventivo scritto a
      mano nasce dentro la scheda di un cliente: chi non sa gia' che esiste, da
      li' non lo trova. */
-  deve(/\{\s*l:\s*'Preventivi personalizzati'/.test(src),
-    'nel menu non c\'e\' nessuna voce «Preventivi personalizzati»');
+  /* Il nome della voce e' cambiato con quello delle linguette: due etichette
+     per la stessa cosa sono il difetto che si stava curando. */
+  deve(/\{\s*l:\s*'Preventivi scritti a mano'/.test(src),
+    'nel menu non c\'e\' nessuna voce «Preventivi scritti a mano»');
   deve(pagineChieste(src).includes('preventivi-personalizzati'),
     'la voce non chiede la pagina «preventivi-personalizzati»');
   return 'raggiungibile dal menu, non solo da dentro una scheda cliente';
@@ -95,7 +97,7 @@ e.prova('la voce sta sotto Clienti, dove si va a cercare un cliente', () => {
   const i = src.indexOf("key: 'clienti'");
   deve(i > 0, 'non trovo piu\' il gruppo «Clienti»: la prova non starebbe guardando niente');
   const gruppo = src.slice(i, i + (src.indexOf('] },', i) - i));
-  deve(/\{\s*l:\s*'Preventivi personalizzati'/.test(gruppo),
+  deve(/\{\s*l:\s*'Preventivi scritti a mano'/.test(gruppo),
     'la voce non e\' nel menu Clienti');
   return 'sotto Clienti, accanto ad Anagrafiche';
 });

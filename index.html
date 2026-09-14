@@ -3158,6 +3158,16 @@ input[type=file]{display:none;}
         <div class="fld"><label>Data</label><input type="date" id="ag-data"></div>
         <div class="fld"><label>Ora</label><input type="time" id="ag-ora" value="09:00"></div>
       </div>
+      <!-- L'interruttore di casa (.sw), non una casella qualunque: dentro .fld
+           il CSS toglie l'aspetto nativo agli input (-webkit-appearance:none),
+           e una checkbox normale qui si vedeva VUOTA anche da spuntata. Il
+           dato era giusto e lo schermo diceva il contrario, che e' il modo
+           piu' rapido per far salvare a qualcuno il contrario di quello che
+           voleva. Visto solo guardando il modulo in un browser. -->
+      <div class="sw-row" style="border-top:none;padding:4px 0 2px">
+        <span class="sw-lbl">Tutto il giorno <span style="color:var(--txt3)">(senza orario)</span></span>
+        <label class="sw"><input type="checkbox" id="ag-giornata" onchange="agGiornata()"><span class="sw-track"></span><span class="sw-thumb"></span></label>
+      </div>
       <div class="fld"><label>Note</label><input type="text" id="ag-note" placeholder="Breve descrizione"></div>
     </div>
   </div>
@@ -8695,14 +8705,12 @@ function renderTratt() {
 function encodeForAttr(s) { return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 // Apre Google Calendar o link universale senza scaricare file
-function openGCal(titolo, data, ora, note) {
-  const ora_ = ora || '09:00';
-  const dt = data.replace(/-/g,'')+'T'+(ora_.replace(':',''))+'00';
-  const dtE= data.replace(/-/g,'')+'T'+(String(parseInt(ora_.split(':')[0])+1).padStart(2,'0')+ora_.split(':')[1])+'00';
-  // Google Calendar link (funziona su tutti i dispositivi)
-  const gcUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${dt}/${dtE}&details=${encodeURIComponent(note||'')}`;
-  window.open(gcUrl, '_blank');
-}
+/* C'erano DUE openGCal(): questa, e un'altra piu' sotto. Vinceva sempre la
+   seconda, perche' la dichiarazione successiva copre la precedente — quindi
+   questa non l'ha mai eseguita nessuno (CLAUDE.md §1). Tolta: lasciarne due
+   vuol dire che il prossimo corregge quella sbagliata e non capisce perche'
+   non cambia niente. La versione viva sta sotto, ed e' quella che sa fare
+   anche l'evento di tutta la giornata. */
 
 function openTrattModal(id) {
   loadPipe(); loadTeam(); PIPE_ID = id;
@@ -8789,14 +8797,18 @@ function exportRecalling() {
 // ─── AGENDA ───────────────────────────────────────────────────────────────────
 function renderAgenda() {
   const oggi = new Date().toISOString().split('T')[0];
-  const fut  = AGENDA.filter(a=>a.data>=oggi).sort((a,b)=>a.data.localeCompare(b.data));
-  const past = AGENDA.filter(a=>a.data<oggi).sort((a,b)=>b.data.localeCompare(a.data));
+  /* Dentro lo stesso giorno l'attivita' senza orario va in cima, come in
+     qualunque calendario: non ha un'ora che la collochi fra le altre, e
+     metterla in fondo la farebbe sembrare l'ultima cosa della giornata. */
+  const perOra = (x, y) => (x.ora ? 1 : 0) - (y.ora ? 1 : 0) || String(x.ora||'').localeCompare(String(y.ora||''));
+  const fut  = AGENDA.filter(a=>a.data>=oggi).sort((a,b)=>a.data.localeCompare(b.data) || perOra(a,b));
+  const past = AGENDA.filter(a=>a.data<oggi).sort((a,b)=>b.data.localeCompare(a.data) || perOra(a,b));
   const mkList = (arr,label) => arr.length ? `<div style="padding:8px 14px 4px;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.6px;">${label}</div>`+arr.map(a=>`
     <div class="row">
       <div class="rico ${a.data===oggi?'red':'blu'}"><i class="ti ti-calendar-event"></i></div>
-      <div class="rmain"><div class="rname">${a.titolo}${a._locale?' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--gia-bg,#fffbeb);color:var(--gia-txt,#b7791f);vertical-align:middle;">SOLO SU QUESTO PC</span>':''}</div><div class="rsub">${a.data}${a.ora?' · '+a.ora:''}</div>${a.note?`<div class="rsub">${esc(a.note)}</div>`:''}</div>
+      <div class="rmain"><div class="rname">${a.titolo}${a._locale?' <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;background:var(--gia-bg,#fffbeb);color:var(--gia-txt,#b7791f);vertical-align:middle;">SOLO SU QUESTO PC</span>':''}</div><div class="rsub">${esc(agQuando(a))}</div>${a.note?`<div class="rsub">${esc(a.note)}</div>`:''}</div>
       <div class="rright" style="display:flex;flex-direction:column;gap:4px;">
-        <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||'09:00'}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
+        <button onclick="openGCal('${encodeForAttr(a.titolo)}','${a.data}','${a.ora||''}','${encodeForAttr(a.note||'')}')" style="font-size:10px;padding:3px 7px;background:var(--blu-bg);color:var(--blu-txt);border:none;border-radius:4px;cursor:pointer;"><i class="ti ti-calendar-event"></i> Cal.</button>
         <button onclick="delAgenda('${a.id}')" style="font-size:10px;padding:3px 7px;background:var(--red-bg);color:var(--red-txt);border:none;border-radius:4px;cursor:pointer;">✕</button>
       </div>
     </div>`).join('') : '';
@@ -8828,11 +8840,54 @@ function openAgendaModal() {
   document.getElementById('ag-data').value   = new Date().toISOString().split('T')[0];
   document.getElementById('ag-ora').value    = '09:00';
   document.getElementById('ag-note').value   = '';
+  const gg = document.getElementById('ag-giornata');
+  if (gg) gg.checked = false;
+  agGiornata();
   document.getElementById('modal-agenda').classList.add('show');
 }
 
+/* ── TUTTO IL GIORNO ─────────────────────────────────────────────────────────
+   Un'attivita' senza orario non e' un'attivita' alle nove: e' una cosa da fare
+   entro quel giorno. Nell'archivio si scrive `ora = null` — la colonna lo
+   ammette gia', nessuna migrazione.
+
+   ATTENZIONE, ED E' IL PUNTO DI TUTTA LA MODIFICA: tre punti del codice
+   scrivevano `a.ora || '09:00'`. Con quella riga in mezzo, spuntare la casella
+   non avrebbe cambiato NIENTE — il null diventava le nove prima di arrivare
+   all'archivio, e la casella sarebbe stata un interruttore staccato. */
+function agGiornata() {
+  const gg = document.getElementById('ag-giornata');
+  const ora = document.getElementById('ag-ora');
+  if (!ora) return;
+  const tutto = !!(gg && gg.checked);
+  ora.disabled = tutto;
+  /* Il campo resta a schermo, spento: nasconderlo farebbe saltare la riga e
+     ballare il modulo a ogni spunta. */
+  ora.style.opacity = tutto ? '.4' : '';
+  const et = ora.closest ? ora.closest('.fld') : null;
+  const lab = et ? et.querySelector('label') : null;
+  if (lab) lab.textContent = tutto ? 'Ora (tutto il giorno)' : 'Ora';
+}
+
+/* L'orario come va scritto nell'archivio: una stringa HH:MM oppure null.
+   Un campo svuotato a mano vale quanto la casella spuntata — in tutti e due i
+   casi chi scrive non ha dato un orario. */
+function agOra(v, tuttoIlGiorno) {
+  if (tuttoIlGiorno) return null;
+  const t = String(v == null ? '' : v).trim();
+  return t || null;
+}
+
+/* Quello che si legge sulla riga. «Tutto il giorno» va scritto: una riga con
+   la sola data lascerebbe credere a un orario dimenticato. */
+function agQuando(a) {
+  return a.data + (a.ora ? ' · ' + a.ora : ' · tutto il giorno');
+}
+
 async function saveAgenda() {
-  const a = { id:Date.now().toString(), titolo:g('ag-titolo'), data:g('ag-data'), ora:g('ag-ora'), note:g('ag-note') };
+  const gg = document.getElementById('ag-giornata');
+  const a = { id:Date.now().toString(), titolo:g('ag-titolo'), data:g('ag-data'),
+              ora:agOra(g('ag-ora'), !!(gg && gg.checked)), note:g('ag-note') };
   if (!a.titolo||!a.data) { alert('Inserisci titolo e data.'); return; }
   const btn = document.getElementById('ag-salva');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
@@ -8881,7 +8936,7 @@ async function agendaImportaLocali() {
   if (btn) { btn.disabled = true; btn.textContent = 'Salvo...'; }
   let ok = 0, ko = 0;
   for (const a of sosp) {
-    const scritto = await saveAgendaDB({ id:String(a.id), titolo:a.titolo, data:a.data, ora:a.ora || '09:00', note:a.note || '' });
+    const scritto = await saveAgendaDB({ id:String(a.id), titolo:a.titolo, data:a.data, ora:agOra(a.ora, false), note:a.note || '' });
     if (scritto) { ok++; agendaLocaleDel(a.id); delete a._locale; } else { ko++; }
   }
   renderAgenda();
@@ -9421,7 +9476,11 @@ function renderAgendaSePresente() { if (document.getElementById('ag-list')) { tr
 async function saveAgendaDB(a) {
   if (!db || !ME) return false;
   try {
-    const riga = { id: String(a.id), titolo: a.titolo, data: a.data, ora: a.ora || '09:00', note: a.note || '', utente_id: ME.id };
+    /* `a.ora || '09:00'` NO: schiaccerebbe sulle nove ogni attivita' di tutta
+       la giornata, e la casella nel modulo non servirebbe a niente. Un null
+       esplicito resta null (il default della colonna vale solo se la casella
+       non viene nominata, e qui viene nominata sempre). */
+    const riga = { id: String(a.id), titolo: a.titolo, data: a.data, ora: agOra(a.ora, false), note: a.note || '', utente_id: ME.id };
     const { error } = await db.from('iam_agenda').upsert(riga, { onConflict: 'id' });
     if (error) throw error;
     return true;
@@ -13786,17 +13845,38 @@ async function modificaFirma(){
 }
 
 // Aggiorna openGCal per rispettare preferenza calendario
+/* Il giorno dopo, in formato calendario (AAAAMMGG). Serve perche' in iCal e
+   in Google la fine di un evento di tutta la giornata e' ESCLUSA: un evento
+   del 14 va dichiarato 14 -> 15, altrimenti sul telefono non si vede per
+   niente. Il conto si fa in UTC: farlo sull'ora locale, a cavallo dell'ora
+   legale, sposta il giorno. */
+function agGiornoDopo(data) {
+  const d = new Date(data + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+/* SENZA ORARIO = EVENTO DI TUTTA LA GIORNATA, e non un evento alle nove.
+   Prima un'attivita' senza ora usciva con `ora || '09:00'`: sul telefono di
+   chi la riceveva compariva un appuntamento delle 9:00-10:00 che nessuno
+   aveva mai fissato. Vale anche per il diario, che le attivita' senza orario
+   le ha sempre avute. */
 function openGCal(titolo, data, ora, note) {
-  const ora_ = ora || '09:00';
-  const dt  = data.replace(/-/g,'')+'T'+(ora_.replace(':',''))+'00';
-  const dtE = data.replace(/-/g,'')+'T'+(String(parseInt(ora_.split(':')[0])+1).padStart(2,'0')+ora_.split(':')[1])+'00';
+  const ora_ = String(ora == null ? '' : ora).trim();
+  const tuttoIlGiorno = !ora_;
+  const giorno = data.replace(/-/g,'');
+  const dt  = tuttoIlGiorno ? giorno : giorno+'T'+(ora_.replace(':',''))+'00';
+  const dtE = tuttoIlGiorno ? agGiornoDopo(data)
+            : giorno+'T'+(String(parseInt(ora_.split(':')[0])+1).padStart(2,'0')+ora_.split(':')[1])+'00';
   const useGoogle = localStorage.getItem('iam_cal') === 'google';
   if (useGoogle) {
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(titolo)}&dates=${dt}/${dtE}&details=${encodeURIComponent(note||'')}`;
     window.open(url, '_blank');
   } else {
-    // iCal per Mac/iPhone
-    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART:${dt}\r\nDTEND:${dtE}\r\nSUMMARY:${titolo}\r\nDESCRIPTION:${note||''}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+    // iCal per Mac/iPhone. VALUE=DATE e' cio' che rende l'evento "tutto il
+    // giorno": con un DTSTART a data e ora resterebbe un appuntamento.
+    const q = tuttoIlGiorno ? ';VALUE=DATE' : '';
+    const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nBEGIN:VEVENT\r\nDTSTART${q}:${dt}\r\nDTEND${q}:${dtE}\r\nSUMMARY:${titolo}\r\nDESCRIPTION:${note||''}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
     const blob = new Blob([ics],{type:'text/calendar'});
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');

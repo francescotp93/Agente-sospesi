@@ -19,6 +19,9 @@ const NOMI = [
   'agendaLocale', 'agendaLocaleSet', 'agendaLocaleAdd', 'agendaLocaleDel', 'agendaInSospeso',
   'renderAgenda', 'renderAgendaSePresente', 'saveAgenda', 'delAgenda', 'agendaImportaLocali',
   'loadAgendaDB', 'saveAgendaDB', 'loadPipe', 'saveAg',
+  /* Le tre dell'attivita' di tutta la giornata: senza, il ritaglio carica un
+     saveAgenda che chiama funzioni che nella stanza non esistono. */
+  'agOra', 'agQuando', 'agGiornata',
 ];
 
 // Compila il modulo "nuovo appuntamento" come lo compilerebbe una persona.

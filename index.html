@@ -9646,6 +9646,11 @@ async function apriDatiUtente(uid) {
   if (!u) return;
   const mio = uid === ME?.id;
   const suo = (u.email || '').toLowerCase() === SUPER_ADMIN_EMAIL;
+  /* L'indirizzo di accesso lo cambia un amministratore. Quello del
+     proprietario, soltanto lui: e' la stessa regola che la funzione di
+     servizio applica sul server, dove conta davvero — qui si evita solo di
+     mostrare un campo che verrebbe rifiutato. */
+  const puoEmail = PROFILO?.ruolo === 'admin' && (!suo || mio);
   if (!(PROFILO?.ruolo === 'admin' || PROFILO?.ruolo === 'operatore' || mio)) return;
   if (suo && !mio) return;   // la scheda del proprietario la tocca solo lui
   let ov = document.getElementById('du-overlay');
@@ -9668,16 +9673,24 @@ async function apriDatiUtente(uid) {
       <div style="margin-bottom:11px;"><label style="display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;">Cognome</label>
         <input id="du-cognome" style="${campo}" value="${esc(u.cognome || '')}"></div>
       <div style="margin-bottom:6px;"><label style="display:block;font-size:11.5px;color:var(--txt2);margin-bottom:5px;font-weight:600;">Email di accesso</label>
-        <input id="du-email" style="${campo}opacity:.6;" value="${esc(u.email || '')}" disabled></div>
+        <input id="du-email" style="${campo}${puoEmail ? '' : 'opacity:.6;'}" value="${esc(u.email || '')}" ${puoEmail ? '' : 'disabled'}></div>
       <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:14px;">
-        L'email con cui si entra sta nell'anagrafe degli accessi, non qui: cambiarla solo in questa scheda
-        farebbe vedere il nuovo indirizzo e lascerebbe l'accesso — e il messaggio per rifare la password — sul vecchio.
-        Per cambiarla davvero serve una funzione di servizio: chiedila e si aggiunge.
+        ${puoEmail
+          ? 'Cambiandola, da subito si entra con il nuovo indirizzo: il vecchio smette di funzionare e anche il recupero password passa dal nuovo. Non viene chiesta nessuna conferma alla persona — serve proprio per correggere un indirizzo sbagliato, a cui non arriverebbe niente.'
+          : 'L\'email con cui si entra la cambia un amministratore. Cambiarla solo in questa scheda farebbe vedere il nuovo indirizzo e lascerebbe l\'accesso — e il messaggio per rifare la password — sul vecchio.'}
       </div>
       <div id="du-err" style="font-size:12px;color:var(--red);min-height:16px;margin-bottom:8px;"></div>
       <button onclick="salvaDatiUtente('${uid}')" style="width:100%;padding:10px;background:var(--acc);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">Salva</button>
     </div>
   </div>`;
+}
+
+/* L'errore di una funzione di servizio arriva dentro la risposta, non nel
+   messaggio: senza aprirlo l'utente leggerebbe «Edge Function returned a
+   non-2xx status code», che non gli dice niente. */
+async function erroreFunzione(e) {
+  try { const j = await e.context.json(); if (j && j.errore) return j.errore; } catch (_) {}
+  return e?.message || 'Chiamata non riuscita.';
 }
 
 async function salvaDatiUtente(uid) {
@@ -9687,9 +9700,40 @@ async function salvaDatiUtente(uid) {
   /* Un utente senza nome diventa una riga vuota in elenco, e una firma vuota
      sui documenti che lo citano. */
   if (!nome && !cognome) { if (err) err.textContent = 'Serve almeno il nome o il cognome.'; return; }
+
+  const u = (UTENTI_LISTA || []).find(x => x.id === uid);
+  const campoMail = document.getElementById('du-email');
+  const emailNuova = (campoMail && !campoMail.disabled) ? (campoMail.value || '').trim().toLowerCase() : '';
+  const emailVecchia = String(u?.email || '').toLowerCase();
+  const cambiaEmail = !!emailNuova && emailNuova !== emailVecchia;
+
+  /* Cambiare l'accesso di una persona non e' salvare un campo: da quel
+     momento il vecchio indirizzo non entra piu'. Si chiede, e si dice cosa
+     succede — non «sei sicuro?». */
+  if (cambiaEmail && !confirm(
+      'Da adesso ' + ((nome + ' ' + cognome).trim() || 'questo utente') + ' entrera\' con:\n\n' +
+      emailNuova + '\n\nIl vecchio indirizzo (' + (emailVecchia || '—') + ') smettera\' di funzionare, ' +
+      'e anche il messaggio per rifare la password passera\' dal nuovo.\n\nProcedo?')) return;
+
+  if (err) err.textContent = '';
   try {
+    /* 1. I dati anagrafici, direttamente. L'email NON entra in questa update:
+          qui e' una copia, e scriverla da sola lascerebbe l'accesso indietro. */
     const { error } = await db.from('iam_utenti').update({ nome, cognome }).eq('id', uid);
     if (error) throw error;
+
+    /* 2. L'accesso passa dalla funzione di servizio: e' l'unica che puo'
+          toccare l'anagrafe degli accessi, e i permessi li ricontrolla lei sul
+          server — quello che dice questa pagina non conta. */
+    if (cambiaEmail) {
+      const { data, error: e2 } = await db.functions.invoke('utente-email', {
+        body: { userId: uid, email: emailNuova }
+      });
+      if (e2) throw new Error(await erroreFunzione(e2));
+      if (data && data.ok === false) throw new Error(data.errore || 'Cambio non riuscito.');
+      if (data && data.avviso) alert(data.avviso);
+    }
+
     document.getElementById('du-overlay')?.remove();
     await renderUtenti();
   } catch (e) {

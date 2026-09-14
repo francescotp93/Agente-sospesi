@@ -351,13 +351,6 @@
     { key: 'clienti', l: 'Clienti', i: 'i-users', go: Q('anagrafiche'),
       sub: [
         { l: 'Anagrafiche', i: 'i-user', go: Q('anagrafiche') },
-        /* Il preventivo scritto a mano per un cliente. Nasce dentro la sua
-           scheda — si fa per qualcuno, non in astratto — ma da li' lo trova
-           soltanto chi sa gia' che esiste. E' lo stesso difetto delle
-           Convenzioni del 2 settembre («NON LO VEDO»), e la cura e' questa
-           riga: una schermata senza voce nel menu, per chi lavora, non
-           esiste. */
-        { l: 'Preventivi scritti a mano', i: 'i-file', go: function () { aprireQuoto('preventivi-personalizzati', { titolo: ['Preventivi scritti a mano', 'Clienti'] }); } },
         { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } }
         /* «Lead» e' andata sotto Marketing, «Posta» sotto Strumenti, «Documenti»
            sotto Strumenti › Utility: qui erano tutte nel posto sbagliato

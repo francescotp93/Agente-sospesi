@@ -2749,6 +2749,22 @@ input[type=file]{display:none;}
           <div class="fld"><label>P.IVA</label><input type="text" id="az-piva" placeholder="IT00000000000"></div>
           <div class="fld"><label>Codice fiscale</label><input type="text" id="az-cf" placeholder="00000000000"></div>
           <div class="fld ffull"><label>Sede legale</label><input type="text" id="az-sede" placeholder="Via, numero, città, CAP"></div>
+          <!-- ISCRIZIONE RUI DELL'AGENZIA.
+               Non e' un dato anagrafico in piu': e' quello che rende
+               riconoscibile l'intermediario su ogni documento che esce di
+               casa (IDD, Reg. IVASS 40/2018). Finche' resta vuoto, i
+               documenti che lo stampano scrivono «da confermare» — e un
+               preventivo con quella scritta non si consegna a un cliente. -->
+          <div class="fld"><label>RUI · sezione</label>
+            <select id="az-rui_sezione">
+              <option value="">— da confermare —</option>
+              <option value="A">A — Agenti</option>
+              <option value="B">B — Mediatori (broker)</option>
+              <option value="D">D — Banche e intermediari finanziari</option>
+              <option value="E">E — Collaboratori</option>
+            </select></div>
+          <div class="fld"><label>RUI · numero iscrizione</label><input type="text" id="az-rui_numero" placeholder="es. A000123456"></div>
+          <div class="fld"><label>RUI · data iscrizione</label><input type="date" id="az-rui_data"></div>
           <div class="fld"><label>Email</label><input type="email" id="az-email"></div>
           <div class="fld"><label>Telefono</label><input type="tel" id="az-tel"></div>
           <div class="fld"><label>PEC</label><input type="email" id="az-pec" placeholder="pec@domain.it"></div>
@@ -14806,7 +14822,7 @@ async function loadAzienda() {
       const { data } = await db.from('iam_azienda').select('dati,docs').eq('id',1).single();
       if (data) {
         const d = data.dati || {};
-        const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+        const fields = ['rs','piva','cf','sede','rui_sezione','rui_numero','rui_data','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
         fields.forEach(f => { const el=document.getElementById('az-'+f); if(el&&d[f]) el.value=d[f]; });
         AZ_DOCS = data.docs || {};
         // Cache locale
@@ -14819,14 +14835,14 @@ async function loadAzienda() {
   // Fallback locale
   try {
     const d = JSON.parse(localStorage.getItem('iam_azienda')||'{}');
-    const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+    const fields = ['rs','piva','cf','sede','rui_sezione','rui_numero','rui_data','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
     fields.forEach(f => { const el=document.getElementById('az-'+f); if(el&&d[f]) el.value=d[f]; });
     AZ_DOCS = JSON.parse(localStorage.getItem('iam_az_docs')||'{}');
   } catch(e) {}
 }
 
 async function salvaAzienda() {
-  const fields = ['rs','piva','cf','sede','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
+  const fields = ['rs','piva','cf','sede','rui_sezione','rui_numero','rui_data','email','tel','pec','sdi','iban1','iban2','banca','bic','affitto','sc-affitto','note-utenze','note'];
   const d = {};
   fields.forEach(f => { const el=document.getElementById('az-'+f); if(el) d[f]=el.value; });
   localStorage.setItem('iam_azienda', JSON.stringify(d));

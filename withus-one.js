@@ -357,7 +357,7 @@
            Convenzioni del 2 settembre («NON LO VEDO»), e la cura e' questa
            riga: una schermata senza voce nel menu, per chi lavora, non
            esiste. */
-        { l: 'Preventivi personalizzati', i: 'i-file', go: function () { aprireQuoto('preventivi-personalizzati', { titolo: ['Preventivi personalizzati', 'Clienti'] }); } },
+        { l: 'Preventivi scritti a mano', i: 'i-file', go: function () { aprireQuoto('preventivi-personalizzati', { titolo: ['Preventivi scritti a mano', 'Clienti'] }); } },
         { l: 'Trattative', i: 'i-trend', act: 'pipeline', mirror: 'nb-pipeline', go: function () { vai('pipeline'); } }
         /* «Lead» e' andata sotto Marketing, «Posta» sotto Strumenti, «Documenti»
            sotto Strumenti › Utility: qui erano tutte nel posto sbagliato

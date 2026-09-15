@@ -402,6 +402,69 @@ body.w1-min{ --w1-sidew:66px; }
 .w1-mbar .w1-subwrap.open > .w1-has-sub{ background:rgba(255,255,255,.06); color:#fff; }
 .w1-mbar .w1-subdd a{ padding-left:58px; }
 
+/* ═══ IL MENU PRODOTTI COME ALBERO (15/09/2026) ═══════════════════════
+   Quattro categorie chiuse; ogni clic apre un livello sotto. Il rientro a
+   sinistra cresce col livello (data-liv), cosi' si vede a colpo d'occhio
+   cosa sta dentro cosa. Le etichette lunghe (AMTRUST, mediatori creditizi)
+   vanno a capo invece di sparire con i puntini. */
+.w1-mbar .w1-mega a, .w1-mbar .w1-mega .w1-soon{ white-space:normal; line-height:1.3; }
+.w1-mbar .w1-mega .w1-subwrap[data-liv="0"] > .w1-has-sub{
+  padding-left:20px; font-weight:600; color:#e3e9ef; font-size:12.5px;
+}
+.w1-mbar .w1-mega .w1-subwrap[data-liv="0"] > .w1-has-sub svg:first-child{ color:var(--w1-verde2); }
+.w1-mbar .w1-mega .w1-subwrap[data-liv="0"]{ border-top:1px solid rgba(255,255,255,.05); }
+.w1-mbar .w1-mega .w1-subwrap[data-liv="0"]:first-child{ border-top:none; }
+.w1-mbar .w1-mega [data-liv="1"]{ padding-left:40px; }
+.w1-mbar .w1-mega [data-liv="2"]{ padding-left:56px; }
+.w1-mbar .w1-mega [data-liv="3"]{ padding-left:72px; }
+.w1-mbar .w1-mega [data-liv="4"]{ padding-left:88px; }
+.w1-mbar .w1-mega .w1-subwrap[data-liv]{ padding-left:0; }
+.w1-mbar .w1-mega a{ text-decoration:none; }
+/* nodo aperto: l'intestazione resta evidenziata finche' i figli sono visibili */
+.w1-mbar .w1-mega .w1-subwrap.open > .w1-has-sub{ background:rgba(255,255,255,.06); color:#fff; }
+.w1-mbar .w1-mega .w1-subwrap.open > .w1-has-sub svg:first-child{ color:var(--w1-verde2); }
+
+/* «In arrivo»: si vede, in grigio, con la scritta; non e' un link, non
+   prende il fuoco, il puntatore non cambia. */
+.w1-soon{
+  display:flex; align-items:center; gap:8px; padding:8px 16px;
+  color:rgba(255,255,255,.38); font-size:12.5px; cursor:default; user-select:none;
+}
+.w1-soon svg{ color:rgba(255,255,255,.25); }
+.w1-soon .w1-bdg{ margin-left:auto; background:rgba(255,255,255,.08); color:rgba(255,255,255,.55); }
+
+/* ═══ SU TELEFONO: un livello alla volta, a schermo intero ═══════════ */
+.w1-drill{
+  display:none; position:fixed; inset:0; z-index:260;
+  background:var(--w1-scuro); color:#fff; flex-direction:column;
+}
+.w1-drill.open{ display:flex; }
+.w1-drill-h{
+  flex:0 0 auto; display:flex; align-items:center; gap:6px; height:56px;
+  padding:0 8px; border-bottom:1px solid rgba(255,255,255,.1);
+}
+.w1-drill-back{
+  display:flex; align-items:center; gap:6px; padding:8px 10px; min-height:40px;
+  background:none; border:none; color:#fff; font:inherit; font-size:13.5px;
+  border-radius:var(--w1-r); cursor:pointer;
+}
+.w1-drill-back svg{ transform:rotate(180deg); }   /* «Indietro»: la freccia guarda a sinistra */
+.w1-drill-x svg{ transform:none; }
+.w1-drill-x{ margin-left:auto; }
+.w1-drill-t{ flex:1 1 auto; font-weight:600; font-size:15px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-left:6px; }
+.w1-drill-b{ flex:1 1 auto; overflow-y:auto; padding:6px 0; -webkit-overflow-scrolling:touch; }
+.w1-drill-row{
+  display:flex; align-items:center; gap:12px; padding:14px 18px; min-height:52px;
+  color:#e3e9ef; font-size:14.5px; text-decoration:none; cursor:pointer;
+  border-bottom:1px solid rgba(255,255,255,.05); line-height:1.3;
+}
+.w1-drill-row svg:first-child{ color:var(--w1-verde2); }
+.w1-drill-row .w1-ch{ margin-left:auto; flex:0 0 auto; transform:rotate(0); color:rgba(255,255,255,.5); }
+.w1-drill-row:active{ background:rgba(255,255,255,.06); }
+.w1-drill-row.w1-soon{ color:rgba(255,255,255,.38); cursor:default; }
+.w1-drill-row.w1-soon svg:first-child{ color:rgba(255,255,255,.25); }
+@media (min-width: 901px){ .w1-drill{ display:none !important; } }
+
 /* ── Sidebar compressa: sole icone, i sotto-menu escono come flyout ── */
 body.w1-min .w1-mbar{ overflow:visible; }
 body.w1-min .w1-side-nav{ overflow:visible; }
@@ -425,18 +488,18 @@ body.w1-min .w1-mbar .w1-m > a{ justify-content:center; padding:0; }
 body.w1-min .w1-mbar .w1-m > a > span,
 body.w1-min .w1-mbar .w1-m > a .w1-ch{ display:none; }
 body.w1-min .w1-mbar .w1-m.nuovo > a{ margin:2px 12px 10px; padding:0; }
-/* i sotto-menu: nascosti da fermi, escono a destra al passaggio del mouse */
+/* i sotto-menu: nascosti da fermi, escono a destra AL CLIC sulla voce (.open).
+   Prima uscivano al passaggio del mouse (:hover) e sparivano appena il
+   puntatore usciva di un pixel: il brief del 14/09/2026 vuole apertura al
+   clic e chiusura solo con clic fuori o Esc. Niente :hover che apre. */
 body.w1-min .w1-mbar .w1-m.open > .w1-dd,
-body.w1-min .w1-mbar .w1-m.open > .w1-mega{ display:none; }
-body.w1-min .w1-mbar .w1-m:hover > .w1-dd,
-body.w1-min .w1-mbar .w1-m:hover > .w1-mega{
+body.w1-min .w1-mbar .w1-m.open > .w1-mega{
   display:block; position:absolute; left:100%; top:0; width:250px;
   background:var(--w1-scuro2); border-radius:0 var(--w1-r) var(--w1-r) 0;
   box-shadow:10px 10px 34px rgba(0,0,0,.45); z-index:250; padding:6px 0;
-  border-top:none;
+  border-top:none; max-height:calc(100vh - 16px); overflow-y:auto;
 }
-body.w1-min .w1-mbar .w1-m:hover > .w1-mega{ width:560px; }
-body.w1-min .w1-mbar .w1-m:hover > .w1-mega .w1-cols{ display:grid; grid-template-columns:repeat(2,1fr); gap:0 8px; }
+body.w1-min .w1-mbar .w1-m.open > .w1-mega{ width:320px; }
 
 /* ═══ BARRA 3 — titolo e briciole ══════════════════════════════════ */
 .w1-pbar{
@@ -528,9 +591,7 @@ body.theme-dark .w1-dot{ border-color:var(--w1-scuro); }
   body.w1-min .w1-mbar .w1-m.nuovo > a{ margin:2px 10px 10px; }
   /* i sotto-menu tornano fisarmonica (niente flyout dentro il cassetto) */
   body.w1-min .w1-mbar .w1-m.open > .w1-dd,
-  body.w1-min .w1-mbar .w1-m.open > .w1-mega{ display:block; position:static; width:auto; box-shadow:none; }
-  body.w1-min .w1-mbar .w1-m:hover > .w1-dd,
-  body.w1-min .w1-mbar .w1-m:hover > .w1-mega{ position:static; width:auto; box-shadow:none; background:rgba(0,0,0,.22); }
+  body.w1-min .w1-mbar .w1-m.open > .w1-mega{ display:block; position:static; width:auto; max-height:none; box-shadow:none; background:rgba(0,0,0,.22); }
   /* Su mobile la sidebar è un cassetto che apre e chiude il burger in alto
      (.w1-burger): l'hamburger di testa non deve comparire, altrimenti se ne
      vedrebbero due (IAM.md §13.4). */

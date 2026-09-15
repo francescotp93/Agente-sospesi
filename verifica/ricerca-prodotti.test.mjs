@@ -73,19 +73,33 @@ e.prova('cercando un prodotto esce quel prodotto, per primo', () => {
     ['rca', 'Autovetture'],
     ['targa', 'Autovetture'],
     ['furgone', 'Autocarri'],
-    ['barca', 'Imbarcazioni'],
-    ['epoca', "Auto d'epoca"],
-    ['salute', 'Malattia'],
     ['cane', 'Animali domestici'],
     ['gatto', 'Animali domestici'],
     ['viaggio', 'Viaggio'],
-    ['famiglia', 'Infortuni famiglia e LTC'],
     ['legale', 'Tutela legale'],
-    ['medico', 'Polizza medici'],
     ['fotovoltaico', 'Fotovoltaico'],
     ['cauzione', 'Cauzioni appalti'],
     ['fideiussione', 'Fideiussioni'],
     ['fonti', 'Stato collegamenti compagnie'],
+    /* Le voci nuove dell'albero (15/09/2026): la ricerca deve arrivare alla
+       FOGLIA, non alla categoria che la contiene. */
+    ['tcm', 'TCM'],
+    ['mutuo', 'TCM Mutuo'],
+    ['circolazione', 'Infortuni alla circolazione'],
+    ['utenze', 'Rimborso utenze'],
+    ['terremoto', 'Rischi catastrofali abitazione'],
+    ['medici', 'Medici'],
+    ['infermiere', 'Sanitario non medico'],
+    ['geometra', 'Geometri'],
+    ['avvocato', 'Avvocati'],
+    ['commercialisti', 'Commercialisti'],
+    ['dpo', 'DPO'],
+    ['amtrust', 'AMTRUST'],
+    ['dentista', 'Dentista Protetto'],
+    ['albergo', 'Albergo'],
+    ['lido', 'Lidi balneari'],
+    ['provvisoria', 'Provvisoria'],
+    ['agea', 'Contributi AGEA'],
   ];
   for (const [testo, atteso] of attesi) {
     const r = primi(testo);
@@ -101,9 +115,9 @@ e.prova('maiuscole e accenti non fanno sparire il prodotto', () => {
   for (const t of ['CASA', 'Casa', 'cAsA']) {
     deve(primi(t)[0] === 'Casa', '«' + t + '» non trova Casa');
   }
-  /* «Auto d'epoca» ha l'apostrofo: chi scrive «auto d epoca» o «epoca»
-     deve arrivarci lo stesso. */
-  deve(primi('epoca')[0] === "Auto d'epoca", 'l\'apostrofo blocca la ricerca');
+  /* «Idoneità finanziaria autotrasportatori» ha l'accento: chi scrive
+     «idoneita» senza accento deve arrivarci lo stesso. */
+  deve(primi('idoneita')[0] === 'Idoneità finanziaria autotrasportatori', 'l\'accento blocca la ricerca');
 });
 
 // ── 3. una lettera sola non apre la fiera dei prodotti ─────────────────────
@@ -124,7 +138,11 @@ e.prova('il nome della colonna non trascina dentro tutti i suoi prodotti', () =>
   deve(primi('casa').join('|') === 'Casa',
     'cercando «casa» escono anche: ' + primi('casa').slice(1).join(', '));
   deve(primi('moto')[0] === 'Moto e ciclomotori', '«moto» non trova più la moto');
-  deve(primi('moto').length <= 2,
+  /* «moto» sta anche dentro «terremoto» (i rischi catastrofali): quelli
+     escono per parola loro, e va bene. Quello che NON deve succedere e' che
+     la colonna Motor si porti dietro Autovetture e Autocarri. */
+  const daMotor = primi('moto').filter(l => ['Autovetture', 'Autocarri'].includes(l));
+  deve(daMotor.length === 0,
     'cercando «moto» esce tutta la colonna Motor: ' + primi('moto').join(', '));
 
   /* Ma una colonna deve restare raggiungibile per nome: «patrimonio» non
@@ -147,7 +165,10 @@ e.prova('al massimo sei suggerimenti', () => {
 // ── 5. ogni suggerimento sa dove andare ────────────────────────────────────
 e.prova('ogni prodotto suggerito porta a una pagina vera', () => {
   const tutti = vm.runInContext('indiceProdotti()', stanza);
-  deve(tutti.length >= 26, 'l\'indice ha solo ' + tutti.length + ' prodotti: ne mancano');
+  deve(tutti.length >= 70, 'l\'indice ha solo ' + tutti.length + ' prodotti: ne mancano');
+  /* Le voci «In arrivo» non hanno una destinazione e NON devono essere
+     suggerite: un suggerimento che non apre niente e' una promessa falsa. */
+  for (const p of tutti) deve(p.l !== 'RC Attività' && p.l !== 'Cyber', '«' + p.l + '» e\' in arrivo e viene suggerita');
   for (const p of tutti) {
     deve(typeof p.p === 'string' && p.p.length > 0, '«' + p.l + '» non dice quale pagina aprire');
     deve(typeof p.gruppo === 'string' && p.gruppo.length > 0, '«' + p.l + '» non ha un gruppo');
@@ -155,8 +176,19 @@ e.prova('ogni prodotto suggerito porta a una pagina vera', () => {
   /* I prodotti che si aprono per chiave devono usare una chiave vera:
      apriProdotto() con una chiave sconosciuta non apre niente e resta
      dov'è — un clic che non fa nulla, senza nessun errore visibile. */
-  const chiavi = ['autovetture', 'motocicli', 'autocarri', 'imbarcazioni',
-    'conducente', 'storici', 'cvtard'];
+  /* L'elenco e' quello di INTERFACCIA-QUOTO-IAM.md §2.6, lo stesso che
+     PRODOTTI_DIRETTI di QUOTO risolve. La prova gemella di la' controlla che
+     il codice di QUOTO e il contratto dicano la stessa cosa. */
+  const chiavi = ['autovetture', 'motocicli', 'autocarri',
+    'tcm', 'tcm_mutuo', 'tl_mydrive', 'tl_myway', 'tl_utenze',
+    'imp_catastrofali', 'imp_fotovoltaico', 'albergo', 'lidi',
+    'rcp_medici', 'rcp_paramedici', 'rcp_avvocati', 'rcp_nonreg',
+    'rcp_tecnici_architetti', 'rcp_tecnici_geometri', 'rcp_tecnici_periti', 'rcp_tecnici_geologi', 'rcp_tecnici_agronomi', 'rcp_tecnici_chimici',
+    'rcp_fiscale_commercialisti', 'rcp_fiscale_commercialisti_revisori', 'rcp_fiscale_revisore', 'rcp_fiscale_revisore_sindaco', 'rcp_fiscale_visto_leggero',
+    'rcp_varie_informatici', 'rcp_varie_perito_agrario', 'rcp_varie_agenti_immobiliari', 'rcp_varie_amministratori_condominio', 'rcp_varie_mediatori_creditizi', 'rcp_varie_dpo',
+    'amt_commercialista_protetto', 'amt_ingegno_protetto', 'amt_professioni_intellettuali', 'amt_pubblico_impiego', 'amt_medico_protetto', 'amt_dentista_protetto', 'amt_farmacista_protetto', 'amt_studi_dentistici', 'amt_poliambulatori', 'amt_residenze_sanitarie', 'amt_farmacie',
+    'cauz_provvisoria', 'cauz_definitiva', 'cauz_anticipazione', 'cauz_provvisoria_privati', 'cauz_definitiva_privati',
+    'cauz_legge_210', 'cauz_concessione_edilizia', 'cauz_contributi_agea', 'cauz_rimborso_iva', 'cauz_generico', 'cauz_autotrasportatori', 'cauz_ingresso_stranieri', 'cauz_albo_gestori_ambientali'];
   for (const p of tutti) {
     if (p.prod) deve(chiavi.includes(p.prod), '«' + p.l + '» usa la chiave sconosciuta «' + p.prod + '»');
   }

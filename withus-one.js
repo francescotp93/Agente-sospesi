@@ -278,48 +278,148 @@
 
   function Q(page, titolo) { return function () { aprireQuoto(page, { titolo: titolo }); }; }
 
-  /* ═══ il mega-menu dei prodotti ═════════════════════════════════════
-     Quattro colonne, come nel modello approvato. Ogni voce apre una
-     pagina del preventivatore dentro la scocca.                        */
+  /* ═══ il menu dei prodotti: un ALBERO, non quattro colonne ═══════════
+     Rifatto il 15/09/2026 (brief «ristrutturazione menu Nuovo preventivo»).
+     Quattro categorie, e sotto ogni categoria le voci, che possono avere a
+     loro volta figli (es. Impresa e Cauzioni › RC Professionali › Tecnici ›
+     Geometri). Ogni FOGLIA porta al SUO prodotto: `p` e' la pagina di QUOTO
+     che lo contiene, `prod` la chiave che QUOTO risolve in PRODOTTI_DIRETTI.
+     Le chiavi sono contratto (INTERFACCIA-QUOTO-IAM.md §2.6): una chiave che
+     di la' non c'e' e' un clic che non fa niente, senza nessun errore.
+     Un nodo con `sub` cliccato apre/chiude i figli e non naviga; se ha anche
+     `p`, la ricerca in alto lo sa trovare e apre quella pagina.
+     `soon: true` = prodotto previsto ma non ancora in QUOTO: si vede, in
+     grigio, con la scritta «In arrivo», e non e' cliccabile ne' focusabile.
+     Le voci uscite dal menu (Imbarcazioni, Infortuni al conducente, CVT/ARD,
+     Auto d'epoca, Infortuni famiglia/LTC, Malattia, Fondo pensione, TFR, Beni
+     e oggetti di valore, RC rischi diversi, Polizza medici) NON vanno
+     rimesse: la prova menu-preventivo-albero.test.mjs le cerca e le vieta.
+     AMTRUST sta intero sotto RC Professionali, con le denominazioni della
+     tariffa; quattro suoi prodotti sono anche sotto Sanitario › Struttura, e
+     la doppia strada e' voluta (§8 del brief). */
   var MEGA = {
     cols: [
-      /* Ogni voce porta al SUO prodotto (parametro `prod`). Prima erano cinque
-         etichette che aprivano tutte la stessa schermata, e la scelta andava
-         rifatta a mano dentro: il menu prometteva una strada e ne apriva
-         un'altra. (03/08/2026) */
-      { t: 'Motor', v: [
+      { t: 'Motor', i: 'i-car', v: [
         { l: 'Autovetture', p: 'rca', prod: 'autovetture', i: 'i-car' },
         { l: 'Moto e ciclomotori', p: 'rca', prod: 'motocicli', i: 'i-moto' },
-        { l: 'Autocarri', p: 'rca', prod: 'autocarri', i: 'i-truck' },
-        { l: 'Imbarcazioni', p: 'rca', prod: 'imbarcazioni', i: 'i-swap' },
-        { l: 'Infortuni al conducente', p: 'rca', prod: 'conducente', i: 'i-user' },
-        { l: 'CVT e ARD', p: 'cvtard', i: 'i-shield' },
-        { l: "Auto d'epoca", p: 'saravintage', prod: 'storici', i: 'i-star' }
+        { l: 'Autocarri', p: 'rca', prod: 'autocarri', i: 'i-truck' }
       ] },
-      { t: 'Persona', v: [
+      { t: 'Persona', i: 'i-heart', v: [
         { l: 'Infortuni', p: 'infortuni', i: 'i-heart' },
-        { l: 'Infortuni famiglia e LTC', p: 'persona', i: 'i-users' },
-        { l: 'Infortuni del conducente', p: 'infcirc', i: 'i-car' },
-        { l: 'Malattia', p: 'malattia', i: 'i-med' },
-        { l: 'Vita e TCM', p: 'vita', i: 'i-shield' },
+        { l: 'Infortuni alla circolazione', p: 'infcirc', i: 'i-car' },
+        { l: 'Vita', p: 'vita', i: 'i-shield', sub: [
+          { l: 'TCM', p: 'vita', prod: 'tcm', i: 'i-shield' },
+          { l: 'TCM Mutuo', p: 'vita', prod: 'tcm_mutuo', i: 'i-home' }
+        ] },
         { l: 'Viaggio', p: 'viaggio', i: 'i-plane' }
       ] },
-      { t: 'Casa e patrimonio', v: [
+      { t: 'Casa e Patrimonio', i: 'i-home', v: [
         { l: 'Casa', p: 'casa', i: 'i-home' },
+        /* Solo qui: da Persona e' uscita (decisione presa, §8 del brief). */
         { l: 'RC vita privata', p: 'rcvp', i: 'i-user' },
-        { l: 'Tutela legale', p: 'tutela', i: 'i-scale' },
+        /* La pagina e' «tutelalegale» (My Drive / My Way / Rimborso Utenze),
+           non la vecchia «tutela», che era un altro modulo con altri prodotti. */
+        { l: 'Tutela legale', p: 'tutelalegale', i: 'i-scale', sub: [
+          { l: 'MyDrive', p: 'tutelalegale', prod: 'tl_mydrive', i: 'i-car' },
+          { l: 'MyWay', p: 'tutelalegale', prod: 'tl_myway', i: 'i-users' },
+          { l: 'Rimborso utenze', p: 'tutelalegale', prod: 'tl_utenze', i: 'i-euro' }
+        ] },
         { l: 'Animali domestici', p: 'animali', i: 'i-paw' },
         { l: 'Fotovoltaico', p: 'fotovoltaico', i: 'i-sun' },
-        { l: 'Beni e oggetti di valore', p: 'beni', i: 'i-boxes' }
+        /* Viveva sotto «Beni e oggetti di valore», che dal menu e' sparita:
+           senza questa riga dal menu non ci si arrivava piu'. */
+        { l: 'Rischi catastrofali abitazione', p: 'rcab', i: 'i-bolt' }
       ] },
-      { t: 'Impresa e cauzioni', v: [
-        { l: 'Multirischio impresa', p: 'impresa', i: 'i-build' },
-        { l: 'Polizza medici', p: 'impresa', i: 'i-med' },
-        { l: 'RC professionale', p: 'rcprof', i: 'i-case' },
-        { l: 'RC rischi diversi', p: 'rcrd', i: 'i-shield' },
-        { l: 'Cauzioni appalti', p: 'cauzioni-appalti', i: 'i-bank' },
-        { l: 'Cauzioni privati', p: 'cauzioni-privati', i: 'i-lock' },
-        { l: 'Fideiussioni', p: 'cauzioni', i: 'i-sign' }
+      { t: 'Impresa e Cauzioni', i: 'i-build', v: [
+        { l: 'Multirischi Impresa', p: 'impresa', i: 'i-build', sub: [
+          { l: 'RC Attività', soon: true, i: 'i-case' },
+          { l: 'Cyber', soon: true, i: 'i-lock' },
+          { l: 'Rischi Catastrofali', p: 'impresa', prod: 'imp_catastrofali', i: 'i-bolt' },
+          { l: 'Fotovoltaico', p: 'impresa', prod: 'imp_fotovoltaico', i: 'i-sun' }
+        ] },
+        /* Ex «Polizza medici». Medici e Sanitario non medico sono le tariffe
+           a classi di QUOTO (MEDICI / PARAMEDICI); «Struttura» non ha un
+           prodotto unico: sono le quattro strutture AMTRUST. */
+        { l: 'Sanitario', p: 'rcprof', i: 'i-med', sub: [
+          { l: 'Struttura', p: 'rcprof', i: 'i-build', sub: [
+            { l: 'Studi Dentistici', p: 'rcprof', prod: 'amt_studi_dentistici', i: 'i-med' },
+            { l: 'Poliambulatori', p: 'rcprof', prod: 'amt_poliambulatori', i: 'i-build' },
+            { l: 'Residenze Sanitarie', p: 'rcprof', prod: 'amt_residenze_sanitarie', i: 'i-home' },
+            { l: 'Farmacie', p: 'rcprof', prod: 'amt_farmacie', i: 'i-plus' }
+          ] },
+          { l: 'Medici', p: 'rcprof', prod: 'rcp_medici', i: 'i-med' },
+          { l: 'Sanitario non medico', p: 'rcprof', prod: 'rcp_paramedici', i: 'i-heart' }
+        ] },
+        { l: 'RC Professionali', p: 'rcprof', i: 'i-case', sub: [
+          { l: 'Tecnici', p: 'rcprof', i: 'i-cog', sub: [
+            { l: 'Architetti / Ingegneri', p: 'rcprof', prod: 'rcp_tecnici_architetti', i: 'i-build' },
+            { l: 'Geometri', p: 'rcprof', prod: 'rcp_tecnici_geometri', i: 'i-cog' },
+            { l: 'Periti', p: 'rcprof', prod: 'rcp_tecnici_periti', i: 'i-search' },
+            { l: 'Geologi', p: 'rcprof', prod: 'rcp_tecnici_geologi', i: 'i-sun' },
+            { l: 'Agronomi', p: 'rcprof', prod: 'rcp_tecnici_agronomi', i: 'i-sun' },
+            { l: 'Chimici / Fisici', p: 'rcprof', prod: 'rcp_tecnici_chimici', i: 'i-flask' }
+          ] },
+          { l: 'Avvocati', p: 'rcprof', prod: 'rcp_avvocati', i: 'i-scale' },
+          /* Tutte e cinque le sottocategorie della tariffa, non solo la prima. */
+          { l: 'Area Fiscale', p: 'rcprof', i: 'i-calc', sub: [
+            { l: 'Commercialisti', p: 'rcprof', prod: 'rcp_fiscale_commercialisti', i: 'i-calc' },
+            { l: 'Commercialisti sindaci revisori', p: 'rcprof', prod: 'rcp_fiscale_commercialisti_revisori', i: 'i-calc' },
+            { l: 'Revisore', p: 'rcprof', prod: 'rcp_fiscale_revisore', i: 'i-check' },
+            { l: 'Revisore sindaco', p: 'rcprof', prod: 'rcp_fiscale_revisore_sindaco', i: 'i-check' },
+            { l: 'Visto leggero', p: 'rcprof', prod: 'rcp_fiscale_visto_leggero', i: 'i-file' }
+          ] },
+          { l: 'Professioni Varie', p: 'rcprof', i: 'i-case', sub: [
+            { l: 'Servizi informatici', p: 'rcprof', prod: 'rcp_varie_informatici', i: 'i-db' },
+            { l: 'Perito agrario', p: 'rcprof', prod: 'rcp_varie_perito_agrario', i: 'i-sun' },
+            { l: 'Agenti immobiliari', p: 'rcprof', prod: 'rcp_varie_agenti_immobiliari', i: 'i-home' },
+            { l: 'Amministratori di condominio', p: 'rcprof', prod: 'rcp_varie_amministratori_condominio', i: 'i-build' },
+            { l: 'Mediatori creditizi e agenti in attività finanziaria', p: 'rcprof', prod: 'rcp_varie_mediatori_creditizi', i: 'i-bank' },
+            /* «DPO» (Data Protection Officer): cosi' si chiama in tariffa. */
+            { l: 'DPO', p: 'rcprof', prod: 'rcp_varie_dpo', i: 'i-lock' }
+          ] },
+          { l: 'Professioni non regolamentate', p: 'rcprof', prod: 'rcp_nonreg', i: 'i-list' },
+          /* Denominazioni ESATTE di tariffe/amtrust.json (tipo rc_professionale). */
+          { l: 'AMTRUST', p: 'rcprof', i: 'i-shield', sub: [
+            { l: 'Commercialista Protetto', p: 'rcprof', prod: 'amt_commercialista_protetto', i: 'i-calc' },
+            { l: 'Ingegno Protetto', p: 'rcprof', prod: 'amt_ingegno_protetto', i: 'i-cog' },
+            { l: 'ProfessionIntellettuali - Avvocati (Conv. 0091)', p: 'rcprof', prod: 'amt_professioni_intellettuali', i: 'i-scale' },
+            { l: 'PubblicoImpiego (Convenzione 0083)', p: 'rcprof', prod: 'amt_pubblico_impiego', i: 'i-bank' },
+            { l: 'Medico Protetto', p: 'rcprof', prod: 'amt_medico_protetto', i: 'i-med' },
+            { l: 'Dentista Protetto', p: 'rcprof', prod: 'amt_dentista_protetto', i: 'i-med' },
+            { l: 'Farmacista Protetto', p: 'rcprof', prod: 'amt_farmacista_protetto', i: 'i-plus' },
+            { l: 'Studi Dentistici', p: 'rcprof', prod: 'amt_studi_dentistici', i: 'i-med' },
+            { l: 'Poliambulatori', p: 'rcprof', prod: 'amt_poliambulatori', i: 'i-build' },
+            { l: 'Residenze Sanitarie', p: 'rcprof', prod: 'amt_residenze_sanitarie', i: 'i-home' },
+            { l: 'Farmacie', p: 'rcprof', prod: 'amt_farmacie', i: 'i-plus' }
+          ] }
+        ] },
+        /* Sono il modulo «RC rischi diversi» (HDI): due ingressi giusti al
+           posto di una voce che apriva sempre gli alberghi. */
+        { l: 'Albergo', p: 'rcrd', prod: 'albergo', i: 'i-build' },
+        { l: 'Lidi balneari', p: 'rcrd', prod: 'lidi', i: 'i-ombr' },
+        { l: 'Cauzioni appalti', p: 'cauzioni-appalti', i: 'i-bank', sub: [
+          { l: 'Provvisoria', p: 'cauzioni-appalti', prod: 'cauz_provvisoria', i: 'i-file' },
+          { l: 'Definitiva', p: 'cauzioni-appalti', prod: 'cauz_definitiva', i: 'i-doc2' },
+          { l: 'Anticipazione', p: 'cauzioni-appalti', prod: 'cauz_anticipazione', i: 'i-euro' }
+        ] },
+        { l: 'Cauzioni fra privati', p: 'cauzioni-privati', i: 'i-lock', sub: [
+          { l: 'Provvisoria fra privati', p: 'cauzioni-privati', prod: 'cauz_provvisoria_privati', i: 'i-file' },
+          { l: 'Definitiva fra privati', p: 'cauzioni-privati', prod: 'cauz_definitiva_privati', i: 'i-doc2' }
+        ] },
+        /* Tutto il resto delle cauzioni, escluse appalti e privati che hanno
+           gia' la loro strada. Le etichette non ripetono «Cauzione»: stanno
+           gia' sotto Fideiussioni, e nella ricerca «cauzione» deve portare
+           agli appalti, non alla prima foglia che inizia cosi'. */
+        { l: 'Fideiussioni', p: 'cauzioni', i: 'i-sign', sub: [
+          { l: 'Legge 210', p: 'cauzioni', prod: 'cauz_legge_210', i: 'i-home' },
+          { l: 'Concessione edilizia', p: 'cauzioni', prod: 'cauz_concessione_edilizia', i: 'i-build' },
+          { l: 'Contributi AGEA', p: 'cauzioni', prod: 'cauz_contributi_agea', i: 'i-sun' },
+          { l: 'Rimborso IVA', p: 'cauzioni', prod: 'cauz_rimborso_iva', i: 'i-euro' },
+          { l: 'Generica', p: 'cauzioni', prod: 'cauz_generico', i: 'i-shield' },
+          { l: 'Idoneità finanziaria autotrasportatori', p: 'cauzioni', prod: 'cauz_autotrasportatori', i: 'i-truck' },
+          { l: 'Ingresso stranieri', p: 'cauzioni', prod: 'cauz_ingresso_stranieri', i: 'i-users' },
+          { l: 'Iscrizione albo gestori ambientali', p: 'cauzioni', prod: 'cauz_albo_gestori_ambientali', i: 'i-refresh' }
+        ] }
       ] }
     ],
     foot: [
@@ -539,23 +639,22 @@
   var TITOLI_QUOTO = {
     home:        ['Nuovo preventivo', 'Preventivatore'],
     rca:         ['RC Auto e veicoli', 'Preventivatore'],
-    cvtard:      ['CVT e ARD', 'Preventivatore'],
-    saravintage: ["Auto d'epoca", 'Preventivatore'],
+    /* 15/09/2026: cvtard, saravintage, persona, malattia, beni e la vecchia
+       «tutela» sono uscite dal menu; le voci nuove portano il titolo con se'
+       (data-t), qui restano i titoli delle pagine che si aprono per nome. */
     infortuni:   ['Infortuni', 'Preventivatore'],
-    persona:     ['Infortuni famiglia e LTC', 'Preventivatore'],
-    infcirc:     ['Infortuni del conducente', 'Preventivatore'],
-    malattia:    ['Malattia', 'Preventivatore'],
-    vita:        ['Vita e TCM', 'Preventivatore'],
+    infcirc:     ['Infortuni alla circolazione', 'Preventivatore'],
+    vita:        ['Vita', 'Preventivatore'],
     viaggio:     ['Viaggio', 'Preventivatore'],
     casa:        ['Casa', 'Preventivatore'],
     rcvp:        ['RC vita privata', 'Preventivatore'],
-    tutela:      ['Tutela legale', 'Preventivatore'],
+    tutelalegale:['Tutela legale', 'Preventivatore'],
     animali:     ['Animali domestici', 'Preventivatore'],
     fotovoltaico:['Fotovoltaico', 'Preventivatore'],
-    beni:        ['Beni e oggetti di valore', 'Preventivatore'],
-    impresa:     ['Multirischio impresa', 'Preventivatore'],
-    rcprof:      ['RC professionale', 'Preventivatore'],
-    rcrd:        ['RC rischi diversi', 'Preventivatore'],
+    rcab:        ['Rischi catastrofali abitazione', 'Preventivatore'],
+    impresa:     ['Multirischi Impresa', 'Preventivatore'],
+    rcprof:      ['RC Professionali', 'Preventivatore'],
+    rcrd:        ['Albergo e lidi balneari', 'Preventivatore'],
     'cauzioni-appalti': ['Cauzioni appalti', 'Preventivatore'],
     'cauzioni-privati': ['Cauzioni privati', 'Preventivatore'],
     cauzioni:    ['Fideiussioni', 'Preventivatore'],
@@ -608,6 +707,15 @@
   function chiudiTendine() {
     var a = document.querySelectorAll('.w1-m.open');
     for (var i = 0; i < a.length; i++) a[i].classList.remove('open');
+    /* L'albero dei prodotti si richiude anche dentro: alla prossima apertura
+       si ritrovano le quattro categorie chiuse, non il ramo di prima aperto
+       a meta' (che al primo clic si chiuderebbe invece di aprirsi). */
+    var rami = document.querySelectorAll('.w1-mega .w1-subwrap.open');
+    for (var r = 0; r < rami.length; r++) {
+      rami[r].classList.remove('open');
+      var testa = rami[r].querySelector('a.w1-has-sub');
+      if (testa) testa.setAttribute('aria-expanded', 'false');
+    }
   }
 
   function chiudiCassetto() {
@@ -659,17 +767,45 @@
     return d;
   }
 
+  /* Testo dentro un attributo HTML: le denominazioni AMTRUST hanno parentesi
+     e trattini, e prima o poi qualcuna avra' anche un apice. */
+  function attr(t) {
+    return String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  }
+
+  /* Una voce dell'albero, a qualsiasi livello.
+     - foglia (p, prod)  -> <a data-p data-prod data-t>: naviga
+     - nodo (sub)        -> <a class="w1-has-sub"> + figli: apre/chiude, non naviga
+     - soon              -> <span class="w1-soon" aria-disabled>: si vede, non si clicca
+     `liv` e' la profondita', e serve solo al rientro a sinistra (CSS). */
+  function voceMegaHTML(v, liv) {
+    var testo = ico(v.i || 'i-right', 'sm') + '<span>' + attr(v.l) + '</span>';
+    if (v.soon) {
+      return '<span class="w1-soon" data-liv="' + liv + '" aria-disabled="true" title="Prodotto previsto, non ancora attivo">' +
+        testo + '<span class="w1-bdg">In arrivo</span></span>';
+    }
+    if (v.sub) {
+      var h = '<div class="w1-subwrap" data-liv="' + liv + '">' +
+        '<a href="javascript:void(0)" class="w1-has-sub" aria-expanded="false" data-liv="' + liv + '">' + testo +
+        '<svg class="w1-i sm w1-ch w1-subch"><use href="#i-down"/></svg></a><div class="w1-subdd">';
+      for (var i = 0; i < v.sub.length; i++) h += voceMegaHTML(v.sub[i], liv + 1);
+      return h + '</div></div>';
+    }
+    return '<a href="javascript:void(0)" data-liv="' + liv + '" data-p="' + attr(v.p) + '"' +
+      (v.prod ? ' data-prod="' + attr(v.prod) + '"' : '') +
+      ' data-t="' + attr(v.l) + '|Preventivatore">' + testo + '</a>';
+  }
+
   function costruisciMega() {
     var d = document.createElement('div');
     d.className = 'w1-mega';
     var h = '<div class="w1-cols">';
+    /* Le quattro categorie sono il primo livello dell'albero: chiuse finche'
+       non si clicca, come chiede il brief («al click sulla categoria si apre
+       il relativo sotto-menu»). */
     for (var c = 0; c < MEGA.cols.length; c++) {
-      h += '<div><h5>' + MEGA.cols[c].t + '</h5>';
-      for (var v = 0; v < MEGA.cols[c].v.length; v++) {
-        var x = MEGA.cols[c].v[v];
-        h += '<a href="javascript:void(0)" data-p="' + x.p + '"' + (x.prod ? ' data-prod="' + x.prod + '"' : '') + ' data-t="' + x.l + '|Preventivatore">' + ico(x.i, 'sm') + '<span>' + x.l + '</span></a>';
-      }
-      h += '</div>';
+      var col = MEGA.cols[c];
+      h += voceMegaHTML({ l: col.t, i: col.i, sub: col.v }, 0);
     }
     h += '</div><div class="w1-foot">';
     for (var f = 0; f < MEGA.foot.length; f++) {
@@ -679,6 +815,27 @@
     h += '</div>';
     d.innerHTML = h;
     d.addEventListener('click', function (e) {
+      /* Un nodo con figli: apre i suoi e chiude i fratelli allo stesso
+         livello, cosi' la colonna non diventa un rotolo. Non naviga. */
+      var n = e.target.closest('a.w1-has-sub');
+      if (n) {
+        e.preventDefault(); e.stopPropagation();
+        var wrap = n.parentElement;
+        var apri = !wrap.classList.contains('open');
+        var fratelli = wrap.parentElement ? wrap.parentElement.children : [];
+        for (var i = 0; i < fratelli.length; i++) {
+          if (fratelli[i] !== wrap && fratelli[i].classList) {
+            fratelli[i].classList.remove('open');
+            var fa = fratelli[i].querySelector('a.w1-has-sub');
+            if (fa) fa.setAttribute('aria-expanded', 'false');
+          }
+        }
+        wrap.classList.toggle('open', apri);
+        n.setAttribute('aria-expanded', apri ? 'true' : 'false');
+        return;
+      }
+      /* «In arrivo»: il clic non fa niente, e non chiude nemmeno il menu. */
+      if (e.target.closest('.w1-soon')) { e.stopPropagation(); return; }
       var a = e.target.closest('a[data-p]');
       if (!a) return;
       e.preventDefault(); e.stopPropagation();
@@ -687,6 +844,75 @@
       aprireQuoto(a.getAttribute('data-p'), { titolo: t ? t.split('|') : null, prod: a.getAttribute('data-prod') || null });
     });
     return d;
+  }
+
+  /* ═══ SU TELEFONO: l'albero a schermo intero, un livello alla volta ═════
+     Sotto i 900px la fisarmonica dentro il cassetto diventa un rotolo di
+     quattro livelli su 272px: non si legge. Qui il menu prodotti prende tutto
+     lo schermo, mostra un livello per volta, e «Indietro» risale. Stesso
+     albero (MEGA), stessa apertura (aprireQuoto): cambia solo il disegno. */
+  var DRILL = [];
+  function eTelefono() {
+    return !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+  }
+  function radiceMega() {
+    var figli = [];
+    for (var c = 0; c < MEGA.cols.length; c++) figli.push({ l: MEGA.cols[c].t, i: MEGA.cols[c].i, sub: MEGA.cols[c].v });
+    return { l: 'Nuovo preventivo', sub: figli };
+  }
+  function elDrill() {
+    var d = document.getElementById('w1-drill');
+    if (d) return d;
+    d = document.createElement('div');
+    d.className = 'w1-drill';
+    d.id = 'w1-drill';
+    d.setAttribute('role', 'dialog');
+    d.setAttribute('aria-label', 'Nuovo preventivo');
+    document.body.appendChild(d);
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-drill]');
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      var cosa = b.getAttribute('data-drill');
+      if (cosa === 'indietro') { DRILL.pop(); if (DRILL.length) disegnaDrill(); else chiudiDrill(); return; }
+      if (cosa === 'chiudi') { chiudiDrill(); return; }
+      var cur = DRILL[DRILL.length - 1];
+      var v = cur && cur.sub ? cur.sub[parseInt(cosa, 10)] : null;
+      if (!v || v.soon) return;
+      if (v.sub) { DRILL.push(v); disegnaDrill(); return; }
+      chiudiDrill(); chiudiCassetto();
+      aprireQuoto(v.p, { titolo: [v.l, 'Preventivatore'], prod: v.prod || null });
+    });
+    return d;
+  }
+  function disegnaDrill() {
+    var d = elDrill();
+    var cur = DRILL[DRILL.length - 1];
+    var h = '<div class="w1-drill-h">' +
+      (DRILL.length > 1
+        ? '<button type="button" class="w1-drill-back" data-drill="indietro">' + ico('i-right', 'sm') + '<span>Indietro</span></button>'
+        : '') +
+      '<div class="w1-drill-t">' + attr(cur.l) + '</div>' +
+      '<button type="button" class="w1-drill-back w1-drill-x" data-drill="chiudi" aria-label="Chiudi">' + ico('i-x') + '</button>' +
+      '</div><div class="w1-drill-b">';
+    for (var i = 0; i < cur.sub.length; i++) {
+      var v = cur.sub[i];
+      if (v.soon) {
+        h += '<span class="w1-drill-row w1-soon" aria-disabled="true">' + ico(v.i || 'i-right') + '<span>' + attr(v.l) + '</span><span class="w1-bdg">In arrivo</span></span>';
+      } else {
+        h += '<a href="javascript:void(0)" class="w1-drill-row" data-drill="' + i + '">' + ico(v.i || 'i-right') + '<span>' + attr(v.l) + '</span>' +
+          (v.sub ? '<svg class="w1-i sm w1-ch"><use href="#i-right"/></svg>' : '') + '</a>';
+      }
+    }
+    d.innerHTML = h + '</div>';
+    d.classList.add('open');
+    d.querySelector('.w1-drill-b').scrollTop = 0;
+  }
+  function apriDrill() { DRILL = [radiceMega()]; disegnaDrill(); }
+  function chiudiDrill() {
+    DRILL = [];
+    var d = document.getElementById('w1-drill');
+    if (d) d.classList.remove('open');
   }
 
   function costruisciBarra2() {
@@ -738,6 +964,9 @@
           var aperta = w.classList.contains('open');
           var haSub = m.sub || m.mega;
           chiudiTendine();
+          /* Su telefono il menu prodotti non e' una fisarmonica nel cassetto:
+             e' una schermata intera, un livello alla volta (vedi DRILL). */
+          if (m.mega && eTelefono()) { chiudiCassetto(); apriDrill(); return; }
           if (haSub && !aperta) w.classList.add('open');
           /* Capo-menu con sotto-voci: il clic apre SOLTANTO la tendina, non
              naviga (IAM.md §11.5-6). Si naviga scegliendo una sotto-voce — così
@@ -855,27 +1084,52 @@
     'Autovetture': 'auto rca rc auto macchina vettura targa',
     'Moto e ciclomotori': 'moto scooter ciclomotore motorino',
     'Autocarri': 'furgone camion autocarro mezzi',
-    'Imbarcazioni': 'barca natante nautica gommone',
-    'Infortuni al conducente': 'conducente guidatore',
-    'CVT e ARD': 'kasko furto incendio cristalli danni veicolo',
-    "Auto d'epoca": 'epoca storica storiche vintage sara',
     'Infortuni': 'infortunio',
-    'Infortuni famiglia e LTC': 'famiglia ltc long term care nucleo',
-    'Malattia': 'salute malattie sanitaria rimborso spese mediche aglea',
-    'Vita e TCM': 'vita tcm temporanea caso morte mutuo previdenza tfr',
+    'Infortuni alla circolazione': 'conducente guidatore trasportati circolazione',
+    'Vita': 'vita previdenza',
+    'TCM': 'tcm temporanea caso morte capitale decesso',
+    'TCM Mutuo': 'mutuo tcm capitale decrescente',
     'Viaggio': 'viaggi vacanza estero bagaglio annullamento',
     'Casa': 'abitazione fabbricato immobile appartamento globale casa',
     'RC vita privata': 'rcvp capofamiglia responsabilita civile privata',
     'Tutela legale': 'legale avvocato spese legali controversie',
+    'MyDrive': 'my drive tutela veicolo',
+    'MyWay': 'my way tutela famiglia',
+    'Rimborso utenze': 'utenze bollette luce gas telefono',
     'Animali domestici': 'cane gatto animale dottorpet pet coniglio',
     'Fotovoltaico': 'pannelli solare impianto',
-    'Beni e oggetti di valore': 'gioielli oggetti preziosi valore',
-    'Multirischio impresa': 'azienda attivita negozio bottega impresa',
-    'Polizza medici': 'medico medici sanitario dottore',
-    'RC professionale': 'professionale rcprof professionisti studio',
-    'RC rischi diversi': 'rischi diversi rcrd',
+    'Rischi catastrofali abitazione': 'terremoto alluvione catastrofali',
+    'Multirischi Impresa': 'azienda attivita negozio bottega impresa multirischio',
+    'Rischi Catastrofali': 'terremoto alluvione catastrofali azienda',
+    'Sanitario': 'sanitario sanita medici',
+    'Medici': 'medico medici dottore chirurgo',
+    'Sanitario non medico': 'paramedici infermiere fisioterapista ostetrica',
+    'Struttura': 'strutture sanitarie clinica',
+    'RC Professionali': 'professionale rcprof professionisti studio',
+    'Tecnici': 'tecnico tecniche',
+    'Architetti / Ingegneri': 'architetto ingegnere',
+    'Geometri': 'geometra',
+    'Periti': 'perito',
+    'Geologi': 'geologo',
+    'Agronomi': 'agronomo',
+    'Chimici / Fisici': 'chimico fisico',
+    'Avvocati': 'avvocato studio legale',
+    'Area Fiscale': 'fiscale tributario',
+    'Commercialisti': 'commercialista consulente del lavoro tributarista',
+    'Revisore': 'revisore legale',
+    'Professioni Varie': 'varie',
+    'Servizi informatici': 'informatica software it',
+    'Perito agrario': 'agrario',
+    'Agenti immobiliari': 'immobiliare agenzia immobiliare',
+    'Amministratori di condominio': 'amministratore condominio',
+    'Mediatori creditizi e agenti in attività finanziaria': 'mediatore creditizio agente finanziario',
+    'DPO': 'dpo privacy data protection officer',
+    'Professioni non regolamentate': 'non regolamentate',
+    'AMTRUST': 'amtrust professione protetta',
+    'Albergo': 'alberghi hotel b&b bed and breakfast residence campeggio ricettiva',
+    'Lidi balneari': 'lido stabilimento balneare spiaggia',
     'Cauzioni appalti': 'cauzione appalto gara ente pubblico',
-    'Cauzioni privati': 'cauzione privati affitto locazione',
+    'Cauzioni fra privati': 'cauzione privati affitto locazione',
     'Fideiussioni': 'fideiussione garanzia',
     'Preventivi salvati': 'preventivi storico salvati',
     'Stato collegamenti compagnie': 'fonti compagnie collegamenti portali stato'
@@ -885,19 +1139,28 @@
   function indiceProdotti() {
     if (INDICE) return INDICE;
     INDICE = [];
-    for (var c = 0; c < MEGA.cols.length; c++) {
-      var col = MEGA.cols[c];
-      for (var v = 0; v < col.v.length; v++) {
-        var voce = col.v[v];
-        INDICE.push({
-          l: voce.l, p: voce.p, prod: voce.prod || null, i: voce.i,
-          gruppo: col.t, titolo: null,
-          etichetta: senzaAccenti(voce.l),
-          sinonimi: senzaAccenti(SINONIMI[voce.l] || ''),
-          gruppoc: senzaAccenti(col.t)
-        });
+    /* Si scende nell'albero: entra nell'indice ogni voce che ha una pagina
+       da aprire — le foglie, e anche i nodi che hanno `p` (cercando
+       «fideiussione» si deve arrivare a Fideiussioni, che e' un nodo). Le
+       voci «In arrivo» restano fuori: un suggerimento che non apre niente
+       e' una promessa falsa. `gruppo` e' il percorso, per la riga a destra
+       nel risultato («Impresa e Cauzioni › RC Professionali › Tecnici»). */
+    function scendi(voci, percorso) {
+      for (var v = 0; v < voci.length; v++) {
+        var voce = voci[v];
+        if (voce.p && !voce.soon) {
+          INDICE.push({
+            l: voce.l, p: voce.p, prod: voce.prod || null, i: voce.i,
+            gruppo: percorso.join(' › '), titolo: null,
+            etichetta: senzaAccenti(voce.l),
+            sinonimi: senzaAccenti(SINONIMI[voce.l] || ''),
+            gruppoc: senzaAccenti(percorso.join(' '))
+          });
+        }
+        if (voce.sub) scendi(voce.sub, percorso.concat([voce.l]));
       }
     }
+    for (var c = 0; c < MEGA.cols.length; c++) scendi(MEGA.cols[c].v, [MEGA.cols[c].t]);
     for (var f = 0; f < MEGA.foot.length; f++) {
       var fo = MEGA.foot[f];
       INDICE.push({
@@ -1305,6 +1568,7 @@
     scrim.id = 'w1-scrim';
     scrim.onclick = chiudiCassetto;
     document.body.appendChild(scrim);
+    elDrill();
 
     /* In testa a #app: la fascia unica (BARRA 1, che si porta dentro le voci di
        menu della ex BARRA 2) e sotto la riga del titolo (BARRA 3). */
@@ -1357,15 +1621,19 @@
        apre la voce, e la tendina non si aprirebbe piu'. */
     document.addEventListener('click', chiudiTendine);
 
-    /* Il puntatore ha lasciato la barra: la tendina ha finito il suo lavoro.
-       Scendere sulle voci NON la chiude, perche' la tendina e' figlia della
-       barra e mouseleave non scatta verso i propri discendenti. */
-    var barraMenu = document.getElementById('w1-mbar');
-    if (barraMenu) barraMenu.addEventListener('mouseleave', chiudiTendine);
+    /* Un menu si chiude SOLO con un clic fuori o con Esc (brief del
+       14/09/2026). Qui c'era un `mouseleave` sulla barra: con l'albero a tre
+       livelli il puntatore esce dalla colonna per un pelo e il menu sparisce
+       mentre si sta scegliendo. Tolto, e la prova
+       menu-preventivo-albero.test.mjs vieta di rimetterlo. Niente apertura
+       al passaggio del mouse nemmeno a colonna compressa: si apre al clic
+       (withus-one.css, body.w1-min .w1-m.open). */
 
-    /* Il fuoco e' passato dentro il riquadro del preventivatore: e' il segnale
-       che l'agente sta lavorando li' dentro, e li' la tendina da' solo fastidio.
-       E' questa la rete che prende il caso segnalato. */
+    /* Il clic dentro il riquadro del preventivatore E' un clic fuori dal
+       menu, ma il documento non lo vede: l'iframe sta su un altro dominio e
+       i suoi clic non arrivano qui. L'unico segnale che ne resta e' il fuoco
+       che passa all'iframe. Questo NON e' il blur involontario che il brief
+       vieta: scatta solo quando l'agente clicca davvero nel riquadro. */
     window.addEventListener('blur', function () {
       var a = document.activeElement;
       if (a && a.tagName === 'IFRAME') chiudiTendine();
@@ -1376,7 +1644,7 @@
         var i = document.getElementById('w1-cerca');
         if (i) i.focus();
       }
-      if (e.key === 'Escape') { chiudiTendine(); chiudiCassetto(); }
+      if (e.key === 'Escape') { chiudiTendine(); chiudiCassetto(); chiudiDrill(); }
     });
 
     watchPerms();

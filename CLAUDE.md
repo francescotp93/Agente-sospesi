@@ -82,6 +82,33 @@ Prima di toccare quelle funzioni, si legge quella prova.
 
 ---
 
+## Il menu «Nuovo preventivo» (15 settembre 2026)
+
+L'albero è `MEGA` in `withus-one.js`: quattro categorie, nodi annidati, foglie
+con `p` (pagina di QUOTO) e `prod` (chiave che QUOTO risolve in
+`PRODOTTI_DIRETTI`). Le chiavi sono **contratto**: `INTERFACCIA-QUOTO-IAM.md`
+§2.6, identico nei due repository. Chi aggiunge una voce la aggiunge in tre
+posti nella stessa sessione: `MEGA`, la tabella §2.6, `PRODOTTI_DIRETTI` di
+QUOTE — e `verifica/menu-preventivo-albero.test.mjs` diventa rossa se ne manca
+uno.
+
+- Il menu si chiude **solo** con clic fuori o Esc. Niente `mouseleave`, niente
+  `:hover` che apre: la prova lo vieta.
+- `soon: true` = «In arrivo»: grigia, non link, non focusabile.
+- Su telefono l'albero è il drill-down (`apriDrill`), non la fisarmonica.
+- Ogni modifica a `withus-one.js` o `withus-one.css` richiede di aggiornare
+  `?v=` e l'impronta annotata in `index.html` (`versione-scocca.test.mjs`).
+- La scocca si collauda in un Chromium vero senza Supabase: una pagina con
+  `#app`, i bottoni `nb-*` rispecchiati da `data-mirror`, `.panels` con un
+  `.panel.act`, e `window.goTab = function(){}`. Playwright non è fra le
+  dipendenze di questo repository: si prende da QUOTE.
+- **Produzione di IAM = il VPS OVH, da Caddy, dal 16/09/2026** (prima GitHub
+  Pages; Vercel fa solo le anteprime delle PR). Il sito è versionato in
+  `QUOTE/deploy/caddy/iam.caddy`: IAM alla radice da `/opt/withus-iam`
+  (aggiornato ogni minuto da `main`), QUOTO sotto `/nuovo-preventivo/`. Il
+  riquadro carica `/nuovo-preventivo/`: stessa origine. Per guardare dentro il
+  VPS c'è il canale comandi (`QUOTE/deploy/cmd-runner.sh`, ramo `claude-cmd`).
+
 ## Memoria di sessione (Obsidian)
 
 Il vault Obsidian `secondo-cervello` è collegato via MCP (server `mcp-tools-istefox`).

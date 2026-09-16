@@ -1,3 +1,7 @@
+> **FERMATI: questo repository è un archivio (dal 16/09/2026).** Il codice di
+> IAM vive in `francescotp93/QUOTE`, cartella `iam/`. Qualsiasi modifica va
+> fatta là, non qui: quello che si scrive qui non arriva in produzione.
+
 # IAM — Note per Claude Code
 
 > **Prima di toccare qualsiasi cosa, leggi `IAM.md`**: dice che cos'è IAM, come

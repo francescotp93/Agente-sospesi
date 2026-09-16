@@ -4029,11 +4029,12 @@ async function caricaDatiPerData(dataSelezionata) {
 }
 
 // ─── PONTE IAM → QUOTO ────────────────────────────────────────────────────────
-// INDIRIZZO UNICO: il preventivatore non è più un sito separato. È un percorso
-// dello stesso dominio (iam.withusassicurazioni.it/nuovo-preventivo/) che
-// vercel.json riscrive verso il server OVH. Per tornare indietro basta rimettere
-// qui 'https://quoto.withusassicurazioni.it/' e togliere le righe da vercel.json.
-const QUOTO_URL = 'https://quoto.withusassicurazioni.it/';
+// INDIRIZZO UNICO (acceso il 16/09/2026): il preventivatore non è più un sito
+// separato. È un percorso dello stesso dominio, iam.withusassicurazioni.it/
+// nuovo-preventivo/, servito da Caddy sul VPS OVH insieme a IAM (il pacchetto
+// sta in QUOTE/deploy/caddy/). Per tornare indietro basta rimettere qui
+// 'https://quoto.withusassicurazioni.it/', che resta su GitHub Pages.
+const QUOTO_URL = '/nuovo-preventivo/';
 // Il passaggio della sessione nell'hash (#at/#rt) resta com'era: ora che il
 // dominio è uno solo il login sarebbe già condiviso, ma lasciarlo garantisce che
 // tutto continui a funzionare anche se la riscrittura viene disattivata.
@@ -14335,7 +14336,24 @@ const WD_TIPI = {
    legge come una griglia oraria, e accanto stanno le due cose che servono
    sempre: che cosa c'e' da fare oggi, e il dettaglio di quello che guardi. */
 let WDS_LUN = null, WDS_SEL = null;
-const WDS_ORE = [8,9,10,11,12,13,14,15,16,17,18];
+/* Le ore della griglia. 8-18 e' la giornata normale, ma la griglia si ALLARGA
+   a quello che c'e' davvero: prima era una lista fissa, e un appuntamento
+   alle 19 — orario leggibilissimo, quindi non «senza orario» — non trovava
+   nessuna riga e spariva sia dalla settimana sia dal giorno, pur essendo
+   contato nel totale in alto. Segnalato da Francesco il 16/09/2026. */
+const WDS_ORA_DA = 8, WDS_ORA_A = 18;
+function wdsOre(lista) {
+  let da = WDS_ORA_DA, a = WDS_ORA_A;
+  (lista || []).forEach(w => {
+    const t = wdsOra(w);
+    if (!t) return;
+    if (t.h < da) da = t.h;
+    if (t.h > a) a = t.h;
+  });
+  const ore = [];
+  for (let o = da; o <= a; o++) ore.push(o);
+  return ore;
+}
 
 /* Il lunedi' della settimana di una data. In Italia la settimana comincia di
    lunedi'; getDay() invece parte da domenica, ed e' l'errore classico che
@@ -14391,9 +14409,12 @@ function renderWDSett() {
      finirebbero accanto all'ora sbagliata: un giorno sfalsato rispetto agli
      altri, che dal codice non si vede. */
   const seNoOra = dentro.some(w => !wdsOra(w));
+  /* Le stesse ore in tutte le colonne: la griglia si allarga per tutta la
+     settimana, altrimenti un giorno con una riga in piu' scivolerebbe. */
+  const ore = wdsOre(dentro);
   let h = '<div class="wds-ore"><div class="wds-ang"></div>'
     + (seNoOra ? '<div class="wds-senzora eti">senza<br>orario</div>' : '')
-    + WDS_ORE.map(o => `<div class="wds-o">${String(o).padStart(2,'0')}:00</div>`).join('') + '</div>';
+    + ore.map(o => `<div class="wds-o">${String(o).padStart(2,'0')}:00</div>`).join('') + '</div>';
   for (const g of giorni) {
     const iso = wdsISO(g);
     const delGiorno = dentro.filter(w => w.data === iso);
@@ -14413,7 +14434,7 @@ function renderWDSett() {
       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();wdApriGiorno('${wdsISO(g)}')}"
       ><b>${g.toLocaleDateString('it-IT',{weekday:'short'})}</b><span>${g.getDate()}</span></div>`;
     if (seNoOra) h += `<div class="wds-senzora">${senzaOra.map(w => wdsChip(w)).join('')}</div>`;
-    for (const o of WDS_ORE) {
+    for (const o of ore) {
       const qui = delGiorno.filter(w => { const t = wdsOra(w); return t && t.h === o; });
       h += `<div class="wds-fascia" data-ora="${o}">${qui.map(w => wdsChip(w)).join('')}</div>`;
     }
@@ -14626,7 +14647,7 @@ function renderWDGiorno() {
   let h = senzaOra.length
     ? `<div class="wdg-r"><div class="wdg-t">senza<br>orario</div><div class="wdg-s2">${senzaOra.map(wdsChip).join('')}</div></div>`
     : '';
-  h += WDS_ORE.map(o => {
+  h += wdsOre(lista).map(o => {
     const dentro = lista.filter(w => { const t = wdsOra(w); return t && t.h === o; });
     return `<div class="wdg-r"><div class="wdg-t">${String(o).padStart(2,'0')}:00</div>`
          + `<div class="wdg-s2">${dentro.map(wdsChip).join('')}</div></div>`;
@@ -17782,8 +17803,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-<!-- impronta withus-one.js: 721572c6 — se cambia, cambia anche il ?v= qui sotto -->
-<script src="withus-one.js?v=20260915a"></script>
+<!-- impronta withus-one.js: 5789579f — se cambia, cambia anche il ?v= qui sotto -->
+<script src="withus-one.js?v=20260916a"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

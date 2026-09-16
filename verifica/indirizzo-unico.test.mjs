@@ -82,12 +82,19 @@ prova('le intestazioni di sicurezza non sono state toccate', () => {
   return chiavi.join(', ');
 });
 
-prova('il ponte verso il preventivatore usa l indirizzo di QUOTO', () => {
+prova('il ponte verso il preventivatore resta sullo stesso indirizzo: /nuovo-preventivo/', () => {
+  /* Dal 16/09/2026 iam. e' servito da Caddy sul VPS (QUOTE/deploy/caddy/
+     iam.caddy) e QUOTO sta sotto /nuovo-preventivo/ dello stesso dominio.
+     Un indirizzo assoluto verso quoto. qui riaprirebbe la seconda origine:
+     token nell'indirizzo, doppio login, clic nel riquadro invisibili. */
   const one = leggi('withus-one.js');
   const idx = leggi('index.html');
-  deve(/var QUOTO = 'https:\/\/quoto\.withusassicurazioni\.it\/';/.test(one), 'withus-one.js: ponte non punta a QUOTO');
-  deve(/const QUOTO_URL = 'https:\/\/quoto\.withusassicurazioni\.it\/';/.test(idx), 'index.html: ponte non punta a QUOTO');
-  return 'entrambi su quoto.withusassicurazioni.it';
+  deve(/var QUOTO = '\/nuovo-preventivo\/';/.test(one), 'withus-one.js: il riquadro non carica /nuovo-preventivo/');
+  deve(/const QUOTO_URL = '\/nuovo-preventivo\/';/.test(idx), 'index.html: il salto a pagina intera non usa /nuovo-preventivo/');
+  deve(!/var QUOTO = 'https:/.test(one) && !/const QUOTO_URL = 'https:/.test(idx), 'e\' tornato un indirizzo assoluto');
+  /* QUOTO_ORIGIN si ricava dal percorso: con un percorso relativo e' l'origine di IAM. */
+  deve(/var QUOTO_ORIGIN = \(function \(\) \{ try \{ return new URL\(QUOTO, location\.href\)\.origin;/.test(one), 'QUOTO_ORIGIN non si ricava piu\' da QUOTO: i messaggi al riquadro andrebbero a un\'origine sbagliata');
+  return 'riquadro e salto a pagina intera su /nuovo-preventivo/, stessa origine';
 });
 
 console.log('INDIRIZZO UNICO');

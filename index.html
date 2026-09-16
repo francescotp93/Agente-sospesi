@@ -4029,11 +4029,12 @@ async function caricaDatiPerData(dataSelezionata) {
 }
 
 // ─── PONTE IAM → QUOTO ────────────────────────────────────────────────────────
-// INDIRIZZO UNICO: il preventivatore non è più un sito separato. È un percorso
-// dello stesso dominio (iam.withusassicurazioni.it/nuovo-preventivo/) che
-// vercel.json riscrive verso il server OVH. Per tornare indietro basta rimettere
-// qui 'https://quoto.withusassicurazioni.it/' e togliere le righe da vercel.json.
-const QUOTO_URL = 'https://quoto.withusassicurazioni.it/';
+// INDIRIZZO UNICO (acceso il 16/09/2026): il preventivatore non è più un sito
+// separato. È un percorso dello stesso dominio, iam.withusassicurazioni.it/
+// nuovo-preventivo/, servito da Caddy sul VPS OVH insieme a IAM (il pacchetto
+// sta in QUOTE/deploy/caddy/). Per tornare indietro basta rimettere qui
+// 'https://quoto.withusassicurazioni.it/', che resta su GitHub Pages.
+const QUOTO_URL = '/nuovo-preventivo/';
 // Il passaggio della sessione nell'hash (#at/#rt) resta com'era: ora che il
 // dominio è uno solo il login sarebbe già condiviso, ma lasciarlo garantisce che
 // tutto continui a funzionare anche se la riscrittura viene disattivata.
@@ -17802,8 +17803,8 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 
-<!-- impronta withus-one.js: 721572c6 — se cambia, cambia anche il ?v= qui sotto -->
-<script src="withus-one.js?v=20260915a"></script>
+<!-- impronta withus-one.js: 5789579f — se cambia, cambia anche il ?v= qui sotto -->
+<script src="withus-one.js?v=20260916a"></script>
   <script src="withus-ticket-uno.js?v=1"></script>
 </body>
 </html>

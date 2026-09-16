@@ -102,9 +102,12 @@ uno.
   `#app`, i bottoni `nb-*` rispecchiati da `data-mirror`, `.panels` con un
   `.panel.act`, e `window.goTab = function(){}`. Playwright non è fra le
   dipendenze di questo repository: si prende da QUOTE.
-- **Produzione di IAM = GitHub Pages**, non Vercel (che fa solo anteprime). Il
-  VPS OVH ha già `/opt/withus-iam` pronto: manca il blocco Caddy e il DNS
-  (`deploy/TRASLOCO-OVH.md` in QUOTE).
+- **Produzione di IAM = il VPS OVH, da Caddy, dal 16/09/2026** (prima GitHub
+  Pages; Vercel fa solo le anteprime delle PR). Il sito è versionato in
+  `QUOTE/deploy/caddy/iam.caddy`: IAM alla radice da `/opt/withus-iam`
+  (aggiornato ogni minuto da `main`), QUOTO sotto `/nuovo-preventivo/`. Il
+  riquadro carica `/nuovo-preventivo/`: stessa origine. Per guardare dentro il
+  VPS c'è il canale comandi (`QUOTE/deploy/cmd-runner.sh`, ramo `claude-cmd`).
 
 ## Memoria di sessione (Obsidian)
 
